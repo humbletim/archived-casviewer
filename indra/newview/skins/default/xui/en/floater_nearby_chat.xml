@@ -83,7 +83,8 @@
          parse_highlights="true"
          parse_urls="true"
          left="1"
-         width="249">
+         width="249"
+		 value="test1">
         </chat_history>
       <line_editor
          bottom="0"
