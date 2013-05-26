@@ -281,9 +281,9 @@ fi
 
 if [ -z $CHANNEL ] ; then
     if [ $PLATFORM == "darwin" ] ; then
-        CHANNEL="private-`hostname -s` "
+        CHANNEL="Private-`hostname -s` "
     else
-        CHANNEL="private-`hostname`"
+        CHANNEL="Private-`hostname`"
     fi
 else
     CHANNEL=`echo $CHANNEL | sed -e "s/[^a-zA-Z0-9\-]*//g"` # strip out difficult characters from channel
@@ -317,9 +317,9 @@ if [ \( $WANTS_VERSION -eq $TRUE \) -o \( $WANTS_CONFIG -eq $TRUE \) ] ; then
     majorVer=`cat indra/Version | cut -d "=" -f 2 | cut -d "." -f 1`
     minorVer=`cat indra/Version | cut -d "=" -f 2 | cut -d "." -f 2`
     patchVer=`cat indra/Version | cut -d "=" -f 2 | cut -d "." -f 3`
-    echo "Channel : Firestorm-${CHANNEL}"
+    echo "Channel : CtrlAltStudio-Viewer-${CHANNEL}"
     echo "Version : ${majorVer}.${minorVer}.${patchVer}.${buildVer}"
-    python ./scripts/update_version_files.py --channel="Firestorm-$CHANNEL" --version=${majorVer}.${minorVer}.${patchVer}.${buildVer}
+    python ./scripts/update_version_files.py --channel="CtrlAltStudio-Viewer-$CHANNEL" --version=${majorVer}.${minorVer}.${patchVer}.${buildVer}
     popd
 fi
 
