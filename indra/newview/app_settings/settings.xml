@@ -1613,7 +1613,7 @@
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
-      <string>http://crashlogs.phoenixviewer.com/upload</string>
+      <string>http://ctrlaltstudio.com/viewer/upload-crash-log</string>
       <key>Backup</key>
       <integer>0</integer>
     </map>
@@ -15156,7 +15156,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
-      <string>https://update.phoenixviewer.com</string>
+      <string>http://ctrlaltstudio.com/viewer/update</string>
     </map>
     <key>UpdaterServicePath</key>
     <map>
@@ -15167,7 +15167,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
-      <string>update</string>
+      <string>viewer/update</string>
     </map>
     <key>UpdaterServiceProtocolVersion</key>
     <map>
