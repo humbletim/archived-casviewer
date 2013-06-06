@@ -295,7 +295,7 @@ std::string LLDir::buildSLOSCacheDir() const
 	}
 	else
 	{
-		res = add(getOSCacheDir(), "Firestorm");
+		res = add(getOSCacheDir(), "CtrlAltStudio Viewer");
 	}
 	return res;
 }

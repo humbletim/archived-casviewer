@@ -79,7 +79,7 @@ LLDir_Mac::LLDir_Mac()
 	
 	//if (executableURLRef != NULL)
 
-    const std::string     secondLifeString = "Firestorm";
+    const std::string     secondLifeString = "CtrlAltStudio Viewer";
     
     std::string *executablepathstr = getSystemExecutableFolder();
 
@@ -173,7 +173,7 @@ LLDir_Mac::LLDir_Mac()
 		if (error == noErr)
 		{
 			FSRefToLLString(&cacheDirRef, mOSCacheDir);
-			(void)CFCreateDirectory(&cacheDirRef, CFSTR("Firestorm"),NULL);
+			(void)CFCreateDirectory(&cacheDirRef, CFSTR("CtrlAltStudio Viewer"),NULL);
 #endif
             mOSCacheDir = *cachedir;
             //SPATTERS TODO:  This changes from ~/Library/Cache/Secondlife to ~/Library/Cache/com.app.secondlife/Secondlife.  Last dir level could go away.

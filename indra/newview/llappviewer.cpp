@@ -767,7 +767,7 @@ bool LLAppViewer::init()
 
 	// Need to do this initialization before we do anything else, since anything
 	// that touches files should really go through the lldir API
-	gDirUtilp->initAppDirs("Firestorm");
+	gDirUtilp->initAppDirs("CtrlAltStudio Viewer");
 	// set skin search path to default, will be overridden later
 	// this allows simple skinned file lookups to work
 // [SL:KB] - Patch: Viewer-Skins | Checked: 2012-12-26 (Catznip-3.4)
@@ -2428,12 +2428,12 @@ bool LLAppViewer::initLogging()
 
 	// Remove the last ".old" log file.
 	std::string old_log_file = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-							     "Firestorm.old");
+							     "CASviewer.old");
 	LLFile::remove(old_log_file);
 
 	// Rename current log file to ".old"
 	std::string log_file = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-							     "Firestorm.log");
+							     "CASviewer.log");
 	LLFile::rename(log_file, old_log_file);
 
 	// Set the log file to SecondLife.log
