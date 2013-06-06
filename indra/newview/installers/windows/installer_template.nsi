@@ -626,15 +626,15 @@ Push $2
 	; Otherwise (preview/dmz etc) just remove cache
 
         # Local Settings directory is the cache, there is no "cache" subdir
-        RMDir /r "$2\Local Settings\Application Data\Firestorm\user_settings"
-	RMDir /r "$2\Local Settings\Application Data\Firestorm\data"
+        RMDir /r "$2\Local Settings\Application Data\CtrlAltStudio Viewer\user_settings"
+	RMDir /r "$2\Local Settings\Application Data\CtrlAltStudio Viewer\data"
         # Vista version of the same
-        RMDir /r "$2\AppData\Local\Firestorm\user_settings"
-	RMDir /r "$2\AppData\Local\Firestorm\data"
-    Delete  "$2\Application Data\Firestorm\*.bmp"
-    Delete  "$2\Application Data\Firestorm\search_history.txt"
-    Delete  "$2\Application Data\Firestorm\plugin_cookies.txt"
-    Delete  "$2\Application Data\Firestorm\typed_locations.txt"
+        RMDir /r "$2\AppData\Local\CtrlAltStudio Viewer\user_settings"
+	RMDir /r "$2\AppData\Local\CtrlAltStudio Viewer\data"
+    Delete  "$2\Application Data\CtrlAltStudio Viewer\*.bmp"
+    Delete  "$2\Application Data\CtrlAltStudio Viewer\search_history.txt"
+    Delete  "$2\Application Data\CtrlAltStudio Viewer\plugin_cookies.txt"
+    Delete  "$2\Application Data\CtrlAltStudio Viewer\typed_locations.txt"
 
   CONTINUE:
     IntOp $0 $0 + 1
@@ -647,17 +647,17 @@ Pop $2
 Pop $1
 Pop $0
 
-; Delete files in Documents and Settings\All Users\Firestorm
+; Delete files in Documents and Settings\All Users\CtrlAltStudio Viewer
 Push $0
   ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" "Common AppData"
   StrCmp $0 "" +2
-  RMDir /r "$0\Firestorm"
+  RMDir /r "$0\CtrlAltStudio Viewer"
 Pop $0
 
 ; Delete files in C:\Windows\Application Data\SecondLife
 ; If the user is running on a pre-NT system, Application Data lives here instead of
 ; in Documents and Settings.
-RMDir /r "$WINDIR\Application Data\Firestorm"
+RMDir /r "$WINDIR\Application Data\CtrlAltStudio Viewer"
 
 FunctionEnd
 
@@ -700,7 +700,7 @@ Function un.RemovePassword
 DetailPrint $(UnRemovePasswordsDP)
 
 SetShellVarContext current
-Delete "$APPDATA\Firestorm\user_settings\password.dat"
+Delete "$APPDATA\CtrlAltStudio Viewer\user_settings\password.dat"
 SetShellVarContext all
 
 FunctionEnd
