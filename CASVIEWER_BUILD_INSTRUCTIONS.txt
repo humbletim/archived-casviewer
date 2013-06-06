@@ -1,0 +1,11 @@
+See the Firestorm build instruction text files plus the instructions at the following sites:
+- http://wiki.phoenixviewer.com/fs_compiling_firestorm
+- http://wiki.secondlife.com/wiki/Get_source_and_compile
+
+The Firestorm target names such as ReleaseFS_open are retained.
+
+For example, to build your own private version without installer:
+autobuild configure -c ReleaseFS_open -- -DPACKAGE:BOOL=FALSE
+autobuild build -c ReleaseFS_open --no-configure
+
+Building and running Mac and Linux targets has not been tested.
