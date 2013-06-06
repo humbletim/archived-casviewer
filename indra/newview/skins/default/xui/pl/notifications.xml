@@ -3506,8 +3506,8 @@ Nazwa nie może zawierać ":" lub "|".
 		<usetemplate name="okcancelbuttons" yestext="Wyślij" notext="Anuluj" />
 	</notification>
 	<notification name="FireStormReqInfo">
-		[NAME] prosi o wysłanie jej/mu informacji o Twojej instalacji Firestorma.
-(To dokładnie to samo, co możesz znaleźć w Pomoc -> Informacje o Firestorm)
+		[NAME] prosi o wysłanie jej/mu informacji o Twojej instalacji CtrlAltStudio Viewera.
+(To dokładnie to samo, co możesz znaleźć w Pomoc -> Informacje o CtrlAltStudio)
 [REASON]
 Czy chcesz jej/mu wysłać te informacje?
 		<form name="form">

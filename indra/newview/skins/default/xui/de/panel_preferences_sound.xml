@@ -108,7 +108,7 @@
 			Hier können die Klänge der Benutzeroberfläche geändert, aktiviert oder deaktiviert werden.
 Der jeweilige Standardwert wird im Hovertip des UUID-Feldes angezeigt.
 		</text>
-		<text tool_tip="UUID des Klangs bei Standardwarnungen in Firestorm." name="textFSSndAlert">
+		<text tool_tip="UUID des Klangs bei Standardwarnungen in CtrlAltStudio Viewer." name="textFSSndAlert">
 			Warnung (Standard):
 		</text>
 		<button label="V" name="Prev_UISndAlert" tool_tip="Vorschau zu diesem Sound."/>

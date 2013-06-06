@@ -43,7 +43,7 @@
 - (NSDictionary *) registrationDictionaryForGrowl {
 	
 	NSDictionary *regDict = [NSDictionary dictionaryWithObjectsAndKeys:
-							 @"Firestorm Viewer", GROWL_APP_NAME,
+							 @"CtrlAltStudio Viewer", GROWL_APP_NAME,
 							 nil];
 		
 	return regDict;

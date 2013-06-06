@@ -107,7 +107,7 @@
 				Aquí puedes cambiar (mediante UUIDs) los sonidos por defecto de la interfaz.
 Sitúa el cursor del ratón sobre el campo de UUID para mostrar su valor por defecto.
 			</text>
-			<text tool_tip="Sonido a reproducir por las alertas por defecto de Firestorm." name="textFSSndAlert">
+			<text tool_tip="Sonido a reproducir por las alertas por defecto de CtrlAltStudio Viewer." name="textFSSndAlert">
 				Alerta por defecto:
 			</text>
 			<button name="Prev_UISndAlert" label="P" tool_tip="Probar sonido."/>

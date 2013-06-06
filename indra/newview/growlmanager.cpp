@@ -140,7 +140,7 @@ void GrowlManager::loadConfig()
 		}
 		configs.close();
 
-		this->mNotifier->registerApplication("Firestorm Viewer", notificationTypes);
+		this->mNotifier->registerApplication("CtrlAltStudio Viewer", notificationTypes);
 	}
 	else
 	{

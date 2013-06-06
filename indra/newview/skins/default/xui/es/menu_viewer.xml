@@ -584,7 +584,7 @@
 	<menu label="Mundo" name="V1-World"/>
 	<menu label="Herramientas" name="V1-Tools"/>
 	<menu label="Ayuda" name="V1-Help"/>
-	<menu label="Firestorm" name="V1-Firestorm"/>
+	<menu label="CtrlAltStudio" name="V1-Firestorm"/>
 	<menu label="Avanzado" name="V1-Advanced">
 		<menu_item_check label="Usar menús V1" name="V1 Menus"/>
 	</menu>

@@ -208,7 +208,7 @@
 		 layout="topleft"
 		 left="15"
 		 name="FSRenderFarClipStepping"
-		 tool_tip="If enabled, Firestorm will use a progressive draw distance stepping after teleporting."
+		 tool_tip="If enabled, CtrlAltStudio Viewer will use a progressive draw distance stepping after teleporting."
 		 initial_value="true"
 		 top_pad="5"
 		 width="250" />

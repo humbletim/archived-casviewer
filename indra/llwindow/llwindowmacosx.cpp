@@ -68,19 +68,19 @@ BOOL check_for_card(const char* RENDERER, const char* bad_card)
 	if (!strnicmp(RENDERER, bad_card, strlen(bad_card)))
 	{
 		std::string buffer = llformat(
-			"Your video card appears to be a %s, which Firestorm does not support.\n"
+			"Your video card appears to be a %s, which the CtrlAltStudio Viewer does \n"
+			"not support.\n"
 			"\n"
-			"Firestorm requires a video card with 32 Mb of memory or more, as well as\n"
-			"multitexture support.  We explicitly support nVidia GeForce 2 or better, \n"
-			"and ATI Radeon 8500 or better.\n"
+			"CtrlAltStudio Viewer requires a video card with 32 Mb of memory or more, \n"
+			"as well as multitexture support. We explicitly support nVidia GeForce 2 \n"
+			"or better, and ATI Radeon 8500 or better.\n"
 			"\n"
 			"If you own a supported card and continue to receive this message, try \n"
-			"updating to the latest video card drivers. Otherwise contact the\n"
-			"Phoenix Viewer Support group in world, or visit www.phoenixviewer.com\n"
-			"for support.\n"
+			"updating to the latest video card drivers. Otherwise see \n"
+			"ctrlaltstudio.com/viewer/support for support.\n"
 			"\n"
-			"You can try to run Firestorm, but it will probably crash or run\n"
-			"very slowly.  Try anyway?",
+			"You can try to run the CtrlAltStudio Viewer, but it will probably crash \n"
+			"or run very slowly. Try anyway?",
 			bad_card);
 		S32 button = OSMessageBox(buffer.c_str(), "Unsupported video card", OSMB_YESNO);
 		if (OSBTN_YES == button)

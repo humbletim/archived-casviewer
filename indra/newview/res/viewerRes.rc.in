@@ -67,7 +67,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE
 FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_LL_ICON,IDC_STATIC,7,7,20,20
-    LTEXT           "Loading Firestorm ...",666,36,13,211,8
+    LTEXT           "Loading CtrlAltStudio Viewer ...",666,36,13,211,8
 END
 
 
@@ -151,14 +151,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "The Phoenix Firestorm Project, Inc."
-            VALUE "FileDescription", "Firestorm"
-            VALUE "FileVersion", "3.4.1.264760"
-            VALUE "InternalName", "Second Life"
-            VALUE "LegalCopyright", "Copyright ï¿½ 2001-2012, The Phoenix Firestorm Project, Inc."
-            VALUE "OriginalFilename", "Firestorm.exe"
-            VALUE "ProductName", "Second Life"
-            VALUE "ProductVersion", "3.4.1.264760"
+            VALUE "CompanyName", "CtrlAltStudio"
+            VALUE "FileDescription", "CtrlAltStudioViewer"
+            VALUE "FileVersion", "1.0.0.33721"
+            VALUE "InternalName", "CtrlAltstudio Viewer"
+            VALUE "LegalCopyright", "Copyright © 2013, CtrlAltStudio"
+            VALUE "OriginalFilename", "CASviewer.exe"
+            VALUE "ProductName", "CtrlAltStudio Viewer"
+            VALUE "ProductVersion", "1.0.0.33721"
         END
     END
     BLOCK "VarFileInfo"

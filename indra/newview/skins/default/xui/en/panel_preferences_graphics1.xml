@@ -207,7 +207,7 @@
          layout="topleft"
          left="10"
          name="Fullscreen Mode"
-         tool_tip="Run Firestorm in Fullscreen mode. A restart is required to change mode."
+         tool_tip="Run CtrlAltStudio Viewer in Fullscreen mode. A restart is required to change mode."
          top="65"
          width="280" />
         <text

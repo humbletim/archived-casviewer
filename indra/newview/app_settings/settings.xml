@@ -12506,7 +12506,7 @@ Change of this parameter will affect the layout of buttons in notification toast
   <key>FSUseStandaloneGroupFloater</key>
     <map>
       <key>Comment</key>
-      <string>If enabled, Firestorm will use a standalone floater for each group profile.</string>
+      <string>If enabled, CtrlAltStudio Viewer will use a standalone floater for each group profile.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -17598,7 +17598,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>NearbyListShowMap</key>
     <map>
       <key>Comment</key>
-      <string>Show/hide map above nearby people list (unused by firestorm)</string>
+      <string>Show/hide map above nearby people list (unused by CtrlAltStudio Viewer)</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19789,7 +19789,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSUseStandalonePlaceDetailsFloater</key>
     <map>
       <key>Comment</key>
-      <string>If enabled, Firestorm will use a standalone floater for each landmark details, teleport history details and parcel details view.</string>
+      <string>If enabled, CtrlAltStudio Viewer will use a standalone floater for each landmark details, teleport history details and parcel details view.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19800,7 +19800,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSUseStandaloneTeleportHistoryFloater</key>
     <map>
       <key>Comment</key>
-      <string>If enabled, Firestorm will use a standalone floater for the teleport history view.</string>
+      <string>If enabled, CtrlAltStudio Viewer will use a standalone floater for the teleport history view.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19811,7 +19811,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSUseStandaloneBlocklistFloater</key>
     <map>
       <key>Comment</key>
-      <string>If enabled, Firestorm will use a standalone floater for the blocklist.</string>
+      <string>If enabled, CtrlAltStudio Viewer will use a standalone floater for the blocklist.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19822,7 +19822,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSDisableIMChiclets</key>
     <map>
       <key>Comment</key>
-      <string>If enabled, Firestorm will not show any group / IM chat chiclets (notifications envelope and sum of IMs will remain on the screen).</string>
+      <string>If enabled, CtrlAltStudio Viewer will not show any group / IM chat chiclets (notifications envelope and sum of IMs will remain on the screen).</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19844,7 +19844,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSDisableMouseWheelCameraZoom</key>
     <map>
       <key>Comment</key>
-      <string>If true, Firestorm will not use mouse wheel to zoom in/out the camera.</string>
+      <string>If true, CtrlAltStudio Viewer will not use mouse wheel to zoom in/out the camera.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19900,7 +19900,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSEnableVolumeControls</key>
     <map>
         <key>Comment</key>
-        <string>If true, Firestorm will show volume controls (sounds, media, stream) in upper right corner of the screen. Useful, if skin already has its own controls.</string>
+        <string>If true, CtrlAltStudio Viewer will show volume controls (sounds, media, stream) in upper right corner of the screen. Useful, if skin already has its own controls.</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
@@ -19911,7 +19911,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSResetCameraOnMovement</key>
     <map>
         <key>Comment</key>
-        <string>If true, Firestorm will reset camera on avatar movement.</string>
+        <string>If true, CtrlAltStudio Viewer will reset camera on avatar movement.</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
@@ -19922,7 +19922,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSShowInterfaceInMouselook</key>
     <map>
         <key>Comment</key>
-        <string>If true, Firestorm will show user interface in mouselook mode.</string>
+        <string>If true, CtrlAltStudio Viewer will show user interface in mouselook mode.</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>

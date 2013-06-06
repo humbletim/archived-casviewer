@@ -16,7 +16,7 @@
      top="30"
      width="250"
      height="16"
-     label="Send crash reports to firestormviewer.org"
+     label="Send crash reports to CtrlAltStudio"
      name="checkSendCrashReports"
      enabled="false" />
 
@@ -161,6 +161,6 @@
      top_pad="20"
      width="500"
      font.style="BOLD" >
-        Privacy policy: http://www.firestormviewer.org/privacy-policy
+        Privacy policy: http://ctrlaltstudio.com/viewer/privacy-policy
     </text>
 </panel>

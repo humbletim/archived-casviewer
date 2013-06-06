@@ -17,7 +17,7 @@
 		<radio_item label="En una ventana independiente" name="script_1" left_delta="110"/>
 	</radio_group>
 	<check_box label="Activar notificaciones Growl" name="notify_growl_checkbox"/>
-	<check_box name="notify_growl_always_checkbox" label="Mostrar Growl incluso si Firestorm está activo"/>
+	<check_box name="notify_growl_always_checkbox" label="Mostrar Growl incluso si CtrlAltStudio Viewer está activo"/>
 	<check_box label="Mostrar notificaciones de colisión en el chat local" name="FSCollisionMessagesInChat"/>
 	<check_box label="Reportar colisiones a los scripts mediante el canal" name="FSReportCollisionMessages"/>
 	<spinner name="FSReportCollisionMessagesChannel" tool_tip="Canal utilizado para reportar los mensajes de colisión a los scripts (Por defecto: -25000)"/>

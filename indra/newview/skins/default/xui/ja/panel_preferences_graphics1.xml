@@ -7,7 +7,7 @@
 	
 	<panel label="一般" name="General">
 	
-		<check_box label="フルスクリーンモード（再起動が必要）" name="Fullscreen Mode" tool_tip="Firestormをフルスクリーンモードで起動します。" />
+		<check_box label="フルスクリーンモード（再起動が必要）" name="Fullscreen Mode" tool_tip="CtrlAltStudio Viewer をフルスクリーンモードで起動します。" />
 		<text name="QualitySpeed">
 			レンダリング・クォリティ（低い方が動作が軽い）：
 		</text>

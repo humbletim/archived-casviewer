@@ -110,7 +110,7 @@
 Przytrzymaj kursor myszki ponad polem na UUID, aby zobaczyć jego domyślną wartość.
 			</text>
 
-			<text tool_tip="UUID dźwięku odgrywany podczas domyślnych ostrzeżeń Firestorma." name="textFSSndAlert">
+			<text tool_tip="UUID dźwięku odgrywany podczas domyślnych ostrzeżeń CtrlAltStudio Viewer." name="textFSSndAlert">
 				Domyślne ostrzeżenie:
 			</text>
 			<button name="Prev_UISndAlert" tool_tip="Podgląd dźwięku."/>

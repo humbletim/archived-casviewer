@@ -2,7 +2,7 @@
 <panel label="Grafica" name="Display panel">
 	<tab_container label="Impostazioni Grafiche" name="tabs">
 		<panel label="Generale" name="General">
-			<check_box label="A Tutto Schermo (Richiesto riavvio)" name="Fullscreen Mode" tool_tip="Avvia Firestorm a modalità schermo intero"/>
+			<check_box label="A Tutto Schermo (Richiesto riavvio)" name="Fullscreen Mode" tool_tip="Avvia CtrlAltStudio Viewer a modalità schermo intero"/>
 			<text name="QualitySpeed">
 				Qualità di Visualizzazione (Bassa è più veloce):
 			</text>

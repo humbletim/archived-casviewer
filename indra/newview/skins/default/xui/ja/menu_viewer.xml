@@ -602,7 +602,7 @@
     <menu label="ヘルプ" name="V1-Help">
     </menu>
     <!-- V1 menu: Firestorm -->
-    <menu label="Firestorm" name="V1-Firestorm">
+    <menu label="CtrlAltStudio" name="V1-Firestorm">
     </menu>
     <!-- V1 menu: Advanced -->
     <menu label="アドバンス" name="V1-Advanced">

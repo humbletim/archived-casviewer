@@ -54,8 +54,8 @@ Darstellungsqualität: [RENDERQUALITY]
 	<tab_container name="about_tab">
 		<panel label="Info" name="support_panel">
     <text name="support_intro">    
-Aktuelle Informationen über Firestorm finden Sie unter
-http://www.firestormviewer.org
+Aktuelle Informationen über CtrlAltStudio Viewer finden Sie unter
+http://ctrlaltstudio.com/viewer
     </text>
 			<button label="In Zwischenablage kopieren" name="copy_btn"/>
 		</panel>

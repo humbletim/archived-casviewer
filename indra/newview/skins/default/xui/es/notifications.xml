@@ -3337,7 +3337,7 @@ Al ocultar el botón Hablar se desactiva la función de voz.
 		</form>
 	</notification>
 	<notification name="ModeChange">
-		Cambiar entre los diferentes modos requiere que cierres y reinicies Firestorm.
+		Cambiar entre los diferentes modos requiere que cierres y reinicies CtrlAltStudio Viewer.
 		<usetemplate name="okcancelbuttons" yestext="Cerrar" notext="No cerrar"/>
 	</notification>
 	<notification label="" name="NoClassifieds">
@@ -4273,7 +4273,7 @@ El nombre NO puede contener los caracteres ":" o "|".
 		<usetemplate name="okbutton" yestext="Aceptar"/>
 	</notification>
 	<notification name="FireStormReqInfo">
-		[NAME] te solicita que le envíes información sobre tu configuración de Firestorm (Ésta es la misma información que puedes encontrar en Ayuda->Acerca de Firestorm)    
+		[NAME] te solicita que le envíes información sobre tu configuración de CtrlAltStudio Viewer (Ésta es la misma información que puedes encontrar en Ayuda->Acerca de CtrlAltStudio)    
 [REASON]
 ¿Aceptas enviarle esta información?
 		<form name="form">

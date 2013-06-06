@@ -239,7 +239,7 @@ void LLAssetUploadResponder::errorWithContent(U32 statusNum, const std::string& 
 		case 400:
 			args["FILE"] = (mFileName.empty() ? mVFileID.asString() : mFileName);
 			args["REASON"] = "Error in upload request.  Please visit "
-				"http://www.firestormviewer.org/support for help fixing this problem.";
+				"http://ctrlaltstudio.com/viewer/support for help fixing this problem.";
 			LLNotificationsUtil::add("CannotUploadReason", args);
 			break;
 		case 500:

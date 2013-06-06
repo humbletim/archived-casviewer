@@ -91,22 +91,21 @@ Error fetching server release notes URL.
     <text
           follows="top|left|right"
           font="SansSerif"
-          height="40"
+          height="48"
           layout="topleft"
           left="5"
           name="support_intro"
           top="20"
           width="435"
           wrap="true">
-For the latest information about Firestorm, visit 
-http://www.firestormviewer.org
+The CtrlAltStudio Viewer is based on the Firestorm viewer, to which certain functionality is added. For details see: http://ctrlaltstudio.com/viewer
     
     </text>
       <text_editor
         parse_urls="true" 
        follows="top|left"
        font="SansSerif"
-       height="443"
+       height="435"
        bg_readonly_color="Transparent"
        left="0"
        max_length="65536"

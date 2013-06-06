@@ -23,7 +23,7 @@
 		<text name="ShadersPrefText4">
 			Ultra
 		</text>
-		<check_box label="Vollbildmodus" name="Fullscreen Mode" tool_tip="Firestorm im Vollbildmodus ausführen. (Erfordert Neustart)"/>
+		<check_box label="Vollbildmodus" name="Fullscreen Mode" tool_tip="CtrlAltStudio Viewer im Vollbildmodus ausführen. (Erfordert Neustart)"/>
 		<text name="ShadersText">
 			Shader:
 		</text>

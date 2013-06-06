@@ -123,7 +123,6 @@
 	<string name="LoginFailedViewerNotPermitted">
 		Przeglądarka używana przez Ciebie nie ma już dostępu do Second Life. Proszę przejść na poniższą stronę i pobrać nową:
 http://secondlife.com/download
-http://www.phoenixviewer.com
 
 Więcej informacji w naszym FAQ:
 http://secondlife.com/viewer-access-faq
@@ -5070,7 +5069,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Narzędzie wyrównywania zakończyło pracę.
 	</string>
 	<string name="fsbridge_no_library">
-		Firestorm nie mógł utworzyć Mostu LSL. Włącz swoją Bibliotekę i zaloguj się ponownie.
+		CtrlAltStudio Viewer nie mógł utworzyć Mostu LSL. Włącz swoją Bibliotekę i zaloguj się ponownie.
 	</string>
 	<string name="fsbridge_already_creating">
 		Tworzenie Mostu LSL już trwa, nie można rozpocząć procesu budowania kolejnego. Poczekaj kilka minut, zanim spróbujesz ponownie.

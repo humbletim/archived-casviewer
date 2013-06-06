@@ -1755,13 +1755,14 @@
        </menu_item_call>
        <menu_item_separator/>
     	<menu_item_call
-             label="Firestorm Blog"
-             name="Firestorm Blog">
+             label="CtrlAltStudio Blog"
+             name="CtrlAltStudio Blog">
              <menu_item_call.on_click
              function="PromptShowURL"
              name="firestorm_blog_url"
-             parameter="WebLaunchExternalTarget,http://www.firestormviewer.org/" />
+             parameter="WebLaunchExternalTarget,http://ctrlaltstudio.com/" />
        </menu_item_call>
+<!--
     	<menu_item_call
              label="Firestorm Flickr"
              name="Firestorm Flickr">
@@ -1778,15 +1779,17 @@
              name="firestorm_youtube_url"
              parameter="WebLaunchExternalTarget,http://www.youtube.com/user/PhoenixViewerSL" />
        </menu_item_call>
+-->
     	<menu_item_call
-             label="Firestorm Twitter"
-             name="Firestorm Twitter">
+             label="CtrlAltStudio Twitter"
+             name="CtrlAltStudio Twitter">
              <menu_item_call.on_click
              function="PromptShowURL"
              name="firestorm_twitter_url"
-             parameter="WebLaunchExternalTarget,https://twitter.com/phoenixviewersl" />
+             parameter="WebLaunchExternalTarget,https://twitter.com/ctrlaltdavid" />
        </menu_item_call>
-    	<menu_item_call
+<!--
+      <menu_item_call
              label="Firestorm Plurk"
              name="Firestorm Plurk">
              <menu_item_call.on_click
@@ -1794,6 +1797,7 @@
              name="firestorm_plurk_url"
              parameter="WebLaunchExternalTarget,http://www.plurk.com/ThePhoenixViewerProject" />
        </menu_item_call>	   
+-->
       </menu>   
     
     <!-- Help Menu -->
@@ -1813,7 +1817,7 @@
           <on_click
             function="ToggleUIHints"/>
         </menu_item_check>
-        
+ <!--       
         <menu_item_call
          label="Firestorm Wiki"
          name="Firestorm Wiki"
@@ -1823,7 +1827,7 @@
              name="script_library_url"
              parameter="WebLaunchExternalTarget,http://wiki.phoenixviewer.com" />
        </menu_item_call>
-	   
+-->	   
         <menu_item_call
          label="Join Firestorm Support Group"
          name="firestorm_support_group">
@@ -4864,7 +4868,7 @@
     <!-- V1 menu: Firestorm -->
     <menu
      create_jump_keys="true"
-     label="Firestorm"
+     label="CtrlAltStudio"
      name="V1-Firestorm"
      tear_off="true"
      visible="false">

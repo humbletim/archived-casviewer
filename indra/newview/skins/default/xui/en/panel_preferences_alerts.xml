@@ -140,7 +140,7 @@
       height="18"
       control_name="FSGrowlWhenActive"
       name="notify_growl_always_checkbox"
-      label="Enable Growl even if Firestorm is active"/>
+      label="Enable Growl even if CtrlAltStudio Viewer is active"/>
     <check_box
      control_name="FSCollisionMessagesInChat"
      height="16"

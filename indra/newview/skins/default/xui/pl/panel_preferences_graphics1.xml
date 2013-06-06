@@ -20,7 +20,7 @@
 			<text name="ShadersPrefText3">
 				Wysoka
 			</text>
-			<check_box label="Pełny ekran" name="Fullscreen Mode" tool_tip="Uruchamia Firestorma na pełnym ekranie. Aby zmienić tryb wymagany jest restart."/>
+			<check_box label="Pełny ekran" name="Fullscreen Mode" tool_tip="Uruchamia CtrlAltStudio Viewer na pełnym ekranie. Aby zmienić tryb wymagany jest restart."/>
 			<text name="ShadersText">
 				Cieniowanie pikseli:
 			</text>

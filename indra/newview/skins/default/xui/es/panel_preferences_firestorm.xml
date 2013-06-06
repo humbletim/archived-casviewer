@@ -19,7 +19,7 @@
 			<check_box label="Permitir diferentes términos de búsqueda en cada pestaña del inventario" name="FSSplitInventorySearchOverTabs" tool_tip="Si lo activas se pueden usar diferentes términos de búsqueda en cada pestaña del inventario."/>
 			<check_box label="Desactivar la baliza de seguimiento al alcanzar al avatar (&lt;= 3m)" name="FSDisableAvatarTrackerAtCloseIn" tool_tip="Si lo activas, la baliza de seguimiento se desactivará automáticamente si la distancia con el avatar es menor que 3 metros. (Por defecto)."/>
 			<check_box label="Crear efectos de partículas cuando los scripts se comunican" name="EffectScriptChatParticles" tool_tip="Si lo activas, los objetos con scripts mostrarán remolinos de partículas de luz cuando los scripts se comuniquen"/>
-			<check_box label="Activar escalado progresivo de distancia de dibujo" name="FSRenderFarClipStepping" tool_tip="Si lo activas, Firestorm aumentará progresivamente la distancia de dibujo después de un teleporte." width="300"/>
+			<check_box label="Activar escalado progresivo de distancia de dibujo" name="FSRenderFarClipStepping" tool_tip="Si lo activas, CtrlAltStudio Viewer aumentará progresivamente la distancia de dibujo después de un teleporte." width="300"/>
 			<slider name="progressive_draw_distance_interval" tool_tip="Intérvalo en segundos entre cada incremento de distancia de dibujo"/>
 			<check_box name="UseLSLBridge" label="Activar el LSL-Client Bridge" tool_tip="Permite al visor usar un accesorio con scripts (Bridge) para extender sus características"/>
 			<check_box name="UseLSLFlightAssist" label="Activar asistente de vuelo del Bridge" tool_tip="Activa el script que permite volar y flotar a mayor altitud"/>

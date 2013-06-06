@@ -5533,7 +5533,7 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Die Ausrichtung ist beendet.
 	</string>
 	<string name="fsbridge_no_library">
-		Firestorm konnte die LSL-Brücke nicht erstellen. Bitte die Bibliothek aktivieren und neu einloggen.
+		CtrlAltStudio Viewer konnte die LSL-Brücke nicht erstellen. Bitte die Bibliothek aktivieren und neu einloggen.
 	</string>
 	<string name="fsbridge_already_creating">
 		LSL-Brücke wird bereits erstellt. Bitte einige Minuten vor einem erneuten Versuch warten.

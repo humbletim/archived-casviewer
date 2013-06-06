@@ -801,7 +801,7 @@ class DarwinManifest(ViewerManifest):
 
                 icon_path = self.icon_path()
                 if self.prefix(src=icon_path, dst="") :
-                    self.path("phoenix_icon.icns")
+                    self.path("casviewer_icon.icns")
                     self.end_prefix(icon_path)
 
                 self.path("CASviewer.nib")
@@ -1103,7 +1103,7 @@ class LinuxManifest(ViewerManifest):
         super(LinuxManifest, self).construct()
         self.path("licenses-linux.txt","licenses.txt")
         self.path("VivoxAUP.txt")
-        self.path("res/firestorm_icon.png","firestorm_icon.png")
+        self.path("res/casviewer_icon.png","casviewer_icon.png")
         if self.prefix("linux_tools", dst=""):
             self.path("client-readme.txt","README-linux.txt")
 	    self.path("CASVIEWER_DESKTOPINSTALL.txt","CASVIEWER_DESKTOPINSTALL.txt")
@@ -1137,9 +1137,9 @@ class LinuxManifest(ViewerManifest):
         # Get the icons based on the channel
         icon_path = self.icon_path()
         if self.prefix(src=icon_path, dst="") :
-            self.path("firestorm_256.png","firestorm_48.png")
+            self.path("casviewer_256.png","casviewer_48.png")
             if self.prefix(src="",dst="res-sdl") :
-                self.path("firestorm_256.BMP","ll_icon.BMP")
+                self.path("casviewer_256.BMP","ll_icon.BMP")
                 self.end_prefix("res-sdl")
             self.end_prefix(icon_path)
 

@@ -4,10 +4,10 @@
 		[CURRENT_GRID]
 	</string>
 	<string name="APP_NAME">
-		Firestorm
+		CtrlAltStudio Viewer
 	</string>
 	<string name="CAPITALIZED_APP_NAME">
-		FIRESTORM
+		CTRLALTSTUDIO VIEWER
 	</string>
 	<string name="SECOND_LIFE_GRID">
 		Red de Second Life
@@ -2117,7 +2117,7 @@ Intenta iniciar sesión de nuevo en unos instantes.
 		Script nuevo
 	</string>
 	<string name="BusyModeResponseDefault">
-		El Residente al que has enviado un mensaje no desea ser molestado. Aún así, tu mensaje le será mostrado en el panel de mensajes de su Firestorm Viewer para ser revisado más tarde.
+		El Residente al que has enviado un mensaje no desea ser molestado. Aún así, tu mensaje le será mostrado en el panel de mensajes de su CtrlAltStudio Viewer para ser revisado más tarde.
 	</string>
 	<string name="MuteByName">
 		(Por el nombre)
@@ -5356,7 +5356,7 @@ Inténtalo incluyendo la ruta de acceso al editor entre comillas
 	<string name="qtool_busy">Espera, por favor. La herramienta de alineación está trabajando.</string>
 	<string name="qtool_still_busy">Por favor, continúa esperando. La herramienta de alineación aún está trabajando.</string>
 	<string name="qtool_done">La herramienta de alineación ha finalizado.</string>
-	<string name="fsbridge_no_library">Firestorm no ha podido crear un LSL bridge. Por favor, activa tu librería y vuelve a iniciar sesión.</string>
+	<string name="fsbridge_no_library">CtrlAltStudio Viewer no ha podido crear un LSL bridge. Por favor, activa tu librería y vuelve a iniciar sesión.</string>
 	<string name="fsbridge_already_creating">Creación del bridge en curso, no se puede iniciar otra. Por favor espera unos minutos antes de volverlo a intentar.</string>
 	<string name="fsbridge_creating">Creando el bridge. Puede tardar un momento, por favor espera.</string>
 	<string name="fsbridge_failure_creation_bad_name">No se ha creado el bridge. El bridge tiene un nombre incorrecto. Por favor, usa Avatar -> Salud del avatar -> Regenerar el LSL Bridge para crearlo de nuevo.</string>

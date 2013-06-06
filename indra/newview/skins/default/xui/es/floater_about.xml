@@ -42,8 +42,8 @@ Factor de nivel de detalle (LOD factor): [LOD]
 	<tab_container name="about_tab" height="575">
 		<panel label="Información" name="support_panel">
 			<text name="support_intro">    
-				Para obtener la información más reciente acerca de Firestorm, visita
-http://www.firestormviewer.org
+				Para obtener la información más reciente acerca de CtrlAltStudio Viewer, visita
+http://ctrlaltstudio.com/viewer
 			</text>
   			<button label="Copiar al portapapeles" name="copy_btn"/>
 		</panel>

@@ -55,7 +55,7 @@
 		<text name="GroupTopRightRequiresRestart" left_delta="280">
 			(Erfordert Neustart)
 		</text>
-		<check_box label="Chiclets für IMs und Gruppenchats deaktivieren" name="FSDisableIMChiclets" tool_tip="Falls aktiviert, wird Firestorm keine Chiclets für IMs und Gruppenchats anzeigen (Icons für Gruppenmitteilungen und Anzahl an ungelesenen IMs werden weiterhin angezeigt)."/>
+		<check_box label="Chiclets für IMs und Gruppenchats deaktivieren" name="FSDisableIMChiclets" tool_tip="Falls aktiviert, wird CtrlAltStudio Viewer keine Chiclets für IMs und Gruppenchats anzeigen (Icons für Gruppenmitteilungen und Anzahl an ungelesenen IMs werden weiterhin angezeigt)."/>
 		<text name="UsePieMenuLabel">
 			Pie-Menü:
 		</text>

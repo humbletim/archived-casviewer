@@ -13,6 +13,7 @@ syntax: glob
 #*.orig
 LICENSES
 scripts/install.cache.*
+indra/newview/res/viewerRes.aps
 indra/newview/res/viewerRes.rc
 indra/llcommon/llversionserver.h
 indra/llcommon/llversionviewer.h

@@ -233,7 +233,7 @@
          label="Leave Mouselook after regaining focus"
          layout="topleft"
          name="exit_mouselook_focus_on_focus"
-         tool_tip="Leaves the mouselook if Firestorm regains focus after it has been running in the background."
+         tool_tip="Leaves the mouselook if CtrlAltStudio Viewer regains focus after it has been running in the background."
          width="256" />
         <check_box
          control_name="FSShowMouselookInstructions"
