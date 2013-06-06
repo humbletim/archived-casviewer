@@ -106,7 +106,7 @@ SetOverwrite on							; stomp files by default
 ;AutoCloseWindow true					; after all files install, close window
 
 InstallDir "$PROGRAMFILES\${INSTNAME}"
-InstallDirRegKey HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\${INSTNAME}" ""
+InstallDirRegKey HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\${INSTNAME}" ""
 DirText $(DirectoryChooseTitle) $(DirectoryChooseSetup)
 
 Page license
@@ -259,7 +259,7 @@ FunctionEnd
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Function CheckIfAlreadyCurrent
     Push $0
-    ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG" "Version"
+    ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Version"
     StrCmp $0 ${VERSION_LONG} 0 continue_install
     StrCmp $SKIP_DIALOGS "true" continue_install
     MessageBox MB_OKCANCEL $(CheckIfCurrentMB) /SD IDOK IDOK continue_install
@@ -785,7 +785,7 @@ SetShellVarContext all
 Call un.CloseSecondLife
 
 ; Clean up registry keys and subkeys (these should all be !defines somewhere)
-DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG"
+DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG"
 
 ; Clean up shortcuts
@@ -839,7 +839,7 @@ Call CheckWindowsVersion		; Don't install if on Windows XP SP1 or older (do to X
 lbl_configure_default_lang:
     ; If we currently have a version of SL installed, default to the language of that install
     ; Otherwise don't change $LANGUAGE and it will default to the OS UI language.
-    ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\${INSTNAME}" "InstallerLanguage"
+    ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\${INSTNAME}" "InstallerLanguage"
     IfErrors +2 0 ; If error skip the copy instruction 
 	StrCpy $LANGUAGE $0
 
@@ -863,7 +863,7 @@ lbl_configure_default_lang:
     StrCpy $LANGUAGE $0
 
 	; save language in registry		
-	WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\${INSTNAME}" "InstallerLanguage" $LANGUAGE
+	WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\${INSTNAME}" "InstallerLanguage" $LANGUAGE
 lbl_return:
     Pop $0
     Return
@@ -873,7 +873,7 @@ FunctionEnd
 Function un.onInit
 	; read language from registry and set for uninstaller
     ; Key will be removed on successful uninstall
-	ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\${INSTNAME}" "InstallerLanguage"
+	ReadRegStr $0 HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\${INSTNAME}" "InstallerLanguage"
     IfErrors lbl_end
 	StrCpy $LANGUAGE $0
 lbl_end:
@@ -970,18 +970,18 @@ CreateShortCut "$INSTDIR\Uninstall $INSTSHORTCUT.lnk" \
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Write registry
-WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG" "" "$INSTDIR"
-WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG" "Version" "${VERSION_LONG}"
-WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG" "Flags" "$INSTFLAGS"
-WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG" "Shortcut" "$INSTSHORTCUT"
-WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\The Phoenix Firestorm Project\$INSTPROG" "Exe" "$INSTEXE"
+WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "" "$INSTDIR"
+WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Version" "${VERSION_LONG}"
+WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Flags" "$INSTFLAGS"
+WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Shortcut" "$INSTSHORTCUT"
+WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Exe" "$INSTEXE"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "DisplayName" "$INSTPROG (remove only)"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "UninstallString" '"$INSTDIR\uninst.exe"'
 ; <FS:Ansariel> Add additional data for uninstall list in Windows
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "Publisher" "The Phoenix Firestorm Project, Inc."
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "URLInfoAbout" "http://www.firestormviewer.org"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "URLUpdateInfo" "http://www.firestormviewer.org/downloads"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "HelpLink" "http://www.firestormviewer.org/support"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "Publisher" "CtrlAltStudio"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "URLInfoAbout" "http://ctrlaltstudio.com"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "URLUpdateInfo" "http://ctrlaltstudio.com/viewer"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "HelpLink" "http://ctrlaltstudio.com/viewer"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "DisplayIcon" '"$INSTDIR\$INSTEXE"'
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "DisplayVersion" "${VERSION_LONG}"
 WriteRegDWORD HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "EstimatedSize" "0x0002D400" ; 181 MB
