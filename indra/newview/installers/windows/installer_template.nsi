@@ -93,8 +93,8 @@ LicenseData "VivoxAUP.txt"
 ;SubCaption 0 $(LicenseSubTitleSetup)	; override "license agreement" text
 
 BrandingText " "						; bottom of window text
-Icon          %%SOURCE%%\installers\windows\firestorm_icon.ico
-UninstallIcon %%SOURCE%%\installers\windows\firestorm_icon.ico
+Icon          %%SOURCE%%\installers\windows\casviewer_icon.ico
+UninstallIcon %%SOURCE%%\installers\windows\casviewer_icon.ico
 WindowIcon on							; show our icon in left corner
 BGGradient off							; no big background window
 CRCCheck on								; make sure CRC is OK

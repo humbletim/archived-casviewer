@@ -1457,7 +1457,7 @@ if (DARWIN)
 
   # Add resource files to the project.
   set(viewer_RESOURCE_FILES
-    phoenix_icon.icns
+    casviewer_icon.icns
     macview.r
     gpu_table.txt
     Info-CASviewer.plist
@@ -1538,18 +1538,18 @@ if (WINDOWS)
     message("Copying icons for ${ICON_PATH}")
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/icons/${ICON_PATH}/firestorm_icon.ico"
-        "${CMAKE_CURRENT_SOURCE_DIR}/res/firestorm_icon.ico"
+        "${CMAKE_CURRENT_SOURCE_DIR}/icons/${ICON_PATH}/casviewer_icon.ico"
+        "${CMAKE_CURRENT_SOURCE_DIR}/res/casviewer_icon.ico"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/icons/${ICON_PATH}/firestorm_256.BMP"
-        "${CMAKE_CURRENT_SOURCE_DIR}/res/firestorm_icon.BMP"
+        "${CMAKE_CURRENT_SOURCE_DIR}/icons/${ICON_PATH}/casviewer_256.BMP"
+        "${CMAKE_CURRENT_SOURCE_DIR}/res/casviewer_icon.BMP"
       )
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/icons/${ICON_PATH}/firestorm_256.BMP"
-        "${CMAKE_CURRENT_SOURCE_DIR}/res-sdl/firestorm_icon.BMP"
+        "${CMAKE_CURRENT_SOURCE_DIR}/icons/${ICON_PATH}/casviewer_256.BMP"
+        "${CMAKE_CURRENT_SOURCE_DIR}/res-sdl/casviewer_icon.BMP"
       )
 
     # Add resource files to the project.
@@ -1585,9 +1585,9 @@ if (WINDOWS)
         res/lltooltranslate.cur
         res/lltoolzoomin.cur
         res/lltoolzoomout.cur
-        res/firestorm_icon.BMP
-        res/firestorm_icon.ico
-        res-sdl/firestorm_icon.BMP
+        res/casviewer_icon.BMP
+        res/casviewer_icon.ico
+        res-sdl/casviewer_icon.BMP
         res/resource.h
         res/toolpickobject.cur
         res/toolpickobject2.cur
@@ -2178,7 +2178,7 @@ if (DARWIN)
     PROPERTIES
     OUTPUT_NAME "${product}"
     MACOSX_BUNDLE_INFO_STRING "info string - localize me"
-    MACOSX_BUNDLE_ICON_FILE "phoenix_icon.icns"
+    MACOSX_BUNDLE_ICON_FILE "casviewer_icon.icns"
     MACOSX_BUNDLE_GUI_IDENTIFIER "CASviewer"
     MACOSX_BUNDLE_LONG_VERSION_STRING "ververver"
     MACOSX_BUNDLE_BUNDLE_NAME "CASviewer"

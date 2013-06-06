@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Firestorm</string>
 	<key>CFBundleIconFile</key>
-	<string>phoenix_icon.icns</string>
+	<string>casviewer_icon.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.secondlife.indra.viewer</string>
 	<key>CFBundleInfoDictionaryVersion</key>
