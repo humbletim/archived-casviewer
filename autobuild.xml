@@ -544,7 +544,7 @@
               <key>hash</key>
               <string>a3e8784c5640d3e3d7ff4db16c5bb0ae</string>
               <key>url</key>
-              <string>file:///opt/firestorm/fmod-3.75-darwin-20110620.tar.bz2</string>
+              <string>file:///opt/casviewer/fmod-3.75-darwin-20110620.tar.bz2</string>
             </map>
             <key>name</key>
             <string>darwin</string>
@@ -556,7 +556,7 @@
               <key>hash</key>
               <string>37e18bddbed033f9acb4a1268973890f</string>
               <key>url</key>
-              <string>file:///opt/firestorm/fmod-3.75-linux-20110802.tar.bz2</string>
+              <string>file:///opt/casviewer/fmod-3.75-linux-20110802.tar.bz2</string>
             </map>
             <key>name</key>
             <string>linux</string>
@@ -568,7 +568,7 @@
               <key>hash</key>
               <string>ecf16c7d1b878a9733f4a85d28347948</string>
               <key>url</key>
-              <string>file:///c:/cygwin/opt/firestorm/fmod-3.75-windows-20110706.tar.bz2</string>
+              <string>file:///c:/cygwin/opt/casviewer/fmod-3.75-windows-20110706.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>
@@ -1144,7 +1144,7 @@
               <key>hash</key>
               <string>cf06822fc961c3b66725bd7930292ebf</string>
               <key>url</key>
-              <string>file:///opt/firestorm/kdu-7.1-darwin_x86-20121212.tar.bz2</string>
+              <string>file:///opt/casviewer/kdu-7.1-darwin_x86-20121212.tar.bz2</string>
             </map>
             <key>name</key>
             <string>darwin</string>
@@ -1156,7 +1156,7 @@
               <key>hash</key>
               <string>377d83210badfe1782c3537bfe29b0d4</string>
               <key>url</key>
-              <string>file:///opt/firestorm/kdu-7.1-linux_x86-20121212.tar.bz2</string>
+              <string>file:///opt/casviewer/kdu-7.1-linux_x86-20121212.tar.bz2</string>
             </map>
             <key>name</key>
             <string>linux</string>
@@ -1168,7 +1168,7 @@
               <key>hash</key>
               <string>86c3966fc383e2611345ec8b81da5739</string>
               <key>url</key>
-              <string>file:///c:/cygwin/opt/firestorm//kdu-7.1-windows_x86-20121212.tar.bz2</string>
+              <string>file:///c:/cygwin/opt/casviewer//kdu-7.1-windows_x86-20121212.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>
@@ -2130,7 +2130,7 @@
               <key>configure</key>
               <map>
                 <key>command</key>
-                <string>bash ../scripts/configure_firestorm.sh</string>
+                <string>bash ../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--btype RelWithDebInfo</string>
@@ -2146,7 +2146,7 @@
               <key>configure</key>
               <map>
                 <key>command</key>
-                <string>bash ../scripts/configure_firestorm.sh</string>
+                <string>bash ../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--btype RelWithDebInfo</string>
@@ -2204,7 +2204,7 @@
               <key>configure</key>
               <map>
                 <key>command</key>
-                <string>bash ../scripts/configure_firestorm.sh</string>
+                <string>bash ../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--config</string>
@@ -2221,7 +2221,7 @@
               <key>configure</key>
               <map>
                 <key>command</key>
-                <string>bash ../scripts/configure_firestorm.sh</string>
+                <string>bash ../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--config</string>
@@ -2239,7 +2239,7 @@
               <key>configure</key>
               <map>
                 <key>command</key>
-                <string>bash ../scripts/configure_firestorm.sh</string>
+                <string>bash ../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--config</string>
@@ -2373,7 +2373,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2403,7 +2403,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2485,7 +2485,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2512,7 +2512,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2539,7 +2539,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2674,7 +2674,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2702,7 +2702,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2776,7 +2776,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2801,7 +2801,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2826,7 +2826,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2913,7 +2913,7 @@
                   <string>--config</string>
                   <string>Debug</string>
                   <string>--startup</string>
-                  <string>firestorm-bin</string>
+                  <string>casviewer-bin</string>
                 </array>
                 <key>options</key>
                 <array>
@@ -2999,7 +2999,7 @@
                   <string>--config</string>
                   <string>RelWithDebInfo</string>
                   <string>--startup</string>
-                  <string>firestorm-bin</string>
+                  <string>casviewer-bin</string>
                 </array>
                 <key>options</key>
                 <array>
@@ -3018,15 +3018,15 @@
               <map>
                 <key>arguments</key>
                 <array>
-                  <string>Firestorm.sln</string>
+                  <string>CASviewer.sln</string>
                 </array>
                 <key>command</key>
                 <string>msbuild.exe</string>
                 <key>options</key>
                 <array>
                   <string>/p:Configuration=RelWithDebInfo</string>
-                  <string>/flp:LogFile=logs\FirestormBuild_win32.log</string>
-                  <string>/flp1:errorsonly;LogFile=logs\FirestormBuild_win32.err</string>
+                  <string>/flp:LogFile=logs\CASviewerBuild_win32.log</string>
+                  <string>/flp1:errorsonly;LogFile=logs\CASviewerBuild_win32.err</string>
                   <string>/p:Platform=Win32</string>
                   <string>/t:Build</string>
                   <string>/p:useenv=true</string>
@@ -3055,15 +3055,15 @@
               <map>
                 <key>arguments</key>
                 <array>
-                  <string>Firestorm.sln</string>
+                  <string>CASviewer.sln</string>
                 </array>
                 <key>command</key>
                 <string>msbuild.exe</string>
                 <key>options</key>
                 <array>
                   <string>/p:Configuration=RelWithDebInfo</string>
-                  <string>/flp:LogFile=logs\FirestormBuild_win32.log</string>
-                  <string>/flp1:errorsonly;LogFile=logs\FirestormBuild_win32.err</string>
+                  <string>/flp:LogFile=logs\CASviewerBuild_win32.log</string>
+                  <string>/flp1:errorsonly;LogFile=logs\CASviewerBuild_win32.err</string>
                   <string>/p:Platform=Win32</string>
                   <string>/t:Build</string>
                   <string>/p:useenv=true</string>
@@ -3161,7 +3161,7 @@
                   <string>--config</string>
                   <string>Release</string>
                   <string>--startup</string>
-                  <string>firestorm-bin</string>
+                  <string>casviewer-bin</string>
                 </array>
                 <key>options</key>
                 <array>
@@ -3178,15 +3178,15 @@
               <map>
                 <key>arguments</key>
                 <array>
-                  <string>Firestorm.sln</string>
+                  <string>CASviewer.sln</string>
                 </array>
                 <key>command</key>
                 <string>msbuild.exe</string>
                 <key>options</key>
                 <array>
                   <string>/p:Configuration=Release</string>
-                  <string>/flp:LogFile=logs\FirestormBuild_win32.log</string>
-                  <string>/flp1:errorsonly;LogFile=logs\FirestormBuild_win32.err</string>
+                  <string>/flp:LogFile=logs\CASviewerBuild_win32.log</string>
+                  <string>/flp1:errorsonly;LogFile=logs\CASviewerBuild_win32.err</string>
                   <string>/p:Platform=Win32</string>
                   <string>/t:Build</string>
                   <string>/p:useenv=true</string>
@@ -3215,15 +3215,15 @@
               <map>
                 <key>arguments</key>
                 <array>
-                  <string>Firestorm.sln</string>
+                  <string>CASviewer.sln</string>
                 </array>
                 <key>command</key>
                 <string>msbuild.exe</string>
                 <key>options</key>
                 <array>
                   <string>/p:Configuration=Release</string>
-                  <string>/flp:LogFile=logs\FirestormBuild_win32.log</string>
-                  <string>/flp1:errorsonly;LogFile=logs\FirestormBuild_win32.err</string>
+                  <string>/flp:LogFile=logs\CASviewerBuild_win32.log</string>
+                  <string>/flp1:errorsonly;LogFile=logs\CASviewerBuild_win32.err</string>
                   <string>/p:Platform=Win32</string>
                   <string>/t:Build</string>
                   <string>/p:useenv=true</string>
@@ -3252,15 +3252,15 @@
               <map>
                 <key>arguments</key>
                 <array>
-                  <string>Firestorm.sln</string>
+                  <string>CASviewer.sln</string>
                 </array>
                 <key>command</key>
                 <string>msbuild.exe</string>
                 <key>options</key>
                 <array>
                   <string>/p:Configuration=Release</string>
-                  <string>/flp:LogFile=logs\FirestormBuild_win32.log</string>
-                  <string>/flp1:errorsonly;LogFile=logs\FirestormBuild_win32.err</string>
+                  <string>/flp:LogFile=logs\CASviewerBuild_win32.log</string>
+                  <string>/flp1:errorsonly;LogFile=logs\CASviewerBuild_win32.err</string>
                   <string>/p:Platform=Win32</string>
                   <string>/t:Build</string>
                   <string>/p:useenv=true</string>

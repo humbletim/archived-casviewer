@@ -50,7 +50,7 @@ showUsage()
     echo
     echo "  --clean     : Remove past builds & configuration"
     echo "  --config    : General a new architecture-specific config"
-    echo "  --build    : build firestorm"
+    echo "  --build    : build casviewer"
     echo "  --version   : Update version number"
     echo "  --chan  [Release|Beta|Private]   : Private is the default, sets channel"
     echo "  --btype [Release|RelWithDebInfo] : Release is default, whether to use symbols"
@@ -256,7 +256,7 @@ if [ ! -d `dirname "$LOG"` ] ; then
         mkdir -p `dirname "$LOG"`
 fi
 
-echo -e "configure_firestorm.py" > $LOG
+echo -e "configure_casviewer.py" > $LOG
 echo -e "       PLATFORM: '$PLATFORM'"       | tee -a $LOG
 echo -e "         KDU: `b2a $WANTS_KDU`"     | tee -a $LOG
 echo -e "        FMOD: `b2a $WANTS_FMOD`"    | tee -a $LOG
@@ -367,10 +367,10 @@ if [ $WANTS_CONFIG -eq $TRUE ] ; then
         UNATTENDED="-DUNATTENDED=ON"
     fi
 
-    cmake -G "$TARGET" ../indra $FMOD $KDU $PACKAGE $UNATTENDED -DLL_TESTS:BOOL=OFF -DWORD_SIZE:STRING=32 -DCMAKE_BUILD_TYPE:STRING=$BTYPE -DROOT_PROJECT_NAME:STRING=Firestorm $LL_ARGS_PASSTHRU | tee $LOG
+    cmake -G "$TARGET" ../indra $FMOD $KDU $PACKAGE $UNATTENDED -DLL_TESTS:BOOL=OFF -DWORD_SIZE:STRING=32 -DCMAKE_BUILD_TYPE:STRING=$BTYPE -DROOT_PROJECT_NAME:STRING=CASviewer $LL_ARGS_PASSTHRU | tee $LOG
 
     if [ $PLATFORM == "win32" ] ; then
-    ../indra/tools/vstool/VSTool.exe --solution Firestorm.sln --startup firestorm-bin --workingdir firestorm-bin "..\\..\\indra\\newview" --config $BTYPE
+    ../indra/tools/vstool/VSTool.exe --solution CASviewer.sln --startup casviewer-bin --workingdir casviewer-bin "..\\..\\indra\\newview" --config $BTYPE
     fi
 
 fi
@@ -384,9 +384,9 @@ if [ $WANTS_BUILD -eq $TRUE ] ; then
             JOBS="-jobs $JOBS"
         fi
         if [ $OSTYPE == "darwin11" -o $OSTYPE == "darwin12" ] ; then
-            xcodebuild -configuration $BTYPE -project Firestorm.xcodeproj $JOBS GCC_OPTIMIZATION_LEVEL=3 GCC_ENABLE_SSE3_EXTENSIONS=YES 2>&1 | tee -a $LOG
+            xcodebuild -configuration $BTYPE -project CASviewer.xcodeproj $JOBS GCC_OPTIMIZATION_LEVEL=3 GCC_ENABLE_SSE3_EXTENSIONS=YES 2>&1 | tee -a $LOG
         else
-            xcodebuild -configuration $BTYPE -project Firestorm.xcodeproj GCC_VERSION=4.2 GCC_OPTIMIZATION_LEVEL=3 GCC_ENABLE_SSE3_EXTENSIONS=YES 2>&1 | tee -a $LOG
+            xcodebuild -configuration $BTYPE -project CASviewer.xcodeproj GCC_VERSION=4.2 GCC_OPTIMIZATION_LEVEL=3 GCC_ENABLE_SSE3_EXTENSIONS=YES 2>&1 | tee -a $LOG
         fi
     elif [ $PLATFORM == "linux32" -o $PLATFORM == "linux64" ] ; then
         if [ $JOBS == "0" ] ; then
@@ -394,7 +394,7 @@ if [ $WANTS_BUILD -eq $TRUE ] ; then
         fi
         make -j $JOBS | tee -a $LOG
     elif [ $PLATFORM == "win32" ] ; then
-        msbuild.exe Firestorm.sln /flp:LogFile=logs\\FirestormBuild_win32.log /flp1:errorsonly;LogFile=logs\\FirestormBuild_win32.err /flp:LogFile=logs\\FirestormBuild_win32.log /p:Configuration=$BTYPE /p:Platform=Win32 /t:Build /p:useenv=true /verbosity:normal /toolsversion:4.0 /p:"VCBuildAdditionalOptions= /incremental"
+        msbuild.exe CASviewer.sln /flp:LogFile=logs\\CASviewerBuild_win32.log /flp1:errorsonly;LogFile=logs\\CASviewerBuild_win32.err /flp:LogFile=logs\\CASviewerBuild_win32.log /p:Configuration=$BTYPE /p:Platform=Win32 /t:Build /p:useenv=true /verbosity:normal /toolsversion:4.0 /p:"VCBuildAdditionalOptions= /incremental"
     fi
 fi
 

@@ -136,7 +136,7 @@ class ViewerManifest(LLManifest):
                 self.path("*.txt")
                 self.end_prefix("fonts")
                 
-            # AO: Include firestorm resources
+            # AO: Include casviewer resources
             if self.prefix(src="fs_resources"):
 				self.path("*.txt")
 				self.path("*.lsl")
@@ -384,7 +384,7 @@ class WindowsManifest(ViewerManifest):
 
         if self.is_packaging_viewer():
             # Find secondlife-bin.exe in the 'configuration' dir, then rename it to the result of final_exe.
-            self.path(src='%s/firestorm-bin.exe' % self.args['configuration'], dst=self.final_exe())
+            self.path(src='%s/casviewer-bin.exe' % self.args['configuration'], dst=self.final_exe())
 
         # Plugin host application
         self.path2basename(os.path.join(os.pardir,
@@ -649,30 +649,30 @@ class WindowsManifest(ViewerManifest):
         if self.default_channel():
             if self.default_grid():
                 # release viewer
-                installer_file = "Phoenix_Firestorm_%(version_dashes)s_Setup.exe"
+                installer_file = "CtrlAltStudio_Viewer_%(version_dashes)s_Setup.exe"
                 grid_vars_template = """
                 OutFile "%(installer_file)s"
                 !define INSTFLAGS "%(flags)s"
-                !define INSTNAME   "Firestorm"
-                !define SHORTCUT   "Firestorm"
+                !define INSTNAME   "CtrlAltStudio Viewer"
+                !define SHORTCUT   "CtrlAltStudio Viewer"
                 !define URLNAME   "secondlife"
-                Caption "Firestorm ${VERSION}"
+                Caption "CtrlAltStudio Viewer ${VERSION}"
                 """
             else:
                 # beta grid viewer
-                installer_file = "Phoenix_Firestorm_%(version_dashes)s_(%(grid_caps)s)_Setup.exe"
+                installer_file = "CtrlAltStudio_Viewer_%(version_dashes)s_(%(grid_caps)s)_Setup.exe"
                 grid_vars_template = """
                 OutFile "%(installer_file)s"
                 !define INSTFLAGS "%(flags)s"
-                !define INSTNAME   "Firestorm%(grid_caps)s"
-                !define SHORTCUT   "Firestorm (%(grid_caps)s)"
+                !define INSTNAME   "CtrlAltStudio Viewer%(grid_caps)s"
+                !define SHORTCUT   "CtrlAltStudio Viewer (%(grid_caps)s)"
                 !define URLNAME   "secondlife%(grid)s"
                 !define UNINSTALL_SETTINGS 1
-                Caption "Firestorm %(grid)s ${VERSION}"
+                Caption "CtrlAltStudio Viewer %(grid)s ${VERSION}"
                 """
         else:
             # some other channel on some grid
-            installer_file = "Phoenix_%(channel_oneword)s_%(version_dashes)s_Setup.exe"
+            installer_file = "%(channel_oneword)s_%(version_dashes)s_Setup.exe"
             grid_vars_template = """
             OutFile "%(installer_file)s"
             !define INSTFLAGS "%(flags)s"
@@ -692,10 +692,10 @@ class WindowsManifest(ViewerManifest):
         
         #AO: Try to sign original executable first, if we can, using best available signing cert.
         try:
-            subprocess.check_call(["signtool.exe","sign","/n","Phoenix","/d","Firestorm","/du","http://www.phoenixviewer.com",self.args['configuration']+"\\firestorm-bin.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            subprocess.check_call(["signtool.exe","sign","/n","Phoenix","/d","Firestorm","/du","http://www.phoenixviewer.com",self.args['configuration']+"\\slplugin.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            subprocess.check_call(["signtool.exe","sign","/n","Phoenix","/d","Firestorm","/du","http://www.phoenixviewer.com",self.args['configuration']+"\\SLVoice.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            subprocess.check_call(["signtool.exe","sign","/n","Phoenix","/d","Firestorm","/du","http://www.phoenixviewer.com",self.args['configuration']+"\\"+self.final_exe()],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudip.com",self.args['configuration']+"\\casviewer-bin.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\slplugin.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\SLVoice.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\"+self.final_exe()],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
         except Exception, e:
             print "Couldn't sign final binary. Tried to sign %s" % self.args['configuration']+"\\"+self.final_exe()
             
@@ -718,28 +718,28 @@ class WindowsManifest(ViewerManifest):
         self.run_command('"' + proper_windows_path(NSIS_path) + '" /V2 ' + self.dst_path_of(tempfile))
         # self.remove(self.dst_path_of(tempfile))
 
-        #AO: Try to sign installer next, if we can, using "The Phoenix Firestorm Project" signing cert.
+        #AO: Try to sign installer next, if we can, using the "CtrlAltStudio Viewer" signing cert.
         try:
-            subprocess.check_call(["signtool.exe","sign","/n","Phoenix","/d","Firestorm","/du","http://www.phoenixviewer.com",self.args['configuration']+"\\"+substitution_strings['installer_file']],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\"+substitution_strings['installer_file']],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
         except Exception, e:
             print "Working directory: %s" % os.getcwd()
             print "Couldn't sign windows installer. Tried to sign %s" % self.args['configuration']+"\\"+substitution_strings['installer_file']
 
         #AO: Try to package up symbols
         # New Method, for reading cross platform stack traces on a linux/mac host
-        if (os.path.exists("%s/firestorm-symbols-windows.tar.bz2" % self.args['configuration'].lower())):
+        if (os.path.exists("%s/casviewer-symbols-windows.tar.bz2" % self.args['configuration'].lower())):
             # Rename to add version numbers
-            sName = "%s/Phoenix_%s_%s_symbols-windows.tar.bz2" % (self.args['configuration'].lower(),substitution_strings['channel_oneword'],substitution_strings['version_dashes'])
+            sName = "%s/%s_%s_symbols-windows.tar.bz2" % (self.args['configuration'].lower(),substitution_strings['channel_oneword'],substitution_strings['version_dashes'])
 
             if os.path.exists( sName ):
                 os.unlink( sName )
 
-            os.rename("%s/firestorm-symbols-windows.tar.bz2" % self.args['configuration'].lower(), sName )
+            os.rename("%s/casviewer-symbols-windows.tar.bz2" % self.args['configuration'].lower(), sName )
         
         # OLD METHOD, Still used for windows-based debugging
-        symbolZip = zipfile.ZipFile("Phoenix-%s_%s_SymbolsWin.zip" % (substitution_strings['channel_oneword'],substitution_strings['version_dashes']), 'w',zipfile.ZIP_DEFLATED)
-        symbolZip.write("%s/Firestorm-bin.exe" % self.args['configuration'].lower(),"Firestorm-bin.exe")
-        symbolZip.write("%s/Firestorm-bin.pdb" % self.args['configuration'].lower(),"Firestorm-bin.pdb")
+        symbolZip = zipfile.ZipFile("%s_%s_SymbolsWin.zip" % (substitution_strings['channel_oneword'],substitution_strings['version_dashes']), 'w',zipfile.ZIP_DEFLATED)
+        symbolZip.write("%s/CASviewer-bin.exe" % self.args['configuration'].lower(),"CASviewer-bin.exe")
+        symbolZip.write("%s/CASviewer-bin.pdb" % self.args['configuration'].lower(),"CASviewer-bin.pdb")
         # symbolZip.write("../sharedlibs/%s/llcommon.dll" % self.args['configuration'].lower(),"llcommon.dll")
         # symbolZip.write("../sharedlibs/%s/llcommon.pdb" % self.args['configuration'].lower(),"llcommon.pdb")
         symbolZip.close()
@@ -773,10 +773,10 @@ class DarwinManifest(ViewerManifest):
 
     def construct(self):
         # copy over the build result (this is a no-op if run within the xcode script)
-        self.path(self.args['configuration'] + "/Firestorm.app", dst="")
+        self.path(self.args['configuration'] + "/CASviewer.app", dst="")
 
         if self.prefix(src="", dst="Contents"):  # everything goes in Contents
-            self.path("Info-Firestorm.plist", dst="Info.plist")
+            self.path("Info-CASviewer.plist", dst="Info.plist")
 
             # copy additional libs in <bundle>/Contents/MacOS/
             self.path("../packages/lib/release/libndofdev.dylib", dst="Resources/libndofdev.dylib")
@@ -796,7 +796,7 @@ class DarwinManifest(ViewerManifest):
 
                 self.path("licenses-mac.txt", dst="licenses.txt")
                 self.path("featuretable_mac.txt")
-                self.path("Firestorm.nib")
+                self.path("CASviewer.nib")
                 self.path("VivoxAUP.txt")
 
                 icon_path = self.icon_path()
@@ -804,7 +804,7 @@ class DarwinManifest(ViewerManifest):
                     self.path("phoenix_icon.icns")
                     self.end_prefix(icon_path)
 
-                self.path("Firestorm.nib")
+                self.path("CASviewer.nib")
                 
                 # Translations
                 self.path("English.lproj")
@@ -917,7 +917,7 @@ class DarwinManifest(ViewerManifest):
         if ("package" in self.args['actions'] or 
             "unpacked" in self.args['actions']):
             self.run_command('strip -S %(viewer_binary)r' %
-                             { 'viewer_binary' : self.dst_path_of('Contents/MacOS/Firestorm')})
+                             { 'viewer_binary' : self.dst_path_of('Contents/MacOS/CASviewer')})
 
 
     def copy_finish(self):
@@ -968,16 +968,16 @@ class DarwinManifest(ViewerManifest):
 #                                 'bundle': self.get_dst_prefix()
 #                })
 
-        channel_standin = 'Firestorm'  # hah, our default channel is not usable on its own
+        channel_standin = 'CtrlAltStudio-Viewer'  # hah, our default channel is not usable on its own
         if not self.default_channel():
             channel_standin = self.channel()
 
-        imagename="Phoenix_" + self.channel_oneword() + '_' + '_'.join(self.args['version'])
+        imagename=self.channel_oneword() + '_' + '_'.join(self.args['version'])
 
         # MBW -- If the mounted volume name changes, it breaks the .DS_Store's background image and icon positioning.
         #  If we really need differently named volumes, we'll need to create multiple DS_Store file images, or use some other trick.
 
-        volname="Firestorm Installer"  # DO NOT CHANGE without understanding comment above
+        volname="CtrlAltStudio Viewer Installer"  # DO NOT CHANGE without understanding comment above
 
         #if self.default_channel():
         #    if not self.default_grid():
@@ -1010,7 +1010,7 @@ class DarwinManifest(ViewerManifest):
             # Copy everything in to the mounted .dmg
 
             if self.default_channel() and not self.default_grid():
-                app_name = "Firestorm " + self.args['grid']
+                app_name = "CASviewer " + self.args['grid']
             else:
                 app_name = channel_standin.strip()
 
@@ -1021,11 +1021,11 @@ class DarwinManifest(ViewerManifest):
             # one for release candidate and one for first look. Any other channels
             # will use the release .DS_Store, and will look broken.
             # - Ambroff 2008-08-20
-            # If the channel is "firestorm-private-"anything, then use the
+            # If the channel is "ctrlaltstudio-viewer-private-"anything, then use the
             #  private folder for .DS_Store and the background image. -- TS
             template_chan = self.channel_lowerword()
-            if template_chan.startswith("firestorm-private"):
-                template_chan = "firestorm-private"
+            if template_chan.startswith("ctrlaltstudio-viewer-private"):
+                template_chan = "ctrlaltstudio-viewer-private"
             dmg_template = os.path.join(
                 'installers', 'darwin', '%s-dmg' % template_chan)
 
@@ -1091,9 +1091,9 @@ class DarwinManifest(ViewerManifest):
 
         #AO: Try to package up symbols
         # New Method, for reading cross platform stack traces on a linux/mac host
-        if (os.path.exists("%s/firestorm-symbols-darwin.tar.bz2" % self.args['configuration'].lower())):
+        if (os.path.exists("%s/casviewer-symbols-darwin.tar.bz2" % self.args['configuration'].lower())):
             # Rename to add version numbers
-            os.rename("%s/firestorm-symbols-darwin.tar.bz2" % self.args['configuration'].lower(),"%s/Phoenix_%s_%s_symbols-darwin.tar.bz2" % (self.args['configuration'].lower(),substitution_strings['channel_oneword'],substitution_strings['version_dashes']))
+            os.rename("%s/casviewer-symbols-darwin.tar.bz2" % self.args['configuration'].lower(),"%s/%s_%s_symbols-darwin.tar.bz2" % (self.args['configuration'].lower(),substitution_strings['channel_oneword'],substitution_strings['version_dashes']))
 
 
 
@@ -1106,10 +1106,10 @@ class LinuxManifest(ViewerManifest):
         self.path("res/firestorm_icon.png","firestorm_icon.png")
         if self.prefix("linux_tools", dst=""):
             self.path("client-readme.txt","README-linux.txt")
-	    self.path("FIRESTORM_DESKTOPINSTALL.txt","FIRESTORM_DESKTOPINSTALL.txt")
+	    self.path("CASVIEWER_DESKTOPINSTALL.txt","CASVIEWER_DESKTOPINSTALL.txt")
             self.path("client-readme-voice.txt","README-linux-voice.txt")
             self.path("client-readme-joystick.txt","README-linux-joystick.txt")
-            self.path("wrapper.sh","firestorm")
+            self.path("wrapper.sh","casviewer")
             if self.prefix(src="", dst="etc"):
                 self.path("handle_secondlifeprotocol.sh")
                 self.path("register_secondlifeprotocol.sh")
@@ -1123,7 +1123,7 @@ class LinuxManifest(ViewerManifest):
         self.put_in_file(self.flags_list(), 'etc/gridargs.dat')
 
         if self.prefix(src="", dst="bin"):
-            self.path("firestorm-bin","do-not-directly-run-firestorm-bin")
+            self.path("casviewer-bin","do-not-directly-run-casviewer-bin")
             self.path("../linux_crash_logger/linux-crash-logger","linux-crash-logger.bin")
             self.path2basename("../llplugin/slplugin", "SLPlugin")
             self.path2basename("../viewer_components/updater/scripts/linux", "update_install")
@@ -1157,7 +1157,7 @@ class LinuxManifest(ViewerManifest):
     def copy_finish(self):
         # Force executable permissions to be set for scripts
         # see CHOP-223 and http://mercurial.selenic.com/bts/issue1802
-        for script in 'firestorm', 'bin/update_install':
+        for script in 'casviewer', 'bin/update_install':
             self.run_command("chmod +x %r" % os.path.join(self.get_dst_prefix(), script))
 
     def package_finish(self):
@@ -1229,9 +1229,9 @@ class LinuxManifest(ViewerManifest):
 
         #AO: Try to package up symbols
         # New Method, for reading cross platform stack traces on a linux/mac host
-        if (os.path.exists("%s/firestorm-symbols-linux.tar.bz2" % self.args['configuration'].lower())):
+        if (os.path.exists("%s/casviewer-symbols-linux.tar.bz2" % self.args['configuration'].lower())):
             # Rename to add version numbers
-            os.rename("%s/firestorm-symbols-linux.tar.bz2" % self.args['configuration'].lower(),"%s/Phoenix_%s_%s_symbols-linux.tar.bz2" % (self.args['configuration'].lower(),self.channel_oneword(),'-'.join(self.args['version'])))
+            os.rename("%s/casviewer-symbols-linux.tar.bz2" % self.args['configuration'].lower(),"%s/%s_%s_symbols-linux.tar.bz2" % (self.args['configuration'].lower(),self.channel_oneword(),'-'.join(self.args['version'])))
 
 
 class Linux_i686Manifest(LinuxManifest):

@@ -134,7 +134,7 @@ elseif (SOLARIS)
 endif (LINUX)
 
 add_subdirectory(${VIEWER_PREFIX}newview)
-add_dependencies(viewer firestorm-bin)
+add_dependencies(viewer casviewer-bin)
 
 if (LL_TESTS)
   # Define after the custom targets are created so
