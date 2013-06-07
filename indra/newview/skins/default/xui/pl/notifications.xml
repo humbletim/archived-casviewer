@@ -4323,7 +4323,7 @@ Obecny symulator: [NEWVERSION]
 Poprzedni symulator: [OLDVERSION]
 	</notification>
 	<notification name="VintageLoginInfo">
-		Czy wiesz, że możesz sprawić, aby Firestorm wyglądał jak klasyczny Phoenix Viewer? Wybierz w tym celu pozycję "Phoenix" z listy "wybierz tryb" po prawej.
+		Czy wiesz, że możesz sprawić, aby CtrlAltStudio Viewer wyglądał jak klasyczny Phoenix Viewer? Wybierz w tym celu pozycję "Phoenix" z listy "wybierz tryb" po prawej.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="CannotSaveSnapshot">
