@@ -186,6 +186,10 @@ void LLUpdaterServiceImpl::initialize(const std::string& protocol_version,
 	mPath = path;
 	mChannel = channel;
 	mVersion = version;
+	// <CV:David>
+	// Add logging to verify that updater service isn't actually used.
+	LL_INFOS("UpdaterService") << "initializing updater service " << LL_ENDL;
+	// </CV:David>
 }
 
 void LLUpdaterServiceImpl::setCheckPeriod(unsigned int seconds)
@@ -200,6 +204,11 @@ void LLUpdaterServiceImpl::setBandwidthLimit(U64 bytesPerSecond)
 
 void LLUpdaterServiceImpl::startChecking(bool install_if_ready)
 {
+	// <CV:David>
+	// Add logging to verify that updater service isn't actually used.
+	LL_INFOS("UpdaterService") << "start checking" << LL_ENDL;
+	// </CV:David>
+
 	if(mUrl.empty() || mChannel.empty() || mVersion.empty())
 	{
 		throw LLUpdaterService::UsageError("Set params before call to "
