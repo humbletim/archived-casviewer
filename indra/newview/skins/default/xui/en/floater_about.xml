@@ -8,7 +8,7 @@
  help_topic="floater_about"
  save_rect="true"
  title="About [APP_NAME]"
- width="470">
+ width="500">
   <floater.string
      name="AboutHeader">
 [APP_NAME] [VIEWER_VERSION_0].[VIEWER_VERSION_1].[VIEWER_VERSION_2] ([VIEWER_VERSION_3]) [BUILD_DATE] [BUILD_TIME] ([CHANNEL]) [BUILD_TYPE]
@@ -80,7 +80,7 @@ Error fetching server release notes URL.
     top="25"
     left="10"
     height="565" 
-    width="450" 
+    width="480" 
     name="about_tab"
     tab_position="top">
     <panel
@@ -96,7 +96,7 @@ Error fetching server release notes URL.
           left="5"
           name="support_intro"
           top="20"
-          width="435"
+          width="465"
           wrap="true">
 The CtrlAltStudio Viewer is based on the Firestorm viewer, to which certain functionality is added. For details see: http://ctrlaltstudio.com/viewer
     
@@ -111,7 +111,7 @@ The CtrlAltStudio Viewer is based on the Firestorm viewer, to which certain func
        max_length="65536"
        name="support_editor"
        top_pad="5"
-       width="435"
+       width="465"
        word_wrap="true" />
       <button
         follows="left|top" 
@@ -134,7 +134,7 @@ The CtrlAltStudio Viewer is based on the Firestorm viewer, to which certain func
           left="5"
           name="linden_intro"
           top="10"
-          width="435"
+          width="465"
           wrap="true">
 Firestorm would not be possible without the decision from Linden Lab to make their Second Life viewer source code available.
 
@@ -150,7 +150,7 @@ The Lindens are:
        max_length="65536"
        name="linden_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
 Philip, Andrew, Doug, Richard, Phoenix, Ian, Mark, Robin, Dan, Char, Ryan, Eric, Jim, Lee, Jeff, Michael, Kelly, Steve, Catherine, Bub, Ramzi, Jill, Jeska, Don, Kona, Callum, Charity, Jack, Shawn, babbage, James, Lauren, Blue, Brent, Reuben, Pathfinder, Jesse, Patsy, Torley, Bo, Cyn, Jonathan, Gia, Annette, Ginsu, Harry, Lex, Runitai, Guy, Cornelius, Beth, Swiss, Thumper, Wendy, Teeple, Seth, Dee, Mia, Sally, Liana, Aura, Beez, Milo, Red, Gulliver, Marius, Joe, Jose, Dore, Justin, Nora, Morpheus, Lexie, Amber, Chris, Xan, Leyla, Walker, Sabin, Joshua, Hiromi, Tofu, Fritz, June, Jean, Ivy, Dez, Ken, Betsy, Which, Spike, Rob, Zee, Dustin, George, Claudia, del, Matthew, jane, jay, Adrian, Yool, Rika, Yoz, siobhan, Qarl, Benjamin, Beast, Everett, madhavi, Christopher, Izzy, stephany, Jeremy, sean, adreanne, Pramod, Tobin, sejong, Iridium, maurice, kj, Meta, kari, JP, bert, kyle, Jon, Socrates, Bridie, Ivan, maria, Aric, Coco, Periapse, sandy, Storrs, Lotte, Colossus, Brad, Pastrami, Zen, BigPapi, Banzai, Sardonyx, Mani, Garry, Jaime, Neuro, Samuel, Niko, CeeLo, Austin, Soft, Poppy, emma, tessa, angelo, kurz, alexa, Sue, CG, Blake, Erica, Brett, Bevis, kristen, Q, simon, Enus, MJ, laurap, Kip, Scouse, Ron, Ram, kend, Marty, Prospero, melissa, kraft, Nat, Seraph, Hamilton, Lordan, Green, miz, Ashlei, Trinity, Ekim, Echo, Charlie, Rowan, Rome, Jt, Doris, benoc, Christy, Bao, Kate, Tj, Patch, Cheah, Johan, Brandy, Angela, Oreh, Cogsworth, Lan, Mitchell, Space, Bambers, Einstein, Bender, Malbers, Matias, Maggie, Rothman, Milton, Niall, Marin, Allison, Mango, Andrea, Katt, Yi, Ambroff, Rico, Raymond, Gail, Christa, William, Dawn, Usi, Dynamike, M, Corr, Dante, Molly, kaylee, Danica, Kelv, Lil, jacob, Nya, Rodney, elsie, Blondin, Grant, Nyx, Devin, Monty, Minerva, Keira, Katie, Jenn, Makai, Clare, Joy, Cody, Gayathri, FJ, spider, Oskar, Landon, Jarv, Noelle, Al, Doc, Gray, Vir, t, Maestro, Simone, Shannon, yang, Courtney, Scott, charlene, Quixote, Susan, Zed, Amanda, Katelin, Esbee, JoRoan, Enkidu, roxie, Scarlet, Merov, Kevin, Judy, Rand, Newell, Les, Dessie, Galen, Michon, Geo, Siz, Calyle, Pete, Praveen, Callen, Sheldon, Pink, Nelson, jenelle, Terrence, Nathan, Juan, Sascha, Huseby, Karina, Kaye, Kotler, Lis, Darv, Charrell, Dakota, Kimmora, Theeba, Taka, Mae, Perry, Ducot, dana, Esther, Dough, gisele, Doten, Viale, Fisher, jessieann, ashley, Torres, delby, rountree, kurt, Slaton, Madison, Rue, Gino, Wen, Casssandra, Brodesky, Squid, Gez, Rakesh, Gecko, Ladan, Tony, Tatem, Squire, Falcon, BK, Crimp, Tiggs, Bacon, Coyot, Carmilla, Webb, Sea, Arch, Jillian, Jason, Bernard, Vogt, Peggy, dragon, Pup, xandix, Wallace, Bewest, Inoshiro, Rhett, AG, Aimee, Ghengis, Itiaes, Eli, Steffan, Epic, Grapes, Stone, Prep, Scobu, Robert, Alain, Carla, Vicky, Tia, Alec, Taras, Lisa, Oz, Ariane, Log, House, Kazu, Kim, Drofnas, Tyler, Campbell, Michele, Madeline, Nelly, Baron, Thor, Lori, Hele, Fredrik, Teddy, Pixie, Berry, Gabrielle, Alfonso, Brooke, Wolf, Ringo, Cru, Charlar, Rodvik, Gibson, Elise, Bagman, Greger, Leonidas, Jerm, Leslie, CB, Brenda, Durian, Carlo, mm, Zeeshan, Caleb, Max, Elikak, Mercille, Steph, Chase
       </text_editor>
@@ -161,7 +161,7 @@ Philip, Andrew, Doug, Richard, Phoenix, Ian, Mark, Robin, Dan, Char, Ryan, Eric,
           left="5"
           name="contrib_intro"
           top_pad="10"
-          width="435"
+          width="465"
           wrap="true">
 with open source contributions from:
       </text>
@@ -175,7 +175,7 @@ with open source contributions from:
        max_length="65536"
        name="contrib_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
 Dummy Name replaced at run time
       </text_editor>
@@ -186,7 +186,7 @@ Dummy Name replaced at run time
           left="5"
           name="trans_intro"
           top_pad="10"
-          width="435"
+          width="465"
           wrap="true">
 and translations from:
       </text>
@@ -200,7 +200,7 @@ and translations from:
        max_length="65536"
        name="trans_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
 Dummy Name replaced at run time
       </text_editor>
@@ -217,7 +217,7 @@ Dummy Name replaced at run time
           left="5"
           name="firestorm_intro"
           top="10"
-          width="435"
+          width="465"
           wrap="true">
 Firestorm is a community development project to improve the SecondLife(tm) Viewer experience.  We package contributions from various community developers along with code from Linden Lab and ourselves to bring you a quality, feature-rich viewer experience backed up by a large volunteer support team.  Firestorm is brought to you by The Phoenix Firestorm Project, Inc., a non-profit organization.
 
@@ -233,7 +233,7 @@ The Firestorm Development Team:
        max_length="65536"
        name="firestorm_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
 Ansariel Hiller, ArminWeatherHax, Arrehn Oberlander, Cinder Roxley, Holy Gavenkrantz, Jessica Lyon, Kadah Coba, Kitty Barnett, Liny Odell, LordGregGreg Back, Mobius Ryba, Nicky Dasmijn, PanteraPolnocy, Selo Jacobus, Tankmaster Finesmith, Techwolf Lupindo, Tonya Souther, Tozh Taurog, Vortex Saito, WoLf Loonie, Wolfspirit Magic and Zi Ree.
       </text_editor>
@@ -244,7 +244,7 @@ Ansariel Hiller, ArminWeatherHax, Arrehn Oberlander, Cinder Roxley, Holy Gavenkr
           left="5"
           name="fs_contrib_intro"
           top_pad="10"
-          width="435"
+          width="465"
           wrap="true">
 Additional code generously contributed to Firestorm by:
       </text>
@@ -258,7 +258,7 @@ Additional code generously contributed to Firestorm by:
        max_length="65536"
        name="fs_contrib_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
 Albatroz Hird, Alexie Birman, Andromeda Rage, Armin Weatherwax, Casper Warden, Chalice Yao, Cron Stardust, Damian Zhaoying, Dawa Gurbux, Felyza Wishbringer, f0rbidden, Fractured Crystal, Geenz Spad, Hitomi Tiponi, Katharine Berry, Kittin Ninetails, Kool Koolhoven, Lance Corrimal, Magne Metaverse LLC, Magus Freston, MartinRJ Fayray, Melancholy Lemon, Miguael Liamano, Mimika Oh, Mister Acacia, Mysty Saunders, Nagi Michinaga, Name Short, nhede Core, NiranV Dean, Nogardrevlis Lectar, paperwork, Peyton Menges, programmtest, Qwerty Venom, Revolution Smythe, Sahkolihaa Contepomi, sal Kaligawa, Satomi Ahn, Shin Wasp, Shyotl Kuhr, Sione Lomu, Skills Hak, Sunset Faulkes, Thickbrick Sleaford, Vaalith Jinn, Whirly Fizzle, Zwagoth Klaar and others.
       </text_editor>
@@ -270,7 +270,7 @@ Albatroz Hird, Alexie Birman, Andromeda Rage, Armin Weatherwax, Casper Warden, C
     left="5"
     name="fs_support_intro"
     top_pad="10"
-    width="435"
+    width="465"
     wrap="true">
 Special thanks to our Firestorm Support Team, wiki editors, educators, and translators:
       </text>
@@ -284,7 +284,7 @@ Special thanks to our Firestorm Support Team, wiki editors, educators, and trans
        max_length="65536"
        name="fs_trans_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
         Afrika Burton, Albatroz Hird, Alexru Resident, alison Seesaw, AnaLucia Loon, Angell Airy, Annuccia Resident, Annuccia Vuckovic, Anubi Alter, Atthosz Amiot, Ayelin Ethaniel, Basement Desade, Bia Scribe, Bluezy Bleac, Christy Mansbridge, Chymy India, Cordoba Cluny, Damian Zhaoying, DARK Mirabella, Ed Merryman, Eressea Karsin, Erick Gregan, F0RBIDDEN, Fabry String, Flandria Connolly, Foksy, Franklyn Watanabe, FreeSpirit Simmering, Gee McAuley, Gweneth Lange, Hatake Kohime, Hiroshi Kumaki, Hope Dreier, Jodi Nikolaidis, JogiTE Clip, Kool Koolhoven, Kosmox Voom, Lachrimo Skytower, Lalwende Leakey, Landaree Levee, Lassie, Lette Ponnier, Lina Pussycat, Lyn Mimistrobell, Marybeth Oceanlane, Mickeala Praga, Miller Thor, Miro Collas, Mister Acacia, Morgause Whiteberry, Mysty Saunders, Nano Bouscario, narcisssia McMahon, Natem Andel, Nicoletta Schnute, Nisa Maverick, NogarDrevlis Lectar, Norton Burns, PanteraPolnocy, Peewee Musytari, Pisano Smit, PixelProphet Lane, Pol Xaron, Poledra Behemoth, Programmtest, Rander Teskat, Ricky Munz, Riku Highfield, RINOBIT Footman, Robert0 Siamendes, Roth Grut, Sabah Back, SaHaRa Connor, Selene Gregoire, Selo Jacobus, silvanaf Demina, Sniper Siemans, Spartaco Zemenis , Spino Forcella, Srilania Svoboda, Sunset Faulkes, Tanja Levenque, TankMaster Finesmith, Tarlyn Dagger, Thea Brianna, Toy Wylie, Whirly Fizzle, Willow Wilder, Wolfspirit Magic and XLR8RRICK Hudson.
       </text_editor>
@@ -295,7 +295,7 @@ Special thanks to our Firestorm Support Team, wiki editors, educators, and trans
           left="5"
           name="fs_art_intro"
           top_pad="10"
-          width="435"
+          width="465"
           wrap="true">
 Firestorm includes Starlight, modified for Firestorm.  It is provided by residents for residents, with the intention of providing an alternative, brighter, and hopefully easier to use interface.  For further details see &lt;nolink&gt;https://wiki.secondlife.com/wiki/Viewer_Skins/Starlight&lt;/nolink&gt;.
 
@@ -311,9 +311,67 @@ UI Artists and Designers:
        max_length="65536"
        name="fs_artists_names"
        top_pad="10"
-       width="435"
+       width="465"
        word_wrap="true">
 Alexandrea Fride, DarkAgent Baphomet, Digital Scribe, Hitomi Tiponi, Hugh Helendale, KirstenLee Cinquetti, Mobius Ryba, Nadin, Naomah Beaumont, psi Merlin, samm florian, Sammie Benoir, and Vincent Nacon.
+      </text_editor>
+    </panel>
+    <panel
+      border="true"
+      label="CtrlAltStudio Credits"
+      help_topic="about_cvcredits_tab"
+      name="cv_credits_panel">
+      <text
+          follows="top|left|right"
+          height="45"
+          layout="topleft"
+          left="5"
+          name="linden_intro"
+          top="10"
+          width="465"
+          wrap="true">
+        The CtrlAltStudio Viewer is based on the Firestorm viewer which it tracks closely while adding particular features.
+
+The CtrlAltStudio Viewer developers are:
+      </text>
+      <text_editor
+       enabled="false"
+       follows="top|left"
+       height="48"
+       bg_readonly_color="Transparent"
+       left="5"
+       text_color="LtGray"
+       max_length="65536"
+       name="linden_names"
+       top_pad="10"
+       width="465"
+       word_wrap="true">
+        David Rowe
+      </text_editor>
+      <text
+          follows="top|left"
+          height="10"
+          layout="topleft"
+          left="5"
+          name="contrib_intro"
+          top_pad="10"
+          width="465"
+          wrap="true">
+        With open source contributions from:
+      </text>
+      <text_editor
+       enabled="false"
+       follows="top|left"
+       height="178"
+       bg_readonly_color="Transparent"
+       left="5"
+       text_color="LtGray"
+       max_length="65536"
+       name="contrib_names"
+       top_pad="10"
+       width="465"
+       word_wrap="true">
+        Your name here?
       </text_editor>
     </panel>
     <panel
@@ -331,7 +389,7 @@ Alexandrea Fride, DarkAgent Baphomet, Digital Scribe, Hitomi Tiponi, Hugh Helend
        max_length="65536"
        name="credits_editor"
        top="5"
-       width="435"
+       width="465"
        word_wrap="true">
 3Dconnexion SDK Copyright (C) 1992-2009 3Dconnexion
 APR Copyright (C) 2011 The Apache Software Foundation
