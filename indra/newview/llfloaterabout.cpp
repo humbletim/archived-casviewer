@@ -398,7 +398,7 @@ static std::string get_viewer_release_notes_url()
 	//	url += "/";
 	//url += LLVersionInfo::getChannel() + "/";
 	//url += LLVersionInfo::getShortVersion();
-	std::string url = "http://ctrlaltstudio.com/viewer/release-notes";
+	std::string url = "http://ctrlaltstudio.com/viewer/releases";
 	return LLWeb::escapeURL(url);
 }
 

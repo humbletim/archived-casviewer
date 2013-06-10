@@ -79,6 +79,6 @@ const std::string SL_KB_URL (
 	"http://secondlife.com/knowledgebase/"); // *TODO: NOT USED
 
 const std::string RELEASE_NOTES_BASE_URL (
-	"http://ctrlaltstudio.com/viewer/release-notes");
+	"http://ctrlaltstudio.com/viewer/releases");
 */
 
