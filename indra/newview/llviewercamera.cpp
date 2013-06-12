@@ -892,3 +892,33 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 	self->setDefaultFOV(value.asReal());	
 }
 
+// <CV:David> Stereoscopic 3D
+
+void LLViewerCamera::calcStereoValues()
+{
+	// Save default mono camera position and POI.
+	mStereoCameraPosition = this->getOrigin();
+	mStereoPointOfInterest = mLastPointOfInterest;
+
+	// Delta position for left camera.
+	F32 eye_separation = 0.065f;  // *TODO: User-configurable eye separation.
+	mStereoCameraDeltaLeft = eye_separation / 2 * getLeftAxis();
+}
+
+void LLViewerCamera::moveToLeftEye()
+{
+	// Move both camera and POI so that left and rights views are parallel.
+	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
+	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
+	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+}
+
+void LLViewerCamera::moveToRightEye()
+{
+	// Move both camera and POI so that left and rights views are parallel.
+	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
+	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
+	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+}
+
+// </CV:David>
