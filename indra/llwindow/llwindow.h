@@ -170,7 +170,7 @@ public:
 	virtual void setTitle(const std::string& win_title) {};
 //-TT
 protected:
-	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);
+	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags, U32 output_type);
 	virtual ~LLWindow();
 	// Defaults to true
 	virtual BOOL isValid();
@@ -191,6 +191,7 @@ protected:
 	S32			mFullscreenRefresh;
 	LLWindowResolution* mSupportedResolutions;
 	S32			mNumSupportedResolutions;
+	U32			mOutputType;
 	ECursorType	mCurrentCursor;
 	ECursorType	mNextCursor;
 	BOOL		mCursorHidden;
@@ -277,7 +278,8 @@ public:
 		BOOL clearBg = FALSE,
 		BOOL disable_vsync = TRUE,
 		BOOL ignore_pixel_depth = FALSE,
-		U32 fsaa_samples = 0);
+		U32 fsaa_samples = 0,
+		U32 output_type = 0);
 	static BOOL destroyWindow(LLWindow* window);
 	static BOOL isWindowValid(LLWindow *window);
 };

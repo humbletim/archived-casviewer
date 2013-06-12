@@ -98,7 +98,7 @@ S32 OSMessageBox(const std::string& text, const std::string& caption, U32 type)
 // LLWindow
 //
 
-LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags)
+LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags, U32 output_type)
 	: mCallbacks(callbacks),
 	  mPostQuit(TRUE),
 	  mFullscreen(fullscreen),
@@ -106,6 +106,7 @@ LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags)
 	  mFullscreenHeight(0),
 	  mFullscreenBits(0),
 	  mFullscreenRefresh(0),
+	  mOutputType(output_type),
 	  mSupportedResolutions(NULL),
 	  mNumSupportedResolutions(0),
 	  mCurrentCursor(UI_CURSOR_ARROW),
@@ -390,26 +391,27 @@ LLWindow* LLWindowManager::createWindow(
 	BOOL clearBg,
 	BOOL disable_vsync,
 	BOOL ignore_pixel_depth,
-	U32 fsaa_samples)
+	U32 fsaa_samples,
+	U32 output_type)
 {
 	LLWindow* new_window;
 
 #if LL_MESA_HEADLESS
 	new_window = new LLWindowMesaHeadless(callbacks,
 		title, name, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth);
+		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, output_type);
 #elif LL_SDL
 	new_window = new LLWindowSDL(callbacks,
 		title, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples);
+		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples, output_type);
 #elif LL_WINDOWS
 	new_window = new LLWindowWin32(callbacks,
 		title, name, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples);
+		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples, output_type);
 #elif LL_DARWIN
 	new_window = new LLWindowMacOSX(callbacks,
 		title, name, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples);
+		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples, output_type);
 #endif
 
 	if (FALSE == new_window->isValid())

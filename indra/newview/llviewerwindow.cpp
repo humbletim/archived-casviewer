@@ -872,7 +872,8 @@ LLViewerWindow::Params::Params()
 	min_width("min_width"),
 	min_height("min_height"),
 	fullscreen("fullscreen", false),
-	ignore_pixel_depth("ignore_pixel_depth", false)
+	ignore_pixel_depth("ignore_pixel_depth", false),
+	output_type("output_type", 0)
 {}
 
 
@@ -1591,7 +1592,8 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 		clear_bg,
 		gSavedSettings.getBOOL("DisableVerticalSync"),
 		p.ignore_pixel_depth,
-		gSavedSettings.getBOOL("RenderDeferred") ? 0 : gSavedSettings.getU32("RenderFSAASamples")); //don't use window level anti-aliasing if FBOs are enabled
+		gSavedSettings.getBOOL("RenderDeferred") ? 0 : gSavedSettings.getU32("RenderFSAASamples"), //don't use window level anti-aliasing if FBOs are enabled
+		p.output_type);
 
 	if (!LLViewerShaderMgr::sInitialized)
 	{ //immediately initialize shaders
