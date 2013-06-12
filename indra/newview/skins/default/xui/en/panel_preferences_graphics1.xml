@@ -1315,5 +1315,75 @@
          top_pad="5"
          width="374"/>
     </panel>
-</tab_container>
+
+<!--Display Type-->
+    <panel
+    top_pad="5"
+    bottom="-1"
+    left="1"
+    right="-1"
+    follows="all"
+    label="Display Output"
+    name="Display Output" >
+
+      <text
+      type="string"
+      length="1"
+      follows="left|top"
+      height="10"
+      layout="topleft"
+      left="15"
+      name="Output:"
+      top_pad="10"
+      width="300">
+        Output type:
+      </text>
+      <radio_group
+      control_name="OutputType"
+      follows="top|left"
+      height="34"
+      layout="topleft"
+      left_delta="10"
+      name="OutputType"
+      top_pad="4"
+      width="400">
+        <radio_item
+          height="20"
+          label="Normal"
+          layout="topleft"
+          name="normal_display"
+          top="0"
+          value="0"
+          tool_tip="Select this if you have a normal computer display or want to display normally."
+          width="150" />
+        <radio_item
+          height="20"
+          label="Stereoscopic 3D"
+          layout="topleft"
+          name="stereoscopic_3d"
+          top="18"
+          value="1"
+          tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D. A restart is required."
+          width="150" />
+      </radio_group>
+      <text
+       name="stereoscopic_3d_help"
+       follows="all"
+       layout="topleft"
+       left="15"
+       top="72"
+       word_wrap="true"
+       height="80">
+        To display in stereoscopic 3D on Windows using a GeForce graphics card with NVIDIA 3D Vision you will need:
+        - GeForce driver 314.07 or later.
+        - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
+        - Your monitor set to 120Hz.
+        - Full Screen mode turned on in the Graphics > General tab.
+        - Basic Shaders turned off in the Graphics > General tab.
+
+        Other computer setups will likely require similar.
+      </text>
+
+    </panel>
+  </tab_container>
 </panel>
