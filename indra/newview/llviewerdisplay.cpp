@@ -691,6 +691,11 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLViewerCamera::getInstance()->moveToRightEye();
 			render_frame(OUTPUT_STEREO_RIGHT);
 
+			// For subsequent UI ...
+			LLViewerCamera::getInstance()->moveToCenter();	// *TODO: Remove once incorporate 3D UI into render_frame().
+			stop_glerror();
+			display_update_camera();						// *TODO: Ditto
+			stop_glerror();
 			glDrawBuffer(GL_BACK);
 		}
 		// </CV:David>
