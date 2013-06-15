@@ -206,6 +206,11 @@ public:
 	void onClickBackupSettings();
 	void onClickRestoreSettings();
 
+	// <CV:David>
+	void onClickResetEyeSeparation();
+	void onClickResetScreenDistance();
+	// </CV:David>
+
 	void doSelect(BOOL all);		// calls applySelection for each list
 	void applySelection(LLScrollListCtrl* control,BOOL all);		// selects or deselects all items in a scroll list
 	void doRestoreSettings(const LLSD& notification,const LLSD& response);	// callback for restore dialog

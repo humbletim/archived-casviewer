@@ -922,6 +922,10 @@ void LLViewerCamera::calcStereoValues()
 	mStereoCameraPosition = this->getOrigin();
 	mStereoPointOfInterest = mLastPointOfInterest;
 
+	// Retrieve latest stereo values..
+	mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
+	mScreenDistance = gSavedSettings.getF32("ScreenDistance");
+
 	// Delta position for left camera.
 	mStereoCameraDeltaLeft = mEyeSeparation / 2 * getLeftAxis();
 }
