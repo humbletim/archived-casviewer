@@ -127,6 +127,13 @@ public:
 	F32 getZoomFactor() { return mZoomFactor; }                             
 	S16 getZoomSubRegion() { return mZoomSubregion; } 
 
+	// <CV:David> Stereoscopic 3D
+	void calcStereoValues();
+	void moveToLeftEye();
+	void moveToRightEye();
+	void moveToCenter();
+	// </CV:David>
+
 protected:
 	void calcProjection(const F32 far_distance) const;
 
@@ -145,6 +152,12 @@ protected:
 	S32					mScreenPixelArea; // Pixel area of entire window
 	F32					mZoomFactor;
 	S16					mZoomSubregion;
+
+	// <CV:David> Stereoscopic 3D
+	LLVector3 mStereoCameraPosition;
+	LLVector3 mStereoPointOfInterest;
+	LLVector3 mStereoCameraDeltaLeft;
+	// </CV:David>
 
 public:
 } LL_ALIGN_POSTFIX(16);

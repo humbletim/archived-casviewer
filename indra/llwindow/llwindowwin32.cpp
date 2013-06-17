@@ -364,8 +364,9 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 							 BOOL fullscreen, BOOL clearBg,
 							 BOOL disable_vsync,
 							 BOOL ignore_pixel_depth,
-							 U32 fsaa_samples)
-	: LLWindow(callbacks, fullscreen, flags)
+							 U32 fsaa_samples,
+							 U32 output_type)
+	: LLWindow(callbacks, fullscreen, flags, output_type)
 {
 	
 	//MAINT-516 -- force a load of opengl32.dll just in case windows went sideways 
@@ -1060,6 +1061,11 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 
 	LL_INFOS("Window") << "window is created." << llendl ;
 
+	// <CV:David> Request stereoscopic 3D if user configured.
+	BOOL stereo = (mOutputType == 1);
+	U32 pfdStereo = stereo ? PFD_STEREO : 0;
+	// </CV:David>
+
 	//-----------------------------------------------------------------------
 	// Create GL drawing context
 	//-----------------------------------------------------------------------
@@ -1067,7 +1073,7 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	{
 		sizeof(PIXELFORMATDESCRIPTOR), 
 			1,
-			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER, 
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | pfdStereo,
 			PFD_TYPE_RGBA,
 			BITS_PER_PIXEL,
 			0, 0, 0, 0, 0, 0,	// RGB bits and shift, unused
@@ -1144,6 +1150,17 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	LL_INFOS("Window") << "pfd.dwDamageMask:     " << pfd.dwDamageMask << llendl ;
 	LL_INFOS("Window") << "--- end pixel format dump ---" << llendl ;
 
+	// <CV:David> Don't proceed with stereoscopic 3D if it is not available.
+	if (stereo)
+	{
+		stereo = ((pfd.dwFlags & PFD_STEREO) > 0);
+		if (!stereo)
+		{
+			LL_INFOS("Window") << "Stereoscopic 3D is not available." << llendl;
+		}
+	}
+	// </CV:David>
+
 	if (pfd.cColorBits < 32)
 	{
 		close();
@@ -1212,6 +1229,14 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 
 		attrib_list[cur_attrib++] = WGL_DOUBLE_BUFFER_ARB;
 		attrib_list[cur_attrib++] = GL_TRUE;
+
+		// <CV:David> Configure stereoscopic 3D.
+		if (stereo)
+		{
+			attrib_list[cur_attrib++] = WGL_STEREO_ARB;
+			attrib_list[cur_attrib++] = GL_TRUE;
+		}
+		// </CV:David>
 
 		attrib_list[cur_attrib++] = WGL_COLOR_BITS_ARB;
 		attrib_list[cur_attrib++] = 24;
@@ -1430,6 +1455,14 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		<< " Alpha Bits " << S32(pfd.cAlphaBits)
 		<< " Depth Bits " << S32(pfd.cDepthBits) 
 		<< LL_ENDL;
+
+	// <CV:David> Reverify stereoscopic 3D mode available.
+	if (stereo)
+	{
+		stereo = ((pfd.dwFlags & PFD_STEREO) > 0);
+		LL_INFOS("Window") << "Stereoscopic 3D " << (stereo ? "successfully" : "not") << " configured." << llendl;
+	}
+	// </CV:David>
 
 	// make sure we have 32 bits per pixel
 	if (pfd.cColorBits < 32 || GetDeviceCaps(mhDC, BITSPIXEL) < 32)

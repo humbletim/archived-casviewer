@@ -1315,5 +1315,163 @@
          top_pad="5"
          width="374"/>
     </panel>
-</tab_container>
+
+<!--Display Type-->
+    <panel
+    top_pad="5"
+    bottom="-1"
+    left="1"
+    right="-1"
+    follows="all"
+    label="Display Output"
+    name="Display Output" >
+
+      <text
+      type="string"
+      length="1"
+      follows="left|top"
+      height="10"
+      layout="topleft"
+      left="15"
+      name="Output:"
+      top_pad="10"
+      width="300">
+        Output type:
+      </text>
+      <radio_group
+      control_name="OutputType"
+      follows="top|left"
+      height="34"
+      layout="topleft"
+      left_delta="0"
+      name="OutputType"
+      top_pad="5"
+      width="400">
+        <radio_item
+          height="16"
+          label="Normal"
+          layout="topleft"
+          name="DisplayNormal"
+          value="0"
+          tool_tip="Select this if you have a normal computer display or want to display normally. (Restart required.)"
+          width="150" />
+
+        <radio_item
+          height="16"
+          label="Stereoscopic 3D"
+          layout="topleft"
+          name="DisplayStereo"
+          value="1"
+          tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D. (Restart required.)"
+          width="150" />
+      </radio_group>
+
+      <slider
+       control_name="EyeSeparation"
+       decimal_digits="3"
+       label="Eye separation:"
+       follows="left|top"
+       height="16"
+       increment=".005"
+       initial_value=".065"
+       layout="topleft"
+       top_pad="10"
+       left="54"
+       max_val="0.2"
+       min_val="0.0"
+       name="EyeSeparation"
+       width="314"
+       label_width="100"
+       tool_tip="Distance between left and right cameras."/>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="324"
+       name="EyeSeparationUnitsText"
+       top_delta="0"
+       width="32">
+        m
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetEyeSeparation"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetEyeSeparation" />
+      </button>
+
+      <slider
+       control_name="ScreenDistance"
+       decimal_digits="1"
+       enabled_control="DisplayStereo"
+       label="Screen distance:"
+       follows="left|top"
+       height="16"
+       increment=".1"
+       initial_value="1.6"
+       layout="topleft"
+       left="54"
+       max_val="5.0"
+       min_val=".5"
+       name="EyeSeparation"
+       show_text="true"
+       width="314"
+       label_width="100"
+       tool_tip="Distance from camera to virtual screen."/>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="324"
+       name="ScreenDistanceUnitsText"
+       top_delta="0"
+       width="32">
+        m
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetScreenDistance"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetScreenDistance" />
+      </button>
+      <text
+       name="DisplayStereoHelp"
+       follows="all"
+       layout="topleft"
+       left="15"
+       top="126"
+       word_wrap="true"
+       height="80">
+To display in stereoscopic 3D on Windows using a GeForce graphics card with NVIDIA 3D Vision you need:
+        - GeForce driver 314.07 or later.
+        - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
+        - Your monitor set to 120Hz.
+        - Full Screen mode turned on in the Graphics > General tab.
+        - Basic Shaders turned off in the Graphics > General tab.
+
+Other computer configurations will likely require similar.
+      </text>
+
+    </panel>
+  </tab_container>
 </panel>

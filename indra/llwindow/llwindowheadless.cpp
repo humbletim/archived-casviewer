@@ -35,8 +35,8 @@
 //
 LLWindowHeadless::LLWindowHeadless(LLWindowCallbacks* callbacks, const std::string& title, const std::string& name, S32 x, S32 y, S32 width, S32 height,
 							 U32 flags,  BOOL fullscreen, BOOL clear_background,
-							 BOOL disable_vsync, BOOL ignore_pixel_depth)
-	: LLWindow(callbacks, fullscreen, flags)
+							 BOOL disable_vsync, BOOL ignore_pixel_depth, U32 output_type)
+	: LLWindow(callbacks, fullscreen, flags, output_type)
 {
 	// Initialize a headless keyboard.
 	gKeyboard = new LLKeyboardHeadless();

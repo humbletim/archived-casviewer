@@ -58,6 +58,12 @@
 
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
+// <CV:David>
+F32 mEyeSeparation;  // Distance between stereo eyes.
+F32 mScreenDistance;  // Distance of rendering screen from camera.
+F32 mCameraOffset;  // Offset from default camera position for left(-ve) /right(+ve) eye.
+// </CV:David>
+
 //glu pick matrix implementation borrowed from Mesa3D
 glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint* viewport)
 {
@@ -84,7 +90,12 @@ glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloa
 {
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
 
-	return glh::matrix4f(f/aspect, 0, 0, 0,
+	// <CV:David>
+	GLfloat p03 = - mCameraOffset * f / aspect;
+	GLfloat p02 = p03 / mScreenDistance;
+	// </CV:David>
+
+	return glh::matrix4f(f/aspect, 0, p02, p03,
 						 0, f, 0, 0,
 						 0, 0, (zFar+zNear)/(zNear-zFar), (2.f*zFar*zNear)/(zNear-zFar),
 						 0, 0, -1.f, 0);
@@ -120,6 +131,11 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 	mAverageSpeed = 0.f;
 	mAverageAngularSpeed = 0.f;
 	gSavedSettings.getControl("CameraAngle")->getCommitSignal()->connect(boost::bind(&LLViewerCamera::updateCameraAngle, this, _2));
+	// <CV:David>
+	mEyeSeparation = 0.065f;
+	mScreenDistance = 1.6f;
+	mCameraOffset = 0.f;
+	// </CV:David>
 }
 
 void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
@@ -193,7 +209,7 @@ const LLMatrix4 &LLViewerCamera::getModelview() const
 
 void LLViewerCamera::calcProjection(const F32 far_distance) const
 {
-	F32 fov_y, z_far, z_near, aspect, f;
+	F32 fov_y, z_far, z_near, aspect, f, p02, p03;
 	fov_y = getView();
 	z_far = far_distance;
 	z_near = getNear();
@@ -203,6 +219,12 @@ void LLViewerCamera::calcProjection(const F32 far_distance) const
 
 	mProjectionMatrix.setZero();
 	mProjectionMatrix.mMatrix[0][0] = f/aspect;
+	// <CV:David>
+	p03 = - mCameraOffset * f / aspect;
+	p02 = - p03 / mScreenDistance;
+	mProjectionMatrix.mMatrix[0][2] = p02;
+	mProjectionMatrix.mMatrix[0][3] = p03;
+	// </CV:David>
 	mProjectionMatrix.mMatrix[1][1] = f;
 	mProjectionMatrix.mMatrix[2][2] = (z_far + z_near)/(z_near - z_far);
 	mProjectionMatrix.mMatrix[3][2] = (2*z_far*z_near)/(z_near - z_far);
@@ -892,3 +914,44 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 	self->setDefaultFOV(value.asReal());	
 }
 
+// <CV:David> Stereoscopic 3D
+
+void LLViewerCamera::calcStereoValues()
+{
+	// Remember default mono camera position and POI.
+	mStereoCameraPosition = this->getOrigin();
+	mStereoPointOfInterest = mLastPointOfInterest;
+
+	// Retrieve latest stereo values..
+	mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
+	mScreenDistance = gSavedSettings.getF32("ScreenDistance");
+
+	// Delta position for left camera.
+	mStereoCameraDeltaLeft = mEyeSeparation / 2 * getLeftAxis();
+}
+
+void LLViewerCamera::moveToLeftEye()
+{
+	// Move both camera and POI so that left and rights views are parallel.
+	mCameraOffset = -mEyeSeparation / 2;
+	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
+	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
+	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+}
+
+void LLViewerCamera::moveToRightEye()
+{
+	// Move both camera and POI so that left and rights views are parallel.
+	mCameraOffset = mEyeSeparation / 2;
+	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
+	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
+	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+}
+
+void LLViewerCamera::moveToCenter()
+{
+	mCameraOffset = 0.f;
+	this->updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
+}
+
+// </CV:David>

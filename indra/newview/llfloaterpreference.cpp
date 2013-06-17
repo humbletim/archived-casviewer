@@ -504,6 +504,11 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.BackupDeselectAll",		boost::bind(&LLFloaterPreference::onClickDeselectAll, this));
 	// </FS:Zi>
 
+	// <CV:David>
+	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
+	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
+	// </CV:David>
+
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));	
 	gSavedSettings.getControl("NameTagShowFriends")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));	
 	gSavedSettings.getControl("UseDisplayNames")->getCommitSignal()->connect(boost::bind(&handleDisplayNamesOptionChanged,  _2));
@@ -3496,6 +3501,18 @@ void LLFloaterPreference::applySelection(LLScrollListCtrl* control,BOOL all)
 	}
 }
 // </FS:Zi>
+
+// <CV:David>
+void LLFloaterPreference::onClickResetEyeSeparation()
+{
+	gSavedSettings.setF32("EyeSeparation", 0.065f);
+}
+
+void LLFloaterPreference::onClickResetScreenDistance()
+{
+	gSavedSettings.setF32("ScreenDistance", 1.6f);
+}
+// </CV:David>
 
 // <FS:AW optional opensim support>
 #ifdef OPENSIM

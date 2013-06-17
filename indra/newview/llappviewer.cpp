@@ -3427,6 +3427,10 @@ bool LLAppViewer::initWindow()
 
 	// always start windowed
 	BOOL ignorePixelDepth = gSavedSettings.getBOOL("IgnorePixelDepth");
+	// <CV:David>
+	U32 output_type = gSavedSettings.getU32("OutputType");  // Gets passed through to LLWindowManager for window creation.
+	gOutputType = output_type;  // Global for rendering in llviewerdisplay's display().
+	// </CV:David>
 
 	LLViewerWindow::Params window_params;
 	window_params
@@ -3439,7 +3443,8 @@ bool LLAppViewer::initWindow()
 		.min_width(gSavedSettings.getU32("MinWindowWidth"))
 		.min_height(gSavedSettings.getU32("MinWindowHeight"))
 		.fullscreen(gSavedSettings.getBOOL("FullScreen"))
-		.ignore_pixel_depth(ignorePixelDepth);
+		.ignore_pixel_depth(ignorePixelDepth)
+		.output_type(output_type);
 
 	gViewerWindow = new LLViewerWindow(window_params);
 

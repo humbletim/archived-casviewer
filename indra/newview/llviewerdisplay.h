@@ -46,4 +46,7 @@ extern BOOL gWindowResized;
 extern F32 gSavedDrawDistance;
 extern F32 gLastDrawDistanceStep;
 
+// <CV:David> Normal or stereoscopic 3D output type.
+extern U32 gOutputType;
+
 #endif // LL_LLVIEWERDISPLAY_H

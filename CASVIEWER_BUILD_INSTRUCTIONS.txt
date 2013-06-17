@@ -13,6 +13,7 @@ Building and running Mac and Linux targets has not been fully updated. In partic
 - indra\linux_crash_logger
 - indra\linux_updater
 - indra\llcommon\llversionviewer.h.in
+- indra\llwindow\ Mac and Linux specific versions of the llwindow*.h and .cpp files
 - indra\mac_crash_logger
 - indra\mac_updater
 - indra\newview\English.Lproj
