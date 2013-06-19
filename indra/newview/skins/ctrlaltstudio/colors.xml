@@ -3,13 +3,15 @@
 
 	<!--  Colors in this scheme  -->
 	<!-- 
-   var. 1 = #8F5B3F = rgb(143,91,63) 0.56 0.36 0.25
-   var. 2 = #7D5540 = rgb(125,85,64) 0.49 0.33 0.25
-   var. 3 = #764227 = rgb(118,66,39)  0.46 .26 0.15
-   var. 4 = #A96641 = rgb(169,102,65) 0.66 0.40 0.25
-   var. 5 = #AB7B61 = rgb(171,123,97) 0.76 0.58 0.49
-
+   var. 1 = #8F5B3F = rgb(143,91,63)   0.56 0.36 0.25  ==>  #6246A0 = rgb(98,70,160)   0.384 0.275 0.627
+   var. 2 = #7D5540 = rgb(125,85,64)   0.49 0.33 0.25  ==>  #5E498E = rgb(94,73,142)   0.369 0.286 0.557
+   var. 3 = #764227 = rgb(118,66,39)   0.46 0.26 0.15  ==>  #4A2E89 = rgb(74,46,137)   0.290 0.180 0.537
+   var. 4 = #A96641 = rgb(169,102,65)  0.66 0.40 0.25  ==>  #6C4BB9 = rgb(108,75,185)  0.424 0.294 0.725
+   var. 5 = #AB7B61 = rgb(171,123,97)  0.67 0.48 0.38  ==>  #816CB1 = rgb(129,108,177) 0.506 0.424 0.694
+   var. 6 = #C2947D = rgb(194,148,125) 0.76 0.58 0.49  ==>  #9C89C8 = rgb(156,137,200) 0.612 0.537 0.784
+   var. 7 = #F2692B = rgb(242,105,43)  0.95 0.41 0.17  ==>  #7844F4 = rgb(120,68,244)  0.471 0.267 0.957
 	-->
+  
 	<color
 	 name="ltgrey123"
 	 value="0.33333  0.33333  0.33333 1.0" />
@@ -25,29 +27,24 @@
 	<color
 	 name="AccentColor"
 	 value="0.75 0.92 0.49 1.0" />
-  <!--
-  <color
-	 name="EmphasisColor"             
-	 value="0.56 0.36 0.25 1.0" />
-   -->
   <color
 	 name="EmphasisColor"
-	 value="0.99 0.36 0.25 1.0" />
+	 value="0.612 0.537 0.784 1.0" />
   <color
 	 name="SchemeLightest"
-	 value="0.76 0.58 0.49 1.0" />
+	 value="0.612 0.537 0.784 1.0" />
 	<color
 	 name="SchemeLightest_35"
-	 value="0.76 0.58 0.49 0.35" />
+	 value="0.612 0.537 0.784 0.35" />
 	<color 
 	 name="SchemeDark"
-	 value="0.49 0.33 0.25 1.0" />
+	 value="0.369 0.286 0.557 1.0" />
 	<color
 	 name="EmphasisColor_13"
-	 value="0.950 0.412 0.173 0.13" />
+	 value="0.471 0.267 0.957 0.13" />
 	<color
 	 name="EmphasisColor_35"
-	 value="0.950 0.412 0.173 0.35" />
+	 value="0.471 0.267 0.957 0.35" />
 	<color
 	 name="White"
 	 value="1 1 1 1" />
@@ -281,6 +278,12 @@
     <color
      name="NetMapYouOwnBelowWater"
      value="0 0.78 0.78 1" />
+    <color
+     name="PieMenuSelectedColor"
+     reference="EmphasisColor_35" />
+    <color
+     name="PieMenuSelectedColorOverride"
+     reference="EmphasisColor" />
     <color
      name="PropertyColorAuction"
      value="0.5 0 1 0.4" />

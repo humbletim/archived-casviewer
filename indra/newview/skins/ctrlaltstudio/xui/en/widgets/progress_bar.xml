@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<progress_bar image_bar="ProgressTrack"
+              image_fill="ProgressBar"
+              color_bar.red="0.525"
+              color_bar.green="0.361"
+              color_bar.blue="0.922"
+              color_bar.alpha="1" 
+              color_bg.red="0.3"
+              color_bg.green="0.3"
+              color_bg.blue="0.3"
+              color_bg.alpha="1"
+              />
