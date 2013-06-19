@@ -54,17 +54,17 @@
 
     <key>StartColor</key><!-- RGBA -->
         <array>
-            <real>0.666</real>
-            <real>0.228</real>
-            <real>0.13</real>
+            <real>0.85</real>
+            <real>0.85</real>
+            <real>0.85</real>
             <real>0.1</real>
         </array>
     <key>EndColor</key><!-- RGBA -->
         <array>
-            <real>0.766</real>
-            <real>0.328</real>
-            <real>0.23</real>
-            <real>0.9</real>
+            <real>1.0</real>
+            <real>1.0</real>
+            <real>1.0</real>
+            <real>0.95</real>
         </array>
 
     <key>StartScale</key>

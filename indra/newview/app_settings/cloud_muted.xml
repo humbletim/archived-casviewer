@@ -54,16 +54,16 @@
 
     <key>StartColor</key><!-- RGBA -->
         <array>
-            <real>0.13</real>
-            <real>0.78</real>
-            <real>0.13</real>
+            <real>0.9</real>
+            <real>0.9</real>
+            <real>0.9</real>
             <real>0.3</real>
         </array>
     <key>EndColor</key><!-- RGBA -->
         <array>
-            <real>0.13</real>
-            <real>0.39</real>
-            <real>0.13</real>
+            <real>0.4</real>
+            <real>0.4</real>
+            <real>0.4</real>
             <real>0.1</real>
         </array>
 
