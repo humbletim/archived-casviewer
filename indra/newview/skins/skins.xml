@@ -30,6 +30,22 @@
 
     <map>
       <key>name</key>
+      <string>CtrlAltStudio</string>
+      <key>folder</key>
+      <string>ctrlaltstudio</string>
+      <key>themes</key>
+      <array>
+        <map>
+          <key>name</key>
+          <string>Grey</string>
+          <key>folder</key>
+          <string/>
+        </map>
+      </array>
+    </map>
+
+    <map>
+      <key>name</key>
       <string>Firestorm</string>
       <key>folder</key>
       <string>firestorm</string>
