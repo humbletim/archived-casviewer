@@ -256,6 +256,7 @@ static LLFastTimer::DeclareTimer FTM_HUD_UPDATE("HUD Update");
 static LLFastTimer::DeclareTimer FTM_DISPLAY_UPDATE_GEOM("Update Geom");
 static LLFastTimer::DeclareTimer FTM_TEXTURE_UNBIND("Texture Unbind");
 static LLFastTimer::DeclareTimer FTM_TELEPORT_DISPLAY("Teleport Display");
+static LLFastTimer::DeclareTimer FTM_SWAP("Swap");
 
 // Paint the display!
 void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
@@ -708,6 +709,15 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			render_ui();
 		}
 
+		// <CD:David>
+		// Moved buffer swapping out of render_ui().
+		if (gDisplaySwapBuffers)
+		{
+			LLFastTimer t(FTM_SWAP);
+			gViewerWindow->getWindow()->swapBuffers();
+		}
+		gDisplaySwapBuffers = TRUE;
+		// </CV:David>
 
 		LLSpatialGroup::sNoDelete = FALSE;
 		gPipeline.clearReferences();
@@ -1349,8 +1359,6 @@ BOOL setup_hud_matrices(const LLRect& screen_region)
 	return TRUE;
 }
 
-static LLFastTimer::DeclareTimer FTM_SWAP("Swap");
-
 void render_ui(F32 zoom_factor, int subfield)
 {
 	LLGLState::checkStates();
@@ -1418,13 +1426,6 @@ void render_ui(F32 zoom_factor, int subfield)
 		glh_set_current_modelview(saved_view);
 		gGL.popMatrix();
 	}
-
-	if (gDisplaySwapBuffers)
-	{
-		LLFastTimer t(FTM_SWAP);
-		gViewerWindow->getWindow()->swapBuffers();
-	}
-	gDisplaySwapBuffers = TRUE;
 }
 
 void renderCoordinateAxes()
