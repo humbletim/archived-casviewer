@@ -675,6 +675,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		if ((gOutputType == 0) || output_for_snapshot)
 		{
 			render_frame(OUTPUT_NORMAL);
+
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
+			if (!gSnapshot)
+			{
+				render_ui();
+			}
 		}
 		else // gOutputType == 1
 		{
@@ -685,31 +691,18 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 			LLViewerCamera::getInstance()->moveToLeftEye();
 			render_frame(OUTPUT_STEREO_LEFT);
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
+			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
 
 			// Right eye ...
 			glDrawBuffer(GL_BACK_RIGHT);
 			glClear( GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 			LLViewerCamera::getInstance()->moveToRightEye();
 			render_frame(OUTPUT_STEREO_RIGHT);
-
-			// For subsequent UI ...
-			LLViewerCamera::getInstance()->moveToCenter();	// *TODO: Remove once incorporate 3D UI into render_frame().
-			stop_glerror();
-			display_update_camera();						// *TODO: Ditto
-			stop_glerror();
-			glDrawBuffer(GL_BACK);
-		}
-		// </CV:David>
-
-
-		LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
-		if (!gSnapshot)
-		{
-			LLFastTimer t(FTM_RENDER_UI);
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
 		}
 
-		// <CD:David>
 		// Moved buffer swapping out of render_ui().
 		if (gDisplaySwapBuffers)
 		{
