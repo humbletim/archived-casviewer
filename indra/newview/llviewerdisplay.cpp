@@ -701,6 +701,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			render_frame(OUTPUT_STEREO_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
+
+			glDrawBuffer(GL_BACK);  // Needed so that snapshot on exit doesn't include UI.
 		}
 
 		// Moved buffer swapping out of render_ui().
