@@ -773,7 +773,7 @@ class DarwinManifest(ViewerManifest):
 
     def construct(self):
         # copy over the build result (this is a no-op if run within the xcode script)
-        self.path(self.args['configuration'] + "/CASviewer.app", dst="")
+        self.path(self.args['configuration'] + "/CtrlAltStudio Viewer.app", dst="")
 
         if self.prefix(src="", dst="Contents"):  # everything goes in Contents
             self.path("Info-CASviewer.plist", dst="Info.plist")
@@ -796,7 +796,7 @@ class DarwinManifest(ViewerManifest):
 
                 self.path("licenses-mac.txt", dst="licenses.txt")
                 self.path("featuretable_mac.txt")
-                self.path("CASviewer.nib")
+                self.path("CtrlAltStudioViewer.nib")
                 self.path("VivoxAUP.txt")
 
                 icon_path = self.icon_path()
@@ -804,7 +804,7 @@ class DarwinManifest(ViewerManifest):
                     self.path("casviewer_icon.icns")
                     self.end_prefix(icon_path)
 
-                self.path("CASviewer.nib")
+                self.path("CtrlAltStudioViewer.nib")
                 
                 # Translations
                 self.path("English.lproj")
@@ -853,7 +853,7 @@ class DarwinManifest(ViewerManifest):
                 for libfile in (
                                 "libcollada14dom.dylib",
                                 "libexpat.1.5.2.dylib",
-                                "libexception_handler.dylib",
+                                #"libexception_handler.dylib",
                                 "libGLOD.dylib",
                                 ):
                     dylibs += path_optional(os.path.join(libdir, libfile), libfile)
@@ -917,7 +917,7 @@ class DarwinManifest(ViewerManifest):
         if ("package" in self.args['actions'] or 
             "unpacked" in self.args['actions']):
             self.run_command('strip -S %(viewer_binary)r' %
-                             { 'viewer_binary' : self.dst_path_of('Contents/MacOS/CASviewer')})
+                             { 'viewer_binary' : self.dst_path_of('Contents/MacOS/CtrlAltStudio Viewer')})
 
 
     def copy_finish(self):
@@ -1010,7 +1010,7 @@ class DarwinManifest(ViewerManifest):
             # Copy everything in to the mounted .dmg
 
             if self.default_channel() and not self.default_grid():
-                app_name = "CASviewer " + self.args['grid']
+                app_name = "CtrlAltStudio Viewer " + self.args['grid']
             else:
                 app_name = channel_standin.strip()
 

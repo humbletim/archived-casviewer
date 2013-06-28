@@ -126,7 +126,7 @@ protected:
 		const std::string& title, const std::string& name, int x, int y, int width, int height, U32 flags,
 		BOOL fullscreen, BOOL clearBg, BOOL disable_vsync,
 		BOOL ignore_pixel_depth,
-		U32 fsaa_samples);
+		U32 fsaa_samples, U32 output_type);
 	~LLWindowMacOSX();
 
 	void	initCursors();

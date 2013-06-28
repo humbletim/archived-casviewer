@@ -214,8 +214,9 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 							   BOOL fullscreen, BOOL clearBg,
 							   BOOL disable_vsync,
 							   BOOL ignore_pixel_depth,
-							   U32 fsaa_samples)
-	: LLWindow(NULL, fullscreen, flags)
+							   U32 fsaa_samples,
+							   U32 output_type)
+	: LLWindow(NULL, fullscreen, flags, output_type)
 {
 	// *HACK: During window construction we get lots of OS events for window
 	// reshape, activate, etc. that the viewer isn't ready to handle.

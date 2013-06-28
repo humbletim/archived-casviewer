@@ -221,7 +221,7 @@ elseif(DARWIN)
         libminizip.a
         libndofdev.dylib
         libhunspell-1.3.0.dylib
-        libexception_handler.dylib
+        #libexception_handler.dylib
         libcollada14dom.dylib
         #libgrowl.dylib # *TODO - test/fix/get mac growl working
        )
