@@ -46,7 +46,7 @@ indra/newview/res/ll_icon.*
 indra/newview/res-sdl/ll_icon.*
 indra/newview/vivox-runtime
 indra/newview/English.lproj/InfoPlist.strings
-indra/newview/Info-Firestorm.plist
+indra/newview/Info-CASviewer.plist
 indra/server-linux-*
 indra/newview/res/casviewer_icon.BMP
 indra/newview/res/casviewer_icon.ico

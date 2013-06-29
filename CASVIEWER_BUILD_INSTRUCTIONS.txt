@@ -8,17 +8,15 @@ For example, to build your own private version without installer:
 autobuild configure -c ReleaseFS_open -- -DPACKAGE:BOOL=FALSE
 autobuild build -c ReleaseFS_open --no-configure
 
-Building and running Mac and Linux targets has not been fully updated. In particular, while much of the build scripts have been updated, certain Mac- and Linux-specific files have not been renamed or updated, including:
-- debian
-- indra\linux_crash_logger
-- indra\linux_updater
+Building and running on Mac works. However, the following Mac-specific files have not been updated:
 - indra\llcommon\llversionviewer.h.in
-- indra\llwindow\ Mac and Linux specific versions of the llwindow*.h and .cpp files
 - indra\mac_crash_logger
 - indra\mac_updater
 - indra\newview\English.Lproj
-- indra\newview\Firestorm.nib
-- indra\newview\Info-Firestorm.plist.in
-- indra\newview\Info-SecondLife.plist.in
-- indra\newview\installers\darwin
+
+Building and running on Linux has not been fully updated. In particular, while much of the build scripts have been updated, certain Linux-specific files have not been renamed or updated, including:
+- debian
+- indra\linux_crash_logger
+- indra\linux_updater
+- indra\llwindow\ Linux specific versions of the llwindow*.h and .cpp files
 - indra\newview\linux_tools

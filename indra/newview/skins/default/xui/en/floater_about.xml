@@ -348,6 +348,31 @@ The CtrlAltStudio Viewer developers are:
        word_wrap="true">
         David Rowe
       </text_editor>
+      <text
+          follows="top|left"
+          height="10"
+          layout="topleft"
+          left="5"
+          name="contrib_intro"
+          top_pad="10"
+          width="465"
+          wrap="true">
+        Additional code generously contributed by:
+      </text>
+      <text_editor
+       enabled="false"
+       follows="top|left"
+       height="178"
+       bg_readonly_color="Transparent"
+       left="5"
+       text_color="LtGray"
+       max_length="65536"
+       name="contrib_names"
+       top_pad="10"
+       width="465"
+       word_wrap="true">
+        Cinder Roxley
+      </text_editor>
 <!--
       <text
           follows="top|left"
@@ -372,7 +397,7 @@ The CtrlAltStudio Viewer developers are:
        top_pad="10"
        width="465"
        word_wrap="true">
-        Your name here?
+        ...
       </text_editor>
 -->
     </panel>
