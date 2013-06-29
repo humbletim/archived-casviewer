@@ -1467,7 +1467,8 @@ To display in stereoscopic 3D on Windows using a GeForce graphics card with NVID
         - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
         - Your monitor set to 120Hz.
         - Full Screen mode turned on in the Graphics > General tab.
-        - Basic Shaders turned off in the Graphics > General tab.
+        - If Basic Shaders is turned on in the Graphics > General tab you also need 
+          Advanced Lighting Model turned on.
 
 Other computer configurations will likely require similar.
       </text>
