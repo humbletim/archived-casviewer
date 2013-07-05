@@ -43,9 +43,11 @@
 #include "llinventoryfunctions.h"
 #include "llmeshrepository.h"
 #include "llmultigesture.h"
+#include "llnotecard.h"
 #include "llsdserialize.h"
 #include "llsdutil_math.h"
 #include "llsdutil.h"
+#include "lltrans.h"
 #include "llversioninfo.h"
 #include "llvfile.h"
 #include "llviewerinventory.h"
@@ -55,6 +57,7 @@
 #include "llvovolume.h"
 #include "llviewerpartsource.h"
 #include "llworld.h"
+#include "fscommon.h"
 #include <boost/algorithm/string_regex.hpp>
 
 const F32 MAX_TEXTURE_WAIT_TIME = 30.0f;
@@ -196,8 +199,10 @@ void FSExport::exportSelection()
 	mRequestedTexture.clear();
 
 	mExported = false;
+	mAborted = false;
 	mInventoryRequests.clear();
 	mAssetRequests.clear();
+	mTextureChecked.clear();
 
 	mFile["format_version"] = 1;
 	mFile["client"] = LLAppViewer::instance()->getSecondLifeTitle() + LLVersionInfo::getChannel();
@@ -209,7 +214,7 @@ void FSExport::exportSelection()
 		mFile["linkset"].append(getLinkSet((*iter)));
 	}
 
-	if (mExported)
+	if (mExported && !mAborted)
 	{
 		mWaitTimer.start();
 		mLastRequest = mInventoryRequests.size();
@@ -263,7 +268,7 @@ void FSExport::addPrim(LLViewerObject* object, bool root)
 	LLSelectNode* node = LLSelectMgr::getInstance()->getSelection()->getFirstNode(&func);
 	if (node)
 	{
-		if ((LLGridManager::getInstance()->isInSLMain() || LLGridManager::getInstance()->isInSLBeta())
+		if ((LLGridManager::getInstance()->isInSecondLife())
 			&& object->permYouOwner()
 			&& (gAgentID == node->mPermissions->getCreator() || megaPrimCheck(node->mPermissions->getCreator(), object)))
 		{
@@ -336,18 +341,12 @@ void FSExport::addPrim(LLViewerObject* object, bool root)
 				{
 					if(volobjp->isMesh())
 					{
-						LLSD mesh_header = gMeshRepo.getMeshHeader(sculpt_params->getSculptTexture());
-						if (mesh_header["creator"].asUUID() == gAgentID)
+						if (!mAborted)
 						{
-							LL_DEBUGS("export") << "Mesh creater check passed." << LL_ENDL;
-							prim["sculpt"] = sculpt_params->asLLSD();
+							reportToNearbyChat(LLTrans::getString("export_fail_no_mesh"));
+							mAborted = true;
 						}
-						else
-						{
-							LL_DEBUGS("export") << "Using default mesh skulpt." << LL_ENDL;
-							LLSculptParams default_sculpt;
-							prim["sculpt"] = default_sculpt.asLLSD();
-						}
+						return;
 					}
 					else
 					{
@@ -514,7 +513,7 @@ bool FSExport::exportTexture(const LLUUID& texture_id)
 	std::string name;
 	std::string description;
 	
-	if (LLGridManager::getInstance()->isInSLMain() || LLGridManager::getInstance()->isInSLBeta())
+	if (LLGridManager::getInstance()->isInSecondLife())
 	{
 		if (imagep->mComment.find("a") != imagep->mComment.end())
 		{
@@ -686,7 +685,7 @@ bool FSExport::assetCheck(LLUUID asset_id, std::string& name, std::string& descr
 					exportable = true;
 				}
 #endif
-				if ((LLGridManager::getInstance()->isInSLMain() || LLGridManager::getInstance()->isInSLBeta()) && (perms.getCreator() == gAgentID))
+				if (LLGridManager::getInstance()->isInSecondLife() && (perms.getCreator() == gAgentID))
 				{
 					exportable = true;
 				}
@@ -723,7 +722,7 @@ void FSExport::inventoryChanged(LLViewerObject* object, LLInventoryObject::objec
 			exportable = true;
 		}
 #endif
-		if ((LLGridManager::getInstance()->isInSLMain() || LLGridManager::getInstance()->isInSLBeta()) && (perms.getCreator() == gAgentID))
+		if (LLGridManager::getInstance()->isInSecondLife() && (perms.getCreator() == gAgentID))
 		{
 			exportable = true;
 		}
@@ -734,11 +733,37 @@ void FSExport::inventoryChanged(LLViewerObject* object, LLInventoryObject::objec
 			continue;
 		}
 
-		if (item->getType() != LLAssetType::AT_NONE && item->getType() != LLAssetType::AT_OBJECT)
+		if (item->getType() == LLAssetType::AT_NONE || item->getType() == LLAssetType::AT_OBJECT)
 		{
-			prim["content"].append(item->getUUID());
-			mFile["inventory"][item->getUUID().asString()] = ll_create_sd_from_inventory_item(item);
+			// currentelly not exportable
+			LL_DEBUGS("export") << "Skipping " << LLAssetType::lookup(item->getType()) << " item " << item->getName() << LL_ENDL;
+			continue;
+		}
 
+		prim["content"].append(item->getUUID());
+		mFile["inventory"][item->getUUID().asString()] = ll_create_sd_from_inventory_item(item);
+		
+		if (item->getAssetUUID().isNull() && item->getType() == LLAssetType::AT_NOTECARD)
+		{
+			// FIRE-9655
+			// Blank Notecard item can have NULL asset ID.
+			// Generate a new UUID and save as an empty asset.
+			LLUUID asset_uuid = LLUUID::generateNewID();
+			mFile["inventory"][item->getUUID().asString()]["asset_id"] = asset_uuid;
+			
+			mFile["asset"][asset_uuid.asString()]["name"] = item->getName();
+			mFile["asset"][asset_uuid.asString()]["description"] = item->getDescription();
+			mFile["asset"][asset_uuid.asString()]["type"] = LLAssetType::lookup(item->getType());
+
+			LLNotecard nc(255); //don't need to allocate default size of 65536
+			std::stringstream out_stream;
+			nc.exportStream(out_stream);
+			std::string out_string = out_stream.str();
+			std::vector<U8> buffer(out_string.begin(), out_string.end());
+			mFile["asset"][asset_uuid.asString()]["data"] = buffer;
+		}
+		else
+		{
 			LL_DEBUGS("export") << "Requesting asset " << item->getAssetUUID() << " for item " << item->getUUID() << LL_ENDL;
 			mAssetRequests.push_back(item->getUUID());
 			FSAssetResourceData* data = new FSAssetResourceData;

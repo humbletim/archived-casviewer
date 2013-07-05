@@ -140,6 +140,8 @@
 #include "llwldaycycle.h"
 #include "llwlparammanager.h"
 // </FS:Zi>
+#include "growlmanager.h"
+#include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
 const F32 MIN_USER_FAR_CLIP = 64.f;
@@ -251,21 +253,6 @@ bool callback_clear_cache(const LLSD& notification, const LLSD& response)
 
 	return false;
 }
-
-// <FS:LO> FIRE-7050 - Add a warning to the Growl preference option because of FIRE-6868
-#ifdef LL_WINDOWS
-bool callback_growl_not_installed(const LLSD& notification, const LLSD& response)
-{
-	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
-	if ( option == 1 ) // NO
-	{
-		gSavedSettings.setBOOL("FSEnableGrowl", FALSE);
-	}
-
-	return false;
-}
-#endif
-// </FS:LO>
 
 bool callback_clear_browser_cache(const LLSD& notification, const LLSD& response)
 {
@@ -509,8 +496,11 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
 	// </CV:David>
 
-	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));	
-	gSavedSettings.getControl("NameTagShowFriends")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));	
+	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
+	gSavedSettings.getControl("NameTagShowFriends")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
+	// <FS:CR>
+	gSavedSettings.getControl("FSColorUsername")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
+	// </FS:CR>
 	gSavedSettings.getControl("UseDisplayNames")->getCommitSignal()->connect(boost::bind(&handleDisplayNamesOptionChanged,  _2));
 // <FS:CR> FIRE-6659: Legacy "Resident" name toggle
 	gSavedSettings.getControl("DontTrimLegacyNames")->getCommitSignal()->connect(boost::bind(&handleLegacyTrimOptionChanged,  _2));
@@ -673,6 +663,10 @@ BOOL LLFloaterPreference::postBuild()
 	getChild<LLLineEditor>("settings_backup_path")->setValue(dir_name);
 	// </FS:Zi>
 
+	// <FS:Kadah> Load the list of font settings
+	populateFontSelectionCombo();
+	// </FS:Kadah>
+    
 	return TRUE;
 }
 
@@ -852,8 +846,13 @@ void LLFloaterPreference::cancel()
 	// hide translation settings floater
 	LLFloaterReg::hideInstance("prefs_translation");
 	
-	// hide translation settings floater
+	// hide autoreplace settings floater
 	LLFloaterReg::hideInstance("prefs_autoreplace");
+	
+// <FS:CR> STORM-1888
+	// hide spellchecker settings floater
+	LLFloaterReg::hideInstance("prefs_spellchecker");
+// </FS:CR>
 	
 	// cancel hardware menu
 	LLFloaterHardwareSettings* hardware_settings = LLFloaterReg::getTypedInstance<LLFloaterHardwareSettings>("prefs_hardware_settings");
@@ -957,6 +956,15 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 	
 	getChildView("plain_text_chat_history")->setEnabled(TRUE);
 	getChild<LLUICtrl>("plain_text_chat_history")->setValue(gSavedSettings.getBOOL("PlainTextChatHistory"));
+	
+// <FS:CR> Show/hide Client Tag panel
+	bool show_client_tags = false;
+#ifdef OPENSIM
+	//Disabled for now because client tags don't currently work <FS:CR>
+	//show_client_tags = LLGridManager::getInstance()->isInOpenSim();
+#endif // OPENSIM
+	getChild<LLPanel>("client_tags_panel")->setVisible(show_client_tags);
+// </FS:CR>
 	
 	// Make sure the current state of prefs are saved away when
 	// when the floater is opened.  That will make cancel do its
@@ -2322,14 +2330,16 @@ BOOL LLPanelPreference::postBuild()
 	{
 		getChildView("OnlineOfflinetoNearbyChatHistory")->setEnabled(getChild<LLUICtrl>("OnlineOfflinetoNearbyChat")->getValue().asBoolean());
 	}
-	// <FS:LO> FIRE-7050 - Add a warning to the Growl preference option because of FIRE-6868
-#ifdef LL_WINDOWS
+
+	// <FS:Ansariel> Only enable Growl checkboxes if Growl is usable
 	if (hasChild("notify_growl_checkbox", TRUE))
 	{
-		getChild<LLCheckBoxCtrl>("notify_growl_checkbox")->setCommitCallback(boost::bind(&showGrowlNotInstalledWarning, _1, _2));
+		getChild<LLCheckBoxCtrl>("notify_growl_checkbox")->setCommitCallback(boost::bind(&LLPanelPreference::onEnableGrowlChanged, this));
+		getChild<LLCheckBoxCtrl>("notify_growl_checkbox")->setEnabled(GrowlManager::isUsable());
+		getChild<LLCheckBoxCtrl>("notify_growl_always_checkbox")->setEnabled(gSavedSettings.getBOOL("FSEnableGrowl") && GrowlManager::isUsable());
 	}
-#endif
-	// </FS:LO>
+	// </FS:Ansariel>
+
 #ifdef OPENSIM // <FS:AW optional opensim support/>
 // <FS:AW Disable LSL bridge on opensim>
 	if(LLGridManager::getInstance()->isInOpenSim() && !LLGridManager::getInstance()->isInAuroraSim() && hasChild("UseLSLBridge", TRUE))
@@ -2424,17 +2434,12 @@ void LLPanelPreference::showFavoritesOnLoginWarning(LLUICtrl* checkbox, const LL
 	}
 }
 
-// <FS:LO> FIRE-7050 - Add a warning to the Growl preference option because of FIRE-6868
-#ifdef LL_WINDOWS
-void LLPanelPreference::showGrowlNotInstalledWarning(LLUICtrl* checkbox, const LLSD& value)
+// <FS:Ansariel> Only enable Growl checkboxes if Growl is usable
+void LLPanelPreference::onEnableGrowlChanged()
 {
-	if (checkbox && checkbox->getValue())
-	{
-		LLNotificationsUtil::add("GrowlNotInstalled",LLSD(), LLSD(), callback_growl_not_installed);
-	}
+	getChild<LLCheckBoxCtrl>("notify_growl_always_checkbox")->setEnabled(gSavedSettings.getBOOL("FSEnableGrowl") && GrowlManager::isUsable());
 }
-#endif
-// </FS:LO>
+// </FS:Ansariel>
 
 void LLPanelPreference::cancel()
 {
@@ -3514,6 +3519,52 @@ void LLFloaterPreference::onClickResetScreenDistance()
 }
 // </CV:David>
 
+// <FS:Kadah>
+void LLFloaterPreference::loadFontPresetsFromDir(const std::string& dir, LLComboBox* font_selection_combo)
+{
+	LLDirIterator dir_iter(dir, "*.xml");
+	while (1)
+	{
+		std::string file;
+		if (!dir_iter.next(file))
+		{
+			break; // no more files
+		}
+			
+		//hack to deal with "fonts.xml" 
+		if (file == "fonts.xml")
+		{
+			font_selection_combo->add("Deja Vu", file);
+		}
+		//hack to get "fonts_[name].xml" to "Name"
+		else
+		{
+			std::string fontpresetname = file.substr(6, file.length()-10);
+			LLStringUtil::replaceChar(fontpresetname, '_', ' ');
+			fontpresetname[0] = LLStringOps::toUpper(fontpresetname[0]);
+                
+			font_selection_combo->add(fontpresetname, file);
+		}
+	}
+}
+
+void LLFloaterPreference::populateFontSelectionCombo()
+{
+	LLComboBox* font_selection_combo = getChild<LLComboBox>("Fontsettingsfile");
+	if(font_selection_combo)
+	{
+		const std::string fontDir(gDirUtilp->getExpandedFilename(LL_PATH_FONTS, "", ""));
+		const std::string userfontDir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS , "fonts", ""));
+
+		// Load fonts.xmls from the install dir first then user_settings
+		loadFontPresetsFromDir(fontDir, font_selection_combo);
+		loadFontPresetsFromDir(userfontDir, font_selection_combo);
+        
+		font_selection_combo->setValue(gSavedSettings.getString("FSFontSettingsFile"));
+	}
+}
+// </FS:Kadah>
+
 // <FS:AW optional opensim support>
 #ifdef OPENSIM
 static LLRegisterPanelClassWrapper<LLPanelPreferenceOpensim> t_pref_opensim("panel_preference_opensim");
@@ -3727,3 +3778,4 @@ void LLPanelPreferenceOpensim::onClickPickDebugSearchURL()
 
 #endif // OPENSIM
 // <FS:AW optional opensim support>
+

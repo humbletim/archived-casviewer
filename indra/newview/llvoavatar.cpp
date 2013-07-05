@@ -120,16 +120,6 @@ extern F32 ANIM_SPEED_MIN;
 
 using namespace LLAvatarAppearanceDefines;
 
-// for macs
-#if LL_DARWIN
-size_t strnlen(const char *s, size_t n)
-{
-  const char *p = (const char *)memchr(s, 0, n);
-  return(p ? p-s : n);
-}
-#endif
-
-
 //-----------------------------------------------------------------------------
 // Global constants
 //-----------------------------------------------------------------------------
@@ -1959,8 +1949,12 @@ void LLVOAvatar::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
 		return;
 	}	
 
+	// <FS:CR> Use LLCachedControl
+	static LLCachedControl<bool> disable_all_render_types(gSavedSettings, "DisableAllRenderTypes");
 	if (!(gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_AVATAR))
-		&& !(gSavedSettings.getBOOL("DisableAllRenderTypes")))
+		//&& !(gSavedSettings.getBOOL("DisableAllRenderTypes")))
+		&& !(disable_all_render_types))
+	// </FS:CR>
 	{
 		return;
 	}
@@ -2705,22 +2699,21 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 			debugAvatarRezTime("AvatarRezLeftAppearanceNotification","left appearance mode");
 		}
 	}
-	LLColor4 name_tag_color = getNameTagColor(is_friend);
+	// <FS:CR> Colorize name tags
+	//LLColor4 name_tag_color = getNameTagColor(is_friend);
+	LLColor4 name_tag_color = getNameTagColor();
+	// </FS:CR>
 	LLColor4 distance_color = name_tag_color;
 	std::string distance_string;
-
-	static LLCachedControl<bool> fsShowOwnTagColor(gSavedSettings, "FSShowOwnTagColor");
-	if (isSelf() && fsShowOwnTagColor)
-	{
-		static LLCachedControl<LLColor4> firestormTagColor(gSavedPerAccountSettings, "FirestormTagColor");
-		name_tag_color = firestormTagColor;
-	}
 
 	// Wolfspirit: If we don't need to display a friend,
 	// if we aren't self, if we use colored Clienttags and if we have a color
 	// then use that color as name_tag_color
 	static LLUICachedControl<bool> show_friends("NameTagShowFriends");
-	if(mClientTagData.has("color") && !(show_friends && (is_friend || LGGContactSets::getInstance()->hasFriendColorThatShouldShow(getID(), LGG_CS_TAG))) && gSavedSettings.getU32("FSColorClienttags") > 0 && !this->isSelf())
+	static LLUICachedControl<U32> color_client_tags("FSColorClienttags");
+	if (mClientTagData.has("color") &&
+		!(show_friends && (is_friend || LGGContactSets::getInstance()->hasFriendColorThatShouldShow(getID(), LGG_CS_TAG))) &&
+		color_client_tags > 0 && !this->isSelf())
 	{
 		name_tag_color = mClientTagData["color"]; 
 	}
@@ -2787,10 +2780,17 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 	{
 
 		//WS: If we got a uuid and if we know if it's id_based or not, ask FSDATA for the other tagdata, before we display it.
-		if(mClientTagData.has("uuid") && mClientTagData.has("id_based")){			
+		if (mClientTagData.has("uuid") && mClientTagData.has("id_based"))
+		{
 			LLColor4 color;
-			if(mClientTagData.has("tex_color")) color.setValue(mClientTagData["tex_color"]);
-			else color = LLColor4::black;
+			if (mClientTagData.has("tex_color"))
+			{
+				color.setValue(mClientTagData["tex_color"]);
+			}
+			else
+			{
+				color = LLColor4::black;
+			}
 			mClientTagData = FSData::getInstance()->resolveClientTag(LLUUID(mClientTagData["uuid"].asString()), mClientTagData["id_based"].asBoolean(),color);
 		}
 
@@ -2844,10 +2844,8 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 
 		static LLUICachedControl<bool> show_display_names("NameTagShowDisplayNames");
 		static LLUICachedControl<bool> show_usernames("NameTagShowUsernames");
+		static LLUICachedControl<bool> colorize_username("FSColorUsername");	// <FS:CR> FIRE-1061
 		static LLUICachedControl<bool> show_legacynames("FSNameTagShowLegacyUsernames");
-		static LLUICachedControl<bool> FScolor_username("FSColorUsername");
-		static LLUICachedControl<LLColor4> FScolor_username_color("FSColorUsernameColor");
-		
 
 		if (LLAvatarNameCache::useDisplayNames())
 		{
@@ -2877,16 +2875,19 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 					}
 					
 				}
-					// Suppress SLID display if display name matches exactly (ugh)
-					if (show_usernames && !av_name.mIsDisplayNameDefault)
+				
+				// Suppress SLID display if display name matches exactly (ugh)
+				if (show_usernames && !av_name.mIsDisplayNameDefault)
 				{
 					// *HACK: Desaturate the color
+					// <FS:CR> FIRE-1061
 					LLColor4 username_color;
+					if (colorize_username)
+						username_color = LLUIColorTable::instance().getColor("NameTagUsername", LLColor4::white);
+					else
+						username_color = name_tag_color * 0.83f;
+					// </FS:CR>
 
-
-					// Wolfspirit: If we want to display the username as orange (like Phoenix).
-					if(!FScolor_username) username_color = name_tag_color * 0.83f;
-					else username_color = FScolor_username_color;
 					// Show user name as legacy name if selected -- TS
 					std::string username = av_name.mUsername;
 					if (show_legacynames)
@@ -2962,11 +2963,16 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 		mNameText->clearString();
 
 		LLColor4 new_chat = LLUIColorTable::instance().getColor( isSelf() ? "UserChatColor" : "AgentChatColor" );
-				//color based on contact sets prefs
-				if(LGGContactSets::getInstance()->hasFriendColorThatShouldShow(getID(), LGG_CS_CHAT))
-				{
-					new_chat = LGGContactSets::getInstance()->getFriendColor(getID());
-				}
+		
+		// <FS:CR> Colorize tags
+		new_chat = LGGContactSets::getInstance()->colorize(getID(), new_chat, LGG_CS_CHAT);
+		
+		//color based on contact sets prefs
+		if(LGGContactSets::getInstance()->hasFriendColorThatShouldShow(getID(), LGG_CS_CHAT))
+		{
+			new_chat = LGGContactSets::getInstance()->getFriendColor(getID());
+		}
+		// </FS:CR>
 		
 		if (mVisibleChat)
 		{
@@ -3132,18 +3138,16 @@ void LLVOAvatar::idleUpdateNameTagAlpha(BOOL new_name, F32 alpha)
 	}
 }
 
-LLColor4 LLVOAvatar::getNameTagColor(bool is_friend)
+// <FS:CR> Colorize tags
+//LLColor4 LLVOAvatar::getNameTagColor(bool is_friend)
+LLColor4 LLVOAvatar::getNameTagColor()
+// </FS:CR>
 {
-	static LLUICachedControl<bool> show_friends("NameTagShowFriends");
 	static LLUICachedControl<bool> use_old_color("FSUseV1TagColor");
 	
 	// ...not using display names
-	const char* color_name= "NameTagLegacy";
-	if (show_friends && is_friend)
-	{
-		color_name = "NameTagFriend";
-	}
-	else if (LLAvatarNameCache::useDisplayNames())
+	LLColor4 color = LLUIColorTable::getInstance()->getColor("NameTagLegacy");
+	if (LLAvatarNameCache::useDisplayNames())
 	{
 		// ...color based on whether username "matches" a computed display
 		// name
@@ -3151,26 +3155,24 @@ LLColor4 LLVOAvatar::getNameTagColor(bool is_friend)
 		if (LLAvatarNameCache::get(getID(), &av_name)
 			&& av_name.mIsDisplayNameDefault)
 		{
-			color_name = "NameTagMatch";
+			color = LLUIColorTable::getInstance()->getColor("NameTagMatch");
 		}
 		else
 		{
-			color_name = "NameTagMismatch";
+			color = LLUIColorTable::getInstance()->getColor("NameTagMismatch");
 		}
 	}
 	
+	// <FS:CR> FIRE-1061 - Color friends, lindens, muted, etc
+	color = LGGContactSets::getInstance()->colorize(getID(), color, LGG_CS_TAG);
+	// </FS:CR>
+	
 	if (LGGContactSets::getInstance()->hasFriendColorThatShouldShow(getID(), LGG_CS_TAG))
 	{
-		return LGGContactSets::getInstance()->getFriendColor(getID());
+		color = LGGContactSets::getInstance()->getFriendColor(getID());
 	}
 
-	//Wolfspirit: If we don't display a friend, then use "NameTagV1"
-
-	if(use_old_color && !(show_friends && is_friend)){
-		return LLUIColorTable::getInstance()->getColor("NameTagV1");
-	}
-
-	return LLUIColorTable::getInstance()->getColor( color_name );
+	return color;
 }
 
 void LLVOAvatar::idleUpdateBelowWater()
@@ -3219,7 +3221,11 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 	// clear debug text
 	mDebugText.clear();
 
-	if (gSavedSettings.getBOOL("DebugAvatarAppearanceMessage"))
+	// <FS:CR> Use LLCachedControl
+	//if (gSavedSettings.getBOOL("DebugAvatarAppearanceMessage"))
+	static LLCachedControl<bool> debug_avatar_appearance_message(gSavedSettings, "DebugAvatarAppearanceMessage");
+	if (debug_avatar_appearance_message)
+	// </FS:CR>
 	{
 		S32 central_bake_version = -1;
 		if (getRegion())
@@ -3242,7 +3248,11 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 		{
 			debug_line += llformat(" - cof: %d req: %d rcv:%d",
 								   curr_cof_version, last_request_cof_version, last_received_cof_version);
-			if (gSavedSettings.getBOOL("DebugForceAppearanceRequestFailure"))
+			// <FS:CR> Use LLCachedControl
+			//if (gSavedSettings.getBOOL("DebugForceAppearanceRequestFailure"))
+			static LLCachedControl<bool> debug_force_appearance_request_failure(gSavedSettings, "DebugForceAppearanceRequestFailure");
+			if (debug_force_appearance_request_failure)
+			// </FS:CR>
 			{
 				debug_line += " FORCING ERRS";
 			}
@@ -3253,7 +3263,11 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 		}
 		addDebugText(debug_line);
 	}
-	if (gSavedSettings.getBOOL("DebugAvatarCompositeBaked"))
+	// <FS:CR> Use LLCachedControl
+	static LLCachedControl<bool> debug_avatar_composite_baked(gSavedSettings, "DebugAvatarCompositeBaked");
+	if (debug_avatar_composite_baked)
+	//if (gSavedSettings.getBOOL("DebugAvatarCompositeBaked"))
+	// </FS:CR>
 	{
 		if (!mBakedTextureDebugText.empty())
 			addDebugText(mBakedTextureDebugText);
@@ -3487,7 +3501,11 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 			}
 			LLVector3 velDir = getVelocity();
 			velDir.normalize();
-			if (!gSavedSettings.getBOOL("TurnAroundWhenWalkingBackwards") && (mSignaledAnimations.find(ANIM_AGENT_WALK) != mSignaledAnimations.end()))
+			// <FS:CR> Use Cached Control
+			//if (!gSavedSettings.getBOOL("TurnAroundWhenWalkingBackwards") && (mSignaledAnimations.find(ANIM_AGENT_WALK) != mSignaledAnimations.end()))
+			static LLCachedControl<bool> walk_backwards(gSavedSettings, "TurnAroundWhenWalkingBackwards");
+			if (!walk_backwards && mSignaledAnimations.find(ANIM_AGENT_WALK) != mSignaledAnimations.end())
+			// </FS:CR>
 			{
 				F32 vpD = velDir * primDir;
 				if (vpD < -0.5f)
@@ -6204,8 +6222,16 @@ BOOL LLVOAvatar::isWearingWearableType(LLWearableType::EType type) const
 	/* switch(type)
 		case LLWearableType::WT_SHIRT:
 			indicator_te = TEX_UPPER_SHIRT; */
+
+	// <FS:ND> Gets called quite a lot from processObjectUpdates. Remove the frequent getInstance calls.
+
+	// for (LLAvatarAppearanceDictionary::Textures::const_iterator tex_iter = LLAvatarAppearanceDictionary::getInstance()->getTextures().begin();
+	// 	 tex_iter != LLAvatarAppearanceDictionary::getInstance()->getTextures().end();
+	// 	 ++tex_iter)
+
+	LLAvatarAppearanceDictionary::Textures::const_iterator itrEnd = LLAvatarAppearanceDictionary::getInstance()->getTextures().end();
 	for (LLAvatarAppearanceDictionary::Textures::const_iterator tex_iter = LLAvatarAppearanceDictionary::getInstance()->getTextures().begin();
-		 tex_iter != LLAvatarAppearanceDictionary::getInstance()->getTextures().end();
+		 tex_iter != itrEnd;
 		 ++tex_iter)
 	{
 		const LLAvatarAppearanceDictionary::TextureEntry *texture_dict = tex_iter->second;
@@ -6467,13 +6493,6 @@ void LLVOAvatar::logMetricsTimerRecord(const std::string& phase_name, F32 elapse
 	record["is_using_server_bakes"] = ((bool) isUsingServerBakes());
 	record["is_self"] = isSelf();
 	
-
-#if 0 // verbose logging
-	std::ostringstream ostr;
-	ostr << LLSDNotationStreamer(record);
-	LL_DEBUGS("Avatar") << "record\n" << ostr.str() << llendl;
-#endif
-
 	if (isAgentAvatarValid())
 	{
 		gAgentAvatarp->addMetricsTimerRecord(record);
@@ -7337,7 +7356,10 @@ void LLVOAvatar::processAvatarAppearance( LLMessageSystem* mesgsys )
 {
 	LL_DEBUGS("Avatar") << "starts" << llendl;
 	
-	bool enable_verbose_dumps = gSavedSettings.getBOOL("DebugAvatarAppearanceMessage");
+	// <FS:CR> Use LLCachedControl
+	//bool enable_verbose_dumps = gSavedSettings.getBOOL("DebugAvatarAppearanceMessage");
+	static LLCachedControl<bool> enable_verbose_dumps(gSavedSettings, "DebugAvatarAppearanceMessage");
+	// </FS:CR>
 	std::string dump_prefix = getFullname() + "_" + (isSelf()?"s":"o") + "_";
 	if (gSavedSettings.getBOOL("BlockAvatarAppearanceMessages"))
 	{
@@ -7417,23 +7439,24 @@ void LLVOAvatar::processAvatarAppearance( LLMessageSystem* mesgsys )
 
 	applyParsedTEMessage(contents.mTEContents);
 
-	// <clientTags>
+	// <FS:clientTags>
 	//Wolfspirit: Read the UUID, system and Texturecolor
-	LLTextureEntry* tex = getTE(0);
+	LLTextureEntry* tex = getTE(TEX_HEAD_BODYPAINT);
 	const LLUUID tag_uuid = tex->getID();
-	bool new_system=false;
-	if(tex->getGlow() > 0.0f){
+	bool new_system = false;
+	if (tex->getGlow() > 0.0f)
+	{
 		new_system=true;
 	}
 
 	//WS: Write them into an LLSD map
-	mClientTagData["uuid"]=tag_uuid.asString();
-	mClientTagData["id_based"]=new_system;
-	mClientTagData["tex_color"]=tex->getColor().getValue();
+	mClientTagData["uuid"] = tag_uuid.asString();
+	mClientTagData["id_based"] = new_system;
+	mClientTagData["tex_color"] = tex->getColor().getValue();
 
 	//WS: Clear mNameString to force a rebuild
 	mNameString.clear();
-	// </clientTags>
+	// </FS:clientTags>
 
 	// prevent the overwriting of valid baked textures with invalid baked textures
 	for (U8 baked_index = 0; baked_index < mBakedTextureDatas.size(); baked_index++)
@@ -7828,7 +7851,8 @@ void LLVOAvatar::dumpArchetypeXML(const std::string& prefix, bool group_by_weara
 // <FS:CR> FIRE-8893 - Dump archetype xml to user defined location
 	//std::string fullpath = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,outfilename);
 	//outfile.open(fullpath, LL_APR_WB );
-	outfile.open(file_picker.getFirstFile(), LL_APR_WB);
+	std::string fullpath = file_picker.getFirstFile();
+	outfile.open(fullpath, LL_APR_WB);
 // </FS:CR>
 
 	// <FS:ND> Remove LLVolatileAPRPool/apr_file_t and use FILE* instead
@@ -7847,7 +7871,7 @@ void LLVOAvatar::dumpArchetypeXML(const std::string& prefix, bool group_by_weara
 	{
 // <FS:CR> FIRE-8893 - Dump archetype xml to user defined location
 		//llinfos << "xmlfile write handle obtained : " << fullpath << llendl;
-		LL_INFOS("DumpArchetypeXML") << "xmlfile write handle obtained : " << file_picker.getFirstFile() << LL_ENDL;
+		LL_INFOS("DumpArchetypeXML") << "xmlfile write handle obtained : " << fullpath << LL_ENDL;
 // </FS:CR>
 
 	}
@@ -7926,7 +7950,7 @@ void LLVOAvatar::dumpArchetypeXML(const std::string& prefix, bool group_by_weara
 // <FS:CR> FIRE-8893 - Dump archetype xml to user defined location
 	LL_INFOS("DumpArchetypeXML") << "Archetype xml written successfully!" << LL_ENDL;
 	LLSD args;
-	args["FILENAME"] = outfilename;
+	args["FILENAME"] = fullpath;
 	LLNotificationsUtil::add("DumpArchetypeSuccess", args);
 // </FS:CR>
 }
@@ -8430,16 +8454,23 @@ BOOL LLVOAvatar::isTextureDefined(LLAvatarAppearanceDefines::ETextureIndex te, U
 		return FALSE;
 	}
 
-	// <FS:ND> getImage(te, index) can return 0 in some edge cases.
-	if( !getImage( te, index ) || !ndIsValidPtr( getImage( te, index) ) )
+	// <FS:ND> getImage(te, index) can return 0 in some edge cases. Plus make this faster as it gets called frequently.
+
+	// return (getImage(te, index)->getID() != IMG_DEFAULT_AVATAR && 
+	// 		getImage(te, index)->getID() != IMG_DEFAULT);
+
+
+	LLViewerTexture *pImage( getImage( te, index ) );
+
+	if( !pImage )
 	{
 		llwarns << "getImage( " << (S32)te << ", " << index << " ) returned invalid ptr" << llendl;
 		return FALSE;
 	}
 	// </FS:ND>
 
-	return (getImage(te, index)->getID() != IMG_DEFAULT_AVATAR && 
-			getImage(te, index)->getID() != IMG_DEFAULT);
+	LLUUID const &id = pImage->getID();
+	return id != IMG_DEFAULT_AVATAR && id != IMG_DEFAULT;
 }
 
 //virtual

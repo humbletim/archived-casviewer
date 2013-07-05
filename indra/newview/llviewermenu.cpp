@@ -738,7 +738,11 @@ class LLAdvancedToggleHUDInfo : public view_listener_t
 		}
 		else if ("badge" == info_type)
 		{
-			reportToNearbyChat("hippos!");
+			reportToNearbyChat("Hippos!");
+		}
+		else if ("cookies" == info_type)
+		{
+			reportToNearbyChat("Cookies!");
 		}
 		return true;
 	}
@@ -2742,7 +2746,7 @@ void derenderObject(bool permanent)
 		{
 			if (permanent)
 			{
-				std::string entry_name;
+				std::string entry_name = "";
 				std::string region_name;
 
 				if (objp->isAvatar())
@@ -2754,11 +2758,13 @@ void derenderObject(bool permanent)
 				else
 				{
 					LLSelectNode* nodep = select_mgr->getSelection()->getFirstRootNode();
-					if (!nodep->mName.empty())
+					if (nodep)
 					{
-						entry_name = nodep->mName;
+						if (!nodep->mName.empty())
+						{
+							entry_name = nodep->mName;
+						}
 					}
-
 					LLViewerRegion* region = objp->getRegion();
 					if (region)
 					{
@@ -2771,6 +2777,11 @@ void derenderObject(bool permanent)
 
 			select_mgr->deselectObjectOnly(objp);
 			gObjectList.killObject(objp);
+		}
+		else if( (objp) && (gAgentID != objp->getID()) && ((rlv_handler_t::isEnabled()) || (objp->isAttachment()) || (objp->permYouOwner())) )
+		{
+			select_mgr->deselectObjectOnly(objp);
+			return;
 		}
 	}
 }
@@ -2793,6 +2804,13 @@ class LLObjectDerender : public view_listener_t
     }
 };
 // </FS:Ansariel>
+
+// <FS:CR> FIRE-10082 - Don't enable derendering own attachments when RLVa is enabled
+bool enable_derender_object()
+{
+	return (!rlv_handler_t::isEnabled());
+}
+// </FS:CR>
 
 class LLEnableEditParticleSource : public view_listener_t
 {
@@ -3682,10 +3700,12 @@ class LLAvatarDebug : public view_listener_t
 				((LLVOAvatarSelf *)avatar)->dumpLocalTextures();
 			}
 			llinfos << "Dumping temporary asset data to simulator logs for avatar " << avatar->getID() << llendl;
-			std::vector<std::string> strings;
-			strings.push_back(avatar->getID().asString());
-			LLUUID invoice;
-			send_generic_message("dumptempassetdata", strings, invoice);
+			// <FS:Ansariel> Disable message - spawns error "generic request failed"
+			//std::vector<std::string> strings;
+			//strings.push_back(avatar->getID().asString());
+			//LLUUID invoice;
+			//send_generic_message("dumptempassetdata", strings, invoice);
+			// </FS:Ansariel>
 			LLFloaterReg::showInstance( "avatar_textures", LLSD(avatar->getID()) );
 		}
 		return true;
@@ -9686,55 +9706,6 @@ class LLToggleUIHints : public view_listener_t
 	}
 };
 
-class LLCheckSessionsSettings : public view_listener_t
-{
-	bool handleEvent(const LLSD& userdata)
-	{
-		std::string expected = userdata.asString();
-		return gSavedSettings.getString("SessionSettingsFile") == expected;
-	}
-};
-
-class LLChangeMode : public view_listener_t
-{
-	bool handleEvent(const LLSD& userdata)
-	{
-		std::string mode = userdata.asString();
-		if (mode == "basic")
-		{
-			if (gSavedSettings.getString("SessionSettingsFile") != "settings_minimal.xml")
-			{
-				LLNotificationsUtil::add("ModeChange", LLSD(), LLSD(), boost::bind(onModeChangeConfirm, "settings_minimal.xml", _1, _2));
-			}
-			return true;
-		}
-		else if (mode == "advanced")
-		{
-			if (gSavedSettings.getString("SessionSettingsFile") != "")
-			{
-				LLNotificationsUtil::add("ModeChange", LLSD(), LLSD(), boost::bind(onModeChangeConfirm, "", _1, _2));
-			}
-			return true;
-		}
-		return false;
-	}	
-	
-	static void onModeChangeConfirm(const std::string& new_session_settings_file, const LLSD& notification, const LLSD& response)
-	{
-		S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
-		switch (option)
-		{
-		case 0:
-			gSavedSettings.getControl("SessionSettingsFile")->set(new_session_settings_file);
-			LLAppViewer::instance()->requestQuit();
-			break;
-		case 1:
-		default:
-			break;
-		}
-	}
-};
-
 void LLUploadCostCalculator::calculateCost()
 {
 // <FS:AW opensim currency support>
@@ -10326,6 +10297,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLObjectMute(), "Object.Mute");
 	view_listener_t::addMenu(new LLObjectDerender(), "Object.Derender");
 	view_listener_t::addMenu(new LLObjectDerenderPermanent(), "Object.DerenderPermanent"); // <FS:Ansariel> Optional derender & blacklist
+	enable.add("Object.EnableDerender", boost::bind(&enable_derender_object));	// <FS:CR> FIRE-10082 - Don't enable derendering own attachments when RLVa is enabled as well
 	view_listener_t::addMenu(new LLObjectTexRefresh(), "Object.TexRefresh");	// ## Zi: Texture Refresh
 	view_listener_t::addMenu(new LLEditParticleSource(), "Object.EditParticles");
    	view_listener_t::addMenu(new LLEnableEditParticleSource(), "Object.EnableEditParticles");

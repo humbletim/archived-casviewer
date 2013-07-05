@@ -95,12 +95,10 @@ protected:
 	void		onLanguageChange();
 	void		onNameTagOpacityChange(const LLSD& newvalue);
 
-
-
-	// ## Zi: Pie menu
+	// <FS:Zi> Pie menu
 	// make sure controls get greyed out or enabled when pie color override is toggled
 	void onPieColorsOverrideChanged();
-	// ## Zi: Pie menu
+	// </FS:Zi> Pie menu
 
 	// set value of "BusyResponseChanged" in account settings depending on whether busy response
 	// string differs from default after user changes.
@@ -113,7 +111,7 @@ protected:
 	void setHardwareDefaults();
 	// callback for when client turns on shaders
 	void onVertexShaderEnable();
-	// AO: callback for local lights toggle
+	// <FS:AO> callback for local lights toggle
 	void onLocalLightsEnable();
 
 	// callback for commit in the "Single click on land" and "Double click on land" comboboxes.
@@ -125,15 +123,19 @@ protected:
 	// <FS:PP> updates UI Sounds controls depending on values from settings.xml
 	void updateUISoundsControls();
 	
-	// ## Zi: Optional Edit Appearance Lighting
+	// <FS:Zi> Optional Edit Appearance Lighting
 	// make sure controls get greyed out or enabled when appearance camera movement is toggled
 	void onAppearanceCameraChanged();
-	// ## Zi: Optional Edit Appearance Lighting
+	// </FS:Zi> Optional Edit Appearance Lighting
 
+	//<FS:Kadah> Font Selection
+	void populateFontSelectionCombo();
+	void loadFontPresetsFromDir(const std::string& dir, LLComboBox* font_selection_combo);
+	//</FS:Kadah>
+    
 	// This function squirrels away the current values of the controls so that
 	// cancel() can restore them.	
 	void saveSettings();
-		
 
 public:
 
@@ -266,11 +268,8 @@ private:
  	//for "Show my Favorite Landmarks at Login"
 	static void showFavoritesOnLoginWarning(LLUICtrl* checkbox, const LLSD& value);
 
-	// <FS:LO> FIRE-7050 - Add a warning to the Growl preference option because of FIRE-6868
-#ifdef LL_WINDOWS
-	static void showGrowlNotInstalledWarning(LLUICtrl* checkbox, const LLSD& value);
-#endif
-	// </FS:LO>
+	// <FS:Ansariel> Only enable Growl checkboxes if Growl is usable
+	void onEnableGrowlChanged();
 
 	typedef std::map<std::string, LLColor4> string_color_map_t;
 	string_color_map_t mSavedColors;

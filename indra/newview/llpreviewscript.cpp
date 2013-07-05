@@ -229,6 +229,10 @@ LLScriptEdCore::LLScriptEdCore(
 	mEnableSave(FALSE),
 	mLiveFile(NULL),
 	mContainer(container),
+	// <FS:CR> FIRE-10606, patch by Sei Lisa
+	mLSLProc(NULL),
+	mPostEditor(NULL),
+	// </FS:CR>
 	mHasScriptData(FALSE)
 {
 	setFollowsAll();
@@ -267,7 +271,18 @@ LLScriptEdCore::~LLScriptEdCore()
 BOOL LLScriptEdCore::postBuild()
 {
 	mLineCol=getChild<LLTextBox>("line_col");
-	mSaveBtn=getChildView("Save_btn");
+// <FS:CR> Advanced Script Editor
+	//mSaveBtn=getChildView("Save_btn");
+	mSaveBtn =	getChild<LLButton>("save_btn");
+	mCutBtn =	getChild<LLButton>("cut_btn");
+	mCopyBtn =	getChild<LLButton>("copy_btn");
+	mPasteBtn =	getChild<LLButton>("paste_btn");
+	mUndoBtn =	getChild<LLButton>("undo_btn");
+	mRedoBtn =	getChild<LLButton>("redo_btn");
+	mSaveToDiskBtn = getChild<LLButton>("save_disk_btn");
+	mLoadFromDiskBtn = getChild<LLButton>("load_disk_btn");
+	mSearchBtn = getChild<LLButton>("search_btn");
+// </FS:CR>
 
 	mErrorList = getChild<LLScrollListCtrl>("lsl errors");
 
@@ -279,11 +294,10 @@ BOOL LLScriptEdCore::postBuild()
 
 	// NaCl - LSL Preprocessor
 	static LLCachedControl<bool> _NACL_LSLPreprocessor(gSavedSettings,"_NACL_LSLPreprocessor", 0);
-	BOOL preproc = _NACL_LSLPreprocessor;
-	if(preproc)
+	if (_NACL_LSLPreprocessor)
 	{
 		mPostEditor = getChild<LLViewerTextEditor>("Post Editor");
-		if(mPostEditor)
+		if (mPostEditor)
 		{
 			mPostEditor->setFollowsAll();
 			mPostEditor->setEnabled(TRUE);
@@ -292,10 +306,14 @@ BOOL LLScriptEdCore::postBuild()
 	// NaCl End
 
 	childSetCommitCallback("lsl errors", &LLScriptEdCore::onErrorList, this);
-	childSetAction("Save_btn", boost::bind(&LLScriptEdCore::doSave,this,FALSE));
+// <FS:CR> Advanced Script Editor
+	//childSetAction("Save_btn", boost::bind(&LLScriptEdCore::doSave,this,FALSE));
+	childSetAction("prefs_btn", boost::bind(&LLScriptEdCore::onBtnPrefs, this));
+// </FS:CR>
 	childSetAction("Edit_btn", boost::bind(&LLScriptEdCore::openInExternalEditor, this));
 	
 	initMenu();
+	initButtonBar();	// <FS:CR> Advanced Script Editor
 
 
 	std::vector<std::string> funcs;
@@ -333,7 +351,14 @@ BOOL LLScriptEdCore::postBuild()
 	
 	LLColor3 color(0.5f, 0.0f, 0.15f);
 	mEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"keywords.ini"), funcs, tooltips, color);
-
+	if (_NACL_LSLPreprocessor)
+		mEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "keywords_preproc.ini"), funcs, tooltips, color);
+// <FS:CR> OSSL Keywords
+#ifdef OPENSIM
+	mEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "keywords_ossl.ini"), funcs, tooltips, color);
+#endif // OPENSIM
+// </FS:CR>
+	
 	std::vector<std::string> primary_keywords;
 	std::vector<std::string> secondary_keywords;
 	LLKeywordToken *token;
@@ -356,58 +381,11 @@ BOOL LLScriptEdCore::postBuild()
 	if(mPostEditor)
 	{
 		mPostEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"keywords.ini"), funcs, tooltips, color);
-		mEditor->addToken(LLKeywordToken::WORD,"#assert",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#define",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#elif",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#else",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#endif",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#error",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#ident",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#sccs",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#if",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#ifdef",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#ifndef",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#import",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#include",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#include_next",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#line",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#pragma",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#unassert",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#undef",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#warning",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-		mEditor->addToken(LLKeywordToken::WORD,"#",LLColor3(0.0f,0.0f,0.8f),
-			std::string("Preprocessor command. See Advanced menu of the script editor."));
-
-		if(gSavedSettings.getBOOL("_NACL_PreProcLSLSwitch"))
-		{
-			mEditor->addToken(LLKeywordToken::WORD,"switch",LLColor3(0.0f,0.0f,0.8f),
-				std::string("Switch statement. See Advanced menu of the script editor."));
-			mEditor->addToken(LLKeywordToken::WORD,"case",LLColor3(0.0f,0.0f,0.8f),
-				std::string("Switch case. See Advanced menu of the script editor."));
-			mEditor->addToken(LLKeywordToken::WORD,"break",LLColor3(0.0f,0.0f,0.8f),
-				std::string("Switch break. See Advanced menu of the script editor."));
-		}
-
-		//couldn'tr define in file because # represented a comment
+		// <FS:CR> OSSL Keywords
+#ifdef OPENSIM
+		mPostEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "keywords_ossl.ini"), funcs, tooltips, color);
+#endif // OPENSIM
+		// </FS:CR>
 	}
 	// NaCl End
 
@@ -486,13 +464,49 @@ void LLScriptEdCore::initMenu()
 	menuItem = getChild<LLMenuItemCallGL>("SaveToFile");
 	menuItem->setClickCallback(boost::bind(&LLScriptEdCore::onBtnSaveToFile, this));
 	menuItem->setEnableCallback(boost::bind(&LLScriptEdCore::enableSaveToFileMenu, this));
+
+// <FS:CR> Advanced Script Editor
+	menuItem = getChild<LLMenuItemCallGL>("ScriptPrefs");
+	menuItem->setClickCallback(boost::bind(&LLScriptEdCore::onBtnPrefs, this));
 }
+
+void LLScriptEdCore::initButtonBar()
+{
+	mSaveBtn->setClickedCallback(boost::bind(&LLScriptEdCore::doSave, this, FALSE));
+	mCutBtn->setClickedCallback(boost::bind(&LLTextEditor::cut, mEditor));
+	mCopyBtn->setClickedCallback(boost::bind(&LLTextEditor::copy, mEditor));
+	mPasteBtn->setClickedCallback(boost::bind(&LLTextEditor::paste, mEditor));
+	mUndoBtn->setClickedCallback(boost::bind(&LLTextEditor::undo, mEditor));
+	mRedoBtn->setClickedCallback(boost::bind(&LLTextEditor::redo, mEditor));
+	mSaveToDiskBtn->setClickedCallback(boost::bind(&LLScriptEdCore::onBtnSaveToFile, this));
+	mLoadFromDiskBtn->setClickedCallback(boost::bind(&LLScriptEdCore::onBtnLoadFromFile, this));
+	mSearchBtn->setClickedCallback(boost::bind(&LLFloaterSearchReplace::show, mEditor));
+}
+
+void LLScriptEdCore::updateButtonBar()
+{
+	mSaveBtn->setEnabled(hasChanged());
+	mCutBtn->setEnabled(mEditor->canCut());
+	mCopyBtn->setEnabled(mEditor->canCopy());
+	mPasteBtn->setEnabled(mEditor->canPaste());
+	mUndoBtn->setEnabled(mEditor->canUndo());
+	mRedoBtn->setEnabled(mEditor->canRedo());
+	mSaveToDiskBtn->setEnabled(mEditor->canLoadOrSaveToFile());
+	mLoadFromDiskBtn->setEnabled(mEditor->canLoadOrSaveToFile());
+}
+
+//static
+void LLScriptEdCore::onBtnPrefs(void* userdata)
+{
+	LLFloaterReg::showInstance("fs_script_editor_prefs");
+}
+// </FS:CR>
 
 // NaCl - LSL Preprocessor
 void LLScriptEdCore::onToggleProc(void* userdata)
 {
 	LLScriptEdCore* corep = (LLScriptEdCore*)userdata;
-	corep->mErrorList->setCommentText(std::string("Toggling the preprocessor will not take full effect unless you close and reopen this editor."));
+	corep->mErrorList->setCommentText(LLTrans::getString("preproc_toggle_warning"));
 	corep->mErrorList->selectFirstItem();
 	gSavedSettings.setBOOL("_NACL_LSLPreprocessor",!gSavedSettings.getBOOL("_NACL_LSLPreprocessor"));
 }
@@ -629,8 +643,11 @@ bool LLScriptEdCore::hasChanged()
 
 void LLScriptEdCore::draw()
 {
-	BOOL script_changed	= hasChanged();
-	mSaveBtn->setEnabled(script_changed);
+// <FS:CR> Advanced Script Editor
+	//BOOL script_changed	= hasChanged();
+	//mSaveBtn->setEnabled(script_changed);
+	updateButtonBar();
+// </FS:CR>
 
 	if( mEditor->hasFocus() )
 	{
@@ -967,10 +984,10 @@ void LLScriptEdCore::onBtnInsertFunction(LLUICtrl *ui, void* userdata)
 void LLScriptEdCore::doSave( BOOL close_after_save )
 {
 	// NaCl - LSL Preprocessor
-	if(gSavedSettings.getBOOL("_NACL_LSLPreprocessor"))
+	if (mLSLProc && gSavedSettings.getBOOL("_NACL_LSLPreprocessor"))
 	{
 		llinfos << "passing to preproc" << llendl;
-		this->mLSLProc->preprocess_script(close_after_save);
+		mLSLProc->preprocess_script(close_after_save);
 	}
 	else
 	{

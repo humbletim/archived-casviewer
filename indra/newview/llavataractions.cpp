@@ -558,6 +558,13 @@ void LLAvatarActions::csr(const LLUUID& id, std::string name)
 //static 
 void LLAvatarActions::share(const LLUUID& id)
 {
+	// <FS:Ansariel> FIRE-8804: Prevent opening inventory from using share in radar context menu
+	if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWINV))
+	{
+		return;
+	}
+	// </FS:Ansariel>
+
 	LLSD key;
 	LLFloaterSidePanelContainer::showPanel("inventory", key);
 
@@ -1813,11 +1820,7 @@ void LLAvatarActions::onDerenderAvatarNameLookup(const LLUUID& agent_id, const L
 {
 	if (permanent)
 	{
-		FSWSAssetBlacklist* instance = FSWSAssetBlacklist::getInstance();
-		if (!instance->isBlacklisted(agent_id, LLAssetType::AT_OBJECT))
-		{
-			instance->addNewItemToBlacklist(agent_id, av_name.getLegacyName(), "", LLAssetType::AT_OBJECT);
-		}
+		FSWSAssetBlacklist::getInstance()->addNewItemToBlacklist(agent_id, av_name.getLegacyName(), "", LLAssetType::AT_OBJECT);
 	}
 
 	LLViewerObject* av_obj = gObjectList.findObject(agent_id);

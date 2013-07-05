@@ -254,6 +254,7 @@
 
 #include "nd/ndmemorypool.h" // <FS:ND/> tcmalloc replacement
 #include "nd/ndmallocstats.h" // <FS:ND/> collect stats about memory allocations
+#include "fsradar.h"
 
 
 #if (LL_LINUX || LL_SOLARIS) && LL_GTK
@@ -781,7 +782,7 @@ bool LLAppViewer::init()
 	// OK to write stuff to logs now, we've now crash reported if necessary
 	//
 	
-	
+// <FS>
 	// SJ/AO:  Reset Configuration here, if our marker file exists. Configuration needs to be reset before settings files 
 	// are read in to avoid file locks.
 
@@ -792,55 +793,65 @@ bool LLAppViewer::init()
 	{
 		mPurgeSettings = true;
 		llinfos << "Purging configuration..." << llendl;
-		//std::string delem = gDirUtilp->getDirDelimiter();
+		std::string delem = gDirUtilp->getDirDelimiter();
 
 		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"CLEAR"));
 		
 		//[ADD - Clear Usersettings : SJ] - Delete directories beams, beamsColors, windlight in usersettings
 		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "beams") );
 		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "beamsColors") );
-		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight/water") );
-		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight/days") );
-		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight/skies") );
+		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight" + delem + "water") );
+		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight" + delem + "days") );
+		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight" + delem + "skies") );
 		LLFile::rmdir(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "windlight") );		
-	
-		std::string user_dir = gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "", "");
 
 		// We don't delete the entire folder to avoid data loss of config files unrelated to the current binary. -AO
 		//gDirUtilp->deleteFilesInDir(user_dir, "*.*");
 		
-		//The below line would delete the settings file assuming no channel overrides on the command line, which
-		//may be typical for some start scripts or launchers.  Rather than use this assumption, we'll do further config 
-		//file deletion later in initConfiguration() after parsing command line arguments.
-                //std::string sWorkingChannelName(LL_CHANNEL);
-                //LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_"+sWorkingChannelName+".xml"));
-
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "colors.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "grids.xml"));
-				LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "grids.user.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "agents.xml"));
-	            gDirUtilp->deleteFilesInDir(user_dir, "feature*.txt");
-	            gDirUtilp->deleteFilesInDir(user_dir, "gpu*.txt");
-
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "releases.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list_v2.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_firestorm.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_phoenix.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_hybrid.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_v3.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "quick_preferences.xml"));
-		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_minimal.xml"));
+		// Alphabetised
 		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "account_settings_phoenix.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "bin_conf.dat"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "password.dat"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "agents.xml"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "bin_conf.dat"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list_v2.xml"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "colors.xml"));
 		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "ignorable_dialogs.xml"));
-		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "stored_favorites.xml"));
-                LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, CRASH_SETTINGS_FILE));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "grids.xml"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "grids.user.xml"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "password.dat"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "quick_preferences.xml"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "releases.xml"));
+		LLFile::remove(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, CRASH_SETTINGS_FILE));
+		
+		std::string user_dir = gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "", "");
+		gDirUtilp->deleteFilesInDir(user_dir, "feature*.txt");
+		gDirUtilp->deleteFilesInDir(user_dir, "gpu*.txt");
+		gDirUtilp->deleteFilesInDir(user_dir, "settings_*.xml");
 
+		// Remove misc OS user app dirs
+		std::string base_dir = gDirUtilp->getOSUserAppDir() + delem;
+		
+		LLFile::rmdir(base_dir + "browser_profile");
+		LLFile::rmdir(base_dir + "data");
+		
 		// Delete per-user files below
-		/* TODO: spider user folders for settings_per_account, notices, contactsets */
+		std::string per_user_dir_glob = base_dir + "*" + delem;
+		
+		LLFile::remove(per_user_dir_glob + "filters.xml");
+		LLFile::remove(per_user_dir_glob + "medialist.xml");
+		LLFile::remove(per_user_dir_glob + "plugin_cookies.xml");
+		LLFile::remove(per_user_dir_glob + "screen_last.bmp");
+		LLFile::remove(per_user_dir_glob + "search_history.xml");
+		LLFile::remove(per_user_dir_glob + "settings_friends_groups.xml");
+		LLFile::remove(per_user_dir_glob + "settings_per_account.xml");
+		LLFile::remove(per_user_dir_glob + "teleport_history.xml");
+		LLFile::remove(per_user_dir_glob + "texture_list_last.xml");
+		LLFile::remove(per_user_dir_glob + "toolbars.xml");
+		LLFile::remove(per_user_dir_glob + "typed_locations.xml");
+		LLFile::remove(per_user_dir_glob + "url_history.xml");
+		LLFile::remove(per_user_dir_glob + "volume_settings.xml");
+		LLFile::rmdir(per_user_dir_glob + "browser_profile");
 	}
-	
+// </FS>
 	
 	init_default_trans_args();
 	
@@ -1493,6 +1504,7 @@ bool LLAppViewer::mainLoop()
 					&& !gFocusMgr.focusLocked())
 				{
 					joystick->scanJoystick();
+					gKeyboard->scanKeyboard();
 					// <FS:Ansariel> Chalice Yao's crouch toggle
 					static LLCachedControl<bool> fsCrouchToggle(gSavedSettings, "FSCrouchToggle");
 					static LLCachedControl<bool> fsCrouchToggleStatus(gSavedSettings, "FSCrouchToggleStatus");
@@ -1501,7 +1513,6 @@ bool LLAppViewer::mainLoop()
 						gAgent.moveUp(-1);
 					}
 					// </FS:Ansariel>
-					gKeyboard->scanKeyboard();
 				}
 
 				// Update state based on messages, user input, object idle.
@@ -1880,8 +1891,13 @@ bool LLAppViewer::cleanup()
 	// shut down mesh streamer
 	gMeshRepo.shutdown();
 
+	// <FS:ND> FIRE-8385 Crash on exit in Havok. It is hard to say why it happens, as we only have the binary Havok blob. This is a hack around it.
+	// Due to the fact the process is going to die anyway, the OS will clean up any reources left by not calling quitSystem.
+	// The OpenSim version does not use Havok, it is okay to call shutdown then.
+#ifdef OPENSIM
 	// shut down Havok
 	LLPhysicsExtensions::quitSystem();
+#endif // </FS:ND>
 
 	// Must clean up texture references before viewer window is destroyed.
 	if(LLHUDManager::instanceExists())
@@ -2707,10 +2723,12 @@ bool LLAppViewer::initConfiguration()
 	// - load overrides from user_settings 
 	loadSettingsFromDirectory("User");
 
-	//Wolfspirit: Temporary fix for NOT loading settings_minimal.xml
 	if (gSavedSettings.getBOOL("FirstRunThisInstall"))
 	{
-		gSavedSettings.setString("SessionSettingsFile", "settings_firestorm.xml");
+		if (gSavedSettings.getString("SessionSettingsFile").empty())
+        {
+            gSavedSettings.setString("SessionSettingsFile", "settings_firestorm.xml");
+        }
 		
 // <FS:CR> Set ForceShowGrid to TRUE on first run if we're on an OpenSim build
 #ifdef OPENSIM
@@ -2724,12 +2742,15 @@ bool LLAppViewer::initConfiguration()
 	}
 
 	//WS: Set the usersessionsettingsfile to the account_SessionSettingsFile file. This allows settings_per_accounts to be per session.
-	if(gSavedSettings.getString("SessionSettingsFile")!=""){
-		if(gSavedSettings.getString("UserSessionSettingsFile")=="")
-			gSavedSettings.setString("UserSessionSettingsFile","account_"+gSavedSettings.getString("SessionSettingsFile"));
+	if(!gSavedSettings.getString("SessionSettingsFile").empty())
+    {
+		if(gSavedSettings.getString("UserSessionSettingsFile").empty())
+			gSavedSettings.setString("UserSessionSettingsFile","account_" + gSavedSettings.getString("SessionSettingsFile"));
 	}
-	else gSavedSettings.setString("UserSessionSettingsFile","");
-
+	else
+    {
+        gSavedSettings.setString("UserSessionSettingsFile","");
+    }
 
 	if (clp.hasOption("sessionsettings"))
 	{
@@ -2744,9 +2765,7 @@ bool LLAppViewer::initConfiguration()
 	{
 		std::string user_session_settings_filename = clp.getOption("usersessionsettings")[0];		
 		gSavedSettings.setString("UserSessionSettingsFile", user_session_settings_filename);
-		llinfos	<< "Using user session settings filename: " 
-			<< user_session_settings_filename << llendl;
-
+		llinfos << "Using user session settings filename: " << user_session_settings_filename << llendl;
 	}
 
 	
@@ -3607,7 +3626,15 @@ void LLAppViewer::writeSystemInfo()
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
 	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
 
-//	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
+// <FS:ND> Add which flavor of FS generated an error
+#ifdef OPENSIM
+	gDebugInfo["ClientInfo"]["Flavor"] = "oss";
+#else
+	gDebugInfo["ClientInfo"]["Flavor"] = "hvk";
+#endif
+// </FS:ND>
+
+	//	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
 
 	gDebugInfo["CPUInfo"]["CPUString"] = gSysCPU.getCPUString();
 	gDebugInfo["CPUInfo"]["CPUFamily"] = gSysCPU.getFamily();
@@ -3715,6 +3742,14 @@ void LLAppViewer::handleViewerCrash()
 	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
 	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+
+// <FS:ND> Add which flavor of FS generated an error
+#ifdef OPENSIM
+	gDebugInfo["ClientInfo"]["Flavor"] = "oss";
+#else
+	gDebugInfo["ClientInfo"]["Flavor"] = "hvk";
+#endif
+// </FS:ND>
 
 /*
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
@@ -5465,6 +5500,13 @@ void LLAppViewer::disconnectViewer()
 		gFloaterView->restoreAll();
 	}
 
+	// <FS:Ansariel> Firestorm radar: Shutdown radar
+	if (FSRadar::instanceExists())
+	{
+		FSRadar::deleteSingleton();
+	}
+	// <FS:Ansariel>
+
 	if (LLSelectMgr::getInstance())
 	{
 		LLSelectMgr::getInstance()->deselectAll();
@@ -5644,6 +5686,14 @@ void LLAppViewer::handleLoginComplete()
 	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
 	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
 	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+
+// <FS:ND> Add which flavor of FS generated an error
+#ifdef OPENSIM
+	gDebugInfo["ClientInfo"]["Flavor"] = "oss";
+#else
+	gDebugInfo["ClientInfo"]["Flavor"] = "hvk";
+#endif
+// </FS:ND>
 
 /*
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();

@@ -321,6 +321,12 @@ Nur große Parzellen können in der Suche aufgeführt werden.
 			<panel.string name="push_restrict_region_text">
 				Kein Stoßen (regional)
 			</panel.string>
+			<panel.string name="DirectoryFree">
+				Ort in Suche anzeigen
+			</panel.string>
+			<panel.string name="DirectoryFee">
+				Ort in Suche anzeigen ([DIRECTORY_FEE] L$/Woche)
+			</panel.string>
 			<panel.string name="see_avs_text">
 				Avatare auf anderen Parzellen können
 			</panel.string>
@@ -432,6 +438,9 @@ Nur große Parzellen können in der Suche aufgeführt werden.
 			<text name="MusicURL:">
 				Musik-URL:
 			</text>
+			<button name="stream_add_btn" tool_tip="Musik-URL zur Liste der gespeicherten Streams hinzufügen"/>
+			<button name="stream_delete_btn" tool_tip="Musik-URL von der Liste der gespeicherten Streams entfernen"/>
+			<button name="stream_copy_btn" tool_tip="Musik-URL in die Zwischenablage kopieren"/>
 			<text name="Sound:">
 				Sound:
 			</text>

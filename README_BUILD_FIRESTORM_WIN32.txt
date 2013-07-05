@@ -1,10 +1,10 @@
 Before you start configuring your Windows build system, be aware of our tested configurations:
-	Memory: You will need at least 2GB RAM, 4GB strongly recommendted.
+	Memory: You will need at least 2GB RAM, 4GB strongly recommended.
 	CPU: Multiple CPUs are strongly recommended. 
 	  A build can take over an hour.
 	Visual Studio 2010. 
 
-Insure you can build a stock viewer-development try as described in the SL wiki. Before asking for any help
+Ensure you can build a stock viewer-development try as described in the SL wiki. Before asking for any help
 compiling Firestorm, make sure you can build viewer-development first. If you try and skip this step, you may
 receive much less help. http://wiki.secondlife.com/wiki/Viewer_2_Microsoft_Windows_Builds
 

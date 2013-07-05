@@ -970,11 +970,17 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="TeleportYourAgent">
 		Sie teleportieren
 	</string>
-	<string name="SilentEstateManagement">
+	<string name="JoinAnExperience">
+		Einem Erlebnis beiwohnen
+	</string>
+	<string name="SilentlyManageEstateAccess">
 		Benachrichtigungen über Änderungen am Grundbesitzzugang stummschalten
 	</string>
-	<string name="OverrideAgentAnimations">
+	<string name="OverrideYourAnimations">
 		Ihre Avatar-Animationen übersteuern
+	</string>
+	<string name="ScriptReturnObjects">
+		Objekte in deinem Auftrag zurückgeben
 	</string>
 	<string name="NotConnected">
 		Nicht verbunden
@@ -2068,6 +2074,15 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	</string>
 	<string name="ATTACH_HUD_BOTTOM_RIGHT">
 		HUD unten rechts
+	</string>
+	<string name="ATTACH_NECK">
+		Hals
+	</string>
+	<string name="ATTACH_AVATAR_CENTER">
+		Avatar-Mitte
+	</string>
+	<string name="ATTACH_BRIDGE">
+		Brücke
 	</string>
 	<string name="CursorPos">
 		Zeile [LINE], Spalte [COLUMN]
@@ -5113,6 +5128,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="Command_Snapshot_To_Disk_Label">
 		Foto auf Datenträger
 	</string>
+	<string name="Command_Radar_Label">
+		Radar
+	</string>
 	<string name="Command_AboutLand_Tooltip">
 		Informationen zu dem von Ihnen besuchten Land
 	</string>
@@ -5247,6 +5265,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="Command_Snapshot_To_Disk_Tooltip">
 		Macht ein Foto und speichert es auf der Festplatte
+	</string>
+	<string name="Command_Radar_Tooltip">
+		Öffnet das Radar für Avatare in der Nähe
 	</string>
 	<string name="Toolbar_Bottom_Tooltip">
 		gegenwärtig in der unteren Symbolleiste
@@ -5647,5 +5668,44 @@ Setzen Sie den Editorpfad in Anführungszeichen
 
 	<string name="GroupChatMuteNotice">
 		Ignoriere Gruppenchat von [NAME].
+	</string>
+	
+	<!-- <FS:Ansariel> Radar notifications -->
+	<string name="camera_no_focus">
+		Die Kamera kann nicht auf [AVATARNAME] fokussiert werden, da er/sie sich außerhalb der Draw Distance befindet.
+	</string>
+	<string name="entering_draw_distance">
+		kommt in Draw Distance ([DISTANCE] m).
+	</string>
+	<string name="leaving_draw_distance">
+		hat die Draw Distance verlassen.
+	</string>
+	<string name="entering_chat_range">
+		kommt in Chat-Reichweite ([DISTANCE] m).
+	</string>
+	<string name="leaving_chat_range">
+		hat die Chat-Reichweite verlassen.
+	</string>
+	<string name="entering_region">
+		hat die Region betreten.
+	</string>
+	<string name="entering_region_distance">
+		hat die Region betreten ([DISTANCE] m).
+	</string>
+	<string	name="leaving_region">
+		hat die Region verlassen.
+	</string>
+
+	<string name="export_fail_no_mesh">
+		Der Export von Mesh wird derzeit nicht unterstützt. Export abgebrochen.
+	</string>
+	<string name="TotalScriptCountChangeIncrease">
+		Skriptanzahl in Region hat sich von [OLD_VALUE] auf [NEW_VALUE] erhöht ([DIFFERENCE]).
+	</string>
+	<string name="TotalScriptCountChangeDecrease">
+		Skriptanzahl in Region hat sich von [OLD_VALUE] auf [NEW_VALUE] verringert ([DIFFERENCE]).
+	</string>
+	<string name="preproc_toggle_warning">
+		Umschalten des Präprozessors wird erst vollständig wirksam, nachdem der Editor geschlossen und neu geöffnet wurde.
 	</string>
 </strings>

@@ -881,6 +881,13 @@ void LLAgent::toggleFlying()
 		LLToolPie::instance().stopClickToWalk();
 	}
 
+	// <FS:Ansariel> Chalice Yao's crouch toggle
+	if (gSavedSettings.getBOOL("FSCrouchToggleStatus"))
+	{
+		gSavedSettings.setBOOL("FSCrouchToggleStatus", FALSE);
+	}
+	// </FS:Ansariel>
+
 	BOOL fly = !gAgent.getFlying();
 
 	gAgent.mMoveTimer.reset();
@@ -3857,9 +3864,6 @@ class LLAgentGroupDataUpdateViewerNode : public LLHTTPNode
 				update_group_floaters(group.mID);
 			}
 		}
-
-		// <FS:Ansariel> Fire event for group title overview
-		gAgent.fireEvent(new LLOldEvents::LLEvent(&gAgent, "update grouptitle list"), "");
 	}
 };
 

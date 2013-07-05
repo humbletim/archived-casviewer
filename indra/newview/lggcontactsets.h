@@ -21,6 +21,9 @@
 
 #include "v4color.h"
 #include "llsingleton.h"
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+
 
 typedef enum e_lgg_cs
 {
@@ -30,62 +33,117 @@ typedef enum e_lgg_cs
 	LGG_CS_MINIMAP
 } ELGGCSType;
 
+const std::string CS_GROUP_ALL_SETS = "All Sets";
+const std::string CS_GROUP_NO_SETS = "No Sets";
+const std::string CS_GROUP_EXTRA_AVS = "extraAvs";
+const std::string CS_GROUP_PSEUDONYM = "pseudonym";
+const std::string CS_GLOBAL_SETTINGS = "globalSettings";
+const std::string CS_PSEUDONYM = "--- ---";
+
 class LGGContactSets : public LLSingleton<LGGContactSets>
 {
 	friend class LLSingleton<LGGContactSets>;
 	LOG_CLASS(LGGContactSets);
+
 public:
-	static LLColor4 toneDownColor(LLColor4 inColor, float strength, bool usedForBackground = false);
-	LLColor4 getGroupColor(std::string groupName);
-	LLColor4 getFriendColor(LLUUID friend_id, std::string ignoredGroupName = "");
+	typedef std::vector<std::string> string_vec_t;
+
+	static LLColor4 toneDownColor(const LLColor4& inColor, float strength, bool usedForBackground = false);
+
+	void setGroupColor(const std::string& groupName, const LLColor4& color);
+	LLColor4 getGroupColor(const std::string& groupName);
+	LLColor4 getFriendColor(const LLUUID& friend_id, const std::string& ignoredGroupName = "");
+	LLColor4 colorize(const LLUUID& uuid, const LLColor4& cur_color, ELGGCSType type);
+
+	void setDefaultColor(const LLColor4& dColor);
 	LLColor4 getDefaultColor();
-	std::string getPseudonym(LLUUID friend_id);
-	BOOL hasPseudonym(LLUUID friend_id);
-	BOOL hasDisplayNameRemoved(LLUUID friend_id);
-	BOOL hasFriendColorThatShouldShow(LLUUID friend_id, ELGGCSType type);
-	void setDefaultColor(LLColor4 dColor);
-	std::vector<std::string> getInnerGroups(std::string groupName);
-	std::vector<std::string> getFriendGroups(LLUUID friend_id);
-	std::vector<std::string> getAllGroups(BOOL extraGroups = TRUE);
-	BOOL isFriendInGroup(LLUUID friend_id, std::string groupName);
-	BOOL notifyForFriend(LLUUID friend_id);
-	void addFriendToGroup(LLUUID friend_id, std::string groupName);
-	void addNonFriendToList(LLUUID non_friend_id);
-	void removeNonFriendFromList(LLUUID non_friend_id);
-	BOOL isNonFriend(LLUUID non_friend_id);
-	std::vector<LLUUID> getListOfNonFriends();
-	void clearPseudonym(LLUUID friend_id);
-	void removeFriendFromAllGroups(LLUUID friend_id);
-	void removeDisplayName(LLUUID friend_id);
-	void removeFriendFromGroup(LLUUID friend_id, std::string groupName);
-	void addGroup(std::string groupName);
-	void deleteGroup(std::string groupName);
-	bool isAGroup(std::string groupName);
-	void setNotifyForGroup(std::string groupName, BOOL notify);
-	BOOL getNotifyForGroup(std::string groupName);
-	void setGroupColor(std::string groupName, LLColor4 color);
+
+	std::string getPseudonym(const LLUUID& friend_id);
+	bool hasPseudonym(const LLUUID& friend_id);
+	void clearPseudonym(const LLUUID& friend_id);
+
+	void removeDisplayName(const LLUUID& friend_id);
+	bool hasDisplayNameRemoved(const LLUUID& friend_id);
+
+	string_vec_t getInnerGroups(const std::string& groupName);
+	string_vec_t getFriendGroups(const LLUUID& friend_id);
+	string_vec_t getAllGroups();
+
+	void addFriendToGroup(const LLUUID& friend_id, const std::string& groupName);
+	void removeFriendFromGroup(const LLUUID& friend_id, const std::string& groupName);
+	void removeFriendFromAllGroups(const LLUUID& friend_id);
+	bool isFriendInGroup(const LLUUID& friend_id, const std::string& groupName);
+	bool hasFriendColorThatShouldShow(const LLUUID& friend_id, ELGGCSType type);
+
+	void addGroup(const std::string& groupName);
+	void deleteGroup(const std::string& groupName);
+	bool isAGroup(const std::string& groupName);
+
+	void addNonFriendToList(const LLUUID& non_friend_id);
+	void removeNonFriendFromList(const LLUUID& non_friend_id);
+	bool isNonFriend(const LLUUID& non_friend_id);
+	uuid_vec_t getListOfNonFriends();
+	uuid_vec_t getListOfPseudonymAvs();
+
+	bool notifyForFriend(const LLUUID& friend_id);
+	void setNotifyForGroup(const std::string& groupName, bool notify);
+	bool getNotifyForGroup(const std::string& groupName);
+
 	bool callbackAliasReset(const LLSD& notification, const LLSD& response);
+
+	bool isInternalGroupName(const std::string& groupName);
+	bool hasGroups() { return !mGroups.empty(); }
+
 private:
+	typedef boost::unordered_set<LLUUID, FSUUIDHash> uuid_set_t;
+	typedef boost::unordered_map<LLUUID, std::string, FSUUIDHash> uuid_map_t;
+
+	class ContactSetGroup
+	{
+	public:
+		bool hasFriend(const LLUUID& avatar_id)
+		{
+			return (mFriends.find(avatar_id) != mFriends.end());
+		}
+
+		std::string		mName;
+		uuid_set_t		mFriends;
+		bool			mNotify;
+		LLColor4		mColor;
+	};
+
+
 	LGGContactSets();
 	~LGGContactSets();
-	
-	BOOL saveGroupToDisk(std::string groupName, std::string fileName);
-	LLSD exportGroup(std::string groupName);
-	LLSD getContactSets();
-	std::vector<LLUUID> getFriendsInGroup(std::string groupName);
-	BOOL isFriendInAnyGroup(LLUUID friend_id);
-	std::vector<LLUUID> getFriendsInAnyGroup();
-	void setPseudonym(LLUUID friend_id, std::string pseudonym);
-	std::vector<LLUUID> getListOfPseudonymAvs();
-	BOOL hasVisuallyDiferentPseudonym(LLUUID friend_id);
+
+	uuid_vec_t getFriendsInGroup(const std::string& groupName);
+	bool isFriendInAnyGroup(const LLUUID& friend_id);
+	uuid_vec_t getFriendsInAnyGroup();
+
+	void setPseudonym(const LLUUID& friend_id, const std::string& pseudonym);
+	bool hasVisuallyDifferentPseudonym(const LLUUID& friend_id);
+
 	void loadFromDisk();
-	
-	void saveToDisk(LLSD newSettings);
+	LLSD exportGroup(const std::string& groupName);
+	bool saveGroupToDisk(const std::string& groupName, const std::string& fileName);
+
 	std::string getFileName();
 	std::string getDefaultFileName();
 	std::string getOldFileName();
 
-	LLSD mContactSets;
+
+	typedef std::map<std::string, ContactSetGroup*> group_map_t;
+	group_map_t mGroups;
+
+	ContactSetGroup* getGroup(const std::string& groupName);
+
+	void importFromLLSD(const LLSD& data);
+	LLSD exportToLLSD();
+	void saveToDisk();
+
+	LLColor4		mDefaultColor;
+	uuid_set_t		mExtraAvatars;
+	uuid_map_t		mPseudonyms;
 };
 
 #endif // LGG_CONTACTSETS_H

@@ -70,6 +70,7 @@
 	<menu label="Świat" name="World">
 		<menu_item_call label="Synchronizuj animacje" name="Resync Animations"/>
 		<menu_item_call label="Osoby w pobliżu" name="Active Speakers"/>
+		<menu_item_check label="Radar" name="Radar"/>
 		<menu_item_call label="Historia teleportacji" name="Teleport History"/>
 		<menu_item_check label="Miejsca" name="Places"/>
 		<menu_item_check label="Minimapa" name="Mini-Map"/>
@@ -207,6 +208,7 @@
 	<menu label="Pomoc" name="Help">
 		<menu_item_check label="Włącz podpowiedzi" name="Enable Hints"/>
 		<menu_item_call label="Wiki Firestorma" name="Firestorm Wiki"/>
+		<menu_item_call label="Rozwiązywanie problemów" name="Troubleshooting"/>
 		<menu_item_call label="Dołącz do Grupy Wsparcia Firestorma" name="firestorm_support_group"/>
 		<menu_item_call label="Na temat [CURRENT_GRID]" name="current_grid_about"/>
 		<menu_item_call label="Sprawdź stan świata (Siatki)" name="Grid Status"/>
@@ -333,7 +335,8 @@
 			<menu_item_check label="Kamera" name="Camera"/>
 			<menu_item_check label="Wiatr" name="Wind"/>
 			<menu_item_check label="Pole widzenia" name="FOV"/>
-			<menu_item_check label="Znak" name="Badge"/>
+			<menu_item_check label="Hipcie!" name="Badge"/>
+			<menu_item_check label="Ciasteczka!" name="Cookies"/>
 		</menu>
 		<menu label="Pokaż informacje" name="Display Info">
 			<menu_item_check label="Pokaż czas" name="Show Time"/>

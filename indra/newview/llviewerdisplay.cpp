@@ -90,7 +90,9 @@ LLPointer<LLViewerTexture> gDisconnectedImagep = NULL;
 // used to toggle renderer back on after teleport
 const F32 TELEPORT_RENDER_DELAY = 20.f; // Max time a teleport is allowed to take before we raise the curtain
 const F32 TELEPORT_ARRIVAL_DELAY = 2.f; // Time to preload the world before raising the curtain after we've actually already arrived.
-const F32 TELEPORT_LOCAL_DELAY = 1.0f;  // Delay to prevent teleports after starting an in-sim teleport.
+// <FS:CR> FIRE-8721 - Remove local teleport delay
+//const F32 TELEPORT_LOCAL_DELAY = 1.0f;  // Delay to prevent teleports after starting an in-sim teleport.
+// </FS:CR>
 BOOL		 gTeleportDisplay = FALSE;
 LLFrameTimer gTeleportDisplayTimer;
 LLFrameTimer gTeleportArrivalTimer;
@@ -114,7 +116,7 @@ LLFrameTimer gRecentMemoryTime;
 // Rendering stuff
 void pre_show_depth_buffer();
 void post_show_depth_buffer();
-void render_frame(U32 output_type);
+void render_frame(U32 output_type);  // <CV:David>
 void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
 void render_hud_attachments();
 void render_ui_3d();
@@ -511,7 +513,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Short delay when teleporting in the same sim (progress screen active but not shown - did not
 			// fall-through from TELEPORT_START)
 			{
-				if( gTeleportDisplayTimer.getElapsedTimeF32() > TELEPORT_LOCAL_DELAY )
+				// <FS:CR> FIRE-8721 - Remove local teleport delay
+				//if( gTeleportDisplayTimer.getElapsedTimeF32() > TELEPORT_LOCAL_DELAY )
+				// </FS:CR>
 				{
 					//LLFirstUse::useTeleport();
 					gAgent.setTeleportState( LLAgent::TELEPORT_NONE );
@@ -715,6 +719,15 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		// </CV:David>
 
 		LLSpatialGroup::sNoDelete = FALSE;
+		
+		// <	FS:ND>FIRE-9943; resizeScreenTexture will try to disable deferred mode in low memory situations.
+		// Depending	 on the state of the pipeline. this can trigger illegal deletion of drawables.
+		// To work around th	at, resizeScreenTexture will just set a flag, which then later does trigger the change
+		// in shaders.
+		// RenderDeffered will be shut down here if needed.
+		gPipeline.disableDeferredOnLowMemory();
+		// </FS:ND>
+
 		gPipeline.clearReferences();
 
 		gPipeline.rebuildGroups();

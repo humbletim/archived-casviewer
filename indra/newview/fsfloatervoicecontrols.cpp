@@ -111,6 +111,8 @@ FSFloaterVoiceControls::FSFloaterVoiceControls(const LLSD& key)
 , mSpeakingIndicator(NULL)
 , mIsModeratorMutedVoice(false)
 , mInitParticipantsVoiceState(false)
+, mVolumeSlider(NULL)
+, mMuteButton(NULL)
 {
 	static LLUICachedControl<S32> voice_left_remove_delay ("VoiceParticipantLeftRemoveDelay", 10);
 	mSpeakerDelayRemover = new LLSpeakersDelayActionsStorage(boost::bind(&FSFloaterVoiceControls::removeVoiceLeftParticipant, this, _1), voice_left_remove_delay);
@@ -149,18 +151,20 @@ BOOL FSFloaterVoiceControls::postBuild()
 	mAvatarList = getChild<LLAvatarList>("speakers_list");
 	mAvatarListRefreshConnection = mAvatarList->setRefreshCompleteCallback(boost::bind(&FSFloaterVoiceControls::onAvatarListRefreshed, this));
 
-	mAvatarList->setCommitCallback(boost::bind(&FSFloaterVoiceControls::onParticipantSelected,this));
-
 	childSetAction("leave_call_btn", boost::bind(&FSFloaterVoiceControls::leaveCall, this));
 
 	mNonAvatarCaller = findChild<LLNonAvatarCaller>("non_avatar_caller");
 	mNonAvatarCaller->setVisible(FALSE);
 
-	mVolumeSlider=getChild<LLSliderCtrl>("volume_slider");
-	mVolumeSlider->setCommitCallback(boost::bind(&FSFloaterVoiceControls::onVolumeChanged,this));
+	mVolumeSlider = findChild<LLSliderCtrl>("volume_slider");
+	mMuteButton = findChild<LLButton>("mute_btn");
 
-	mMuteButton=getChild<LLButton>("mute_btn");
-	mMuteButton->setCommitCallback(boost::bind(&FSFloaterVoiceControls::onMuteChanged,this));
+	if (mVolumeSlider && mMuteButton)
+	{
+		mAvatarList->setCommitCallback(boost::bind(&FSFloaterVoiceControls::onParticipantSelected, this));
+		mVolumeSlider->setCommitCallback(boost::bind(&FSFloaterVoiceControls::onVolumeChanged, this));
+		mMuteButton->setCommitCallback(boost::bind(&FSFloaterVoiceControls::onMuteChanged, this));
+	}
 
 	initAgentData();
 

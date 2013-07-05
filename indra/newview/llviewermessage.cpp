@@ -153,6 +153,7 @@ const static boost::regex NEWLINES("\\n{1}");
 #include "tea.h" // <FS:AW opensim currency support>
 #include "fscommon.h"
 #include "fslightshare.h" // <FS:CR> FIRE-5118 - Lightshare support
+#include "fsradar.h"
 
 #if LL_MSVC
 // disable boost::lexical_cast warning
@@ -200,9 +201,10 @@ const std::string SCRIPT_QUESTIONS[SCRIPT_PERMISSION_EOF] =
 		"TrackYourCamera",
 		"ControlYourCamera",
 		"TeleportYourAgent",
-		"Unused0x2000",
-		"SilentEstateManagement",
-		"OverrideAgentAnimations"
+		"JoinAnExperience",
+		"SilentlyManageEstateAccess",
+		"OverrideYourAnimations",
+		"ScriptReturnObjects"
 	};
 
 const BOOL SCRIPT_QUESTION_IS_CAUTION[SCRIPT_PERMISSION_EOF] = 
@@ -219,9 +221,10 @@ const BOOL SCRIPT_QUESTION_IS_CAUTION[SCRIPT_PERMISSION_EOF] =
 	FALSE,	// TrackYourCamera,
 	FALSE,	// ControlYourCamera
 	FALSE,	// TeleportYourAgent
-	FALSE,	// Unused0x2000
-	FALSE,	// SilentEstateManagement
-	FALSE	// OverrideAgentAnimations
+	FALSE,	// JoinAnExperience
+	FALSE,	// SilentlyManageEstateAccess
+	FALSE,	// OverrideYourAnimations
+	FALSE,	// ScriptReturnObjects
 };
 
 bool friendship_offer_callback(const LLSD& notification, const LLSD& response)
@@ -5591,10 +5594,10 @@ void process_sound_trigger(LLMessageSystem *msg, void **)
 	// sound assets as a request for a full radar update to a channel
 	if ((owner_id == gAgent.getID()) && (sound_id.asString() == gSavedSettings.getString("RadarLegacyChannelAlertRefreshUUID")))
 	{
-		LLPanelPeople* pPeoplePanel = getPeoplePanel();
-		if (pPeoplePanel)
+		FSRadar* radar = FSRadar::getInstance();
+		if (radar)
 		{
-			pPeoplePanel->requestRadarChannelAlertSync();
+			radar->requestRadarChannelAlertSync();
 		}
 		return;
 	}
@@ -5820,6 +5823,38 @@ void process_sim_stats(LLMessageSystem *msg, void **user_data)
 			break;
 		case LL_SIM_STAT_NUMSCRIPTSACTIVE:
 			LLViewerStats::getInstance()->mSimActiveScripts.addValue(stat_value);
+			// <FS:Ansariel> Report script count changes
+			{
+				static LLCachedControl<bool> fsReportTotalScriptCountChanges(gSavedSettings, "FSReportTotalScriptCountChanges");
+				static LLCachedControl<U32> fsReportTotalScriptCountChangesThreshold(gSavedSettings, "FSReportTotalScriptCountChangesThreshold");
+				static const std::string increase_message = LLTrans::getString("TotalScriptCountChangeIncrease");
+				static const std::string decrease_message = LLTrans::getString("TotalScriptCountChangeDecrease");
+				static S32 prev_total_scripts = -1;
+
+				if (fsReportTotalScriptCountChanges)
+				{
+					S32 new_val = (S32)stat_value;
+					S32 change_count = new_val - prev_total_scripts;
+					if (llabs(change_count) >= fsReportTotalScriptCountChangesThreshold && prev_total_scripts > -1)
+					{
+						LLStringUtil::format_map_t args;
+						args["NEW_VALUE"] = llformat("%d", new_val);
+						args["OLD_VALUE"] = llformat("%d", prev_total_scripts);
+						args["DIFFERENCE"] = llformat("%+d", change_count);
+
+						if (change_count > 0)
+						{
+							reportToNearbyChat(formatString(increase_message, args));
+						}
+						else if (change_count < 0)
+						{
+							reportToNearbyChat(formatString(decrease_message, args));
+						}
+					}
+				}
+				prev_total_scripts = (S32)stat_value;
+			}
+			// </FS:Ansariel>
 			break;
 		case LL_SIM_STAT_SCRIPT_EPS:
 			LLViewerStats::getInstance()->mSimScriptEPS.addValue(stat_value);
@@ -6108,7 +6143,7 @@ void process_avatar_sit_response(LLMessageSystem *mesgsys, void **user_data)
 	if (object)
 	{
 		LLVector3 sit_spot = object->getPositionAgent() + (sitPosition * object->getRotation());
-		if (!use_autopilot || isAgentAvatarValid() && gAgentAvatarp->isSitting() && gAgentAvatarp->getRoot() == object->getRoot())
+		if (!use_autopilot || (isAgentAvatarValid() && gAgentAvatarp->isSitting() && gAgentAvatarp->getRoot() == object->getRoot()))
 		{
 			//we're already sitting on this object, so don't autopilot
 		}
@@ -6952,7 +6987,8 @@ bool attempt_standard_notification(LLMessageSystem* msgsystem)
 
 		std::string llsdRaw;
 		LLSD llsdBlock;
-		msgsystem->getStringFast(_PREHASH_AlertInfo, _PREHASH_Message, notificationID);
+		// <FS:Ansariel> Remove dupe call
+		//msgsystem->getStringFast(_PREHASH_AlertInfo, _PREHASH_Message, notificationID);
 		msgsystem->getStringFast(_PREHASH_AlertInfo, _PREHASH_ExtraParams, llsdRaw);
 		if (llsdRaw.length())
 		{
@@ -6999,6 +7035,30 @@ bool attempt_standard_notification(LLMessageSystem* msgsystem)
 				return true;
 			}
 		}
+
+		// <FS:Ansariel> FIRE-9858: Kill annoying "Autopilot canceled" toast
+		if (notificationID == "AutopilotCanceled")
+		{
+			return true;
+		}
+		// </FS:Ansariel>
+// <FS:CR> FIRE-9696 - Moved detection of HomePositionSet Alert hack to here where it's actually found now
+		if (notificationID == "HomePositionSet")
+		{
+			// save the home location image to disk
+			std::string snap_filename = gDirUtilp->getLindenUserDir();
+			snap_filename += gDirUtilp->getDirDelimiter();
+			snap_filename += SCREEN_HOME_FILENAME;
+			if (gViewerWindow->saveSnapshot(snap_filename, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), FALSE, FALSE))
+			{
+				llinfos << SCREEN_HOME_FILENAME << " saved successfully." << llendl;
+			}
+			else
+			{
+				llwarns << SCREEN_HOME_FILENAME << " could not be saved." << llendl;
+			}
+		}
+// </FS:CR>
 		
 		LLNotificationsUtil::add(notificationID, llsdBlock);
 		return true;
@@ -7074,14 +7134,16 @@ void process_alert_core(const std::string& message, BOOL modal)
 	{
 		LLViewerStats::getInstance()->incStat(LLViewerStats::ST_KILLED_COUNT);
 	}
-	else if( message == "Home position set." )
-	{
+// <FS:CR> FIRE-9696 - The viewer isn't ever seeing the alert here moved below and detect by name
+	//else if( message == "Home Position Set." )
+	//{
 		// save the home location image to disk
-		std::string snap_filename = gDirUtilp->getLindenUserDir();
-		snap_filename += gDirUtilp->getDirDelimiter();
-		snap_filename += SCREEN_HOME_FILENAME;
-		gViewerWindow->saveSnapshot(snap_filename, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), FALSE, FALSE);
-	}
+	//	std::string snap_filename = gDirUtilp->getLindenUserDir();
+	//	snap_filename += gDirUtilp->getDirDelimiter();
+	//	snap_filename += SCREEN_HOME_FILENAME;
+	//	gViewerWindow->saveSnapshot(snap_filename, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), FALSE, FALSE);
+	//}
+// </FS:CR>
 
 	std::string processed_message = message;
 	const std::string ALERT_PREFIX("ALERT: ");

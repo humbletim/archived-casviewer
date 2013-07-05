@@ -317,6 +317,7 @@ void LLWorldMapView::draw()
 	static LLCachedControl<bool> showMatureEvents(gSavedSettings, "ShowMatureEvents");
 	static LLCachedControl<bool> showAdultEvents(gSavedSettings, "ShowAdultEvents");
 	static LLCachedControl<bool> drawAdvancedRegionInfo(gSavedSettings, "FSAdvancedWorldmapRegionInfo");
+	static LLCachedControl<bool> sDrawRegionGridCoordinates(gSavedSettings, "FSShowRegionGridCoordinates", false);
 
 	LLTextureView::clearDebugImages();
 
@@ -541,6 +542,17 @@ void LLWorldMapView::draw()
 					LLColor4::white,
 					LLFontGL::LEFT, LLFontGL::BASELINE, LLFontGL::NORMAL, LLFontGL::DROP_SHADOW);
 			}
+// <FS:CR> Show the grid coordinates (in units of regions)
+			if (sDrawRegionGridCoordinates)
+			{
+				LLVector3d origin = info->getGlobalOrigin();
+				std::ostringstream coords;
+				coords << "(" << origin.mdV[VX] / REGION_WIDTH_METERS << "," << origin.mdV[VY] / REGION_WIDTH_METERS << ")";
+				//mesg += coords.str();
+				font->renderUTF8(coords.str(), 0, llfloor(left + 3), llfloor(bottom + 16), LLColor4::white,
+								 LLFontGL::LEFT, LLFontGL::BASELINE, LLFontGL::NORMAL, LLFontGL::DROP_SHADOW);
+			}
+// </FS:CR>
 		}
 	}
 

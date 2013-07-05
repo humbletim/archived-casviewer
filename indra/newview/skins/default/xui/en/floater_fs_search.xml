@@ -295,5 +295,31 @@
 		name="event_reminder_btn"
 		width="120"
 		left_pad="1" />
+		<loading_indicator
+		left="134"
+		top="320"
+		follows="left|top|right"
+		mouse_opaque="false"
+		name="loading"
+		rotations_per_sec="1.0"
+		tab_stop="false"
+		height="100"
+		width="100"
+		visible="false" >
+			<images>
+				<image name="ProgressLarge_1"/>
+				<image name="ProgressLarge_2"/>
+				<image name="ProgressLarge_3"/>
+				<image name="ProgressLarge_4"/>
+				<image name="ProgressLarge_5"/>
+				<image name="ProgressLarge_6"/>
+				<image name="ProgressLarge_7"/>
+				<image name="ProgressLarge_8"/>
+				<image name="ProgressLarge_9"/>
+				<image name="ProgressLarge_10"/>
+				<image name="ProgressLarge_11"/>
+				<image name="ProgressLarge_12"/>
+			</images>
+		</loading_indicator>
 	</panel>
 </floater>

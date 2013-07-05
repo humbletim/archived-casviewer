@@ -1102,7 +1102,10 @@ LLTextureCtrl::LLTextureCtrl(const LLTextureCtrl::Params& p)
 	mDefaultImageAssetID(p.default_image_id),
 	mDefaultImageName(p.default_image_name),
 	mFallbackImage(p.fallback_image),
-	mPreviewMode(!p.enabled) // For texture preview mode
+	// <FS:Ansariel> Mask texture if desired
+	mIsMasked(FALSE),
+	// </FS:Ansariel> Mask texture if desired
+	mPreviewMode(!p.enabled) // <FS:Ansariel> For texture preview mode
 {
 	setAllowNoTexture(p.allow_no_texture);
 	setCanApplyImmediately(p.can_apply_immediately);
@@ -1213,9 +1216,11 @@ void LLTextureCtrl::setEnabled( BOOL enabled )
 
 	mCaption->setEnabled( enabled );
 
-	// Texture preview mode
+	// <FS:Ansariel> Texture preview mode
+	//LLView::setEnabled( enabled );
 	LLView::setEnabled( (enabled || getValue().asUUID().notNull()) );
 	mPreviewMode = !enabled;
+	// </FS:Ansariel>
 }
 
 void LLTextureCtrl::setValid(BOOL valid )
@@ -1325,6 +1330,12 @@ BOOL LLTextureCtrl::handleMouseDown(S32 x, S32 y, MASK mask)
 
 	if (!handled && mBorder->parentPointInView(x, y))
 	{
+		// <FS:Ansariel> Texture preview mode
+		//showPicker(FALSE);
+		////grab textures first...
+		//LLInventoryModelBackgroundFetch::instance().start(gInventory.findCategoryUUIDForType(LLFolderType::FT_TEXTURE));
+		////...then start full inventory fetch.
+		//LLInventoryModelBackgroundFetch::instance().start();
 		if (!mPreviewMode)
 		{
 			showPicker(FALSE);
@@ -1333,7 +1344,7 @@ BOOL LLTextureCtrl::handleMouseDown(S32 x, S32 y, MASK mask)
 			//...then start full inventory fetch.
 			LLInventoryModelBackgroundFetch::instance().start();
 		}
-		else
+		else if (!mIsMasked)
 		{
 			// Open the preview floater for the texture
 			LLSD params;
@@ -1341,6 +1352,7 @@ BOOL LLTextureCtrl::handleMouseDown(S32 x, S32 y, MASK mask)
 			params["preview_only"] = TRUE;
 			LLFloaterReg::showInstance("preview_texture", params, TRUE);
 		}
+		// </FS:Ansariel>
 
 		handled = TRUE;
 	}
@@ -1535,6 +1547,13 @@ void LLTextureCtrl::draw()
 		
 		gl_draw_scaled_image( interior.mLeft, interior.mBottom, interior.getWidth(), interior.getHeight(), mTexturep, UI_VERTEX_COLOR % alpha);
 		mTexturep->addTextureStats( (F32)(interior.getWidth() * interior.getHeight()) );
+		// <FS:Ansariel> Mask texture if desired
+		if (mIsMasked)
+		{
+			gl_rect_2d( interior, LLColor4(0.5f, 0.5f, 0.5f, 0.44f), TRUE);
+			gl_draw_x( interior, LLColor4::black );
+		}
+		// </FS:Ansariel> Mask texture if desired
 	}
 	else if (!mFallbackImage.isNull())
 	{
@@ -1661,10 +1680,12 @@ BOOL LLTextureCtrl::handleUnicodeCharHere(llwchar uni_char)
 
 void LLTextureCtrl::setValue( const LLSD& value )
 {
-	// Changed for texture preview mode
+	// <FS:Ansariel> Texture preview mode
+	//setImageAssetID(value.asUUID());
 	LLUUID uuid = value.asUUID();
 	setImageAssetID(uuid);
 	LLView::setEnabled( (!mPreviewMode || uuid.notNull()) );
+	// </FS:Ansariel>
 }
 
 LLSD LLTextureCtrl::getValue() const

@@ -112,13 +112,18 @@ FSFloaterGroup* FSFloaterGroup::openGroupFloater(const LLSD& params)
 	}
 
 	FSFloaterGroup* floater = LLFloaterReg::getTypedInstance<FSFloaterGroup>("fs_group", LLSD().with("group_id", params.get("group_id").asUUID()));
-	if (floater)
+	if (floater->getVisible())
+	{
+		// If floater is already open, simply call onOpen.
+		// This will pass-through the parameters to the group panel.
+		floater->onOpen(params);
+	}
+	else
 	{
 		floater->openFloater(params);
-		return floater;
 	}
 
-	return NULL;
+	return floater;
 }
 
 // static

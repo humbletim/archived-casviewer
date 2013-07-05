@@ -128,6 +128,7 @@ set(viewer_SOURCE_FILES
     fsexport.cpp
     fsfloaterblocklist.cpp
     fsfloatergroup.cpp
+    fsfloatergrouptitles.cpp
     fsfloaterimport.cpp
     fsfloaterim.cpp
     fsfloaterimcontainer.cpp
@@ -135,12 +136,13 @@ set(viewer_SOURCE_FILES
     fsfloaterplacedetails.cpp
     fsfloaterposestand.cpp
     fsfloaterprofile.cpp
+    fsfloaterradar.cpp
+    fsfloaterscripteditorprefs.cpp
     fsfloatersearch.cpp
     fsfloaterteleporthistory.cpp
     fsfloatervoicecontrols.cpp
     fsfloatervolumecontrols.cpp
     fsfloaterwsassetblacklist.cpp
-    fsgrouptitles.cpp
     fskeywords.cpp
     fslightshare.cpp
     fslslbridge.cpp
@@ -156,8 +158,12 @@ set(viewer_SOURCE_FILES
     fspanelprefs.cpp
     fspanelprofile.cpp
     fspanelprofileclassifieds.cpp
+    fspanelradar.cpp
     fspose.cpp
+    fsradar.cpp
+    fsradarentry.cpp
     fsradarlistctrl.cpp
+    fsradarmenu.cpp
     fsslurlcommand.cpp
     fswsassetblacklist.cpp
     groupchatlistener.cpp
@@ -789,6 +795,7 @@ set(viewer_HEADER_FILES
     fsexport.h
     fsfloaterblocklist.h
     fsfloatergroup.h
+    fsfloatergrouptitles.h
     fsfloaterimport.h
     fsfloaterim.h
     fsfloaterimcontainer.h
@@ -796,13 +803,14 @@ set(viewer_HEADER_FILES
     fsfloaterplacedetails.h
     fsfloaterposestand.h
     fsfloaterprofile.h
+    fsfloaterradar.h
+    fsfloaterscripteditorprefs.h
     fsfloatersearch.h
     fsfloaterteleporthistory.h
     fsfloatervoicecontrols.h
     fsfloatervolumecontrols.h
     fsfloaterwsassetblacklist.h
     fsgridhandler.h
-    fsgrouptitles.h
     fskeywords.h
     fslightshare.h
     fslslbridge.h
@@ -818,8 +826,12 @@ set(viewer_HEADER_FILES
     fspanelprefs.h
     fspanelprofile.h
     fspanelprofileclassifieds.h
+    fspanelradar.h
     fspose.h
+    fsradar.h
+    fsradarentry.h
     fsradarlistctrl.h
+    fsradarmenu.h
     fsslurl.h
     fsslurlcommand.h
     fswsassetblacklist.h
@@ -1801,6 +1813,12 @@ list(APPEND EVENT_HOST_SCRIPTS ${EVENT_HOST_SCRIPT_GLOB_LIST})
 set(PACKAGE ON CACHE BOOL
     "Add a package target that builds an installer package.")
 
+if ( OPENSIM )
+  set( ND_VIEWER_FLAVOR "oss" )
+else ( OPENSIM )
+  set( ND_VIEWER_FLAVOR "hvk" )
+endif ( OPENSIM )
+
 if (WINDOWS)
     set_target_properties(${VIEWER_BINARY_NAME}
         PROPERTIES
@@ -2004,6 +2022,7 @@ if (WINDOWS)
           --source=${CMAKE_CURRENT_SOURCE_DIR}
           --touch=${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/touched.bat
           --version=${viewer_VERSION}
+          --viewer_flavor=${ND_VIEWER_FLAVOR}
         DEPENDS 
             ${VIEWER_BINARY_NAME} 
             ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py
@@ -2133,6 +2152,7 @@ if (LINUX)
         --source=${CMAKE_CURRENT_SOURCE_DIR}
         --version=${viewer_VERSION}
         --touch=${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/.${product}.touched
+        --viewer_flavor=${ND_VIEWER_FLAVOR}
       DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py
         ${COPY_INPUT_DEPENDENCIES}
@@ -2232,6 +2252,7 @@ if (DARWIN)
           --source=${CMAKE_CURRENT_SOURCE_DIR}
           --touch=${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/.${product}.touched
           --version=${viewer_VERSION}
+          --viewer_flavor=${ND_VIEWER_FLAVOR}
           ${SIGNING_SETTING}
         DEPENDS
           ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py

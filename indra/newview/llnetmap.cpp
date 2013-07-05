@@ -77,17 +77,11 @@
 // [RLVa:KB] - Checked: 2010-04-19 (RLVa-1.2.0f)
 #include "rlvhandler.h"
 // [/RLVa:KB]
-#include "lltrans.h"
 #include "llmutelist.h"
 
 // Ansariel: For accessing the radar data
-#include "llavatarlist.h"
-#include "llavatarlistitem.h"
-#include "llpanelpeople.h"
-#include "llfloatersidepanelcontainer.h"
+#include "fsradar.h"
 #include "lggcontactsets.h"
-
-#include "llavataractions.h"
 #include "fscommon.h"
 
 static LLDefaultChildRegistry::Register<LLNetMap> r1("net_map");
@@ -238,9 +232,6 @@ void LLNetMap::draw()
 
  	static LLFrameTimer map_timer;
 	static LLUIColor map_avatar_color = LLUIColorTable::instance().getColor("MapAvatarColor", LLColor4::white);
-	static LLUIColor map_avatar_friend_color = LLUIColorTable::instance().getColor("MapAvatarFriendColor", LLColor4::white);
-	static LLUIColor map_avatar_linden_color = LLUIColorTable::instance().getColor("MapAvatarLindenColor", LLColor4::blue);
-	static LLUIColor map_avatar_muted_color = LLUIColorTable::instance().getColor("MapAvatarMutedColor", LLColor4::grey3);
 	static LLUIColor map_track_color = LLUIColorTable::instance().getColor("MapTrackColor", LLColor4::white);
 	//static LLUIColor map_track_disabled_color = LLUIColorTable::instance().getColor("MapTrackDisabledColor", LLColor4::white);
 	static LLUIColor map_frustum_color = LLUIColorTable::instance().getColor("MapFrustumColor", LLColor4::white);
@@ -500,6 +491,7 @@ void LLNetMap::draw()
 // [SL:KB] - Patch: World-MinimapOverlay | Checked: 2012-07-26 (Catznip-3.3)
 		if (s_fShowObjects)
 		{
+			gGL.color4f(1.f, 1.f, 1.f, 1.f);
 			gGL.getTexUnit(0)->bind(mObjectImagep);
 // [/SL:KB]
 			gGL.begin(LLRender::QUADS);
@@ -523,6 +515,7 @@ void LLNetMap::draw()
 			map_center_agent.mV[VX] *= mScale / region_width;
 			map_center_agent.mV[VY] *= mScale / region_width;
 
+			gGL.color4f(1.f, 1.f, 1.f, 1.f);
 			gGL.getTexUnit(0)->bind(mParcelImagep);
 			gGL.begin(LLRender::QUADS);
 				gGL.texCoord2f(0.f, 1.f);
@@ -567,14 +560,6 @@ void LLNetMap::draw()
 			pos_map = globalPosToView(positions[i]);
 			LLUUID uuid = avatar_ids[i];
 
-// [RLVa:KB] - Checked: 2010-04-19 (RLVa-1.2.0f) | Modified: RLVa-1.2.0f
-			bool show_as_friend = (LLAvatarTracker::instance().getBuddyInfo(uuid) != NULL) &&
-				(!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES));
-// [/RLVa:KB]
-//			bool show_as_friend = (LLAvatarTracker::instance().getBuddyInfo(uuid) != NULL);
-
-			LLColor4 color = show_as_friend ? map_avatar_friend_color : map_avatar_color;
-
 			// <FS:Ansariel> Check for unknown Z-offset => AVATAR_UNKNOWN_Z_OFFSET
 			//unknown_relative_z = positions[i].mdV[VZ] == COARSEUPDATE_MAX_Z &&
 			//		camera_position.mV[VZ] >= COARSEUPDATE_MAX_Z;
@@ -595,27 +580,26 @@ void LLNetMap::draw()
 					pos_map.mV[VZ] = F32_MAX;
 				}
 			}
-			// </FS:Ansariel>
-
-			// Colorize muted avatars and Lindens
-			std::string fullName;
-			LLMuteList* muteListInstance = LLMuteList::getInstance();
-
-			if (muteListInstance->isMuted(uuid)) color = map_avatar_muted_color;
-			else if (gCacheName->getFullName(uuid, fullName) && muteListInstance->isLinden(fullName)) color = map_avatar_linden_color;			
-
+			// </FS:Ansariel>	
+			
+			LLColor4 color = map_avatar_color;	// <FS:CR>
+			
+			// <FS:CR> Color "special" avatars with special colors (Friends, muted, Lindens, etc)
+			color = LGGContactSets::getInstance()->colorize(uuid, color, LGG_CS_MINIMAP);
+			// </FS:CR>
+			
+			//color based on contact sets prefs
+			if(LGGContactSets::getInstance()->hasFriendColorThatShouldShow(uuid, LGG_CS_MINIMAP))
+			{
+				color = LGGContactSets::getInstance()->getFriendColor(uuid);
+			}
+			
 			// <FS:Ansariel> Mark Avatars with special colors
 			if (LLNetMap::sAvatarMarksMap.find(uuid) != LLNetMap::sAvatarMarksMap.end())
 			{
 				color = LLNetMap::sAvatarMarksMap[uuid];
 			}
 			// </FS:Ansariel> Mark Avatars with special colors
-					
-			//color based on contact sets prefs
-			if(LGGContactSets::getInstance()->hasFriendColorThatShouldShow(uuid, LGG_CS_MINIMAP))
-			{
-				color = LGGContactSets::getInstance()->getFriendColor(uuid);
-			}
 
 // [RLVa:KB] - Checked: 2010-04-19 (RLVa-1.2.0f) | Modified: RLVa-1.2.0f | FS-Specific
 			LLWorldMapView::drawAvatar(
@@ -707,6 +691,7 @@ void LLNetMap::draw()
 		}
 
 		// Draw dot for self avatar position
+		static LLUIColor self_tag_color = LLUIColorTable::instance().getColor("MapAvatarSelfColor", LLColor4::yellow); // <FS:CR> FIRE-1061
 		LLVector3d pos_global = gAgent.getPositionGlobal();
 		pos_map = globalPosToView(pos_global);
 		S32 dot_width = llround(mDotRadius * 2.f);
@@ -716,7 +701,8 @@ void LLNetMap::draw()
 			you->draw(llround(pos_map.mV[VX] - mDotRadius),
 					  llround(pos_map.mV[VY] - mDotRadius),
 					  dot_width,
-					  dot_width);
+					  dot_width,
+					  self_tag_color);	// <FS:CR> FIRE-1061
 
 			F32	dist_to_cursor_squared = dist_vec_squared(LLVector2(pos_map.mV[VX], pos_map.mV[VY]),
 										  LLVector2(local_mouse_x,local_mouse_y));
@@ -1018,13 +1004,13 @@ BOOL LLNetMap::handleToolTipAgent(const LLUUID& avatar_id)
 			//               aka radar when above 1020m.
 			if (isHigher1020mBug)
 			{
-				LLPanelPeople* panel_people = getPeoplePanel();
-				if (panel_people)
+				FSRadar* radar = FSRadar::getInstance();
+				if (radar)
 				{
-					LLAvatarListItem* avatar_list_item = panel_people->getNearbyList()->getAvatarListItem(avatar_id);
-					if (avatar_list_item)
+					FSRadarEntry* entry = radar->getEntry(avatar_id);
+					if (entry)
 					{
-						F32 radar_distance = avatar_list_item->getRange();
+						F32 radar_distance = entry->getRange();
 
 						if (radar_distance > AVATAR_UNKNOWN_RANGE)
 						{
@@ -1710,10 +1696,10 @@ void LLNetMap::startTracking()
 {
 	if (mClosestAgentRightClick.notNull())
 	{
-		LLPanelPeople* panel_people = getPeoplePanel();
-		if (panel_people != NULL)
+		FSRadar* radar = FSRadar::getInstance();
+		if (radar)
 		{
-			panel_people->startTracking(mClosestAgentRightClick);
+			radar->startTracking(mClosestAgentRightClick);
 		}
 	}
 }

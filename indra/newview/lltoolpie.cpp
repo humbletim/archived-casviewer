@@ -1204,7 +1204,15 @@ BOOL LLToolPie::handleTooltipObject( LLViewerObject* hover_object, std::string l
 							// us again after it received the name.
 							std::string l;
 							std::string m;
-							LLAvatarNameCache::get(owner, boost::bind(&LLToolPie::handleTooltipObject, this, hover_object, l, m));
+
+							// <FS:ND> FIRE-10276; handleTooltipObject can be called during name resolution (LLAvatarNameCache), then hover_object can lon gbe destroyed and the pointer invalid.
+
+							// mNamecacheConnections.push_back( LLAvatarNameCache::get(owner, boost::bind(&LLToolPie::handleTooltipObject, this, hover_object, l, m)) );
+
+							LLUUID id( hover_object->getID() );
+							mNamecacheConnections.push_back( LLAvatarNameCache::get(owner, boost::bind(&LLToolPie::handleTooltipObjectById, this, id, l, m)) );
+
+							// <FS:ND>
 						}
 
 						// Owner name
@@ -2253,3 +2261,32 @@ void LLToolPie::steerCameraWithMouse(S32 x, S32 y)
 	mMouseSteerX = x;
 	mMouseSteerY = y;
 }
+
+// <FS:ND> Keep track of name resolutions we made and delete them if needed to avoid crashing if this instance dies.
+LLToolPie::~LLToolPie()
+{
+	std::vector< tNamecacheConnection >::iterator itr = mNamecacheConnections.begin();
+	std::vector< tNamecacheConnection >::iterator itrEnd = mNamecacheConnections.end();
+
+	while( itr != itrEnd )
+	{
+		itr->disconnect();
+		++itr;
+	}
+}
+// </FS:ND>
+
+// <FS:ND> FIRE-10276; handleTooltipObject can be called during name resolution (LLAvatarNameCache), then hover_object can lon gbe destroyed and the pointer invalid.
+// To circumvent this just pass the id and try to fetch the object from gObjectList.
+
+BOOL LLToolPie::handleTooltipObjectById( LLUUID hoverObjectId, std::string line, std::string tooltip_msg)
+{
+	LLViewerObject* pObject = gObjectList.findObject( hoverObjectId );
+
+	if( !pObject )
+		return TRUE;
+
+	return handleTooltipObject( pObject, line, tooltip_msg );
+}
+
+// </FS:ND>

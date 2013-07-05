@@ -34,8 +34,6 @@
 #include "lluictrlfactory.h"
 #include "roles_constants.h"
 
-#include "lleconomy.h" // <FS:AW FIRE-7091 group creation cost inaccurate on opensim>
-
 // UI elements
 #include "llbutton.h"
 #include "llcheckboxctrl.h"
@@ -55,10 +53,10 @@
 #include "lltrans.h"
 #include "llviewerwindow.h"
 
-// for copy URI button
-#include "llclipboard.h"
-
+// Firestorm includes
 #include "exogroupmutelist.h"
+#include "llclipboard.h"
+#include "lleconomy.h" // <FS:AW FIRE-7091 group creation cost inaccurate on opensim>
 
 static LLRegisterPanelClassWrapper<LLPanelGroupGeneral> t_panel_group_general("panel_group_general");
 
@@ -107,8 +105,11 @@ BOOL LLPanelGroupGeneral::postBuild()
 		mEditCharter->setFocusReceivedCallback(boost::bind(onFocusEdit, _1, this));
 		mEditCharter->setFocusChangedCallback(boost::bind(onFocusEdit, _1, this));
 	}
-	// set up callback for copy URI button
-	childSetCommitCallback("copy_uri",boost::bind(&LLPanelGroupGeneral::onCopyURI,this),NULL);
+	// <FS> set up callbacks for copy URI and name buttons
+	childSetCommitCallback("copy_uri", boost::bind(&LLPanelGroupGeneral::onCopyURI, this), NULL);
+	childSetCommitCallback("copy_name", boost::bind(&LLPanelGroupGeneral::onCopyName, this), NULL);
+	childSetEnabled("copy_name", FALSE);
+	// </FS>
 
 
 	mListVisibleMembers = getChild<LLNameListCtrl>("visible_members", recurse);
@@ -398,12 +399,13 @@ bool LLPanelGroupGeneral::apply(std::string& mesg)
 				return false;
 			}
 
-// <FS:AW FIRE-7091 group creation cost inaccurate on opensim>
+			// <FS:AW> FIRE-7091 group creation cost inaccurate on opensim>
+			//LLNotificationsUtil::add("CreateGroupCost",  LLSD(), LLSD(), boost::bind(&LLPanelGroupGeneral::createGroupCallback, this, _1, _2));
 			LLSD args;
 			S32 cost =  LLGlobalEconomy::Singleton::getInstance()->getPriceGroupCreate();
 			args["[COST]"] = llformat("%d", cost);
 			LLNotificationsUtil::add("CreateGroupCost",  args, LLSD(), boost::bind(&LLPanelGroupGeneral::createGroupCallback, this, _1, _2));
-// </FS:AW FIRE-7091 group creation cost inaccurate on opensim>
+			// </FS:AW> FIRE-7091 group creation cost inaccurate on opensim>
 
 			return false;
 		}
@@ -741,6 +743,11 @@ void LLPanelGroupGeneral::update(LLGroupChange gc)
 		}
 	}
 
+	// <FS:Ansariel> Copy group name button
+	childSetEnabled("copy_name", !gdatap->mName.empty());
+	mGroupName = gdatap->mName;
+	// </FS:Ansariel>
+
 	resetDirty();
 }
 
@@ -764,7 +771,7 @@ void LLPanelGroupGeneral::updateMembers()
 	// <FS:ND> FIRE-6074; If the group changes, mMemberPRogresss is invalid, as it belongs to a different LLGroupMgrGroupData. Reset it, start over.
 	if( mIteratorGroup != mGroupID )
 	{
-		mMemberProgress == gdatap->mMembers.begin();
+		mMemberProgress = gdatap->mMembers.begin();
 		mIteratorGroup = mGroupID;
 	}
 	// </FS:ND> FIRE-6074
@@ -781,17 +788,17 @@ void LLPanelGroupGeneral::updateMembers()
 			continue;
 		}
 
-		if (LLAvatarNameCache::get(mMemberProgress->first, &av_name))
+//		if (LLAvatarNameCache::get(mMemberProgress->first, &av_name))
 		{
 			addMember(mMemberProgress->second);
 		}
-		else
-		{
-			// If name is not cached, onNameCache() should be called when it is cached and add this member to list.
-			LLAvatarNameCache::get(mMemberProgress->first, 
-									boost::bind(&LLPanelGroupGeneral::onNameCache,
-												this, gdatap->getMemberVersion(), member, _2));
-		}
+//		else
+//		{
+//			// If name is not cached, onNameCache() should be called when it is cached and add this member to list.
+//			LLAvatarNameCache::get(mMemberProgress->first, 
+//									boost::bind(&LLPanelGroupGeneral::onNameCache,
+//												this, gdatap->getMemberVersion(), member, _2));
+//		}
 	}
 
 	if (mMemberProgress == gdatap->mMembers.end())
@@ -980,21 +987,29 @@ void	LLPanelGroupGeneral::resetDirty()
 void LLPanelGroupGeneral::setGroupID(const LLUUID& id)
 {
 	LLPanelGroupTab::setGroupID(id);
-	// get group key display and copy URI button pointers
+	// <FS> Get group key display and copy URI/name button pointers
 	LLTextEditor* groupKeyEditor = getChild<LLTextEditor>("group_key");
 	LLButton* copyURIButton = getChild<LLButton>("copy_uri");
+	LLButton* copyNameButton = getChild<LLButton>("copy_name");
 	// happens when a new group is created
+	// </FS>
 	if(id == LLUUID::null)
 	{
+		// <FS>
 		if (groupKeyEditor)
 			groupKeyEditor->setValue(LLSD());
 
 		if (copyURIButton)
 			copyURIButton->setEnabled(FALSE);
 
+		if (copyNameButton)
+			copyNameButton->setEnabled(FALSE);
+		// </FS>
+
 		reset();
 		return;
 	}
+	// <FS>
 	// fill in group key
 	if (groupKeyEditor)
 		groupKeyEditor->setValue(id.asString());
@@ -1002,6 +1017,7 @@ void LLPanelGroupGeneral::setGroupID(const LLUUID& id)
 	// activate copy URI button
 	if (copyURIButton)
 		copyURIButton->setEnabled(TRUE);
+	// </FS>
 
 	BOOL accept_notices = FALSE;
 	BOOL list_in_profile = FALSE;
@@ -1067,11 +1083,17 @@ S32 LLPanelGroupGeneral::sortMembersList(S32 col_idx,const LLScrollListItem* i1,
 	return LLStringUtil::compareDict(cell1->getValue().asString(), cell2->getValue().asString());
 }
 
-// protected
-
+// <FS> Copy button handlers
 // Copy URI button callback
 void LLPanelGroupGeneral::onCopyURI()
 {
     std::string name = "secondlife:///app/group/"+getChild<LLUICtrl>("group_key")->getValue().asString()+"/about";
     LLClipboard::instance().copyToClipboard(utf8str_to_wstring(name), 0, name.size() );
 }
+
+void LLPanelGroupGeneral::onCopyName()
+{
+    LLClipboard::instance().copyToClipboard(utf8str_to_wstring(mGroupName), 0, mGroupName.size() );
+}
+
+// </FS> Copy button handlers

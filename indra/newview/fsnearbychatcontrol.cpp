@@ -88,6 +88,11 @@
 // #include "llanimationstates.h"	// ANIM_AGENT_WHISPER, ANIM_AGENT_TALK, ANIM_AGENT_SHOUT
 // #include "llviewerstats.h"
 // </FS:Zi>
+// <FS:CR> FIRE-3192 - Name Prediction
+#include "llworld.h"
+
+#define NAME_PREDICTION_MINIMUM_LENGTH 2
+// </FS:CR>
 
 static LLDefaultChildRegistry::Register<FSNearbyChatControl> r("fs_nearby_chat_control");
 
@@ -167,6 +172,7 @@ void FSNearbyChatControl::onKeystroke(LLLineEditor* caller,void* userdata)
 	}
 	
 	KEY key = gKeyboard->currentKey();
+	MASK mask = gKeyboard->currentMask(FALSE);	// <FS:CR> FIRE-3192 - Predictive name completion
 	
 	// Ignore "special" keys, like backspace, arrows, etc.
 	if (length > 1 
@@ -199,6 +205,124 @@ void FSNearbyChatControl::onKeystroke(LLLineEditor* caller,void* userdata)
 			caller->setCursorToEnd();
 		}
 	}
+// <FS:CR> FIRE-3192 - Predictive name completion, based on code by Satomi Ahn
+	static LLCachedControl<bool> sNameAutocomplete(gSavedSettings, "FSChatbarNamePrediction");
+	if (length > NAME_PREDICTION_MINIMUM_LENGTH && sNameAutocomplete && key < KEY_SPECIAL && mask != MASK_CONTROL)
+	{
+		S32 cur_pos = caller->getCursor();
+		if (cur_pos && (raw_text[cur_pos - 1] != ' '))
+		{
+			// Get a list of avatars within range
+			std::vector<LLUUID> avatar_ids;
+			std::vector<LLVector3d> positions;
+			LLWorld::getInstance()->getAvatars(&avatar_ids, &positions, gAgent.getPositionGlobal(), gSavedSettings.getF32("NearMeRange"));
+			
+			if (avatar_ids.empty()) return; // Nobody's in range!
+			
+			// Parse text for a pattern to search
+			std::string prefix = wstring_to_utf8str(raw_text.substr(0, cur_pos)); // Text before search string
+			std::string suffix = "";
+			if (cur_pos <= raw_text.length()) // Is there anything after the cursor?
+			{
+				suffix = wstring_to_utf8str(raw_text.substr(cur_pos)); // Text after search string
+			}
+			U32 last_space = prefix.rfind(" ");
+			std::string pattern = prefix.substr(last_space + 1, prefix.length() - last_space - 1); // Search pattern
+			
+			prefix = prefix.substr(0, last_space + 1);
+			std::string match_pattern = "";
+			
+			if (pattern.size() < NAME_PREDICTION_MINIMUM_LENGTH) return;
+
+			match_pattern = prefix.substr(last_space + 1, prefix.length() - last_space - 1);
+			prefix = prefix.substr(0, last_space + 1);
+			std::string match = pattern;
+			LLStringUtil::toLower(pattern);
+			
+			std::string name;
+			bool found = false;
+			bool full_name = false;
+			std::vector<LLUUID>::iterator iter = avatar_ids.begin();
+			
+			if (last_space != std::string::npos && !prefix.empty())
+			{
+				last_space = prefix.substr(0, prefix.length() - 2).rfind(" ");
+				match_pattern = prefix.substr(last_space + 1, prefix.length() - last_space - 1);
+				prefix = prefix.substr(0, last_space + 1);
+				
+				// prepare search pattern
+				std::string full_pattern(match_pattern + pattern);
+				LLStringUtil::toLower(full_pattern);
+				
+				// Look for a match
+				while (iter != avatar_ids.end() && !found)
+				{
+					if ((bool)gCacheName->getFullName(*iter++, name))
+					{
+						if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+						{
+							name = RlvStrings::getAnonym(name);
+						}
+						LLStringUtil::toLower(name);
+						found = (name.find(full_pattern) == 0);
+					}
+				}
+			}
+			
+			if (found)
+			{
+				full_name = true; // ignore OnlyFirstName in case we want to disambiguate
+				prefix += match_pattern;
+			}
+			else if (!pattern.empty()) // if first search did not work, try matching with last word before cursor only
+			{
+				prefix += match_pattern; // first part of the pattern wasn't a pattern, so keep it in prefix
+				LLStringUtil::toLower(pattern);
+				iter = avatar_ids.begin();
+				
+				// Look for a match
+				while (iter != avatar_ids.end() && !found)
+				{
+					if ((bool)gCacheName->getFullName(*iter++, name))
+					{
+						if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+						{
+							name = RlvStrings::getAnonym(name);
+						}
+						LLStringUtil::toLower(name);
+						found = (name.find(pattern) == 0);
+					}
+				}
+			}
+			
+			// if we found something by either method, replace the pattern by the avatar name
+			if (found)
+			{
+				std::string first_name, last_name;
+				gCacheName->getFirstLastName(*(iter - 1), first_name, last_name);
+				if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+				{
+					prefix += RlvStrings::getAnonym(first_name + " " + last_name) + " ";
+				}
+				else
+				{
+					std::string rest_of_match;
+					if (full_name)
+					{
+						rest_of_match = /*first_name + " " +*/ last_name.substr(pattern.size());
+					}
+					else
+					{
+						rest_of_match = first_name.substr(pattern.size());
+					}
+					prefix += match + rest_of_match + " ";
+				}
+				caller->setText(prefix + suffix);
+				caller->setSelection(prefix.length(), cur_pos);
+			}
+		}
+	}
+// </FS:CR>
 }
 
 BOOL FSNearbyChatControl::matchChatTypeTrigger(const std::string& in_str, std::string* out_str)
@@ -274,7 +398,6 @@ BOOL FSNearbyChatControl::handleKeyHere(KEY key, MASK mask )
 	}
 	else if( KEY_RETURN == key )
 	{
-		llinfos << "Handling return key, mask=" << mask << llendl;
 		if (mask == MASK_CONTROL)
 		{
 			// shout

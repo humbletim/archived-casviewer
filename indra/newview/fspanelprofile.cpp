@@ -199,18 +199,21 @@ void FSPanelProfileTab::enableControls()
 
 void FSPanelProfileTab::setApplyProgress(bool started)
 {
-    LLLoadingIndicator* indicator = getChild<LLLoadingIndicator>("progress_indicator");
+	LLLoadingIndicator* indicator = findChild<LLLoadingIndicator>("progress_indicator");
 
-    indicator->setVisible(started);
+	if (indicator)
+	{
+		indicator->setVisible(started);
 
-    if (started)
-    {
-        indicator->start();
-    }
-    else
-    {
-        indicator->stop();
-    }
+		if (started)
+		{
+			indicator->start();
+		}
+		else
+		{
+			indicator->stop();
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -461,36 +464,6 @@ void FSPanelProfile::openGroupProfile()
 void FSPanelProfile::onAvatarNameCache(const LLUUID& agent_id, const LLAvatarName& av_name)
 {
     getChild<LLUICtrl>("complete_name")->setValue( av_name.getCompleteName() );
-
-    //[ADD: FIRE-2266: SJ] make sure username is always filled even when Displaynames are not enabled
-    std::string username = av_name.mUsername;
-    if (username.empty())
-    {
-        username = LLCacheName::buildUsername(av_name.mDisplayName);
-    }
-
-    //[ADD: FIRE-2266: SJ] Adding link to webprofiles on profile which opens Web Profiles in browser
-    std::string url;
-    if (LLGridManager::getInstance()->isInSLMain())
-    {
-        url = gSavedSettings.getString("WebProfileURL");
-    }
-    else if (LLGridManager::getInstance()->isInSLBeta())
-    {
-        url = gSavedSettings.getString("WebProfileNonProductionURL");
-    }
-    else
-    {
-        //OpenSimFIXME: get from grid - but how?
-        // possibilities:     * grid_info  (profiles accessible outside the grid)
-        //             * login message (profiles only within the grid)
-        //            * capability (better for decentaliced environment)
-    }
-    LLSD subs;
-    subs["AGENT_NAME"] = username;
-    url = LLWeb::expandURLSubstitutions(url,subs);
-    LLStringUtil::toLower(url);
-    getChild<LLUICtrl>("web_profile_text")->setValue( url );
 }
 
 void FSPanelProfile::fillCommonData(const LLAvatarData* avatar_data)
@@ -512,7 +485,7 @@ void FSPanelProfile::fillCommonData(const LLAvatarData* avatar_data)
     mDescriptionEdit->setValue(avatar_data->about_text);
     // <FS:LO> Force profile picture boost level up so the full image loads
     LLViewerFetchedTexture* tx=LLViewerTextureManager::getFetchedTexture(avatar_data->image_id);
-    tx->setBoostLevel(LLViewerFetchedTexture::BOOST_UI);
+    tx->setBoostLevel(LLViewerFetchedTexture::BOOST_PREVIEW);
     tx->forceImmediateUpdate();
     // </FS:LO>
     mSecondLifePic->setValue(avatar_data->image_id);
@@ -521,9 +494,6 @@ void FSPanelProfile::fillCommonData(const LLAvatarData* avatar_data)
     {
         mShowInSearchCheckbox->setValue((BOOL)(avatar_data->flags & AVATAR_ALLOW_PUBLISH));
     }
-
-    // Hide home page textbox if no page was set to fix "homepage URL appears clickable without URL - EXT-4734"
-    getChildView("homepage_edit")->setVisible( !avatar_data->profile_url.empty());
 }
 
 void FSPanelProfile::fillPartnerData(const LLAvatarData* avatar_data)
@@ -855,7 +825,7 @@ BOOL FSPanelProfileWeb::postBuild()
     mLoadButton->setCommitCallback(boost::bind(&FSPanelProfileWeb::onCommitLoad, this, _1));
 
     mWebProfileButton->setCommitCallback(boost::bind(&FSPanelProfileWeb::onCommitWebProfile, this, _1));
-	mWebProfileButton->setVisible(LLGridManager::getInstance()->isInSLMain() || LLGridManager::getInstance()->isInSLBeta());
+	mWebProfileButton->setVisible(LLGridManager::getInstance()->isInSecondLife());
 
     mWebBrowser = getChild<LLMediaCtrl>("profile_html");
     mWebBrowser->addObserver(this);

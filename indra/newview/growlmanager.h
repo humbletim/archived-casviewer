@@ -63,6 +63,8 @@ public:
 	BOOL tick();
 
 	static void InitiateManager();
+	static bool isUsable();
+
 private:
 	GrowlNotifier *mNotifier;
 	std::map<std::string, GrowlNotification> mNotifications;
@@ -72,6 +74,7 @@ private:
 	static bool onLLNotification(const LLSD& notice);
 	static bool filterOldNotifications(LLNotificationPtr pNotification);
 	static void onInstantMessage(const LLSD& im);
+	static void onScriptDialog(const LLSD& data);
 	static inline bool shouldNotify();
 };
 

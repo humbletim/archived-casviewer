@@ -799,12 +799,37 @@ void LLFontGL::initClass(F32 screen_dpi, F32 x_scale, F32 y_scale, const std::st
 	if (!sFontRegistry)
 	{
 		sFontRegistry = new LLFontRegistry(create_gl_textures, size_mod);
-		// Allow the user to pick the fonts
-		if (!sFontRegistry->parseFontInfo(fonts_file))
+        
+		// <FS:Kadah> User selectable fonts
+		// load from install_dir/fonts
+		const std::string xml_pathfont(gDirUtilp->getExpandedFilename(LL_PATH_FONTS, "", fonts_file));
+		if (!sFontRegistry->parseFontInfo(xml_pathfont))
 		{
-			// fall back to default if specifed font settings file is not found -KC
-			sFontRegistry->parseFontInfo("fonts.xml");
+			// attempt to load from user_settings/fonts
+			const std::string xml_pathusr(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS , "fonts", fonts_file));
+			if (!sFontRegistry->parseFontInfo(xml_pathusr))
+			{
+				// fall back to default if specifed font settings file is not found -KC
+				const string_vec_t xml_paths = gDirUtilp->findSkinnedFilenames(LLDir::XUI, "fonts.xml");
+ 
+				if (xml_paths.empty())
+				{
+					// We didn't even find one single XUI file
+					llerrs << "No fonts.xml found: " << llendl;
+				}
+
+				for (string_vec_t::const_iterator path_it = xml_paths.begin();
+						path_it != xml_paths.end();
+						++path_it)
+				{
+					if (!sFontRegistry->parseFontInfo(*path_it))
+					{
+						llwarns << "Bad font info file: " << *path_it << llendl;
+					}
+				}
+			}
 		}
+		// </FS:Kadah> 
 	}
 	else
 	{
@@ -827,6 +852,10 @@ bool LLFontGL::loadDefaultFonts()
 	succ &= (NULL != getFontSansSerifBold());
 	succ &= (NULL != getFontMonospace());
 	succ &= (NULL != getFontExtChar());
+	// <FS:CR> Advanced script editor
+	succ &= (NULL != getFontScripting());
+	succ &= (NULL != getFontOCRA());
+	// </FS:CR>
 	return succ;
 }
 
@@ -1011,6 +1040,22 @@ LLFontGL* LLFontGL::getFontSansSerifBold()
 	return fontp;
 }
 
+// <FS:CR> Advanced Script Editor
+//static
+LLFontGL* LLFontGL::getFontScripting()
+{
+	static LLFontGL* fontp = getFont(LLFontDescriptor("Scripting","Monospace",0));
+	return fontp;
+}
+
+//static
+LLFontGL* LLFontGL::getFontOCRA()
+{
+	static LLFontGL* fontp = getFont(LLFontDescriptor("OCRA","Monospace",0));
+	return fontp;
+}
+// </FS:CR>
+
 //static
 LLFontGL* LLFontGL::getFontExtChar()
 {
@@ -1039,12 +1084,21 @@ LLFontGL* LLFontGL::getFontByName(const std::string& name)
 	{
 		return getFontSansSerifBig();
 	}
-	else if (name == "SMALL" || name == "OCRA")
+	// <FS:CR> Advanced script editor
+	//else if (name == "SMALL" || name == "OCRA")
+	else if (name == "SMALL")
+	// </FS:CR>
 	{
-		// *BUG: Should this be "MONOSPACE"?  Do we use "OCRA" anymore?
+		// *BUG: Should this be "MONOSPACE"?
 		// Does "SMALL" mean "SERIF"?
 		return getFontMonospace();
 	}
+	// <FS:CR> Advanced script editor
+	else if (name == "OCRA")
+	{
+		return getFontOCRA();
+	}
+	// </FS:CR>
 	else
 	{
 		return NULL;

@@ -37,9 +37,10 @@
 			<check_box label="Tipp-Sound abspielen wenn Personen im Chat in der Nähe tippen" name="play_typing_sound"/> 
 			<check_box label="Andere Avatare während IM-Sitzungen benachrichtigen, wenn ich schreibe" name="FSSendTypingState"/>
 			<check_box label="Auto-Vervollständigen für Gesten im Chat in der Nähe aktivieren" name="FSChatbarGestureAutoCompleteEnable"/>
+			<check_box label="Automatische Namensvorhersage in „Chat in der Nähe“-Eingabezeile aktivieren" name="FSChatbarNamePrediction"/>
 			<check_box label="IMs per Email zuschicken, wenn ich offline bin ([EMAIL])" name="send_im_to_email"/>
-			<check_box label="Kompakten IM- und Text-Chatverlauf aktivieren" name="plain_text_chat_history"/>
-			<check_box label="Miniaturicons anzeigen, falls Chat-Überschriften verwendet werden" name="ShowChatMiniIcons"/>	
+			<check_box label="V1-Stil für IM- und Text-Chatverlauf verwenden" name="plain_text_chat_history"/>
+			<check_box label="Miniaturicons anzeigen, falls V2/3-Chat-Stil verwendet word" name="ShowChatMiniIcons"/>	
 			<check_box label="Zeitstempel im lokalen Chat verbergen" name="hide_timestamps_nearby_chat"/>
 			<check_box label="Zeitstempel in IM's verbergen" name="hide_timestamps_im"/>
 			<check_box label="Blasen-Chat" name="bubble_text_chat"/>
@@ -85,7 +86,6 @@
 				<combo_box.item label="Anzeigename (Benutzername)" name="display_user_name"/>
 				<combo_box.item label="Benutzername (Anzeigename)" name="user_display_name"/>
 			</combo_box>
-			<button label="Einstellungen Chat-Übersetzung" name="translation_settings_btn" width="190"/>
 		</panel>
 		
         <!-- Chat: Notifications -->
@@ -255,12 +255,15 @@
             <text name="textFSKeywordSound" width="200">
               UUID für Soundbenachrichtigung:
             </text>
+            <button label="V" name="Prev_UISndFSKeywordSound" tool_tip="Vorschau zu diesem Sound."/>
+            <button label="S" name="Def_UISndFSKeywordSound" tool_tip="Auf Standardwert zurücksetzen."/>
         </panel>
 
         <!-- Chat: Text Input -->
         <panel label="Texteingabe" name="ChatTextInput">
 			<button name="autoreplace_showgui" label="Automatische Ersetzung..."/>
-			<button name="spellcheck_showgui" label="Rechtschreibprüfung..."/>
+			<button name="spellcheck_showgui" label="Rechtschreibprüfung..." width="145"/>
+			<button label="Einstellungen Chat-Übersetzung" name="translation_settings_btn" width="190"/>
         </panel>
 
 	</tab_container>

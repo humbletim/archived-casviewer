@@ -638,6 +638,17 @@
              parameter="nearby_panel" />
         </menu_item_call>
 
+        <menu_item_check
+         label="Radar"
+         name="Radar">
+            <menu_item_check.on_check
+             function="Floater.Visible"
+             parameter="fs_radar" />
+            <menu_item_check.on_click
+             function="Floater.Toggle"
+             parameter="fs_radar" />
+        </menu_item_check>
+
         <menu_item_call
          label="Teleport History"
          name="Teleport History"
@@ -1251,7 +1262,7 @@
              function="Tools.LookAtSelection"
              parameter="focus" />
           <menu_item_call.on_enable
-             function="Tools.SomethingSelectedNoHUD" />
+             function="SomethingSelectedNoHUD" />
         </menu_item_call>
         <menu_item_call
            label="Zoom to Selection"
@@ -1261,7 +1272,7 @@
              function="Tools.LookAtSelection"
              parameter="zoom" />
           <menu_item_call.on_enable
-             function="Tools.SomethingSelectedNoHUD" />
+             function="SomethingSelectedNoHUD" />
         </menu_item_call>
 
         <menu_item_separator/>
@@ -1352,7 +1363,7 @@
             <menu_item_call.on_click
                function="Tools.ScriptInfo" />
             <menu_item_call.on_enable
-               function="EditableSelected" />
+               function="SomethingSelected" />
           </menu_item_call>
           <menu_item_call
              label="Recompile Scripts (Mono)"
@@ -1511,6 +1522,7 @@
 
                 <menu_item_check
                  label="Show Selection Outlines"
+				 shortcut="control|alt|H"
                  name="Show Selection Outlines">
                     <menu_item_check.on_check
                      function="CheckControl"
@@ -1789,7 +1801,7 @@
              parameter="WebLaunchExternalTarget,https://twitter.com/ctrlaltdavid" />
        </menu_item_call>
 <!--
-      <menu_item_call
+    	<menu_item_call
              label="Firestorm Plurk"
              name="Firestorm Plurk">
              <menu_item_call.on_click
@@ -1826,8 +1838,17 @@
              function="PromptShowURL"
              name="script_library_url"
              parameter="WebLaunchExternalTarget,http://wiki.phoenixviewer.com" />
-       </menu_item_call>
--->	   
+        </menu_item_call>
+-->
+        <menu_item_call
+         label="Troubleshooting"
+         name="Troubleshooting">
+            <menu_item_call.on_click
+             function="PromptShowURL"
+             name="wiki_troubleshooting_url"
+             parameter="WebLaunchExternalTarget,http://wiki.phoenixviewer.com/firestorm_troubleshooting" />
+        </menu_item_call>
+	   
         <menu_item_call
          label="Join Firestorm Support Group"
          name="firestorm_support_group">
@@ -3022,10 +3043,19 @@
             <menu_item_check
              label="Badge"
              name="Badge"
-			 shortcut="alt|control|shift|h">
+             shortcut="alt|control|shift|h">
                 <menu_item_check.on_click
                  function="Advanced.ToggleHUDInfo"
                  parameter="badge" />
+            </menu_item_check>
+            <menu_item_check
+             label="Cookies"
+             name="Cookies"
+             visible="false"
+             shortcut="alt|shift|c">
+                <menu_item_check.on_click
+                 function="Advanced.ToggleHUDInfo"
+                 parameter="cookies" />
             </menu_item_check>
         </menu>
         <menu

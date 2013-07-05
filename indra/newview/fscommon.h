@@ -35,18 +35,10 @@
 const F32 AVATAR_UNKNOWN_Z_OFFSET = -1.f; // Const value for avatars at unknown height
 const F32 AVATAR_UNKNOWN_RANGE = -1.f;
 
-struct FSUUIDEntryHasher : public std::unary_function<LLUUID, size_t>
-{
-	size_t operator() (const LLUUID& id) const
-	{
-		return id.getCRC32();
-	}
-};
-
-
 void reportToNearbyChat(const std::string& message);
 std::string applyAutoCloseOoc(const std::string& message);
 std::string applyMuPose(const std::string& message);
+std::string formatString(std::string text, const LLStringUtil::format_map_t& args);
 LLPanelPeople* getPeoplePanel();
 
 namespace FSCommon
@@ -69,6 +61,8 @@ namespace FSCommon
 	
 	// apply default build preferences to the object
 	void applyDefaultBuildPreferences(LLViewerObject* object);
+
+	bool isLinden(const LLUUID& av_id);
 	
 	/**
 	 * HACK
