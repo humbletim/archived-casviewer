@@ -154,7 +154,8 @@ void FSData::processData(const LLSD& fsData)
 	// Set Message Of The Day if present
 	if(fsData.has("MOTD"))
 	{
-		gAgent.mMOTD.assign(fsData["MOTD"]);
+		// <CV:David> Don't display Firestorm-specific messages at log-in.
+		//gAgent.mMOTD.assign(fsData["MOTD"]);
 	}
 
 	bool local_file = false;
