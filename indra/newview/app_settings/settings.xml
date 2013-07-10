@@ -17261,7 +17261,7 @@ Change of this parameter will affect the layout of buttons in notification toast
 			<key>Type</key>
 			<string>String</string>
 			<key>Value</key>
-			<string>Phoenix</string>
+			<string>===OFF===</string>
 		</map>
 		<key>FSBeamColorFile</key>
 		<map>
