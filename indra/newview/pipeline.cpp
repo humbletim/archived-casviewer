@@ -1052,6 +1052,26 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 	return true;
 }
 
+// <CV:David>
+// Refactored from llviewercontrol.cpp handleRenderDeferredChanged().
+//static
+void LLPipeline::resetRenderDeferred()
+{
+	if (gPipeline.isInit())
+	{
+		LLPipeline::refreshCachedSettings();
+		gPipeline.updateRenderDeferred();
+		gPipeline.releaseGLBuffers();
+		gPipeline.createGLBuffers();
+		gPipeline.resetVertexBuffers();
+		if (LLPipeline::sRenderDeferred == (BOOL)LLRenderTarget::sUseFBO)
+		{
+			LLViewerShaderMgr::instance()->setShaders();
+		}
+	}
+}
+// <CV:David>
+
 //static
 void LLPipeline::updateRenderDeferred()
 {

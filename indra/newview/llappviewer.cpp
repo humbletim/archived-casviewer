@@ -621,7 +621,11 @@ static void settings_to_globals()
 
 static void settings_modify()
 {
-	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred");
+	// <CV: David>
+	// Stereoscopic 3D display also needs sUseFBO set if Basic Shaders are turned on.
+	//LLRenderTarget::sUseFBO			= gSavedSettings.getBOOL("RenderDeferred");
+	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1;
+	// </CV:David>
 	LLPipeline::sRenderDeferred			= gSavedSettings.getBOOL("RenderDeferred");
 	LLVOAvatar::sUseImpostors			= gSavedSettings.getBOOL("RenderUseImpostors");
 	LLVOSurfacePatch::sLODFactor		= gSavedSettings.getF32("RenderTerrainLODFactor");

@@ -1519,6 +1519,13 @@ void LLFloaterPreference::refreshEnabledState()
 	BOOL shaders = ctrl_shader_enable->get();
 	if (shaders)
 	{
+		// <CV:David>
+		// Reset required for stereoscopic 3D Basic Shaders without Advanced Lighting Model.
+		// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1);
+		LLPipeline::resetRenderDeferred();
+		// </CV:David>
+
 		mRadioTerrainDetail->setValue(1);
 		mRadioTerrainDetail->setEnabled(FALSE);
 	}

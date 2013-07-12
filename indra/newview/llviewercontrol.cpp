@@ -426,19 +426,26 @@ static bool handleRenderLocalLightsChanged(const LLSD& newvalue)
 
 static bool handleRenderDeferredChanged(const LLSD& newvalue)
 {
-	LLRenderTarget::sUseFBO = newvalue.asBoolean();
-	if (gPipeline.isInit())
-	{
-		LLPipeline::refreshCachedSettings();
-		gPipeline.updateRenderDeferred();
-		gPipeline.releaseGLBuffers();
-		gPipeline.createGLBuffers();
-		gPipeline.resetVertexBuffers();
-		if (LLPipeline::sRenderDeferred == (BOOL)LLRenderTarget::sUseFBO)
-		{
-			LLViewerShaderMgr::instance()->setShaders();
-		}
-	}
+	// <CV:David>
+	// Stereoscopic 3D display also needs sUseFBO set if Basic Shaders are turned on.
+	// Pipeline operations are refactored into resetRenderDeferred() so that can be reused in preferences changes.
+	//
+	//LLRenderTarget::sUseFBO = newvalue.asBoolean();
+	//if (gPipeline.isInit())
+	//{
+	//	LLPipeline::refreshCachedSettings();
+	//	gPipeline.updateRenderDeferred();
+	//	gPipeline.releaseGLBuffers();
+	//	gPipeline.createGLBuffers();
+	//	gPipeline.resetVertexBuffers();
+	//	if (LLPipeline::sRenderDeferred == (BOOL)LLRenderTarget::sUseFBO)
+	//	{
+	//		LLViewerShaderMgr::instance()->setShaders();
+	//	}
+	//}
+	LLRenderTarget::sUseFBO = newvalue.asBoolean() || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1);
+	LLPipeline::resetRenderDeferred();
+	// </CV:David>
 	return true;
 }
 
