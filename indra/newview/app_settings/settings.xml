@@ -15114,7 +15114,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>U32</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
     <key>UpdaterServiceCheckPeriod</key>
     <map>
@@ -15136,7 +15136,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
-      <string>http://ctrlaltstudio.com/viewer/update</string>
+      <string>http://ctrlaltstudio.com/viewer/releases</string>
     </map>
     <key>UpdaterServicePath</key>
     <map>
@@ -15147,7 +15147,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>String</string>
       <key>Value</key>
-      <string>viewer/update</string>
+      <string>check</string>
     </map>
     <key>UpdaterServiceProtocolVersion</key>
     <map>

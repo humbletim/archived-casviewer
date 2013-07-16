@@ -3365,6 +3365,15 @@ namespace {
 					LLNotificationsUtil::add("FailedUpdateInstall");
 				}
 				break;
+			// <CV: David>
+			case LLUpdaterService::DOWNLOAD_AVAILABLE:
+				if(evt["required"].asBoolean()) {
+					LLNotificationsUtil::add("NewVersionRequired", LLSD(), LLSD(), &install_error_callback);
+				} else {
+					LLNotificationsUtil::add("NewVersionAvailable");
+				}
+				break;
+			// </CV:David>
 			default:
 				break;
 		}

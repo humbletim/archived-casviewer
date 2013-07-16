@@ -3528,6 +3528,36 @@ http://secondlife.com/download.
      yestext="Quit"/>
   </notification>
 
+  <!-- <CV:David> -->
+  <notification
+   icon="alertmodal.tga"
+   name="NewVersionRequired"
+   type="alertmodal">
+A new version of the CtrlAltStudio Viewer needs to be installed.
+You will be unable to log in until your viewer has been updated.
+
+Please download and install the latest version from:
+http://ctrlaltstudio.com/viewer
+    <tag>fail</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="Quit"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="NewVersionAvailable"
+   type="alertmodal">
+A new version of the CtrlAltStudio Viewer is available.
+
+You can download the latest version from:
+http://ctrlaltstudio.com/viewer
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+  <!-- </CV:David> -->
+
   <notification
    icon="alertmodal.tga"
    name="UpdaterServiceNotRunning"

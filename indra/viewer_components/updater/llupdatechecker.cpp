@@ -103,7 +103,12 @@ void LLUpdateChecker::Implementation::checkVersion(std::string const & protocolV
 	std::string checkUrl = buildUrl(protocolVersion, hostUrl, servicePath, channel, version);
 	LL_INFOS("UpdateCheck") << "checking for updates at " << checkUrl << llendl;
 	
-	mHttpClient.get(checkUrl, this);
+	// <CV:David>
+	//mHttpClient.get(checkUrl, this);
+	LLSD headers;
+	headers.insert("Accept", "text/html, application/xhtml+xml, */*");
+	mHttpClient.get(checkUrl, this, headers);
+	// </CV:David>
 }
 
 void LLUpdateChecker::Implementation::completed(U32 status,

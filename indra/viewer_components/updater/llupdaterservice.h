@@ -49,6 +49,7 @@ public:
 	// Type codes for events posted by this service.  Stored the event's 'type' element.
 	enum eUpdaterEvent {
 		INVALID,
+		DOWNLOAD_AVAILABLE,  // <CV:David>
 		DOWNLOAD_COMPLETE,
 		DOWNLOAD_ERROR,
 		INSTALL_ERROR,

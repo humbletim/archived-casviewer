@@ -186,10 +186,6 @@ void LLUpdaterServiceImpl::initialize(const std::string& protocol_version,
 	mPath = path;
 	mChannel = channel;
 	mVersion = version;
-	// <CV:David>
-	// Add logging to verify that updater service isn't actually used.
-	LL_INFOS("UpdaterService") << "initializing updater service " << LL_ENDL;
-	// </CV:David>
 }
 
 void LLUpdaterServiceImpl::setCheckPeriod(unsigned int seconds)
@@ -204,11 +200,6 @@ void LLUpdaterServiceImpl::setBandwidthLimit(U64 bytesPerSecond)
 
 void LLUpdaterServiceImpl::startChecking(bool install_if_ready)
 {
-	// <CV:David>
-	// Add logging to verify that updater service isn't actually used.
-	LL_INFOS("UpdaterService") << "start checking" << LL_ENDL;
-	// </CV:David>
-
 	if(mUrl.empty() || mChannel.empty() || mVersion.empty())
 	{
 		throw LLUpdaterService::UsageError("Set params before call to "
@@ -381,9 +372,15 @@ void LLUpdaterServiceImpl::optionalUpdate(std::string const & newVersion,
 {
 	stopTimer();
 	mNewVersion = newVersion;
-	mIsDownloading = true;
-	setState(LLUpdaterService::DOWNLOADING);
-	mUpdateDownloader.download(uri, hash, newVersion, false);
+	// <CV:David>
+	//mIsDownloading = true;
+	//setState(LLUpdaterService::DOWNLOADING);
+	//mUpdateDownloader.download(uri, hash, newVersion, false);
+	LLSD event;
+	event["type"] = LLSD(LLUpdaterService::DOWNLOAD_AVAILABLE);
+	event["required"] = LLSD(false);
+	LLEventPumps::instance().obtain(LLUpdaterService::pumpName()).post(event);
+	// </CV:David>
 }
 
 void LLUpdaterServiceImpl::requiredUpdate(std::string const & newVersion,
@@ -392,9 +389,15 @@ void LLUpdaterServiceImpl::requiredUpdate(std::string const & newVersion,
 {
 	stopTimer();
 	mNewVersion = newVersion;
-	mIsDownloading = true;
-	setState(LLUpdaterService::DOWNLOADING);
-	mUpdateDownloader.download(uri, hash, newVersion, true);
+	// <CV:David>
+	//mIsDownloading = true;
+	//setState(LLUpdaterService::DOWNLOADING);
+	//mUpdateDownloader.download(uri, hash, newVersion, true);
+	LLSD event;
+	event["type"] = LLSD(LLUpdaterService::DOWNLOAD_AVAILABLE);
+	event["required"] = LLSD(true);
+	LLEventPumps::instance().obtain(LLUpdaterService::pumpName()).post(event);
+	// </CV:David>
 }
 
 void LLUpdaterServiceImpl::upToDate(void)
