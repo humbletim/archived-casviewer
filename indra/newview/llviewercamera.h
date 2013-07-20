@@ -131,7 +131,7 @@ public:
 	void calcStereoValues();
 	void moveToLeftEye();
 	void moveToRightEye();
-	void moveToCenter();
+	void moveToStereoCullFrustum();
 	// </CV:David>
 
 protected:
@@ -154,9 +154,12 @@ protected:
 	S16					mZoomSubregion;
 
 	// <CV:David> Stereoscopic 3D
+	F32 mStereoCameraFOV;
 	LLVector3 mStereoCameraPosition;
 	LLVector3 mStereoPointOfInterest;
 	LLVector3 mStereoCameraDeltaLeft;
+	F32 mStereoCullCameraFOV;
+	LLVector3 mStereoCullCameraDeltaForwards;
 	// </CV:David>
 
 public:

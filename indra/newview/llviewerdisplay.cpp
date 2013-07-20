@@ -693,7 +693,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Left eye ...
 			glDrawBuffer(GL_BACK_LEFT);
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			LLViewerCamera::getInstance()->moveToLeftEye();
 			render_frame(OUTPUT_STEREO_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
@@ -701,7 +700,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			glDrawBuffer(GL_BACK_RIGHT);
 			glClear( GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			LLViewerCamera::getInstance()->moveToRightEye();
 			render_frame(OUTPUT_STEREO_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
@@ -752,6 +750,14 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
 {
+
+	// <CV:David> Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
+	if ((output_type == OUTPUT_STEREO_LEFT) || (output_type == OUTPUT_STEREO_RIGHT))
+	{
+		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
+	}
+	// </CV:David>
+
 	LLAppViewer::instance()->pingMainloopTimeout("Display:Update");
 	if (gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_HUD))
 	{ //don't draw hud objects in this frame
@@ -829,6 +835,21 @@ void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for
 	LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 	gPipeline.updateCull(*LLViewerCamera::getInstance(), result, water_clip);
 	stop_glerror();
+
+	// <CV:David>
+	// Set left / right camera for rendering collected objects.
+	if (output_type == OUTPUT_STEREO_LEFT)
+	{
+		LLViewerCamera::getInstance()->moveToLeftEye();
+	}
+	else if (output_type == OUTPUT_STEREO_RIGHT)
+	{
+		LLViewerCamera::getInstance()->moveToRightEye();
+	}
+	stop_glerror();
+	display_update_camera();
+	stop_glerror();
+	// </CV:David>
 
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();

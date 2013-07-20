@@ -457,7 +457,13 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		}
 	}
 
-	updateFrustumPlanes(*this);
+	// <CV:David>
+	// Update only for mono and stereo clipping cameras; don't update for stereo left and right cameras otherwise lose objects near the edge of the screen.
+	//updateFrustumPlanes(*this);
+	if (mCameraOffset == 0.f) {
+		updateFrustumPlanes(*this);
+	}
+	// </CV:David>
 }
 
 
@@ -918,16 +924,26 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 
 void LLViewerCamera::calcStereoValues()
 {
-	// Remember default mono camera position and POI.
+	// Remember default mono camera details.
+	mStereoCameraFOV = this->getView();
 	mStereoCameraPosition = this->getOrigin();
 	mStereoPointOfInterest = mLastPointOfInterest;
 
-	// Retrieve latest stereo values..
+	// Retrieve latest stereo values.
 	mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
 	mScreenDistance = gSavedSettings.getF32("ScreenDistance");
 
 	// Delta position for left camera.
 	mStereoCameraDeltaLeft = mEyeSeparation / 2 * getLeftAxis();
+
+	// Stereo culling frustum camera parameters.
+	F32 aspect, width, separation, deltaZ;
+	aspect = getAspect();
+	width = 2.0f * aspect * tan(mStereoCameraFOV*0.5f) * mScreenDistance;
+	separation = mEyeSeparation / width;
+	deltaZ = mScreenDistance / (1 + 1 / separation);
+	mStereoCullCameraDeltaForwards = deltaZ * getAtAxis();
+	mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
 }
 
 void LLViewerCamera::moveToLeftEye()
@@ -936,6 +952,7 @@ void LLViewerCamera::moveToLeftEye()
 	mCameraOffset = -mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
+	this->setView(mStereoCameraFOV);
 	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
@@ -945,13 +962,17 @@ void LLViewerCamera::moveToRightEye()
 	mCameraOffset = mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
+	this->setView(mStereoCameraFOV);
 	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
-void LLViewerCamera::moveToCenter()
+void LLViewerCamera::moveToStereoCullFrustum()
 {
 	mCameraOffset = 0.f;
-	this->updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
+	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
+	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCullCameraDeltaForwards;
+	this->setView(mStereoCullCameraFOV);
+	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
 // </CV:David>
