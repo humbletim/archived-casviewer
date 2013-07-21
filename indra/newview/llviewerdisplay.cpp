@@ -128,6 +128,8 @@ U32 gOutputType = 0;
 const U32 OUTPUT_NORMAL = 0;
 const U32 OUTPUT_STEREO_LEFT = 1;
 const U32 OUTPUT_STEREO_RIGHT = 2;
+BOOL gStereoscopic3DEnabled = FALSE;
+BOOL gStereoscopic3DAllowed = FALSE;
 // </CV:David>
 
 void display_startup()
@@ -676,7 +678,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
-		if ((gOutputType == 0) || output_for_snapshot)
+		if ((gOutputType == 0) || !gStereoscopic3DEnabled || output_for_snapshot)
 		{
 			render_frame(OUTPUT_NORMAL);
 

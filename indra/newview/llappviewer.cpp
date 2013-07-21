@@ -3451,8 +3451,10 @@ bool LLAppViewer::initWindow()
 	// always start windowed
 	BOOL ignorePixelDepth = gSavedSettings.getBOOL("IgnorePixelDepth");
 	// <CV:David>
-	U32 output_type = gSavedSettings.getU32("OutputType");  // Gets passed through to LLWindowManager for window creation.
-	gOutputType = output_type;  // Global for rendering in llviewerdisplay's display().
+	U32 output_type = gSavedSettings.getU32("OutputType");
+	gOutputType = output_type;
+	gStereoscopic3DAllowed = gOutputType == 1;
+	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DAllowed;
 	// </CV:David>
 
 	LLViewerWindow::Params window_params;

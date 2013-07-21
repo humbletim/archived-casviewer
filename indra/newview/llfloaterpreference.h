@@ -209,6 +209,7 @@ public:
 	void onClickRestoreSettings();
 
 	// <CV:David>
+	void onChangeOutputType();
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();
 	// </CV:David>

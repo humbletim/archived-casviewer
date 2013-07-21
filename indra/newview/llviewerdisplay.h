@@ -48,5 +48,7 @@ extern F32 gLastDrawDistanceStep;
 
 // <CV:David> Normal or stereoscopic 3D output type.
 extern U32 gOutputType;
+extern BOOL gStereoscopic3DAllowed;
+extern BOOL gStereoscopic3DEnabled;
 
 #endif // LL_LLVIEWERDISPLAY_H

@@ -143,6 +143,8 @@
 #include "growlmanager.h"
 #include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 
+#include "llviewerdisplay.h"  // <CV:David>
+
 const F32 MAX_USER_FAR_CLIP = 512.f;
 const F32 MIN_USER_FAR_CLIP = 64.f;
 //<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
@@ -492,6 +494,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	// </FS:Zi>
 
 	// <CV:David>
+	mCommitCallbackRegistrar.add("Pref.UpdateOutputType",		boost::bind(&LLFloaterPreference::onChangeOutputType, this));
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
 	// </CV:David>
@@ -3515,6 +3518,13 @@ void LLFloaterPreference::applySelection(LLScrollListCtrl* control,BOOL all)
 // </FS:Zi>
 
 // <CV:David>
+void LLFloaterPreference::onChangeOutputType()
+{
+	gStereoscopic3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == 1;
+	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);  // Default for next program run.
+	gStereoscopic3DEnabled = gStereoscopic3DEnabled && gStereoscopic3DAllowed;
+}
+
 void LLFloaterPreference::onClickResetEyeSeparation()
 {
 	gSavedSettings.setF32("EyeSeparation", 0.065f);

@@ -1347,6 +1347,8 @@
       name="OutputType"
       top_pad="5"
       width="400">
+        <radio_group.commit_callback
+          function="Pref.UpdateOutputType" />
         <radio_item
           height="16"
           label="Normal"
