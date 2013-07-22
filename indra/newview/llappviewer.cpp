@@ -3453,7 +3453,7 @@ bool LLAppViewer::initWindow()
 	// <CV:David>
 	U32 output_type = gSavedSettings.getU32("OutputType");
 	gOutputType = output_type;
-	gStereoscopic3DAllowed = gOutputType == 1;
+	gStereoscopic3DAllowed = gOutputType == OUTPUT_TYPE_STEREO;
 	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DAllowed;
 	// </CV:David>
 

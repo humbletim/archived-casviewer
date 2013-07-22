@@ -48,6 +48,8 @@ extern F32 gLastDrawDistanceStep;
 
 // <CV:David> Normal or stereoscopic 3D output type.
 extern U32 gOutputType;
+const U32 OUTPUT_TYPE_NORMAL = 0;
+const U32 OUTPUT_TYPE_STEREO = 1;
 extern BOOL gStereoscopic3DAllowed;
 extern BOOL gStereoscopic3DEnabled;
 

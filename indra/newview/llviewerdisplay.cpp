@@ -124,12 +124,12 @@ void render_ui_2d();
 void render_disconnected_background();
 
 // <CV:David>
-U32 gOutputType = 0;
-const U32 OUTPUT_NORMAL = 0;
-const U32 OUTPUT_STEREO_LEFT = 1;
-const U32 OUTPUT_STEREO_RIGHT = 2;
+U32 gOutputType = OUTPUT_TYPE_NORMAL;
 BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DAllowed = FALSE;
+const U32 RENDER_NORMAL = 0;
+const U32 RENDER_STEREO_LEFT = 1;
+const U32 RENDER_STEREO_RIGHT = 2;
 // </CV:David>
 
 void display_startup()
@@ -678,9 +678,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
-		if ((gOutputType == 0) || !gStereoscopic3DEnabled || output_for_snapshot)
+		if ((gOutputType == OUTPUT_TYPE_NORMAL) || !gStereoscopic3DEnabled || output_for_snapshot)
 		{
-			render_frame(OUTPUT_NORMAL);
+			render_frame(RENDER_NORMAL);
 
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
 			if (!gSnapshot)
@@ -688,21 +688,21 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				render_ui();
 			}
 		}
-		else // gOutputType == 1
+		else // gOutputType == OUTPUT_TYPE_STEREO
 		{
 			LLViewerCamera::getInstance()->calcStereoValues();
 
 			// Left eye ...
 			glDrawBuffer(GL_BACK_LEFT);
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			render_frame(OUTPUT_STEREO_LEFT);
+			render_frame(RENDER_STEREO_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
 
 			// Right eye ...
 			glDrawBuffer(GL_BACK_RIGHT);
 			glClear( GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			render_frame(OUTPUT_STEREO_RIGHT);
+			render_frame(RENDER_STEREO_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
 
@@ -754,7 +754,7 @@ void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for
 {
 
 	// <CV:David> Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
-	if ((output_type == OUTPUT_STEREO_LEFT) || (output_type == OUTPUT_STEREO_RIGHT))
+	if ((output_type == RENDER_STEREO_LEFT) || (output_type == RENDER_STEREO_RIGHT))
 	{
 		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
 	}
@@ -840,11 +840,11 @@ void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for
 
 	// <CV:David>
 	// Set left / right camera for rendering collected objects.
-	if (output_type == OUTPUT_STEREO_LEFT)
+	if (output_type == RENDER_STEREO_LEFT)
 	{
 		LLViewerCamera::getInstance()->moveToLeftEye();
 	}
-	else if (output_type == OUTPUT_STEREO_RIGHT)
+	else if (output_type == RENDER_STEREO_RIGHT)
 	{
 		LLViewerCamera::getInstance()->moveToRightEye();
 	}
