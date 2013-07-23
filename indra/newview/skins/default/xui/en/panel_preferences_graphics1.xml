@@ -1333,10 +1333,10 @@
       height="10"
       layout="topleft"
       left="15"
-      name="Output:"
+      name="OutputType"
       top_pad="10"
       width="300">
-        Output type:
+        Output type (requires restart):
       </text>
       <radio_group
       control_name="OutputType"
