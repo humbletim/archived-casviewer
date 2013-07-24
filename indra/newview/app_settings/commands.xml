@@ -484,7 +484,7 @@
            tooltip_ref="Command_Stereoscopic3D_Tooltip"
            execute_function="World.ToggleStereoscopic3D"
            is_running_function="World.EnableStereoscopic3D"
-           is_enabled_function="World.AllowStereoscopic3D"
+           is_enabled_function="World.ConfigureStereoscopic3D"
            />
 
 </commands>

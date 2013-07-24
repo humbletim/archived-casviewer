@@ -1525,7 +1525,7 @@ void LLFloaterPreference::refreshEnabledState()
 		// <CV:David>
 		// Reset required for stereoscopic 3D Basic Shaders without Advanced Lighting Model.
 		// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
-		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1);
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
 		LLPipeline::resetRenderDeferred();
 		// </CV:David>
 
@@ -3520,9 +3520,9 @@ void LLFloaterPreference::applySelection(LLScrollListCtrl* control,BOOL all)
 // <CV:David>
 void LLFloaterPreference::onChangeOutputType()
 {
-	gStereoscopic3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == 1;
+	gStereoscopic3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == OUTPUT_TYPE_STEREO;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);  // Default for next program run.
-	gStereoscopic3DEnabled = gStereoscopic3DEnabled && gStereoscopic3DAllowed;
+	gStereoscopic3DEnabled = gStereoscopic3DEnabled && gStereoscopic3DConfigured;
 }
 
 void LLFloaterPreference::onClickResetEyeSeparation()

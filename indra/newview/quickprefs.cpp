@@ -60,6 +60,10 @@
 #include "llnotificationsutil.h" // <FS:CR> For restore defaults confirmation
 #include "pipeline.h"  // <CV:David> For resetting deferred rendering
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 #include <boost/foreach.hpp>
 #include <llui.h>
 
@@ -704,7 +708,7 @@ void FloaterQuickPrefs::refreshSettings()
 	// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
 	if (shaders)
 	{
-		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1);
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
 		LLPipeline::resetRenderDeferred();
 	}
 	// </CV:David>

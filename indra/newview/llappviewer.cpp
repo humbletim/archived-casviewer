@@ -621,10 +621,10 @@ static void settings_to_globals()
 
 static void settings_modify()
 {
-	// <CV: David>
+	// <CV:David>
 	// Stereoscopic 3D display also needs sUseFBO set if Basic Shaders are turned on.
 	//LLRenderTarget::sUseFBO			= gSavedSettings.getBOOL("RenderDeferred");
-	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1;
+	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO;
 	// </CV:David>
 	LLPipeline::sRenderDeferred			= gSavedSettings.getBOOL("RenderDeferred");
 	LLVOAvatar::sUseImpostors			= gSavedSettings.getBOOL("RenderUseImpostors");
@@ -3453,8 +3453,8 @@ bool LLAppViewer::initWindow()
 	// <CV:David>
 	U32 output_type = gSavedSettings.getU32("OutputType");
 	gOutputType = output_type;
-	gStereoscopic3DAllowed = gOutputType == OUTPUT_TYPE_STEREO;
-	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DAllowed;
+	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
+	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
 	// </CV:David>
 
 	LLViewerWindow::Params window_params;

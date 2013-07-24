@@ -116,7 +116,7 @@ LLFrameTimer gRecentMemoryTime;
 // Rendering stuff
 void pre_show_depth_buffer();
 void post_show_depth_buffer();
-void render_frame(U32 output_type);  // <CV:David>
+void render_frame(U32 render_type);  // <CV:David>
 void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
 void render_hud_attachments();
 void render_ui_3d();
@@ -126,7 +126,7 @@ void render_disconnected_background();
 // <CV:David>
 U32 gOutputType = OUTPUT_TYPE_NORMAL;
 BOOL gStereoscopic3DEnabled = FALSE;
-BOOL gStereoscopic3DAllowed = FALSE;
+BOOL gStereoscopic3DConfigured = FALSE;
 const U32 RENDER_NORMAL = 0;
 const U32 RENDER_STEREO_LEFT = 1;
 const U32 RENDER_STEREO_RIGHT = 2;
@@ -688,8 +688,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				render_ui();
 			}
 		}
-		else // gOutputType == OUTPUT_TYPE_STEREO
+		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
+			// Stereoscopic 3D references:
+			// - http://nvidia.asia/content/asia/event/siggraph-asia-2010/presos/Gateau_Stereoscopy.pdf
+			// - http://www.forejune.com/stereo/
+
 			LLViewerCamera::getInstance()->calcStereoValues();
 
 			// Left eye ...
@@ -750,15 +754,15 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	gShiftFrame = false;
 }
 
-void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
+void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
 {
 
 	// <CV:David> Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
-	if ((output_type == RENDER_STEREO_LEFT) || (output_type == RENDER_STEREO_RIGHT))
+	if ((render_type == RENDER_STEREO_LEFT) || (render_type == RENDER_STEREO_RIGHT))
 	{
 		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
 	}
-	else if (gOutputType == OUTPUT_TYPE_STEREO)
+	else if ((gOutputType == OUTPUT_TYPE_STEREO) && gStereoscopic3DEnabled)
 	{
 		LLViewerCamera::getInstance()->moveToCenter();
 	}
@@ -844,11 +848,11 @@ void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for
 
 	// <CV:David>
 	// Set left / right camera for rendering collected objects.
-	if (output_type == RENDER_STEREO_LEFT)
+	if (render_type == RENDER_STEREO_LEFT)
 	{
 		LLViewerCamera::getInstance()->moveToLeftEye();
 	}
-	else if (output_type == RENDER_STEREO_RIGHT)
+	else if (render_type == RENDER_STEREO_RIGHT)
 	{
 		LLViewerCamera::getInstance()->moveToRightEye();
 	}

@@ -9844,9 +9844,9 @@ class FSObjectExport : public view_listener_t
 // </FS:Techwolf Lupindo>
 
 // <CV:David>
-bool stereoscopic_3d_allowed()
+bool stereoscopic_3d_configured()
 {
-	return gStereoscopic3DAllowed;
+	return gStereoscopic3DConfigured;
 }
 
 bool stereoscopic_3d_enabled()
@@ -10037,7 +10037,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new CVToggleStereoscopic3D(), "World.ToggleStereoscopic3D");
 	view_listener_t::addMenu(new CVCheckStereoscopic3D(), "World.CheckStereoscopic3D");
 	enable.add("World.EnableStereoscopic3D", boost::bind(&stereoscopic_3d_enabled));
-	enable.add("World.AllowStereoscopic3D", boost::bind(&stereoscopic_3d_allowed));
+	enable.add("World.ConfigureStereoscopic3D", boost::bind(&stereoscopic_3d_configured));
 	// </CV:David>
 
 	// Tools menu

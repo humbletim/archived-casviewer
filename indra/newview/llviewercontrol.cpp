@@ -89,6 +89,10 @@
 #include "fsfloaterposestand.h"
 #include "fsfloaterteleporthistory.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 // Third party library includes
 #include <boost/algorithm/string.hpp>
 
@@ -443,7 +447,7 @@ static bool handleRenderDeferredChanged(const LLSD& newvalue)
 	//		LLViewerShaderMgr::instance()->setShaders();
 	//	}
 	//}
-	LLRenderTarget::sUseFBO = newvalue.asBoolean() || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == 1);
+	LLRenderTarget::sUseFBO = newvalue.asBoolean() || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
 	LLPipeline::resetRenderDeferred();
 	// </CV:David>
 	return true;

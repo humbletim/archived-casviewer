@@ -1336,7 +1336,7 @@
       name="OutputType"
       top_pad="10"
       width="300">
-        Output type (requires restart):
+        Output type:
       </text>
       <radio_group
       control_name="OutputType"
@@ -1355,16 +1355,16 @@
           layout="topleft"
           name="DisplayNormal"
           value="0"
-          tool_tip="Select this if you have a normal computer display or want to display normally. (Restart required.)"
+          tool_tip="Select this if you have a normal computer display or want to display normally."
           width="150" />
 
         <radio_item
           height="16"
-          label="Stereoscopic 3D"
+          label="Stereoscopic 3D (requires restart)"
           layout="topleft"
           name="DisplayStereo"
           value="1"
-          tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D. (Restart required.)"
+          tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D."
           width="150" />
       </radio_group>
 
