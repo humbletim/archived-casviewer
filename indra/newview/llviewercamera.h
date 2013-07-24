@@ -131,6 +131,7 @@ public:
 	void calcStereoValues();
 	void moveToLeftEye();
 	void moveToRightEye();
+	void moveToCenter();
 	void moveToStereoCullFrustum();
 	// </CV:David>
 

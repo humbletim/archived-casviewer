@@ -758,6 +758,10 @@ void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for
 	{
 		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
 	}
+	else if (gOutputType == OUTPUT_TYPE_STEREO)
+	{
+		LLViewerCamera::getInstance()->moveToCenter();
+	}
 	// </CV:David>
 
 	LLAppViewer::instance()->pingMainloopTimeout("Display:Update");

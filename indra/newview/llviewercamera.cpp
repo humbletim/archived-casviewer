@@ -966,6 +966,13 @@ void LLViewerCamera::moveToRightEye()
 	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
+void LLViewerCamera::moveToCenter()
+{
+	mCameraOffset = 0.f;
+	this->setView(mStereoCameraFOV);
+	this->updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
+}
+
 void LLViewerCamera::moveToStereoCullFrustum()
 {
 	mCameraOffset = 0.f;
