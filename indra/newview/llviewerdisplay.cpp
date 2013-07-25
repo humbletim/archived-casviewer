@@ -116,7 +116,7 @@ LLFrameTimer gRecentMemoryTime;
 // Rendering stuff
 void pre_show_depth_buffer();
 void post_show_depth_buffer();
-void render_frame(U32 output_type);  // <CV:David>
+void render_frame(U32 render_type);  // <CV:David>
 void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
 void render_hud_attachments();
 void render_ui_3d();
@@ -124,10 +124,12 @@ void render_ui_2d();
 void render_disconnected_background();
 
 // <CV:David>
-U32 gOutputType = 0;
-const U32 OUTPUT_NORMAL = 0;
-const U32 OUTPUT_STEREO_LEFT = 1;
-const U32 OUTPUT_STEREO_RIGHT = 2;
+U32 gOutputType = OUTPUT_TYPE_NORMAL;
+BOOL gStereoscopic3DEnabled = FALSE;
+BOOL gStereoscopic3DConfigured = FALSE;
+const U32 RENDER_NORMAL = 0;
+const U32 RENDER_STEREO_LEFT = 1;
+const U32 RENDER_STEREO_RIGHT = 2;
 // </CV:David>
 
 void display_startup()
@@ -676,9 +678,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
-		if ((gOutputType == 0) || output_for_snapshot)
+		if ((gOutputType == OUTPUT_TYPE_NORMAL) || !gStereoscopic3DEnabled || output_for_snapshot)
 		{
-			render_frame(OUTPUT_NORMAL);
+			render_frame(RENDER_NORMAL);
 
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
 			if (!gSnapshot)
@@ -686,23 +688,25 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				render_ui();
 			}
 		}
-		else // gOutputType == 1
+		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
+			// Stereoscopic 3D references:
+			// - http://nvidia.asia/content/asia/event/siggraph-asia-2010/presos/Gateau_Stereoscopy.pdf
+			// - http://www.forejune.com/stereo/
+
 			LLViewerCamera::getInstance()->calcStereoValues();
 
 			// Left eye ...
 			glDrawBuffer(GL_BACK_LEFT);
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			LLViewerCamera::getInstance()->moveToLeftEye();
-			render_frame(OUTPUT_STEREO_LEFT);
+			render_frame(RENDER_STEREO_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
 
 			// Right eye ...
 			glDrawBuffer(GL_BACK_RIGHT);
 			glClear( GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			LLViewerCamera::getInstance()->moveToRightEye();
-			render_frame(OUTPUT_STEREO_RIGHT);
+			render_frame(RENDER_STEREO_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
 
@@ -750,8 +754,20 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	gShiftFrame = false;
 }
 
-void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
+void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
 {
+
+	// <CV:David> Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
+	if ((render_type == RENDER_STEREO_LEFT) || (render_type == RENDER_STEREO_RIGHT))
+	{
+		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
+	}
+	else if ((gOutputType == OUTPUT_TYPE_STEREO) && gStereoscopic3DEnabled)
+	{
+		LLViewerCamera::getInstance()->moveToCenter();
+	}
+	// </CV:David>
+
 	LLAppViewer::instance()->pingMainloopTimeout("Display:Update");
 	if (gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_HUD))
 	{ //don't draw hud objects in this frame
@@ -829,6 +845,21 @@ void render_frame(U32 output_type)  // <CV:David> Frame rendering refactored for
 	LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 	gPipeline.updateCull(*LLViewerCamera::getInstance(), result, water_clip);
 	stop_glerror();
+
+	// <CV:David>
+	// Set left / right camera for rendering collected objects.
+	if (render_type == RENDER_STEREO_LEFT)
+	{
+		LLViewerCamera::getInstance()->moveToLeftEye();
+	}
+	else if (render_type == RENDER_STEREO_RIGHT)
+	{
+		LLViewerCamera::getInstance()->moveToRightEye();
+	}
+	stop_glerror();
+	display_update_camera();
+	stop_glerror();
+	// </CV:David>
 
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();

@@ -143,6 +143,8 @@
 #include "growlmanager.h"
 #include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 
+#include "llviewerdisplay.h"  // <CV:David>
+
 const F32 MAX_USER_FAR_CLIP = 512.f;
 const F32 MIN_USER_FAR_CLIP = 64.f;
 //<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
@@ -492,6 +494,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	// </FS:Zi>
 
 	// <CV:David>
+	mCommitCallbackRegistrar.add("Pref.UpdateOutputType",		boost::bind(&LLFloaterPreference::onChangeOutputType, this));
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
 	// </CV:David>
@@ -1519,6 +1522,13 @@ void LLFloaterPreference::refreshEnabledState()
 	BOOL shaders = ctrl_shader_enable->get();
 	if (shaders)
 	{
+		// <CV:David>
+		// Reset required for stereoscopic 3D Basic Shaders without Advanced Lighting Model.
+		// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
+		LLPipeline::resetRenderDeferred();
+		// </CV:David>
+
 		mRadioTerrainDetail->setValue(1);
 		mRadioTerrainDetail->setEnabled(FALSE);
 	}
@@ -3508,6 +3518,13 @@ void LLFloaterPreference::applySelection(LLScrollListCtrl* control,BOOL all)
 // </FS:Zi>
 
 // <CV:David>
+void LLFloaterPreference::onChangeOutputType()
+{
+	gStereoscopic3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == OUTPUT_TYPE_STEREO;
+	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);  // Default for next program run.
+	gStereoscopic3DEnabled = gStereoscopic3DEnabled && gStereoscopic3DConfigured;
+}
+
 void LLFloaterPreference::onClickResetEyeSeparation()
 {
 	gSavedSettings.setF32("EyeSeparation", 0.065f);

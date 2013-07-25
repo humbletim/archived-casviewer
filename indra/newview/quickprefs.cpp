@@ -58,6 +58,11 @@
 #include "llsliderctrl.h"
 #include "llspinctrl.h"
 #include "llnotificationsutil.h" // <FS:CR> For restore defaults confirmation
+#include "pipeline.h"  // <CV:David> For resetting deferred rendering
+
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 
 #include <boost/foreach.hpp>
 #include <llui.h>
@@ -697,6 +702,16 @@ void FloaterQuickPrefs::refreshSettings()
 	mCtrlShaderEnable->setEnabled(
 		fCtrlShaderEnable && ((!gRlvHandler.hasBehaviour(RLV_BHVR_SETENV)) || (!gSavedSettings.getBOOL("VertexShaderEnable"))) );
 	BOOL shaders = mCtrlShaderEnable->get();
+
+	// <CV:David>
+	// Reset required for stereoscopic 3D Basic Shaders without Advanced Lighting Model.
+	// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
+	if (shaders)
+	{
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
+		LLPipeline::resetRenderDeferred();
+	}
+	// </CV:David>
 
 	bool fCtrlWindLightEnable = fCtrlShaderEnable && shaders;
 	mCtrlWindLight->setEnabled(

@@ -393,6 +393,7 @@ public:
 	static void toggleRenderHighlights(void* data);
 	static BOOL getRenderHighlights(void* data);
 
+	static void resetRenderDeferred();  // <CV:David> Refactored from llviewercontrol.cpp.
 	static void updateRenderDeferred();
 	static void refreshCachedSettings();
 

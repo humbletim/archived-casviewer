@@ -1333,7 +1333,7 @@
       height="10"
       layout="topleft"
       left="15"
-      name="Output:"
+      name="OutputType"
       top_pad="10"
       width="300">
         Output type:
@@ -1347,22 +1347,24 @@
       name="OutputType"
       top_pad="5"
       width="400">
+        <radio_group.commit_callback
+          function="Pref.UpdateOutputType" />
         <radio_item
           height="16"
           label="Normal"
           layout="topleft"
           name="DisplayNormal"
           value="0"
-          tool_tip="Select this if you have a normal computer display or want to display normally. (Restart required.)"
+          tool_tip="Select this if you have a normal computer display or want to display normally."
           width="150" />
 
         <radio_item
           height="16"
-          label="Stereoscopic 3D"
+          label="Stereoscopic 3D (requires restart)"
           layout="topleft"
           name="DisplayStereo"
           value="1"
-          tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D. (Restart required.)"
+          tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D."
           width="150" />
       </radio_group>
 
@@ -1467,8 +1469,6 @@ To display in stereoscopic 3D on Windows using a GeForce graphics card with NVID
         - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
         - Your monitor set to 120Hz.
         - Full Screen mode turned on in the Graphics > General tab.
-        - If Basic Shaders is turned on in the Graphics > General tab you also need 
-          Advanced Lighting Model turned on.
 
 Other computer configurations will likely require similar.
       </text>

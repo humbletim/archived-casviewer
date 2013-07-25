@@ -36,6 +36,8 @@
          name="animationoverride" />
         <command
          name="quickprefs" />
+        <command
+          name="stereoscopic3d"/>
     </bottom_toolbar>
     <left_toolbar
      button_alignment="center"

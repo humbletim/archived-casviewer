@@ -9843,6 +9843,37 @@ class FSObjectExport : public view_listener_t
 };
 // </FS:Techwolf Lupindo>
 
+// <CV:David>
+bool stereoscopic_3d_configured()
+{
+	return gStereoscopic3DConfigured;
+}
+
+bool stereoscopic_3d_enabled()
+{
+	return gStereoscopic3DEnabled;
+}
+
+class CVToggleStereoscopic3D : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
+		gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+		return true;
+	}
+};
+
+class CVCheckStereoscopic3D : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool new_value = gStereoscopic3DEnabled;
+		return new_value;
+	}
+};
+// </CV:David>
+
 // <FS:Zi> Make sure to call this before any of the UI is set up, so all text editors can
 //         pick up the menu properly.
 void initialize_edit_menu()
@@ -10001,6 +10032,13 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLWorldEnvPreset(), "World.EnvPreset");
 	view_listener_t::addMenu(new LLWorldEnableEnvPreset(), "World.EnableEnvPreset");
 	view_listener_t::addMenu(new LLWorldPostProcess(), "World.PostProcess");
+
+	// <CV:David>
+	view_listener_t::addMenu(new CVToggleStereoscopic3D(), "World.ToggleStereoscopic3D");
+	view_listener_t::addMenu(new CVCheckStereoscopic3D(), "World.CheckStereoscopic3D");
+	enable.add("World.EnableStereoscopic3D", boost::bind(&stereoscopic_3d_enabled));
+	enable.add("World.ConfigureStereoscopic3D", boost::bind(&stereoscopic_3d_configured));
+	// </CV:David>
 
 	// Tools menu
 	view_listener_t::addMenu(new LLToolsSelectTool(), "Tools.SelectTool");
