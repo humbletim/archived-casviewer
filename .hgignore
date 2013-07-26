@@ -89,5 +89,6 @@ glob:indra/newview/avatar_lad.log
 glob:*.diff
 #*.rej
 glob:fmod*
+my_autobuild.xml
 syntax: regexp
 ^indra/build
