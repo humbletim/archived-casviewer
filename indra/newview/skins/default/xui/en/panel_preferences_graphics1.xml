@@ -1340,8 +1340,8 @@
       </text>
       <radio_group
       control_name="OutputType"
-      follows="top|left"
-      height="34"
+      follows="left|top"
+      height="260"
       layout="topleft"
       left_delta="0"
       name="OutputType"
@@ -1357,7 +1357,6 @@
           value="0"
           tool_tip="Select this if you have a normal computer display or want to display normally."
           width="150" />
-
         <radio_item
           height="16"
           label="Stereoscopic 3D (requires restart)"
@@ -1365,6 +1364,15 @@
           name="DisplayStereo"
           value="1"
           tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D."
+          width="150" />
+        <radio_item
+          height="16"
+          label="Oculus Rift"
+          layout="topleft"
+          name="DisplayRift"
+          value="2"
+          tool_tip="Select this if you have an Oculus Rift VR headset you want to use."
+          top_pad="170"
           width="150" />
       </radio_group>
 
@@ -1378,6 +1386,7 @@
        initial_value=".065"
        layout="topleft"
        top_pad="10"
+       top="72"
        left="54"
        max_val="0.2"
        min_val="0.0"
@@ -1456,14 +1465,15 @@
         <button.commit_callback
          function="Pref.ResetScreenDistance" />
       </button>
+
       <text
        name="DisplayStereoHelp"
-       follows="all"
+       follows="left|top"
        layout="topleft"
-       left="15"
-       top="126"
+       left="54"
+       top="118"
        word_wrap="true"
-       height="80">
+       height="120">
 To display in stereoscopic 3D on Windows using a GeForce graphics card with NVIDIA 3D Vision you need:
         - GeForce driver 314.07 or later.
         - Stereoscopic 3D display enabled in the NVIDIA Control Panel.

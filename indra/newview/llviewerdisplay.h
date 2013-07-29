@@ -50,6 +50,7 @@ extern F32 gLastDrawDistanceStep;
 extern U32 gOutputType;
 const U32 OUTPUT_TYPE_NORMAL = 0;
 const U32 OUTPUT_TYPE_STEREO = 1;
+const U32 OUTPUT_TYPE_RIFT = 2;
 extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
 // </CV:David>
