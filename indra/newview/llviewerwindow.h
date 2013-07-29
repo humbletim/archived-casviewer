@@ -151,8 +151,8 @@ public:
 									min_width,
 									min_height;
 		Optional<bool>				fullscreen,
-									ignore_pixel_depth,
-									output_type;
+									ignore_pixel_depth;
+		Optional<U32>				output_type;
 
 		Params();
 	};
