@@ -1091,15 +1091,15 @@
 				</menu_item_call>
 		</menu>
       <menu_item_check
-       label="Stereoscopic 3D"
-       name="Stereoscopic 3D"
+       label="Display in 3D"
+       name="render_3d"
        shortcut="control|alt|3">
         <menu_item_check.on_check
-         function="World.CheckStereoscopic3D" />
+         function="World.Check3D" />
         <menu_item_check.on_click
-         function="World.ToggleStereoscopic3D" />
+         function="World.Toggle3D" />
         <menu_item_check.on_enable
-         function="World.AllowStereoscopic3D" />
+         function="World.Allow3D" />
       </menu_item_check>
 
       <menu_item_call

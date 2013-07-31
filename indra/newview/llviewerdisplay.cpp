@@ -127,6 +127,8 @@ void render_disconnected_background();
 U32 gOutputType = OUTPUT_TYPE_NORMAL;
 BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
+BOOL gRift3DEnabled = FALSE;
+BOOL gRift3DConfigured = FALSE;
 const U32 RENDER_NORMAL = 0;
 const U32 RENDER_STEREO_LEFT = 1;
 const U32 RENDER_STEREO_RIGHT = 2;
@@ -678,7 +680,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
-		if ((gOutputType == OUTPUT_TYPE_NORMAL) || !gStereoscopic3DEnabled || output_for_snapshot)
+		if ((gOutputType == OUTPUT_TYPE_NORMAL) || (gOutputType == OUTPUT_TYPE_RIFT) || !gStereoscopic3DEnabled || output_for_snapshot)
 		{
 			render_frame(RENDER_NORMAL);
 

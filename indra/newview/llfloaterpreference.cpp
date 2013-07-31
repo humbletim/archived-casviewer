@@ -3521,8 +3521,12 @@ void LLFloaterPreference::applySelection(LLScrollListCtrl* control,BOOL all)
 void LLFloaterPreference::onChangeOutputType()
 {
 	gStereoscopic3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == OUTPUT_TYPE_STEREO;
-	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);  // Default for next program run.
+	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
 	gStereoscopic3DEnabled = gStereoscopic3DEnabled && gStereoscopic3DConfigured;
+
+	gRift3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == OUTPUT_TYPE_RIFT;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+	gRift3DEnabled = gRift3DEnabled && gRift3DConfigured;
 }
 
 void LLFloaterPreference::onClickResetEyeSeparation()

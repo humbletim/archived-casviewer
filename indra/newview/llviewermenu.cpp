@@ -4635,6 +4635,22 @@ class LLLandSit : public view_listener_t
 //
 void reset_view_final( BOOL proceed );
 
+void rightclick_mousewheel_zoom()  // <CV:David> Refactored out of LLViewMouselook.
+{
+	// NaCl - Rightclick-mousewheel zoom
+	static LLCachedControl<LLVector3> _NACL_MLFovValues(gSavedSettings,"_NACL_MLFovValues");
+	static LLCachedControl<F32> CameraAngle(gSavedSettings,"CameraAngle");
+	LLVector3 vTemp=_NACL_MLFovValues;
+	if(vTemp.mV[2] > 0.0f)
+	{
+		vTemp.mV[1]=CameraAngle;
+		vTemp.mV[2]=0.0f;
+		gSavedSettings.setVector3("_NACL_MLFovValues",vTemp);
+		gSavedSettings.setF32("CameraAngle",vTemp.mV[0]);
+	}
+	// NaCl End
+}
+
 void handle_reset_view()
 {
 	if (gAgentCamera.cameraCustomizeAvatar())
@@ -4651,6 +4667,24 @@ void handle_reset_view()
 	gAgentCamera.switchCameraPreset(CAMERA_PRESET_REAR_VIEW);
 	reset_view_final( TRUE );
 	LLFloaterCamera::resetCameraMode();
+
+	// <CV:David>
+	if (gOutputType == OUTPUT_TYPE_RIFT)
+	{
+		gRift3DEnabled = FALSE;
+		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
+		if (gRift3DEnabled)
+		{
+			gAgentCamera.changeCameraToMouselook();
+		}
+		else
+		{
+			rightclick_mousewheel_zoom();
+			gAgentCamera.changeCameraToDefault();
+		}
+	}
+	// </CV:David>
 }
 
 // <FS:Zi> Add reset camera angles menu
@@ -4715,18 +4749,7 @@ class LLViewMouselook : public view_listener_t
 		}
 		else
 		{
-			// NaCl - Rightclick-mousewheel zoom
-			static LLCachedControl<LLVector3> _NACL_MLFovValues(gSavedSettings,"_NACL_MLFovValues");
-			static LLCachedControl<F32> CameraAngle(gSavedSettings,"CameraAngle");
-			LLVector3 vTemp=_NACL_MLFovValues;
-			if(vTemp.mV[2] > 0.0f)
-			{
-				vTemp.mV[1]=CameraAngle;
-				vTemp.mV[2]=0.0f;
-				gSavedSettings.setVector3("_NACL_MLFovValues",vTemp);
-				gSavedSettings.setF32("CameraAngle",vTemp.mV[0]);
-			}
-			// NaCl End
+			rightclick_mousewheel_zoom();
 			gAgentCamera.changeCameraToDefault();
 		}
 		return true;
@@ -8573,7 +8596,8 @@ class LLViewEnableMouselook : public view_listener_t
 	{
 		// You can't go directly from customize avatar to mouselook.
 		// TODO: write code with appropriate dialogs to handle this transition.
-		bool new_value = (CAMERA_MODE_CUSTOMIZE_AVATAR != gAgentCamera.getCameraMode() && !gSavedSettings.getBOOL("FreezeTime"));
+		bool new_value = (CAMERA_MODE_CUSTOMIZE_AVATAR != gAgentCamera.getCameraMode() && !gSavedSettings.getBOOL("FreezeTime") 
+			&& !gRift3DEnabled);  // <CV:David>
 		return new_value;
 	}
 };
@@ -9844,31 +9868,81 @@ class FSObjectExport : public view_listener_t
 // </FS:Techwolf Lupindo>
 
 // <CV:David>
-bool stereoscopic_3d_configured()
+bool viewer_3d_configured()
 {
-	return gStereoscopic3DConfigured;
+	if (gOutputType == OUTPUT_TYPE_STEREO)
+	{
+		return gStereoscopic3DConfigured;
+	}
+	else
+	{
+		return gRift3DConfigured;
+	}
 }
 
-bool stereoscopic_3d_enabled()
+bool viewer_3d_enabled()
 {
-	return gStereoscopic3DEnabled;
+	if (gOutputType == OUTPUT_TYPE_STEREO)
+	{
+		return gStereoscopic3DEnabled;
+	}
+	else
+	{
+		return gRift3DEnabled;
+	}
 }
 
-class CVToggleStereoscopic3D : public view_listener_t
+class CVToggle3D : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
-		gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+		if (gOutputType == OUTPUT_TYPE_STEREO)
+		{
+			gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
+			gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+		}
+		else if (gOutputType == OUTPUT_TYPE_RIFT)
+		{
+			gRift3DEnabled = !gRift3DEnabled;
+			gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
+			if (gRift3DEnabled)
+			{
+				gAgentCamera.changeCameraToMouselook();
+			}
+			else
+			{
+				rightclick_mousewheel_zoom();
+				gAgentCamera.changeCameraToDefault();
+			}
+		}
+
 		return true;
 	}
 };
 
-class CVCheckStereoscopic3D : public view_listener_t
+class CVCheck3D : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		bool new_value = gStereoscopic3DEnabled;
+		bool new_value;
+		if (gOutputType == OUTPUT_TYPE_STEREO)
+		{
+			new_value = gStereoscopic3DEnabled;
+		}
+		else // gOutputType == OUTPUT_TYPE_RIFT
+		{
+			new_value = gRift3DEnabled;
+		}
+		return new_value;
+	}
+};
+
+class CVAllow3D: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool new_value = (gOutputType == OUTPUT_TYPE_STEREO) || (gOutputType == OUTPUT_TYPE_RIFT);
 		return new_value;
 	}
 };
@@ -10034,10 +10108,11 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLWorldPostProcess(), "World.PostProcess");
 
 	// <CV:David>
-	view_listener_t::addMenu(new CVToggleStereoscopic3D(), "World.ToggleStereoscopic3D");
-	view_listener_t::addMenu(new CVCheckStereoscopic3D(), "World.CheckStereoscopic3D");
-	enable.add("World.EnableStereoscopic3D", boost::bind(&stereoscopic_3d_enabled));
-	enable.add("World.ConfigureStereoscopic3D", boost::bind(&stereoscopic_3d_configured));
+	view_listener_t::addMenu(new CVToggle3D(), "World.Toggle3D");
+	view_listener_t::addMenu(new CVCheck3D(), "World.Check3D");
+	view_listener_t::addMenu(new CVAllow3D(), "World.Allow3D");
+	enable.add("World.EnableViewer3D", boost::bind(&viewer_3d_enabled));
+	enable.add("World.ConfigureViewer3D", boost::bind(&viewer_3d_configured));
 	// </CV:David>
 
 	// Tools menu

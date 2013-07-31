@@ -25,7 +25,7 @@
          name="animationoverride" />
         <command
          name="quickprefs" />
-      <command name="stereoscopic3d"/>
+      <command name="display3d"/>
    </bottom_toolbar>
    <left_toolbar
     button_display_mode="icons_only"

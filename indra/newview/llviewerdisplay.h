@@ -53,6 +53,8 @@ const U32 OUTPUT_TYPE_STEREO = 1;
 const U32 OUTPUT_TYPE_RIFT = 2;
 extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
+extern BOOL gRift3DConfigured;
+extern BOOL gRift3DEnabled;
 // </CV:David>
 
 #endif // LL_LLVIEWERDISPLAY_H

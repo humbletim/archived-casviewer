@@ -43,6 +43,10 @@
 #include "lltoolmgr.h"
 #include "lltoolgrab.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 // Linden library includes
 #include "llwindow.h"			// setMouseClipping()
 
@@ -146,7 +150,9 @@ void LLToolGun::draw()
 	// <FS:Ansariel> Use faster LLCachedControl
 	//if( gSavedSettings.getBOOL("ShowCrosshairs") )
 	static LLCachedControl<bool> showCrosshairs(gSavedSettings, "ShowCrosshairs");
-	if (showCrosshairs)
+	// <CV:David>
+	//if (showCrosshairs)
+	if (!gRift3DEnabled && showCrosshairs) // </CV:David>
 	{
 		// <FS:Ansariel> Performance tweak
 		//LLUIImagePtr crosshair = LLUI::getUIImage("crosshairs.tga");

@@ -87,6 +87,10 @@
 #include "rlvhandler.h"
 #include "kcwlinterface.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 // library includes
 #include "imageids.h"
 #include "llfloaterreg.h"
@@ -578,6 +582,14 @@ void LLStatusBar::setVisibleForMouselook(bool visible)
 	mTextTime->setVisible(visible);
 	mBalancePanel->setVisible(visible);
 	mBoxBalance->setVisible(visible);
+
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		mParcelInfoPanel->setVisible(visible);
+	}
+	// </CV:David>
+
 	// <FS:PP> Option to hide volume controls (sounds, media, stream) in upper right
 	// mBtnVolume->setVisible(visible);
 	// mStreamToggle->setVisible(visible);		// ## Zi: Media/Stream separation

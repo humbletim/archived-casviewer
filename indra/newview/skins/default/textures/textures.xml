@@ -725,7 +725,7 @@ with the same filename but different name
   <texture name="pose_stand" file_name="toolbar_icons/posestand.png" preload="true" />
   <texture name="Command_Snapshot_2_Disk_Icon" file_name="toolbar_icons/snapshot_to_disk.png" preload="true" />
   <texture name="radar" file_name="toolbar_icons/radar.png" preload="true" />
-  <texture name="stereoscopic3d" file_name="toolbar_icons/stereoscopic3d.png" preload="true" />  <!-- <CV:David> -->
+  <texture name="display3d" file_name="toolbar_icons/display3d.png" preload="true" />  <!-- <CV:David> -->
   
   <texture name="Unread_Chiclet" file_name="bottomtray/Unread_Chiclet.png" preload="false" />
   <texture name="Unread_IM" file_name="bottomtray/Unread_IM.png" preload="false" />

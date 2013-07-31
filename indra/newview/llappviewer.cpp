@@ -3459,11 +3459,15 @@ bool LLAppViewer::initWindow()
 
 	// always start windowed
 	BOOL ignorePixelDepth = gSavedSettings.getBOOL("IgnorePixelDepth");
+
 	// <CV:David>
 	U32 output_type = gSavedSettings.getU32("OutputType");
 	gOutputType = output_type;
 	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
 	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
+	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
+	gRift3DEnabled = FALSE;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
 	// </CV:David>
 
 	LLViewerWindow::Params window_params;
@@ -4124,6 +4128,14 @@ static LLNotificationFunctorRegistration finish_quit_reg("ConfirmQuit", finish_q
 
 void LLAppViewer::userQuit()
 {
+	// <CV:David>
+	if (gOutputType == OUTPUT_TYPE_RIFT)
+	{
+		gRift3DEnabled = FALSE;
+		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+	}
+	// </CV:David>
+	
 	if (gDisconnected || gViewerWindow->getProgressView()->getVisible())
 	{
 		requestQuit();

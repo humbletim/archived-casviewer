@@ -1367,7 +1367,7 @@
           width="150" />
         <radio_item
           height="16"
-          label="Oculus Rift"
+          label="Oculus Rift (requires restart)"
           layout="topleft"
           name="DisplayRift"
           value="2"
