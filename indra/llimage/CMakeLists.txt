@@ -72,6 +72,7 @@ target_link_libraries(llimage
     ${JPEG_LIBRARIES}
     ${PNG_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    libovr.lib
     )
 
 # Add tests

@@ -237,6 +237,11 @@
 #include "llmachineid.h"
 #include "llmainlooprepeater.h"
 
+// <CV:David>
+#include <LibOVR\Include\OVR.h>
+#include <LibOVR\Include\OVRVersion.h>
+// </CV:David>
+
 
 // *FIX: These extern globals should be cleaned up.
 // The globals either represent state/config/resource-storage of either 
@@ -344,6 +349,15 @@ BOOL gPeriodicSlowFrame = FALSE;
 BOOL gCrashOnStartup = FALSE;
 BOOL gLLErrorActivated = FALSE;
 BOOL gLogoutInProgress = FALSE;
+
+// <CV:David>
+OVR::Ptr<OVR::DeviceManager> gRiftManager;
+OVR::Ptr<OVR::HMDDevice> gRiftHMD;
+OVR::Ptr<OVR::SensorDevice> gRiftSensor;
+OVR::SensorFusion gRiftFusionResult;
+OVR::HMDInfo gRiftHMDInfo;
+BOOL gRiftHMDInfoLoaded;
+// </CV:David>
 
 ////////////////////////////////////////////////////////////
 // Internal globals... that should be removed.
@@ -1061,6 +1075,53 @@ bool LLAppViewer::init()
 		return false;
 	}
 	LL_INFOS("InitInfo") << "Hardware test initialization done." << LL_ENDL ;
+
+	// <CV:David>
+	gOutputType = gSavedSettings.getU32("OutputType");
+	LL_INFOS("InitInfo") << "Output type: " << gOutputType << LL_ENDL;
+
+	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
+	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
+	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
+	gRift3DEnabled = FALSE;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
+	if (gRift3DConfigured)
+	{
+		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
+
+		OVR::System::Init();
+		gRiftManager = *OVR::DeviceManager::Create();
+		gRiftHMD = *gRiftManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
+
+		if (gRiftHMD)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD found" << LL_ENDL;
+			gRiftHMDInfoLoaded = gRiftHMD->GetDeviceInfo(&gRiftHMDInfo);
+			gRiftSensor = *gRiftHMD->GetSensor();
+		}
+		else
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found" << LL_ENDL;
+			gRiftSensor = *gRiftManager->EnumerateDevices<OVR::SensorDevice>().CreateDevice();
+		}
+
+		if (gRiftSensor)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
+			gRiftFusionResult.AttachToSensor(gRiftSensor);
+		}
+		else
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Sensor not found" << LL_ENDL;
+		}
+
+		if (gRiftHMDInfoLoaded)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Product name = " << gRiftHMDInfo.ProductName << LL_ENDL;
+		}
+	}
+	// </CV:David>
 
 	// Prepare for out-of-memory situations, during which we will crash on
 	// purpose and save a dump.
@@ -1858,6 +1919,17 @@ bool LLAppViewer::cleanup()
 	LLError::logToFixedBuffer(NULL);
 
 	llinfos << "Cleaning Up" << llendflush;
+
+	// <CV:David>
+	if (gRift3DConfigured)
+	{
+		gRiftSensor.Clear();
+		gRiftHMD.Clear();
+		gRiftManager.Clear();
+		OVR::System::Destroy();
+		llinfos << "Oculus Rift: Cleaned up" << llendflush;
+	}
+	// </CV:David>
 
 	// <FS:Zi> Backup Settings
 	if(mSaveSettingsOnExit)
@@ -3460,16 +3532,6 @@ bool LLAppViewer::initWindow()
 	// always start windowed
 	BOOL ignorePixelDepth = gSavedSettings.getBOOL("IgnorePixelDepth");
 
-	// <CV:David>
-	U32 output_type = gSavedSettings.getU32("OutputType");
-	gOutputType = output_type;
-	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
-	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
-	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
-	gRift3DEnabled = FALSE;
-	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-	// </CV:David>
-
 	LLViewerWindow::Params window_params;
 	window_params
 		.title(gWindowTitle)
@@ -3482,7 +3544,7 @@ bool LLAppViewer::initWindow()
 		.min_height(gSavedSettings.getU32("MinWindowHeight"))
 		.fullscreen(gSavedSettings.getBOOL("FullScreen"))
 		.ignore_pixel_depth(ignorePixelDepth)
-		.output_type(output_type);
+		.output_type(gOutputType);
 
 	gViewerWindow = new LLViewerWindow(window_params);
 

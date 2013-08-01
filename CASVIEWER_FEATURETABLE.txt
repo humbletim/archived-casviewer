@@ -2,4 +2,4 @@ Please keep this updated with major user-facing features added to the CtrlAltStu
 
 FEATURE			LICENSE
 
-...				...
+Oculus Rift SDK	https://developer.oculusvr.com/license

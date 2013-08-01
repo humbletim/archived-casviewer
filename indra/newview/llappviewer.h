@@ -33,6 +33,11 @@
 #include "lltimer.h"
 #include "llappcorehttp.h"
 
+// <CV:David>
+#include <LibOVR\Include\OVR.h>
+#include <LibOVR\Include\OVRVersion.h>
+// </CV:David>
+
 class LLCommandLineParser;
 class LLFrameTimer;
 class LLPumpIO;
@@ -400,5 +405,14 @@ extern LLUUID gMoonTextureID;
 
 extern BOOL gRandomizeFramerate;
 extern BOOL gPeriodicSlowFrame;
+
+// <CV:David>
+extern OVR::Ptr<OVR::DeviceManager> gRiftManager;
+extern OVR::Ptr<OVR::HMDDevice> gRiftHMD;
+extern OVR::Ptr<OVR::SensorDevice> gRiftSensor;
+extern OVR::SensorFusion gRiftFusionResult;
+extern OVR::HMDInfo gRiftHMDInfo;
+extern BOOL gRiftHMDInfoLoaded;
+// </CV:David>
 
 #endif // LL_LLAPPVIEWER_H
