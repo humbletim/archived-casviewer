@@ -3552,6 +3552,15 @@ bool LLAppViewer::initWindow()
 		.ignore_pixel_depth(ignorePixelDepth)
 		.output_type(gOutputType);
 
+	// <CV:David>
+	if (gRift3DConfigured && gRiftConnected && window_params.fullscreen)
+	{
+		LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHMDInfo.HResolution << ", Height = " << gRiftHMDInfo.VResolution << LL_ENDL;
+		window_params.width = gRiftHMDInfo.HResolution;
+		window_params.height = gRiftHMDInfo.VResolution;
+	}
+	// </CV:David>
+
 	gViewerWindow = new LLViewerWindow(window_params);
 
 	LL_INFOS("AppInit") << "gViewerwindow created." << LL_ENDL;

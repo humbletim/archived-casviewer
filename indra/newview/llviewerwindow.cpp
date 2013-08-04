@@ -2341,11 +2341,15 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 		gSavedSettings.setBOOL("WindowMaximized", maximized);
 
 //<FS:KC - fix for EXP-1777/EXP-1832>
-        LLCoordScreen window_size;
-		if (!maximized
-			&& mWindow->getSize(&window_size))
-//		if (!maximized)
+//        LLCoordScreen window_size;
+//		if (!maximized
+//			&& mWindow->getSize(&window_size))
+////		if (!maximized)
 //</FS:KC - fix for EXP-1777/EXP-1832>
+// <CV:David>
+        LLCoordScreen window_size;
+		if (!maximized && mWindow->getSize(&window_size) && !(gRift3DConfigured && gRiftConnected))
+// </CV:David>
 		{
 			U32 min_window_width=gSavedSettings.getU32("MinWindowWidth");
 			U32 min_window_height=gSavedSettings.getU32("MinWindowHeight");

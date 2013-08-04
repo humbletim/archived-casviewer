@@ -1483,6 +1483,19 @@ To display in stereoscopic 3D on Windows using a GeForce graphics card with NVID
 Other computer configurations will likely require similar.
       </text>
 
+      <text
+       name="DisplayRiftHelp"
+       follows="left|top"
+       layout="topleft"
+       left="54"
+       top="258"
+       word_wrap="true"
+       height="40">
+To display on an Oculus Rift you need:
+        - Your computer configured to duplicate your desktop display on the Rift.
+        - Full Screen mode turned on in the Graphics > General tab.
+      </text>
+
     </panel>
   </tab_container>
 </panel>
