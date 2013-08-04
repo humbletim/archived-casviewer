@@ -55,6 +55,11 @@ extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
 extern BOOL gRift3DConfigured;
 extern BOOL gRift3DEnabled;
+const U32 RENDER_NORMAL = 0;
+const U32 RENDER_STEREO_LEFT = 1;
+const U32 RENDER_STEREO_RIGHT = 2;
+const U32 RENDER_RIFT_LEFT = 3;
+const U32 RENDER_RIFT_RIGHT = 4;
 // </CV:David>
 
 #endif // LL_LLVIEWERDISPLAY_H

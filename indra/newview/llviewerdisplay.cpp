@@ -129,9 +129,6 @@ BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
 BOOL gRift3DEnabled = FALSE;
 BOOL gRift3DConfigured = FALSE;
-const U32 RENDER_NORMAL = 0;
-const U32 RENDER_STEREO_LEFT = 1;
-const U32 RENDER_STEREO_RIGHT = 2;
 // </CV:David>
 
 void display_startup()
@@ -685,7 +682,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gAgentCamera.calcRiftValues();
 		}
 
-		if ((gOutputType == OUTPUT_TYPE_NORMAL) || (gOutputType == OUTPUT_TYPE_RIFT) || !gStereoscopic3DEnabled || output_for_snapshot)
+		if ((gOutputType == OUTPUT_TYPE_NORMAL) 
+			|| (gOutputType == OUTPUT_TYPE_STEREO && !gStereoscopic3DEnabled) 
+			|| (gOutputType == OUTPUT_TYPE_RIFT && !gRift3DEnabled) 
+			|| output_for_snapshot)
 		{
 			render_frame(RENDER_NORMAL);
 
@@ -694,6 +694,24 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			{
 				render_ui();
 			}
+		}
+		else if (gOutputType == OUTPUT_TYPE_RIFT) // && gRift3DEnabled && !output_for_snapshot
+		{
+			LLViewerCamera::getInstance()->calcStereoValues();
+
+			// Left eye ...
+			gViewerWindow->updateWorldViewRect(TRUE, RENDER_RIFT_LEFT);
+			render_frame(RENDER_RIFT_LEFT);
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
+			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
+
+			// Right eye ...
+			gViewerWindow->updateWorldViewRect(TRUE, RENDER_RIFT_RIGHT);
+			render_frame(RENDER_RIFT_RIGHT);
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
+			render_ui();
+
+			glDrawBuffer(GL_BACK);  // Needed so that snapshot on exit doesn't include UI.
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
@@ -855,11 +873,11 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 
 	// <CV:David>
 	// Set left / right camera for rendering collected objects.
-	if (render_type == RENDER_STEREO_LEFT)
+	if ((render_type == RENDER_STEREO_LEFT) || (render_type == RENDER_RIFT_LEFT))
 	{
 		LLViewerCamera::getInstance()->moveToLeftEye();
 	}
-	else if (render_type == RENDER_STEREO_RIGHT)
+	else if ((render_type == RENDER_STEREO_RIGHT) || (render_type == RENDER_RIFT_RIGHT))
 	{
 		LLViewerCamera::getInstance()->moveToRightEye();
 	}

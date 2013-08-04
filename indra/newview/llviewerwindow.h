@@ -308,7 +308,7 @@ public:
 	void				updateMouseDelta();		
 	void				updateKeyboardFocus();		
 
-	void			updateWorldViewRect(bool use_full_window=false);
+	void			updateWorldViewRect(bool use_full_window=false, U32 render_type=0);
 	LLView*			getToolBarHolder() { return mToolBarHolder.get(); }
 	LLView*			getHintHolder() { return mHintHolder.get(); }
 	LLView*			getLoginPanelHolder() { return mLoginPanelHolder.get(); }

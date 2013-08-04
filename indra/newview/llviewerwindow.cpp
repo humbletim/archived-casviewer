@@ -212,6 +212,10 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 #if LL_WINDOWS
 #include <tchar.h> // For Unicode conversion methods
 #endif
@@ -3579,7 +3583,7 @@ void LLViewerWindow::updateKeyboardFocus()
 }
 
 static LLFastTimer::DeclareTimer FTM_UPDATE_WORLD_VIEW("Update World View");
-void LLViewerWindow::updateWorldViewRect(bool use_full_window)
+void LLViewerWindow::updateWorldViewRect(bool use_full_window, U32 render_type)
 {
 	LLFastTimer ft(FTM_UPDATE_WORLD_VIEW);
 
@@ -3599,6 +3603,23 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 		new_world_rect.mTop = llround((F32)new_world_rect.mTop * mDisplayScale.mV[VY]);
 	}
 
+	// <CV:David>
+	if (use_full_window && gRiftConnected && gRift3DEnabled)
+	{
+		if (render_type == RENDER_RIFT_LEFT)
+		{
+			new_world_rect.mRight = new_world_rect.mRight / 2;
+		}
+		else if (render_type == RENDER_RIFT_RIGHT)
+		{
+			new_world_rect.mLeft = new_world_rect.mRight / 2;
+		}
+		mWorldViewRectRaw = new_world_rect;
+	}
+	else
+	{
+	// </CV:David>
+
 	if (mWorldViewRectRaw != new_world_rect)
 	{
 		mWorldViewRectRaw = new_world_rect;
@@ -3612,6 +3633,10 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 		// sending a signal with a new WorldView rect
 		mOnWorldViewRectUpdated(old_world_rect_scaled, mWorldViewRectScaled);
 	}
+
+	// <CV:David>
+	}
+	// </CV:David>
 }
 
 void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
@@ -4938,7 +4963,12 @@ void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset)
 void LLViewerWindow::setup3DRender()
 {
 	// setup perspective camera
-	LLViewerCamera::getInstance()->setPerspective(NOT_FOR_SELECTION, mWorldViewRectRaw.mLeft, mWorldViewRectRaw.mBottom,  mWorldViewRectRaw.getWidth(), mWorldViewRectRaw.getHeight(), FALSE, LLViewerCamera::getInstance()->getNear(), MAX_FAR_CLIP*2.f);
+	LLViewerCamera::getInstance()->setPerspective(NOT_FOR_SELECTION, 
+		mWorldViewRectRaw.mLeft, 
+		mWorldViewRectRaw.mBottom,  
+		mWorldViewRectRaw.getWidth(),
+		mWorldViewRectRaw.getHeight(), 
+		FALSE, LLViewerCamera::getInstance()->getNear(), MAX_FAR_CLIP*2.f);
 	setup3DViewport();
 }
 
