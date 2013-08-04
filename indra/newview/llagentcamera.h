@@ -405,6 +405,19 @@ private:
 	LLUUID						mStoredCameraFocusObjectId;
 	bool						mHasStoredCameraPos;
 // </FS:Ansariel> FIRE-7758: Save/load camera position feature
+
+// <CV:David>
+public:
+	void			calcRiftValues();
+
+private:
+	LLQuaternion	mRiftYaw;
+	LLQuaternion	mRiftPitch;
+	LLQuaternion	mRiftRoll;
+	F32				mLastRiftYaw;
+	LLQuaternion	mAgentRot;
+	F32				mEyeYaw;
+// </CV:David>
 };
 
 extern LLAgentCamera gAgentCamera;

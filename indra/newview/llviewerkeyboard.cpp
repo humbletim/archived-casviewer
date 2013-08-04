@@ -49,6 +49,9 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 #include "llfloaterwebcontent.h"
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 
 //
 // Constants
@@ -975,7 +978,17 @@ EKeyboardMode LLViewerKeyboard::getMode()
 {
 	if ( gAgentCamera.cameraMouselook() )
 	{
-		return MODE_FIRST_PERSON;
+		// <CV:David>
+		// return MODE_FIRST_PERSON;
+		if (gRift3DEnabled)
+		{
+			return MODE_THIRD_PERSON;  // For seated operation.
+		}
+		else
+		{
+			return MODE_FIRST_PERSON;
+		}
+		// </CV:David>
 	}
 	else if ( gMorphView && gMorphView->getVisible())
 	{

@@ -680,6 +680,11 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
+		if (gRiftConnected && gRift3DEnabled)
+		{
+			gAgentCamera.calcRiftValues();
+		}
+
 		if ((gOutputType == OUTPUT_TYPE_NORMAL) || (gOutputType == OUTPUT_TYPE_RIFT) || !gStereoscopic3DEnabled || output_for_snapshot)
 		{
 			render_frame(RENDER_NORMAL);

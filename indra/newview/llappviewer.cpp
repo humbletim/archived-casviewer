@@ -357,6 +357,7 @@ OVR::Ptr<OVR::SensorDevice> gRiftSensor;
 OVR::SensorFusion gRiftFusionResult;
 OVR::HMDInfo gRiftHMDInfo;
 BOOL gRiftHMDInfoLoaded;
+BOOL gRiftConnected;
 // </CV:David>
 
 ////////////////////////////////////////////////////////////
@@ -1086,6 +1087,9 @@ bool LLAppViewer::init()
 	gRift3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
 
+	gRiftHMDInfoLoaded = FALSE;
+	gRiftConnected = FALSE;
+
 	if (gRift3DConfigured)
 	{
 		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
@@ -1120,6 +1124,8 @@ bool LLAppViewer::init()
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: Product name = " << gRiftHMDInfo.ProductName << LL_ENDL;
 		}
+		
+		gRiftConnected = gRiftHMDInfoLoaded && gRiftSensor;
 	}
 	// </CV:David>
 

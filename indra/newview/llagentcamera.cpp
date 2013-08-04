@@ -56,6 +56,10 @@
 #include "fscommon.h"
 #include "lltrans.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 using namespace LLAvatarAppearanceDefines;
 
 extern LLMenuBarGL* gMenuBarView;
@@ -1111,6 +1115,15 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 
 	if (!isAgentAvatarValid()) return;
 
+	// <CV:David>
+	if (gRiftConnected && gRift3DEnabled)
+	{
+		LLVector3 headLookAxis = LLVector3(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
+		setLookAt(LOOKAT_TARGET_MOUSELOOK, gAgentAvatarp, headLookAxis);
+		return;
+	}
+	// </CV:David>
+
 	LLQuaternion av_inv_rot = ~gAgentAvatarp->mRoot->getWorldRotation();
 	LLVector3 root_at = LLVector3::x_axis * gAgentAvatarp->mRoot->getWorldRotation();
 
@@ -1204,6 +1217,13 @@ void LLAgentCamera::updateCamera()
 	{
 		mCameraUpVector = mFollowCam.getUpVector();
 	}
+
+	// <CV:David>
+	if (gRiftConnected && gRift3DEnabled)
+	{
+		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * mAgentRot;
+	}
+	// /CV:David>
 
 	if (mSitCameraEnabled)
 	{
@@ -1557,6 +1577,14 @@ LLVector3d LLAgentCamera::calcFocusPositionTargetGlobal()
 		mFocusTargetGlobal = gAgent.getPosGlobalFromAgent(mFollowCam.getSimulatedFocus());
 		return mFocusTargetGlobal;
 	}
+	// <CV:David>
+	else if (gRift3DEnabled && gRiftConnected)
+	{
+		LLVector3d at_axis = LLVector3d(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
+		mFocusTargetGlobal = calcCameraPositionTargetGlobal() + at_axis;
+		return mFocusTargetGlobal;
+	}
+	// </CV:David>
 	else if (mCameraMode == CAMERA_MODE_MOUSELOOK)
 	{
 		LLVector3d at_axis(1.0, 0.0, 0.0);
@@ -2154,6 +2182,17 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 			gAgent.endAnimationUpdateUI();
 		}
 	}
+
+	// <CV:David>
+	if (gRift3DEnabled && gRiftConnected)
+	{
+		OVR::Quatf hmdOrientation = gRiftFusionResult.GetOrientation();
+		float yaw, pitch, roll;
+		hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+		mLastRiftYaw = yaw;
+		mEyeYaw = 0.f;
+	}
+	// </CV:David>
 }
 
 
@@ -2926,6 +2965,33 @@ void LLAgentCamera::loadCameraPosition()
 	setCameraPosAndFocusGlobal(mStoredCameraPos, mStoredCameraFocus, mStoredCameraFocusObjectId);
 }
 // </FS:Ansariel> FIRE-7758: Save/load camera position feature
+
+// <CV:David>
+
+void LLAgentCamera::calcRiftValues()
+{
+	OVR::Quatf hmdOrientation = gRiftFusionResult.GetOrientation();
+	float yaw, roll, pitch;
+	hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+	mEyeYaw += (yaw - mLastRiftYaw);
+	mLastRiftYaw = yaw;
+
+	mRiftYaw = LLQuaternion(mEyeYaw, LLVector3::z_axis);
+	mRiftPitch = LLQuaternion(-pitch, LLVector3::y_axis);
+	mRiftRoll = LLQuaternion(-roll, LLVector3::x_axis);
+
+	mAgentRot = gAgent.getFrameAgent().getQuaternion();
+	if (isAgentAvatarValid() && gAgentAvatarp->getParent())
+	{
+		LLViewerObject* root_object = (LLViewerObject*)gAgentAvatarp->getRoot();
+		if (!root_object->flagCameraDecoupled())
+		{
+			mAgentRot *= ((LLViewerObject*)(gAgentAvatarp->getParent()))->getRenderRotation();
+		}
+	}
+}
+
+// </CV:David>
 
 // EOF
 

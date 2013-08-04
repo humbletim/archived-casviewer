@@ -413,6 +413,7 @@ extern OVR::Ptr<OVR::SensorDevice> gRiftSensor;
 extern OVR::SensorFusion gRiftFusionResult;
 extern OVR::HMDInfo gRiftHMDInfo;
 extern BOOL gRiftHMDInfoLoaded;
+extern BOOL gRiftConnected;
 // </CV:David>
 
 #endif // LL_LLAPPVIEWER_H
