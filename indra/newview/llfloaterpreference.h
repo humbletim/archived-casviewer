@@ -218,6 +218,7 @@ public:
 	void onChangeOutputType();
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();
+	void onClickResetRiftEyeSeparation();
 	// </CV:David>
 
 private:

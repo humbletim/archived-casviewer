@@ -1434,7 +1434,7 @@
        left="54"
        max_val="5.0"
        min_val=".5"
-       name="EyeSeparation"
+       name="ScreenDistance"
        show_text="true"
        width="314"
        label_width="100"
@@ -1483,12 +1483,57 @@ To display in stereoscopic 3D on Windows using a GeForce graphics card with NVID
 Other computer configurations will likely require similar.
       </text>
 
+      <slider
+       control_name="RiftEyeSeparation"
+       decimal_digits="0"
+       label="Eye separation:"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="65"
+       layout="topleft"
+       top_pad="10"
+       top="258"
+       left="54"
+       max_val="80"
+       min_val="50"
+       name="RiftEyeSeparation"
+       width="314"
+       label_width="100"
+       tool_tip="Distance between pupils of left and right eyes."/>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="324"
+       name="RiftEyeSeparationUnitsText"
+       top_delta="0"
+       width="32">
+        mm
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetRiftEyeSeparation"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftEyeSeparation" />
+      </button>
+
       <text
        name="DisplayRiftHelp"
        follows="left|top"
        layout="topleft"
        left="54"
-       top="258"
+       top="284"
        word_wrap="true"
        height="40">
 To display on an Oculus Rift you need:

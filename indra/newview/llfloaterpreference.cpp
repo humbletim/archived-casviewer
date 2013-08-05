@@ -497,6 +497,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.UpdateOutputType",		boost::bind(&LLFloaterPreference::onChangeOutputType, this));
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -3537,6 +3538,11 @@ void LLFloaterPreference::onClickResetEyeSeparation()
 void LLFloaterPreference::onClickResetScreenDistance()
 {
 	gSavedSettings.setF32("ScreenDistance", 1.6f);
+}
+
+void LLFloaterPreference::onClickResetRiftEyeSeparation()
+{
+	gSavedSettings.setF32("RiftEyeSeparation", 65.0f);
 }
 // </CV:David>
 
