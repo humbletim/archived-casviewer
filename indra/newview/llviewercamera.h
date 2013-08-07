@@ -128,6 +128,7 @@ public:
 	S16 getZoomSubRegion() { return mZoomSubregion; } 
 
 	// <CV:David> Stereoscopic 3D
+	void calcMonoValues();
 	void calcStereoValues();
 	void moveToLeftEye();
 	void moveToRightEye();

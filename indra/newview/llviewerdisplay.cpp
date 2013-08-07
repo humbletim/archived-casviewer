@@ -687,6 +687,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			|| (gOutputType == OUTPUT_TYPE_RIFT && !gRift3DEnabled) 
 			|| output_for_snapshot)
 		{
+			LLViewerCamera::getInstance()->calcMonoValues();
+
 			render_frame(RENDER_NORMAL);
 
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
