@@ -66,6 +66,7 @@ F32 mEyeSeparation;  // Distance between stereo eyes.
 F32 mScreenDistance;  // Distance of rendering screen from camera.
 F32 mCameraOffset;  // Offset from default camera position for left(-ve) /right(+ve) eye.
 F32 mRiftEyeSeparation;  // Distance between pupils.
+F32 mRiftProjectionOffset;
 // </CV:David>
 
 //glu pick matrix implementation borrowed from Mesa3D
@@ -95,8 +96,17 @@ glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloa
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
 
 	// <CV:David>
-	GLfloat p03 = - mCameraOffset * f / aspect;
-	GLfloat p02 = p03 / mScreenDistance;
+	GLfloat p03, p02;
+	if (gRift3DEnabled)
+	{
+		p03 = 0.f;
+		p02 = mRiftProjectionOffset;
+	}
+	else
+	{
+		p03 = - mCameraOffset * f / aspect;
+		p02 = p03 / mScreenDistance;
+	}
 	// </CV:David>
 
 	return glh::matrix4f(f/aspect, 0, p02, p03,
@@ -225,8 +235,16 @@ void LLViewerCamera::calcProjection(const F32 far_distance) const
 	mProjectionMatrix.setZero();
 	mProjectionMatrix.mMatrix[0][0] = f/aspect;
 	// <CV:David>
-	p03 = - mCameraOffset * f / aspect;
-	p02 = - p03 / mScreenDistance;
+	if (gRift3DEnabled)
+	{
+		p03 = 0.f;
+		p02 = mRiftProjectionOffset;
+	}
+	else
+	{
+		p03 = - mCameraOffset * f / aspect;
+		p02 = - p03 / mScreenDistance;
+	}
 	mProjectionMatrix.mMatrix[0][2] = p02;
 	mProjectionMatrix.mMatrix[0][3] = p03;
 	// </CV:David>
@@ -975,6 +993,7 @@ void LLViewerCamera::moveToLeftEye()
 {
 	// Move both camera and POI so that left and rights views are parallel.
 	mCameraOffset = -mEyeSeparation / 2;
+	mRiftProjectionOffset = -gRiftProjectionOffset;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
 	setView(mStereoCameraFOV);
@@ -985,6 +1004,7 @@ void LLViewerCamera::moveToRightEye()
 {
 	// Move both camera and POI so that left and rights views are parallel.
 	mCameraOffset = mEyeSeparation / 2;
+	mRiftProjectionOffset = gRiftProjectionOffset;
 	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
 	setView(mStereoCameraFOV);
@@ -994,6 +1014,7 @@ void LLViewerCamera::moveToRightEye()
 void LLViewerCamera::moveToCenter()
 {
 	mCameraOffset = 0.f;
+	mRiftProjectionOffset = 0.f;
 	setView(mStereoCameraFOV);
 	setOriginAndLookAt(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
 }
@@ -1003,7 +1024,10 @@ void LLViewerCamera::moveToStereoCullFrustum()
 	mCameraOffset = 0.f;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCullCameraDeltaForwards;
-	setView(mStereoCullCameraFOV);
+	if (!gRift3DEnabled)
+	{
+		setView(mStereoCullCameraFOV);
+	}
 	setOriginAndLookAt(new_position, getUpAxis(), new_point_of_interest);
 }
 
