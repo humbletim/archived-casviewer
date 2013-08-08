@@ -637,9 +637,9 @@ static void settings_to_globals()
 static void settings_modify()
 {
 	// <CV:David>
-	// Stereoscopic 3D display also needs sUseFBO set if Basic Shaders are turned on.
+	// Stereoscopic 3D and Oculus Rift display also need sUseFBO set if Basic Shaders are turned on.
 	//LLRenderTarget::sUseFBO			= gSavedSettings.getBOOL("RenderDeferred");
-	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO;
+	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && (gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO || gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_RIFT);
 	// </CV:David>
 	LLPipeline::sRenderDeferred			= gSavedSettings.getBOOL("RenderDeferred");
 	LLVOAvatar::sUseImpostors			= gSavedSettings.getBOOL("RenderUseImpostors");

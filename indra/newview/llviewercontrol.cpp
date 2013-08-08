@@ -431,7 +431,7 @@ static bool handleRenderLocalLightsChanged(const LLSD& newvalue)
 static bool handleRenderDeferredChanged(const LLSD& newvalue)
 {
 	// <CV:David>
-	// Stereoscopic 3D display also needs sUseFBO set if Basic Shaders are turned on.
+	// Stereoscopic 3D display and Oculus Rift also need sUseFBO set if Basic Shaders are turned on.
 	// Pipeline operations are refactored into resetRenderDeferred() so that can be reused in preferences changes.
 	//
 	//LLRenderTarget::sUseFBO = newvalue.asBoolean();
@@ -447,7 +447,7 @@ static bool handleRenderDeferredChanged(const LLSD& newvalue)
 	//		LLViewerShaderMgr::instance()->setShaders();
 	//	}
 	//}
-	LLRenderTarget::sUseFBO = newvalue.asBoolean() || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
+	LLRenderTarget::sUseFBO = newvalue.asBoolean() || (gSavedSettings.getBOOL("VertexShaderEnable") && (gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO || gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_RIFT));
 	LLPipeline::resetRenderDeferred();
 	// </CV:David>
 	return true;

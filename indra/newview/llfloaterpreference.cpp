@@ -1524,9 +1524,9 @@ void LLFloaterPreference::refreshEnabledState()
 	if (shaders)
 	{
 		// <CV:David>
-		// Reset required for stereoscopic 3D Basic Shaders without Advanced Lighting Model.
+		// Reset required for stereoscopic 3D and Oculus Rift Basic Shaders without Advanced Lighting Model.
 		// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
-		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && (gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO || gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_RIFT));
 		LLPipeline::resetRenderDeferred();
 		// </CV:David>
 
