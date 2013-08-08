@@ -785,12 +785,13 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 {
 
 	// <CV:David> Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
-	if ((render_type == RENDER_STEREO_LEFT) || (render_type == RENDER_STEREO_RIGHT))
+	if (render_type == RENDER_STEREO_LEFT || render_type == RENDER_STEREO_RIGHT || render_type == RENDER_RIFT_LEFT || render_type == RENDER_RIFT_RIGHT)
 	{
 		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
 	}
-	else if ((gOutputType == OUTPUT_TYPE_STEREO) && gStereoscopic3DEnabled)
+	else if (((gOutputType == OUTPUT_TYPE_STEREO) && gStereoscopic3DEnabled) || ((gOutputType == OUTPUT_TYPE_RIFT) && gRift3DEnabled))
 	{
+		// For snapshots and such.
 		LLViewerCamera::getInstance()->moveToCenter();
 	}
 	// </CV:David>

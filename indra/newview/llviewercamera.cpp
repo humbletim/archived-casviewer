@@ -44,6 +44,9 @@
 // [RLVa:KB] - Checked: 2010-04-11 (RLVa-1.2.0e)
 #include "rlvhandler.h"
 // [/RLVa:KB]
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 
 // Linden library includes
 #include "lldrawable.h"
@@ -136,7 +139,7 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 	mEyeSeparation = 0.065f;
 	mScreenDistance = 1.6f;
 	mCameraOffset = 0.f;
-	mRiftEyeSeparation = 0.065f;
+	mRiftEyeSeparation = 65.f;
 	// </CV:David>
 }
 
@@ -922,7 +925,7 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 	self->setDefaultFOV(value.asReal());	
 }
 
-// <CV:David> Stereoscopic 3D
+// <CV:David> Stereoscopic 3D and Oculus Rift
 
 void LLViewerCamera::calcMonoValues()
 {
@@ -938,20 +941,34 @@ void LLViewerCamera::calcStereoValues()
 	mStereoPointOfInterest = mLastPointOfInterest;
 
 	// Retrieve latest stereo values.
-	mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
-	mScreenDistance = gSavedSettings.getF32("ScreenDistance");
+	if (gOutputType == OUTPUT_TYPE_STEREO)
+	{
+		mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
+		mScreenDistance = gSavedSettings.getF32("ScreenDistance");
+
+		// Stereo culling frustum camera parameters.
+		F32 aspect, width, separation, deltaZ;
+		aspect = getAspect();
+		width = 2.0f * aspect * tan(mStereoCameraFOV*0.5f) * mScreenDistance;
+		separation = mEyeSeparation / width;
+		deltaZ = mScreenDistance / (1 + 1 / separation);
+		mStereoCullCameraDeltaForwards = deltaZ * getAtAxis();
+		mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
+	}
+	else
+	{
+		mEyeSeparation = gSavedSettings.getF32("RiftEyeSeparation") / 1000.f;
+
+		// Stereo culling frustum camera parameters.
+		F32 aspect, deltaZ;
+		aspect = getAspect();
+		deltaZ = mEyeSeparation / (2.f * aspect * tan(mStereoCameraFOV * 0.5f));
+		mStereoCullCameraDeltaForwards = -deltaZ * getAtAxis();
+		mStereoCullCameraFOV = mStereoCameraFOV;
+	}
 
 	// Delta position for left camera.
 	mStereoCameraDeltaLeft = mEyeSeparation / 2 * getLeftAxis();
-
-	// Stereo culling frustum camera parameters.
-	F32 aspect, width, separation, deltaZ;
-	aspect = getAspect();
-	width = 2.0f * aspect * tan(mStereoCameraFOV*0.5f) * mScreenDistance;
-	separation = mEyeSeparation / width;
-	deltaZ = mScreenDistance / (1 + 1 / separation);
-	mStereoCullCameraDeltaForwards = deltaZ * getAtAxis();
-	mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
 }
 
 void LLViewerCamera::moveToLeftEye()
