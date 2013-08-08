@@ -414,6 +414,9 @@ extern OVR::SensorFusion gRiftFusionResult;
 extern OVR::HMDInfo gRiftHMDInfo;
 extern BOOL gRiftHMDInfoLoaded;
 extern BOOL gRiftConnected;
+extern F32 gRiftFOV;
+extern F32 gRiftAspect;
+extern F32 gRiftProjectionOffset;
 // </CV:David>
 
 #endif // LL_LLAPPVIEWER_H

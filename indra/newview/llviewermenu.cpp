@@ -4671,18 +4671,13 @@ void handle_reset_view()
 	// <CV:David>
 	if (gOutputType == OUTPUT_TYPE_RIFT)
 	{
+		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
 		gRift3DEnabled = FALSE;
 		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
 
-		if (gRift3DEnabled)
-		{
-			gAgentCamera.changeCameraToMouselook();
-		}
-		else
-		{
-			rightclick_mousewheel_zoom();
-			gAgentCamera.changeCameraToDefault();
-		}
+		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
+		rightclick_mousewheel_zoom();
+		gAgentCamera.changeCameraToDefault();
 	}
 	// </CV:David>
 }
@@ -9908,10 +9903,14 @@ class CVToggle3D : public view_listener_t
 
 			if (gRift3DEnabled)
 			{
+				llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
+				LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 				gAgentCamera.changeCameraToMouselook();
 			}
 			else
 			{
+				llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
+				LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
 				rightclick_mousewheel_zoom();
 				gAgentCamera.changeCameraToDefault();
 			}

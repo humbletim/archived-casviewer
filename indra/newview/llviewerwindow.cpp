@@ -5359,7 +5359,18 @@ BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsyn
 
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
-	F32 world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	// <CV:David>
+	//F32 world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	F32 world_aspect;
+	if (gRift3DEnabled)
+	{
+		world_aspect = gRiftAspect;
+	}
+	else
+	{
+		world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	}
+	// </CV:David>
 	return world_aspect;
 }
 
