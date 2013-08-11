@@ -129,6 +129,7 @@ BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
 BOOL gRift3DEnabled = FALSE;
 BOOL gRift3DConfigured = FALSE;
+S32 gRiftCurrentEye;  // 0 = left, 1 = right
 // </CV:David>
 
 void display_startup()
@@ -699,21 +700,25 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		}
 		else if (gOutputType == OUTPUT_TYPE_RIFT) // && gRift3DEnabled && !output_for_snapshot
 		{
+			// Render into FBO, apply Oculus Rift barrel distortion to FBO, copy required portions of FBO to display.
+			
 			LLViewerCamera::getInstance()->calcStereoValues();
 
 			// Left eye ...
-			gViewerWindow->updateWorldViewRect(TRUE, RENDER_RIFT_LEFT);
+			gRiftCurrentEye = 0;
+			gViewerWindow->setRiftlookRect(RENDER_RIFT_LEFT);
 			render_frame(RENDER_RIFT_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
-			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
+			render_ui();  // Note: UI rendering code flushes output to the framebuffer.
 
 			// Right eye ...
-			gViewerWindow->updateWorldViewRect(TRUE, RENDER_RIFT_RIGHT);
+			gRiftCurrentEye = 1;
+			gViewerWindow->setRiftlookRect(RENDER_RIFT_RIGHT);
 			render_frame(RENDER_RIFT_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
 
-			glDrawBuffer(GL_BACK);  // Needed so that snapshot on exit doesn't include UI.
+			gViewerWindow->setRiftlookRect(0);
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
@@ -1448,8 +1453,14 @@ void render_ui(F32 zoom_factor, int subfield)
 			gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
 		}
 		
-		render_hud_elements();
-		render_hud_attachments();
+		// <CV:David>
+		//render_hud_elements();
+		//render_hud_attachments();
+		if (!gRift3DEnabled)
+		{
+			render_hud_elements();
+			render_hud_attachments();
+		}
 	}
 
 	LLGLSDefault gls_default;
@@ -1466,7 +1477,13 @@ void render_ui(F32 zoom_factor, int subfield)
 
 			if (!gDisconnected)
 			{
-				render_ui_3d();
+				// <CV:David>
+				//render_ui_3d();
+				if (!gRift3DEnabled)
+				{
+					render_ui_3d();
+				}
+				// </CV:David>
 				LLGLState::checkStates();
 			}
 			else
@@ -1474,7 +1491,12 @@ void render_ui(F32 zoom_factor, int subfield)
 				render_disconnected_background();
 			}
 
-			render_ui_2d();
+			// <CV:David>
+			//render_ui_2d();
+			if (!gRift3DEnabled)
+			{
+				render_ui_2d();
+			}
 			LLGLState::checkStates();
 		}
 		gGL.flush();

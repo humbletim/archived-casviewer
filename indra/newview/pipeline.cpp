@@ -7242,7 +7242,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 	if (LLPipeline::sRenderDeferred)
 	{
-
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 							!LLToolMgr::getInstance()->inBuildMode() &&
 							RenderDepthOfField;
@@ -7638,8 +7637,16 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
-		buff->setBuffer(mask);
-		buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		// <CV:David>
+		// Don't output to the framebuffer until later.
+		//buff->setBuffer(mask);
+		//buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		if (!gRift3DEnabled)
+		{
+			buff->setBuffer(mask);
+			buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		}
+		// </CV:David>
 		
 		if (LLGLSLShader::sNoFixedFunction)
 		{
@@ -7695,11 +7702,31 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
+
+	// TODO: Oculus Rift distortion shader goes here.
+
 	
 	if (LLRenderTarget::sUseFBO)
 	{ //copy depth buffer from mScreen to framebuffer
-		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		// <CV:David>
+		//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+		//	0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		if (gRift3DEnabled)
+		{
+			// Flush FBO content to the display ...
+			S32 width = mScreen.getWidth();
+			S32 height = mScreen.getHeight();
+			S32 offset = gRiftCurrentEye * width;
+			LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
+				offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			//llinfos << "copyContentsToFramebuffer()" << 0 << " , " << 0 << " , " << width <<  " , " << height << " , " << offset << " , " << 0 << " , " << width + offset << " , " << height << llendl;
+		}
+		else
+		{
+			LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+				0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		}
+		// </CV:David>
 	}
 	
 

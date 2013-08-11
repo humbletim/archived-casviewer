@@ -3583,7 +3583,7 @@ void LLViewerWindow::updateKeyboardFocus()
 }
 
 static LLFastTimer::DeclareTimer FTM_UPDATE_WORLD_VIEW("Update World View");
-void LLViewerWindow::updateWorldViewRect(bool use_full_window, U32 render_type)
+void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 {
 	LLFastTimer ft(FTM_UPDATE_WORLD_VIEW);
 
@@ -3603,23 +3603,6 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window, U32 render_type)
 		new_world_rect.mTop = llround((F32)new_world_rect.mTop * mDisplayScale.mV[VY]);
 	}
 
-	// <CV:David>
-	if (use_full_window && gRiftConnected && gRift3DEnabled)
-	{
-		if (render_type == RENDER_RIFT_LEFT)
-		{
-			new_world_rect.mRight = new_world_rect.mRight / 2;
-		}
-		else if (render_type == RENDER_RIFT_RIGHT)
-		{
-			new_world_rect.mLeft = new_world_rect.mRight / 2;
-		}
-		mWorldViewRectRaw = new_world_rect;
-	}
-	else
-	{
-	// </CV:David>
-
 	if (mWorldViewRectRaw != new_world_rect)
 	{
 		mWorldViewRectRaw = new_world_rect;
@@ -3633,11 +3616,29 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window, U32 render_type)
 		// sending a signal with a new WorldView rect
 		mOnWorldViewRectUpdated(old_world_rect_scaled, mWorldViewRectScaled);
 	}
-
-	// <CV:David>
-	}
-	// </CV:David>
 }
+
+// <CV:David>
+void LLViewerWindow::setRiftlookRect(U32 render_type)
+{
+	S32 width = mWindowRectRaw.getWidth();
+	if (render_type == RENDER_RIFT_LEFT)
+	{
+		mWorldViewRectRaw.mLeft = 0;
+		mWorldViewRectRaw.mRight = width / 2;
+	}
+	else if (render_type == RENDER_RIFT_RIGHT)
+	{
+		mWorldViewRectRaw.mLeft = width / 2;
+		mWorldViewRectRaw.mRight = width;
+	}
+	else
+	{
+		mWorldViewRectRaw.mLeft = 0;
+		mWorldViewRectRaw.mRight = width;
+	}
+}
+// </CV:David>
 
 void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {

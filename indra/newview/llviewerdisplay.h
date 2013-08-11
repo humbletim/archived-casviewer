@@ -55,6 +55,7 @@ extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
 extern BOOL gRift3DConfigured;
 extern BOOL gRift3DEnabled;
+extern S32 gRiftCurrentEye;
 const U32 RENDER_NORMAL = 0;
 const U32 RENDER_STEREO_LEFT = 1;
 const U32 RENDER_STEREO_RIGHT = 2;
