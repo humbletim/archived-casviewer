@@ -358,6 +358,10 @@ OVR::SensorFusion gRiftFusionResult;
 OVR::HMDInfo gRiftHMDInfo;
 BOOL gRiftHMDInfoLoaded;
 BOOL gRiftConnected;
+F32 gRiftHScreenSize;
+F32 gRiftVScreenSize;
+F32 gRiftEyeToScreen;
+F32 gRiftLensSeparation;
 F32 gRiftFOV;
 F32 gRiftAspect;
 F32 gRiftProjectionOffset;
@@ -1131,12 +1135,17 @@ bool LLAppViewer::init()
 		gRiftConnected = gRiftHMDInfoLoaded && gRiftSensor;
 		if (gRiftConnected)
 		{
-			gRiftFOV = 2.f * (atan(gRiftHMDInfo.VScreenSize / (2.f * gRiftHMDInfo.EyeToScreenDistance)));
-			gRiftAspect = gRiftHMDInfo.HScreenSize / (2.f * gRiftHMDInfo.VScreenSize);  // Use physical dimensions not pixels.
-			gRiftProjectionOffset = 1.f - 2.f * gRiftHMDInfo.LensSeparationDistance / gRiftHMDInfo.HScreenSize;
-			llinfos << "Oculus Rift: Screen size = " << gRiftHMDInfo.HScreenSize << " x " << gRiftHMDInfo.VScreenSize << llendl;
+			gRiftHScreenSize = gRiftHMDInfo.HScreenSize;
+			gRiftVScreenSize = gRiftHMDInfo.VScreenSize;
+			gRiftEyeToScreen = gRiftHMDInfo.EyeToScreenDistance;
+			gRiftLensSeparation = gRiftHMDInfo.LensSeparationDistance;
+			gRiftFOV = 2.f * (atan(gRiftVScreenSize / (2.f * gRiftEyeToScreen)));
+			gRiftAspect = gRiftHScreenSize / (2.f * gRiftVScreenSize);  // Use physical dimensions not pixels.
+			gRiftProjectionOffset = 1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize;
+			llinfos << "Oculus Rift: Screen size = " << gRiftHScreenSize << " x " << gRiftVScreenSize << llendl;
 			llinfos << "Oculus Rift: Resolution = " << gRiftHMDInfo.HResolution << " x " << gRiftHMDInfo.VResolution << llendl;
-			llinfos << "Oculus Rift: Eye to screen distance = " << gRiftHMDInfo.EyeToScreenDistance << llendl;
+			llinfos << "Oculus Rift: Eye to screen distance = " << gRiftEyeToScreen << llendl;
+			llinfos << "Oculus Rift: Lens separation = " << gRiftLensSeparation << llendl;
 			llinfos << "Oculus Rift: Vertical FOV = " << gRiftFOV << llendl;
 			llinfos << "Oculus Rift: Aspect = " << gRiftAspect << llendl;
 			llinfos << "Oculus Rift: Projection offset = " << gRiftProjectionOffset << llendl;
