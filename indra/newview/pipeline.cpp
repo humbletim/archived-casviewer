@@ -7638,7 +7638,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
 		// <CV:David>
-		// Don't output to the framebuffer until later.
+		// Don't render Basic Shaders or Atmospheric Shaders output to the framebuffer until later if in Riftlook.
 		//buff->setBuffer(mask);
 		//buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
 		if (!gRift3DEnabled)
@@ -7714,12 +7714,17 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		if (gRift3DEnabled)
 		{
 			// Flush FBO content to the display ...
-			S32 width = mScreen.getWidth();
-			S32 height = mScreen.getHeight();
+
+			LLRect worldViewRectRaw = gViewerWindow->getWorldViewRectRaw();
+			S32 width = worldViewRectRaw.getWidth();
+			S32 height = worldViewRectRaw.getHeight();
 			S32 offset = gRiftCurrentEye * width;
+
+			// Right eye's image is formed in the left half of the FBO.
 			LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
 				offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-			//llinfos << "copyContentsToFramebuffer()" << 0 << " , " << 0 << " , " << width <<  " , " << height << " , " << offset << " , " << 0 << " , " << width + offset << " , " << height << llendl;
+			//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
+			//	offset, 0, offset + width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 		}
 		else
 		{

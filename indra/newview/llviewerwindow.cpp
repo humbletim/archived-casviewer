@@ -4953,10 +4953,26 @@ void LLViewerWindow::setup2DRender()
 
 void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset)
 {
-	gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
-	gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
-	gGLViewport[2] = mWindowRectRaw.getWidth();
-	gGLViewport[3] = mWindowRectRaw.getHeight();
+	// <CV:David>
+	//gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
+	//gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
+	//gGLViewport[2] = mWindowRectRaw.getWidth();
+	//gGLViewport[3] = mWindowRectRaw.getHeight();
+	if (!gRift3DEnabled)
+	{
+		gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
+		gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
+		gGLViewport[2] = mWindowRectRaw.getWidth();
+		gGLViewport[3] = mWindowRectRaw.getHeight();
+	}
+	else
+	{
+		gGLViewport[0] = mWorldViewRectRaw.mLeft + x_offset;
+		gGLViewport[1] = mWorldViewRectRaw.mBottom + y_offset;
+		gGLViewport[2] = mWorldViewRectRaw.getWidth();
+		gGLViewport[3] = mWorldViewRectRaw.getHeight();
+	}
+	// </CV:David>
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
