@@ -365,6 +365,7 @@ F32 gRiftLensSeparation;
 F32 gRiftFOV;
 F32 gRiftAspect;
 F32 gRiftProjectionOffset;
+F32 gRiftDistortionK[4];
 // </CV:David>
 
 ////////////////////////////////////////////////////////////
@@ -1142,13 +1143,18 @@ bool LLAppViewer::init()
 			gRiftFOV = 2.f * (atan(gRiftVScreenSize / (2.f * gRiftEyeToScreen)));
 			gRiftAspect = gRiftHScreenSize / (2.f * gRiftVScreenSize);  // Use physical dimensions not pixels.
 			gRiftProjectionOffset = 1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize;
-			llinfos << "Oculus Rift: Screen size = " << gRiftHScreenSize << " x " << gRiftVScreenSize << llendl;
+			gRiftDistortionK[0] = gRiftHMDInfo.DistortionK[0];
+			gRiftDistortionK[1] = gRiftHMDInfo.DistortionK[1];
+			gRiftDistortionK[2] = gRiftHMDInfo.DistortionK[2];
+			gRiftDistortionK[3] = gRiftHMDInfo.DistortionK[3];
+			llinfos << "Oculus Rift: Screen size = " << std::setprecision(6) << gRiftHScreenSize << " x " << gRiftVScreenSize << std::setprecision(2) << llendl;
 			llinfos << "Oculus Rift: Resolution = " << gRiftHMDInfo.HResolution << " x " << gRiftHMDInfo.VResolution << llendl;
-			llinfos << "Oculus Rift: Eye to screen distance = " << gRiftEyeToScreen << llendl;
-			llinfos << "Oculus Rift: Lens separation = " << gRiftLensSeparation << llendl;
-			llinfos << "Oculus Rift: Vertical FOV = " << gRiftFOV << llendl;
-			llinfos << "Oculus Rift: Aspect = " << gRiftAspect << llendl;
-			llinfos << "Oculus Rift: Projection offset = " << gRiftProjectionOffset << llendl;
+			llinfos << "Oculus Rift: Eye to screen distance = " << std::setprecision(6) << gRiftEyeToScreen << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Lens separation = " << std::setprecision(6) << gRiftLensSeparation << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Aspect = " << std::setprecision(3) << gRiftAspect << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Projection offset = " << std::setprecision(6) << gRiftProjectionOffset << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: DistortionK = " << std::setprecision(3) << gRiftHMDInfo.DistortionK[0] << ", " << gRiftHMDInfo.DistortionK[1] << ", " << gRiftHMDInfo.DistortionK[2] << ", " << gRiftHMDInfo.DistortionK[3] << std::setprecision(2) << llendl;
 		}	
 	}
 	// </CV:David>

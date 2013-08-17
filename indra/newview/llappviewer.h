@@ -421,6 +421,7 @@ extern F32 gRiftLensSeparation;
 extern F32 gRiftFOV;
 extern F32 gRiftAspect;
 extern F32 gRiftProjectionOffset;
+extern F32 gRiftDistortionK[4];
 // </CV:David>
 
 #endif // LL_LLAPPVIEWER_H

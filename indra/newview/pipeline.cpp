@@ -972,6 +972,8 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 			mFXAABuffer.release();
 		}
 		
+		if (!mRiftScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;  // <CV:David>
+
 		if (shadow_detail > 0 || ssao || RenderDepthOfField || samples > 0)
 		{ //only need mDeferredLight for shadows OR ssao OR dof OR fxaa
 			if (!mDeferredLight.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE)) return false;
@@ -1032,12 +1034,14 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		{
 			mShadow[i].release();
 		}
+		mRiftScreen.release();  // <CV:David>
 		mFXAABuffer.release();
 		mScreen.release();
 		mDeferredScreen.release(); //make sure to release any render targets that share a depth buffer with mDeferredScreen first
 		mDeferredDepth.release();
 						
 		if (!mScreen.allocate(resX, resY, GL_RGBA, TRUE, TRUE, LLTexUnit::TT_RECT_TEXTURE, FALSE)) return false;		
+		if (!mRiftScreen.allocate(resX, resY, GL_RGBA, TRUE, TRUE, LLTexUnit::TT_RECT_TEXTURE, FALSE)) return false;  // <CV:David>		
 	}
 	
 	if (LLPipeline::sRenderDeferred)
@@ -7702,10 +7706,39 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
-
-	// TODO: Oculus Rift distortion shader goes here.
-
+	// <CV:David>
+	if (gRift3DEnabled && sRenderDeferred)
+	{
+		mRiftScreen.bindTarget();
+		LLGLSLShader* shader = &gRiftDistortProgram;
+		bindDeferredShader(*shader);
 	
+		S32 width = gViewerWindow->getWorldViewRectRaw().getWidth();
+		S32 height = gViewerWindow->getWorldViewRectRaw().getHeight();
+		shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, width, height);
+		F32 lensOffset = (1 - gRiftCurrentEye * 2) * width / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER, width / 2.f + lensOffset, height / 2.f);
+		shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
+
+		S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+		if (channel > -1)
+		{
+			mScreen.bindTexture(0, channel);
+			gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
+		}
+
+		gGL.begin(LLRender::QUADS);
+			gGL.texCoord2f(tc1.mV[0], tc2.mV[1]);		gGL.vertex2f(-1, 3);
+			gGL.texCoord2f(tc1.mV[0], tc1.mV[1]);		gGL.vertex2f(-1, -1);
+			gGL.texCoord2f(tc2.mV[0], tc1.mV[1]);		gGL.vertex2f(3, -1);
+			gGL.texCoord2f(tc2.mV[0], tc2.mV[1]);		gGL.vertex2f(3, 3);
+		gGL.end();
+
+		unbindDeferredShader(*shader);
+		mRiftScreen.flush();
+	}
+	// </CV:David>
+
 	if (LLRenderTarget::sUseFBO)
 	{ //copy depth buffer from mScreen to framebuffer
 		// <CV:David>
@@ -7713,7 +7746,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		//	0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 		if (gRift3DEnabled)
 		{
-			// Flush FBO content to the display ...
+			// Copy image to framebuffer.
 
 			LLRect worldViewRectRaw = gViewerWindow->getWorldViewRectRaw();
 			S32 width = worldViewRectRaw.getWidth();
@@ -7721,10 +7754,22 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			S32 offset = gRiftCurrentEye * width;
 
 			// Right eye's image is formed in the left half of the FBO.
-			LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
-				offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-			//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
-			//	offset, 0, offset + width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			if (sRenderDeferred)
+			{
+				// Distorted image.
+				LLRenderTarget::copyContentsToFramebuffer(mRiftScreen, 0, 0, width, height, 
+					offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
+				//	offset, 0, offset + width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			}
+			else
+			{
+				// Undistorted image.
+				LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
+					offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
+				//	offset, 0, offset + width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+			}
 		}
 		else
 		{

@@ -171,6 +171,11 @@ public:
 		EXO_RENDER_VIGNETTE,
 		EXO_RENDER_SCREEN,
 // </FS:CR> Import Vignette from Exodus
+// <CV:David>
+		RIFT_FRAME_SIZE,
+		RIFT_LENS_CENTER,
+		RIFT_WARP_PARAMS,
+// </CV:David>
 		END_RESERVED_UNIFORMS
 	} eGLSLReservedUniforms;
 
