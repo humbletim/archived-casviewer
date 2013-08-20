@@ -32,21 +32,20 @@ VARYING vec2 vary_fragcoord;
 
 uniform sampler2DRect diffuseRect;
 uniform vec2 frame_size;
+uniform vec2 scale_in;
+uniform vec2 scale_out;
 uniform vec2 lens_center;
 uniform vec4 warp_params;
 
 vec2 hmdWarp(vec2 xy)
 {
-	vec2 scaleIn = 2.0 / frame_size;
-	vec2 scaleOut = frame_size / 2.0;
-
-	vec2 theta = (xy - lens_center) * scaleIn;  // Scales to [-1, 1]
+	vec2 theta = (xy - lens_center) * scale_in;  // Scales to [-1, 1]
 	float rSq = theta.x * theta.x + theta.y * theta.y;
 	vec2 rVector = theta * (warp_params.x + 
 							warp_params.y * rSq +
 							warp_params.z * rSq * rSq +
-							warp_params.z * rSq * rSq * rSq);
-	return lens_center + rVector * scaleOut;
+							warp_params.w * rSq * rSq * rSq);
+	return lens_center + rVector * scale_out;
 }
 
 void main()

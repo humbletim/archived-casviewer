@@ -63,8 +63,8 @@ U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 // <CV:David>
 F32 mEyeSeparation;  // Distance between stereo eyes.
-F32 mScreenDistance;  // Distance of rendering screen from camera.
-F32 mCameraOffset;  // Offset from default camera position for left(-ve) /right(+ve) eye.
+F32 mScreenDistance = 1.f;  // Distance of rendering screen from camera.
+F32 mCameraOffset = 0.f;  // Offset from default camera position for left(-ve) /right(+ve) eye.
 F32 mRiftEyeSeparation;  // Distance between pupils.
 F32 mRiftProjectionOffset;
 // </CV:David>
@@ -245,8 +245,8 @@ void LLViewerCamera::calcProjection(const F32 far_distance) const
 		p03 = - mCameraOffset * f / aspect;
 		p02 = - p03 / mScreenDistance;
 	}
-	mProjectionMatrix.mMatrix[0][2] = p02;
-	mProjectionMatrix.mMatrix[0][3] = p03;
+	mProjectionMatrix.mMatrix[2][0] = p02;
+	mProjectionMatrix.mMatrix[3][0] = p03;
 	// </CV:David>
 	mProjectionMatrix.mMatrix[1][1] = f;
 	mProjectionMatrix.mMatrix[2][2] = (z_far + z_near)/(z_near - z_far);
@@ -955,13 +955,13 @@ void LLViewerCamera::calcStereoValues()
 {
 	// Remember default mono camera details.
 	mStereoCameraFOV = getView();
-	mStereoCameraAspect = getAspect();
 	mStereoCameraPosition = getOrigin();
 	mStereoPointOfInterest = mLastPointOfInterest;
 
 	// Retrieve latest stereo values.
 	if (gOutputType == OUTPUT_TYPE_STEREO)
 	{
+		mStereoCameraAspect = getAspect();
 		mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
 		mScreenDistance = gSavedSettings.getF32("ScreenDistance");
 
@@ -978,13 +978,14 @@ void LLViewerCamera::calcStereoValues()
 	else
 	{
 		mEyeSeparation = gSavedSettings.getF32("RiftEyeSeparation") / 1000.f;
+		mStereoCameraAspect = gRiftAspect;
 
 		// Stereo culling frustum camera parameters.
 		F32 deltaZ;
 		deltaZ = gRiftEyeToScreen * gRiftLensSeparation / (gRiftHScreenSize - gRiftLensSeparation);  // Use lens rather than eye separation because it's collimated light.
 		mStereoCullCameraDeltaForwards = -deltaZ * getAtAxis();
-		mStereoCullCameraFOV = 2.f * atan(gRiftVScreenSize / (gRiftEyeToScreen + deltaZ));
-		mStereoCullCameraAspect = 2.f * mStereoCameraAspect;
+		mStereoCullCameraFOV = mStereoCameraFOV;
+		mStereoCullCameraAspect = mStereoCameraAspect;
 	}
 
 	// Delta position for left camera.
@@ -1027,6 +1028,7 @@ void LLViewerCamera::moveToCenter()
 void LLViewerCamera::moveToStereoCullFrustum()
 {
 	mCameraOffset = 0.f;
+	mRiftProjectionOffset = 0.f;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCullCameraDeltaForwards;
 	setView(mStereoCullCameraFOV);

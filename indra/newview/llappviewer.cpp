@@ -358,13 +358,16 @@ OVR::SensorFusion gRiftFusionResult;
 OVR::HMDInfo gRiftHMDInfo;
 BOOL gRiftHMDInfoLoaded;
 BOOL gRiftConnected;
+U32 gRiftHResolution;
+U32 gRiftVResolution;
 F32 gRiftHScreenSize;
 F32 gRiftVScreenSize;
-F32 gRiftEyeToScreen;
-F32 gRiftLensSeparation;
-F32 gRiftFOV;
 F32 gRiftAspect;
+F32 gRiftLensSeparation;
 F32 gRiftProjectionOffset;
+F32 gRiftEyeToScreen;
+F32 gRiftDistortionScale;
+F32 gRiftFOV;
 F32 gRiftDistortionK[4];
 // </CV:David>
 
@@ -1136,25 +1139,64 @@ bool LLAppViewer::init()
 		gRiftConnected = gRiftHMDInfoLoaded && gRiftSensor;
 		if (gRiftConnected)
 		{
+			gRiftHResolution = gRiftHMDInfo.HResolution;
+			gRiftVResolution = gRiftHMDInfo.VResolution;
 			gRiftHScreenSize = gRiftHMDInfo.HScreenSize;
 			gRiftVScreenSize = gRiftHMDInfo.VScreenSize;
-			gRiftEyeToScreen = gRiftHMDInfo.EyeToScreenDistance;
-			gRiftLensSeparation = gRiftHMDInfo.LensSeparationDistance;
-			gRiftFOV = 2.f * (atan(gRiftVScreenSize / (2.f * gRiftEyeToScreen)));
+			gRiftHResolution = gRiftHMDInfo.HResolution;
 			gRiftAspect = gRiftHScreenSize / (2.f * gRiftVScreenSize);  // Use physical dimensions not pixels.
+			gRiftLensSeparation = gRiftHMDInfo.LensSeparationDistance;
 			gRiftProjectionOffset = 1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize;
+			gRiftEyeToScreen = gRiftHMDInfo.EyeToScreenDistance;
+
+			OVR::Util::Render::StereoConfig stereo;
+			stereo.SetFullViewport(OVR::Util::Render::Viewport(0, 0, gRiftHResolution, gRiftVResolution));
+			stereo.SetStereoMode(OVR::Util::Render::Stereo_LeftRight_Multipass);
+			stereo.SetHMDInfo(gRiftHMDInfo);
+			if (gRiftHScreenSize > 0.140f)
+			{
+				stereo.SetDistortionFitPointVP(-1.f, 0.f);  // 7": Fit to side of screen.
+			}
+			else
+			{
+				stereo.SetDistortionFitPointVP(0.f, 1.f);  // 5": Fit to top of screen.
+			}
+
+			gRiftDistortionScale = stereo.GetDistortionScale();
+			gRiftFOV = stereo.GetYFOVRadians();
 			gRiftDistortionK[0] = gRiftHMDInfo.DistortionK[0];
 			gRiftDistortionK[1] = gRiftHMDInfo.DistortionK[1];
 			gRiftDistortionK[2] = gRiftHMDInfo.DistortionK[2];
 			gRiftDistortionK[3] = gRiftHMDInfo.DistortionK[3];
+
+			llinfos << "Oculus Rift: Resolution = " << gRiftHResolution << " x " << gRiftVResolution << llendl;
 			llinfos << "Oculus Rift: Screen size = " << std::setprecision(6) << gRiftHScreenSize << " x " << gRiftVScreenSize << std::setprecision(2) << llendl;
-			llinfos << "Oculus Rift: Resolution = " << gRiftHMDInfo.HResolution << " x " << gRiftHMDInfo.VResolution << llendl;
-			llinfos << "Oculus Rift: Eye to screen distance = " << std::setprecision(6) << gRiftEyeToScreen << std::setprecision(2) << llendl;
-			llinfos << "Oculus Rift: Lens separation = " << std::setprecision(6) << gRiftLensSeparation << std::setprecision(2) << llendl;
-			llinfos << "Oculus Rift: Vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(2) << llendl;
 			llinfos << "Oculus Rift: Aspect = " << std::setprecision(3) << gRiftAspect << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Lens separation = " << std::setprecision(6) << gRiftLensSeparation << std::setprecision(2) << llendl;
 			llinfos << "Oculus Rift: Projection offset = " << std::setprecision(6) << gRiftProjectionOffset << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Eye to screen distance = " << std::setprecision(6) << gRiftEyeToScreen << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Unadjusted vertical FOV = " << std::setprecision(6) << 2.f * (atan(gRiftVScreenSize / (2.f * gRiftEyeToScreen))) << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Distortion scale = " << std::setprecision(6) << gRiftDistortionScale << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(2) << llendl;
 			llinfos << "Oculus Rift: DistortionK = " << std::setprecision(3) << gRiftHMDInfo.DistortionK[0] << ", " << gRiftHMDInfo.DistortionK[1] << ", " << gRiftHMDInfo.DistortionK[2] << ", " << gRiftHMDInfo.DistortionK[3] << std::setprecision(2) << llendl;
+
+			/*
+			llinfos << "Oculus Rift: Eye separation = " << std::setprecision(6) << gSavedSettings.getF32("RiftEyeSeparation") / 1000.f << std::setprecision(2) << llendl;
+			stereo.SetIPD(gSavedSettings.getF32("RiftEyeSeparation") / 1000.f);
+			OVR::Util::Render::StereoEyeParams leftEye = stereo.GetEyeRenderParams(OVR::Util::Render::StereoEye_Left);
+			OVR::Util::Render::Viewport leftVP = leftEye.VP;
+			OVR::Matrix4f leftProjection = leftEye.Projection;
+			OVR::Matrix4f leftViewAdjust = leftEye.ViewAdjust;
+			llinfos << "Oculus Rift: Left viewport = " << leftVP.x << ", " << leftVP.y << ", " << leftVP.w << ", " << leftVP.h << std::setprecision(6) << llendl;
+			llinfos << "Oculus Rift: Left projection =  " << leftProjection.M[0][0] << "  " << leftProjection.M[0][1] << "  " << leftProjection.M[0][2] << "  " << leftProjection.M[0][3] << llendl;
+			llinfos << "                                " << leftProjection.M[1][0] << "  " << leftProjection.M[1][1] << "  " << leftProjection.M[1][2] << "  " << leftProjection.M[1][3] << llendl;
+			llinfos << "                                " << leftProjection.M[2][0] << "  " << leftProjection.M[2][1] << "  " << leftProjection.M[2][2] << "  " << leftProjection.M[2][3] << llendl;
+			llinfos << "                                " << leftProjection.M[3][0] << "  " << leftProjection.M[3][1] << "  " << leftProjection.M[3][2] << "  " << leftProjection.M[3][3] << llendl;
+			llinfos << "Oculus Rift: Left view adjust = " << leftViewAdjust.M[0][0] << "  " << leftViewAdjust.M[0][1] << "  " << leftViewAdjust.M[0][2] << "  " << leftViewAdjust.M[0][3] << llendl;
+			llinfos << "                                " << leftViewAdjust.M[1][0] << "  " << leftViewAdjust.M[1][1] << "  " << leftViewAdjust.M[1][2] << "  " << leftViewAdjust.M[1][3] << llendl;
+			llinfos << "                                " << leftViewAdjust.M[2][0] << "  " << leftViewAdjust.M[2][1] << "  " << leftViewAdjust.M[2][2] << "  " << leftViewAdjust.M[2][3] << llendl;
+			llinfos << "                                " << leftViewAdjust.M[3][0] << "  " << leftViewAdjust.M[3][1] << "  " << leftViewAdjust.M[3][2] << "  " << leftViewAdjust.M[3][3] << std::setprecision(2) << llendl;
+			*/
 		}	
 	}
 	// </CV:David>
@@ -3585,9 +3627,9 @@ bool LLAppViewer::initWindow()
 	// <CV:David>
 	if (gRift3DConfigured && gRiftConnected && window_params.fullscreen)
 	{
-		LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHMDInfo.HResolution << ", Height = " << gRiftHMDInfo.VResolution << LL_ENDL;
-		window_params.width = gRiftHMDInfo.HResolution;
-		window_params.height = gRiftHMDInfo.VResolution;
+		LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHResolution << ", Height = " << gRiftVResolution << LL_ENDL;
+		window_params.width = gRiftHResolution;
+		window_params.height = gRiftVResolution;
 	}
 	// </CV:David>
 

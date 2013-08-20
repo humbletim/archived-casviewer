@@ -1164,6 +1164,8 @@ void LLShaderMgr::initAttribsAndUniforms()
 // </FS:CR> Import Vignette from Exodus
 // <CV:David>
 	mReservedUniforms.push_back("frame_size");
+	mReservedUniforms.push_back("scale_in");
+	mReservedUniforms.push_back("scale_out");
 	mReservedUniforms.push_back("lens_center");
 	mReservedUniforms.push_back("warp_params");
 // </CV:David>

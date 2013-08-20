@@ -414,13 +414,16 @@ extern OVR::SensorFusion gRiftFusionResult;
 extern OVR::HMDInfo gRiftHMDInfo;
 extern BOOL gRiftHMDInfoLoaded;
 extern BOOL gRiftConnected;
+extern U32 gRiftHResolution;
+extern U32 gRiftVResolution;
 extern F32 gRiftHScreenSize;
 extern F32 gRiftVScreenSize;
-extern F32 gRiftEyeToScreen;
-extern F32 gRiftLensSeparation;
-extern F32 gRiftFOV;
 extern F32 gRiftAspect;
+extern F32 gRiftLensSeparation;
 extern F32 gRiftProjectionOffset;
+extern F32 gRiftEyeToScreen;
+extern F32 gRiftDistortionScale;
+extern F32 gRiftFOV;
 extern F32 gRiftDistortionK[4];
 // </CV:David>
 

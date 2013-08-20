@@ -7715,8 +7715,11 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	
 		S32 width = gViewerWindow->getWorldViewRectRaw().getWidth();
 		S32 height = gViewerWindow->getWorldViewRectRaw().getHeight();
-		shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, width, height);
 		F32 lensOffset = (1 - gRiftCurrentEye * 2) * width / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+
+		shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, width, height);
+		shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / width, 2.f / (gRiftAspect * height));
+		shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, width / (2.f * gRiftDistortionScale), gRiftAspect * height / (2.f * gRiftDistortionScale));
 		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER, width / 2.f + lensOffset, height / 2.f);
 		shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
 

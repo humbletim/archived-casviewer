@@ -173,6 +173,8 @@ public:
 // </FS:CR> Import Vignette from Exodus
 // <CV:David>
 		RIFT_FRAME_SIZE,
+		RIFT_SCALE_IN,
+		RIFT_SCALE_OUT,
 		RIFT_LENS_CENTER,
 		RIFT_WARP_PARAMS,
 // </CV:David>
