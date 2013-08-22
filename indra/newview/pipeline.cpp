@@ -972,8 +972,6 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 			mFXAABuffer.release();
 		}
 		
-		if (!mRiftScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;  // <CV:David>
-
 		if (shadow_detail > 0 || ssao || RenderDepthOfField || samples > 0)
 		{ //only need mDeferredLight for shadows OR ssao OR dof OR fxaa
 			if (!mDeferredLight.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE)) return false;
@@ -1034,14 +1032,12 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		{
 			mShadow[i].release();
 		}
-		mRiftScreen.release();  // <CV:David>
 		mFXAABuffer.release();
 		mScreen.release();
 		mDeferredScreen.release(); //make sure to release any render targets that share a depth buffer with mDeferredScreen first
 		mDeferredDepth.release();
 						
 		if (!mScreen.allocate(resX, resY, GL_RGBA, TRUE, TRUE, LLTexUnit::TT_RECT_TEXTURE, FALSE)) return false;		
-		if (!mRiftScreen.allocate(resX, resY, GL_RGBA, TRUE, TRUE, LLTexUnit::TT_RECT_TEXTURE, FALSE)) return false;  // <CV:David>		
 	}
 	
 	if (LLPipeline::sRenderDeferred)
@@ -7560,6 +7556,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			
 			mFXAABuffer.flush();
 
+			// <CV:David>
+			if (gRift3DEnabled)
+			{
+				mScreen.bindTarget();  // Reuse mScreen FBO.
+			}
+			// </CV:David>
+
 			shader = &gFXAAProgram;
 			shader->bind();
 
@@ -7570,11 +7573,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-			gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-			gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-			gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-			gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
-			glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+			// <CV:David>
+			//gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
+			//gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
+			//gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
+			//gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+			//glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+			// <CV:David>
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();
@@ -7590,7 +7595,16 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			gGL.end();
 
 			gGL.flush();
+
+			shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mFXAABuffer.getUsage());  // <CV:David>
 			shader->unbind();
+
+			// <CV:David>
+			if (gRift3DEnabled)
+			{
+				mScreen.flush();
+			}
+			// <CV:David>
 		}
 	}
 	else
@@ -7641,16 +7655,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
-		// <CV:David>
-		// Don't render Basic Shaders or Atmospheric Shaders output to the framebuffer until later if in Riftlook.
-		//buff->setBuffer(mask);
-		//buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
-		if (!gRift3DEnabled)
-		{
-			buff->setBuffer(mask);
-			buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
-		}
-		// </CV:David>
+		buff->setBuffer(mask);
+		buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
 		
 		if (LLGLSLShader::sNoFixedFunction)
 		{
@@ -7709,10 +7715,22 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	// <CV:David>
 	if (gRift3DEnabled && sRenderDeferred)
 	{
-		mRiftScreen.bindTarget();
 		LLGLSLShader* shader = &gRiftDistortProgram;
-		bindDeferredShader(*shader);
+		shader->bind();
 	
+		S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+		if (channel > -1)
+		{
+			mScreen.bindTexture(0, channel);
+			gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
+		}
+
+		gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
+		gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
+		gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
+		gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+		glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+
 		S32 width = gViewerWindow->getWorldViewRectRaw().getWidth();
 		S32 height = gViewerWindow->getWorldViewRectRaw().getHeight();
 		F32 lensOffset = (1 - gRiftCurrentEye * 2) * width / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
@@ -7723,65 +7741,26 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER, width / 2.f + lensOffset, height / 2.f);
 		shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
 
-		S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
-		if (channel > -1)
-		{
-			mScreen.bindTexture(0, channel);
-			gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
-		}
-
-		gGL.begin(LLRender::QUADS);
-			gGL.texCoord2f(tc1.mV[0], tc2.mV[1]);		gGL.vertex2f(-1, 3);
-			gGL.texCoord2f(tc1.mV[0], tc1.mV[1]);		gGL.vertex2f(-1, -1);
-			gGL.texCoord2f(tc2.mV[0], tc1.mV[1]);		gGL.vertex2f(3, -1);
-			gGL.texCoord2f(tc2.mV[0], tc2.mV[1]);		gGL.vertex2f(3, 3);
+		gGL.begin(LLRender::TRIANGLE_STRIP);
+			gGL.vertex2f(-1,-1);
+			gGL.vertex2f(-1,3);
+			gGL.vertex2f(3,-1);
 		gGL.end();
+		gGL.flush();
 
-		unbindDeferredShader(*shader);
-		mRiftScreen.flush();
+		shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+		shader->unbind();
 	}
 	// </CV:David>
 
-	if (LLRenderTarget::sUseFBO)
+	// <CV:David>
+	//if (LLRenderTarget::sUseFBO)
+	if (!gRift3DEnabled && LLRenderTarget::sUseFBO)
+	// </CV:David>
 	{ //copy depth buffer from mScreen to framebuffer
-		// <CV:David>
-		//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-		//	0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		if (gRift3DEnabled)
-		{
-			// Copy image to framebuffer.
-
-			LLRect worldViewRectRaw = gViewerWindow->getWorldViewRectRaw();
-			S32 width = worldViewRectRaw.getWidth();
-			S32 height = worldViewRectRaw.getHeight();
-			S32 offset = gRiftCurrentEye * width;
-
-			// Right eye's image is formed in the left half of the FBO.
-			if (sRenderDeferred)
-			{
-				// Distorted image.
-				LLRenderTarget::copyContentsToFramebuffer(mRiftScreen, 0, 0, width, height, 
-					offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-				//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
-				//	offset, 0, offset + width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-			}
-			else
-			{
-				// Undistorted image.
-				LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
-					offset, 0, offset + width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-				//LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, width, height, 
-				//	offset, 0, offset + width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-			}
-		}
-		else
-		{
-			LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-				0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		}
-		// </CV:David>
+		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
-	
 
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.popMatrix();
