@@ -9906,7 +9906,7 @@ class CVToggle3D : public view_listener_t
 				llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
 				LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 				LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
-				gAgentCamera.changeCameraToMouselook();
+				gAgentCamera.changeCameraToMouselook(FALSE);
 			}
 			else
 			{
