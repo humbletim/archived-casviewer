@@ -4674,7 +4674,10 @@ void handle_reset_view()
 		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
 		gRift3DEnabled = FALSE;
 		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-
+		if (gSavedSettings.getBOOL("VertexShaderEnable"))
+		{
+			gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+		}
 		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
@@ -9904,13 +9907,21 @@ class CVToggle3D : public view_listener_t
 			if (gRift3DEnabled)
 			{
 				llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
+				if (gSavedSettings.getBOOL("VertexShaderEnable"))
+				{
+					gViewerWindow->reshape(gRiftHSample * 2, gRiftVSample);
+				}
 				LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 				LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
-				gAgentCamera.changeCameraToMouselook(FALSE);
+				gAgentCamera.changeCameraToMouselook(TRUE);
 			}
 			else
 			{
 				llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
+				if (gSavedSettings.getBOOL("VertexShaderEnable"))
+				{
+					gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+				}
 				LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
 				rightclick_mousewheel_zoom();
 				gAgentCamera.changeCameraToDefault();

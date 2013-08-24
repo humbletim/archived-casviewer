@@ -424,6 +424,10 @@ extern F32 gRiftProjectionOffset;
 extern F32 gRiftEyeToScreen;
 extern F32 gRiftDistortionScale;
 extern F32 gRiftFOV;
+extern U32 gRiftHFrame;
+extern U32 gRiftVFrame;
+extern U32 gRiftHSample;
+extern U32 gRiftVSample;
 extern F32 gRiftDistortionK[4];
 // </CV:David>
 

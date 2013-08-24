@@ -368,6 +368,10 @@ F32 gRiftProjectionOffset;
 F32 gRiftEyeToScreen;
 F32 gRiftDistortionScale;
 F32 gRiftFOV;
+U32 gRiftHFrame;
+U32 gRiftVFrame;
+U32 gRiftHSample;
+U32 gRiftVSample;
 F32 gRiftDistortionK[4];
 // </CV:David>
 
@@ -1164,6 +1168,11 @@ bool LLAppViewer::init()
 
 			gRiftDistortionScale = stereo.GetDistortionScale();
 			gRiftFOV = stereo.GetYFOVRadians();
+			gRiftHFrame = gRiftHResolution / 2;
+			gRiftVFrame = gRiftVResolution;
+			gRiftHSample = floor(gRiftDistortionScale * gRiftHFrame / 10 + 0.5) * 10;
+			gRiftVSample = floor(gRiftHSample / gRiftAspect + 0.5);
+
 			gRiftDistortionK[0] = gRiftHMDInfo.DistortionK[0];
 			gRiftDistortionK[1] = gRiftHMDInfo.DistortionK[1];
 			gRiftDistortionK[2] = gRiftHMDInfo.DistortionK[2];
@@ -1178,6 +1187,7 @@ bool LLAppViewer::init()
 			llinfos << "Oculus Rift: Unadjusted vertical FOV = " << std::setprecision(6) << 2.f * (atan(gRiftVScreenSize / (2.f * gRiftEyeToScreen))) << std::setprecision(2) << llendl;
 			llinfos << "Oculus Rift: Distortion scale = " << std::setprecision(6) << gRiftDistortionScale << std::setprecision(2) << llendl;
 			llinfos << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(2) << llendl;
+			llinfos << "Oculus Rift: Sample resolution = " << gRiftHSample << " x " << gRiftVSample << llendl;
 			llinfos << "Oculus Rift: DistortionK = " << std::setprecision(3) << gRiftHMDInfo.DistortionK[0] << ", " << gRiftHMDInfo.DistortionK[1] << ", " << gRiftHMDInfo.DistortionK[2] << ", " << gRiftHMDInfo.DistortionK[3] << std::setprecision(2) << llendl;
 
 			/*

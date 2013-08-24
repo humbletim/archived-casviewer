@@ -7713,7 +7713,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	}
 
 	// <CV:David>
-	if (gRift3DEnabled && sRenderDeferred)
+	if (gRift3DEnabled)
 	{
 		LLGLSLShader* shader = &gRiftDistortProgram;
 		shader->bind();
@@ -7725,20 +7725,22 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 		}
 
-		gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-		gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-		gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-		gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+		gGLViewport[0] = gRiftCurrentEye * gRiftHFrame;
+		gGLViewport[1] = 0;
+		gGLViewport[2] = gRiftHFrame;
+		gGLViewport[3] = gRiftVFrame;
 		glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 
-		S32 width = gViewerWindow->getWorldViewRectRaw().getWidth();
-		S32 height = gViewerWindow->getWorldViewRectRaw().getHeight();
-		F32 lensOffset = (1 - gRiftCurrentEye * 2) * width / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+		F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+		F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
+		F32 lensCenterV = gRiftVFrame / 2.f;
 
-		shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, width, height);
-		shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / width, 2.f / (gRiftAspect * height));
-		shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, width / (2.f * gRiftDistortionScale), gRiftAspect * height / (2.f * gRiftDistortionScale));
-		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER, width / 2.f + lensOffset, height / 2.f);
+		shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, gRiftHFrame, gRiftVFrame);
+		shader->uniform2f(LLShaderMgr::RIFT_SAMPLE_SIZE, gRiftHSample, gRiftVSample);
+		shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
+		shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, gRiftHFrame / 2.f, gRiftAspect * gRiftVFrame / 2.f);
+		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_IN, lensCenterH, lensCenterV);
+		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_OUT, lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
 		shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
 
 		gGL.begin(LLRender::TRIANGLE_STRIP);
