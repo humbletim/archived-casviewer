@@ -1535,10 +1535,14 @@ Other computer configurations will likely require similar.
        left="54"
        top="284"
        word_wrap="true"
-       height="40">
+       height="80">
 To display on an Oculus Rift you need:
         - Your computer configured to duplicate your desktop display on the Rift.
         - Full Screen mode turned on in the Graphics > General tab.
+        - Basic Shaders or better turned on in the Graphics > General tab.
+          (Advanced Lighting Model or better recommended.)
+        - Antialiasing is recommended in the Graphics > Hardware Settings tab.
+          (Requires Advanced Lighting Model to be on.)
       </text>
 
     </panel>
