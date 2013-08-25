@@ -60,8 +60,8 @@ U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 // <CV:David>
 F32 mEyeSeparation;  // Distance between stereo eyes.
-F32 mScreenDistance;  // Distance of rendering screen from camera.
-F32 mCameraOffset;  // Offset from default camera position for left(-ve) /right(+ve) eye.
+F32 mScreenDistance = 1.6f;  // Distance of rendering screen from camera.
+F32 mCameraOffset = 0.f;  // Offset from default camera position for left(-ve) /right(+ve) eye.
 // </CV:David>
 
 //glu pick matrix implementation borrowed from Mesa3D
