@@ -1129,6 +1129,10 @@ bool LLAppViewer::init()
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
 			gRiftFusionResult.AttachToSensor(gRiftSensor);
+
+			OVR::SensorFusion sensorFusion;
+			sensorFusion.AttachToSensor(gRiftSensor);
+			sensorFusion.SetPredictionEnabled(TRUE);
 		}
 		else
 		{
