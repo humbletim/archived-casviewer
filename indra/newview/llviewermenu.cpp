@@ -359,6 +359,12 @@ BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
 
+// <CV:David>
+S32 mWindowHResolution;
+S32 mWindowVResolution;
+// </CV:David>
+
+
 class LLMenuParcelObserver : public LLParcelObserver
 {
 public:
@@ -4676,7 +4682,14 @@ void handle_reset_view()
 		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
-			gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+			if (gSavedSettings.getBOOL("FullScreen"))
+			{
+				gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+			}
+			else
+			{
+				gViewerWindow->reshape(mWindowHResolution, mWindowVResolution);
+			}
 		}
 		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
@@ -9907,6 +9920,11 @@ class CVToggle3D : public view_listener_t
 			if (gRift3DEnabled)
 			{
 				llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
+				if (!gSavedSettings.getBOOL("FullScreen"))
+				{
+					mWindowHResolution = gViewerWindow->getWindowWidthRaw();
+					mWindowVResolution = gViewerWindow->getWindowHeightRaw();
+				}
 				if (gSavedSettings.getBOOL("VertexShaderEnable"))
 				{
 					gViewerWindow->reshape(gRiftHSample * 2, gRiftVSample);
@@ -9920,7 +9938,14 @@ class CVToggle3D : public view_listener_t
 				llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
 				if (gSavedSettings.getBOOL("VertexShaderEnable"))
 				{
-					gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+					if (gSavedSettings.getBOOL("FullScreen"))
+					{
+						gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+					}
+					else
+					{
+						gViewerWindow->reshape(mWindowHResolution, mWindowVResolution);
+					}
 				}
 				LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
 				rightclick_mousewheel_zoom();
