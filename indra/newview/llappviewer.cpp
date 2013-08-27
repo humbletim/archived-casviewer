@@ -238,6 +238,7 @@
 #include "llmainlooprepeater.h"
 
 // <CV:David>
+#include "llviewermenu.h"
 #include <LibOVR\Include\OVR.h>
 #include <LibOVR\Include\OVRVersion.h>
 // </CV:David>
@@ -4292,10 +4293,9 @@ static LLNotificationFunctorRegistration finish_quit_reg("ConfirmQuit", finish_q
 void LLAppViewer::userQuit()
 {
 	// <CV:David>
-	if (gOutputType == OUTPUT_TYPE_RIFT)
+	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
 	{
-		gRift3DEnabled = FALSE;
-		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+		setRiftlook(FALSE);
 	}
 	// </CV:David>
 	

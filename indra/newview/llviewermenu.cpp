@@ -4677,23 +4677,7 @@ void handle_reset_view()
 	// <CV:David>
 	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
 	{
-		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
-		gRift3DEnabled = FALSE;
-		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-		if (gSavedSettings.getBOOL("VertexShaderEnable"))
-		{
-			if (gSavedSettings.getBOOL("FullScreen"))
-			{
-				gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
-			}
-			else
-			{
-				gViewerWindow->reshape(mWindowHResolution, mWindowVResolution);
-			}
-		}
-		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
-		rightclick_mousewheel_zoom();
-		gAgentCamera.changeCameraToDefault();
+		setRiftlook(FALSE);
 	}
 	// </CV:David>
 }
@@ -9903,6 +9887,47 @@ bool viewer_3d_enabled()
 	}
 }
 
+void setRiftlook(bool on)
+{
+	gRift3DEnabled = on;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
+	if (gRift3DEnabled)
+	{
+		llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
+		if (!gSavedSettings.getBOOL("FullScreen"))
+		{
+			mWindowHResolution = gViewerWindow->getWindowWidthRaw();
+			mWindowVResolution = gViewerWindow->getWindowHeightRaw();
+		}
+		if (gSavedSettings.getBOOL("VertexShaderEnable"))
+		{
+			gViewerWindow->reshape(gRiftHSample * 2, gRiftVSample);
+		}
+		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
+		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
+		gAgentCamera.changeCameraToMouselook(TRUE);
+	}
+	else
+	{
+		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
+		if (gSavedSettings.getBOOL("VertexShaderEnable"))
+		{
+			if (gSavedSettings.getBOOL("FullScreen"))
+			{
+				gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
+			}
+			else
+			{
+				gViewerWindow->reshape(mWindowHResolution, mWindowVResolution);
+			}
+		}
+		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
+		rightclick_mousewheel_zoom();
+		gAgentCamera.changeCameraToDefault();
+	}
+}
+	
 class CVToggle3D : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -9914,43 +9939,7 @@ class CVToggle3D : public view_listener_t
 		}
 		else if (gOutputType == OUTPUT_TYPE_RIFT)
 		{
-			gRift3DEnabled = !gRift3DEnabled;
-			gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-
-			if (gRift3DEnabled)
-			{
-				llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
-				if (!gSavedSettings.getBOOL("FullScreen"))
-				{
-					mWindowHResolution = gViewerWindow->getWindowWidthRaw();
-					mWindowVResolution = gViewerWindow->getWindowHeightRaw();
-				}
-				if (gSavedSettings.getBOOL("VertexShaderEnable"))
-				{
-					gViewerWindow->reshape(gRiftHSample * 2, gRiftVSample);
-				}
-				LLViewerCamera::getInstance()->setAspect(gRiftAspect);
-				LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
-				gAgentCamera.changeCameraToMouselook(TRUE);
-			}
-			else
-			{
-				llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
-				if (gSavedSettings.getBOOL("VertexShaderEnable"))
-				{
-					if (gSavedSettings.getBOOL("FullScreen"))
-					{
-						gViewerWindow->reshape(gRiftHResolution, gRiftVResolution);
-					}
-					else
-					{
-						gViewerWindow->reshape(mWindowHResolution, mWindowVResolution);
-					}
-				}
-				LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
-				rightclick_mousewheel_zoom();
-				gAgentCamera.changeCameraToDefault();
-			}
+			setRiftlook(!gRift3DEnabled);
 		}
 
 		return true;
