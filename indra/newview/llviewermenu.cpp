@@ -4669,7 +4669,7 @@ void handle_reset_view()
 	LLFloaterCamera::resetCameraMode();
 
 	// <CV:David>
-	if (gOutputType == OUTPUT_TYPE_RIFT)
+	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
 	{
 		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
 		gRift3DEnabled = FALSE;
