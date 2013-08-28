@@ -1578,7 +1578,7 @@ LLVector3d LLAgentCamera::calcFocusPositionTargetGlobal()
 		return mFocusTargetGlobal;
 	}
 	// <CV:David>
-	else if (gRift3DEnabled && gRiftConnected)
+	else if (mCameraMode == CAMERA_MODE_MOUSELOOK && gRift3DEnabled && gRiftConnected)
 	{
 		LLVector3d at_axis = LLVector3d(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
 		mFocusTargetGlobal = calcCameraPositionTargetGlobal() + at_axis;
