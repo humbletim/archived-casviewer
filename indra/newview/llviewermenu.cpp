@@ -9937,7 +9937,7 @@ class CVToggle3D : public view_listener_t
 			gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
 			gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
 		}
-		else if (gOutputType == OUTPUT_TYPE_RIFT)
+		else if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DConfigured)
 		{
 			setRiftlook(!gRift3DEnabled);
 		}

@@ -3527,7 +3527,8 @@ void LLFloaterPreference::onChangeOutputType()
 
 	gRift3DEnabled = getChild<LLRadioGroup>("OutputType")->getValue().asInteger() == OUTPUT_TYPE_RIFT;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-	gRift3DEnabled = gRift3DEnabled && gRift3DConfigured;
+	gRift3DConfigured = gRift3DConfigured && gRift3DEnabled;
+	gRift3DEnabled = FALSE;  // Need to restart.
 }
 
 void LLFloaterPreference::onClickResetEyeSeparation()
