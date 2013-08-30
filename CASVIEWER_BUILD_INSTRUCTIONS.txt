@@ -3,7 +3,7 @@ See the Firestorm build instruction text files plus the instructions at the foll
 - http://wiki.secondlife.com/wiki/Get_source_and_compile
 
 You need to provision the Oculus Rift SDK yourself:
-- Download SDK v0.2.3 from https://developer.oculusvr.com.
+- Download SDK v0.2.4.b from https://developer.oculusvr.com.
 - Copy the Include and Src folders, including subfolders, from OculusSDK\LibOVR into build-vc100\packages\include\LibOVR.
 - If building Windows, copy libovr.lib from OculusSDK\LibOVR\Lib\Win32 into build-vc100\packages\lib\debug and \release.
 - If building Max OSX or Linux, build the libovr binary per the instructions in the SDK's overview PDF and copy to the appropriate directories.
