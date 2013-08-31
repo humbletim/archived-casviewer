@@ -1116,7 +1116,7 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 	if (!isAgentAvatarValid()) return;
 
 	// <CV:David>
-	if (gRiftConnected && gRift3DEnabled)
+	if (gRift3DEnabled)
 	{
 		LLVector3 headLookAxis = LLVector3(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
 		setLookAt(LOOKAT_TARGET_MOUSELOOK, gAgentAvatarp, headLookAxis);
@@ -1219,7 +1219,7 @@ void LLAgentCamera::updateCamera()
 	}
 
 	// <CV:David>
-	if (gRiftConnected && gRift3DEnabled)
+	if (gRift3DEnabled)
 	{
 		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * mAgentRot;
 	}
@@ -1578,7 +1578,7 @@ LLVector3d LLAgentCamera::calcFocusPositionTargetGlobal()
 		return mFocusTargetGlobal;
 	}
 	// <CV:David>
-	else if (mCameraMode == CAMERA_MODE_MOUSELOOK && gRift3DEnabled && gRiftConnected)
+	else if (mCameraMode == CAMERA_MODE_MOUSELOOK && gRift3DEnabled)
 	{
 		LLVector3d at_axis = LLVector3d(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
 		mFocusTargetGlobal = calcCameraPositionTargetGlobal() + at_axis;
@@ -2184,7 +2184,7 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	}
 
 	// <CV:David>
-	if (gRift3DEnabled && gRiftConnected)
+	if (gRift3DEnabled)
 	{
 		OVR::Quatf hmdOrientation = gRiftFusionResult.GetOrientation();
 		float yaw, pitch, roll;

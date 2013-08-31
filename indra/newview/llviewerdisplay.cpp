@@ -678,7 +678,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
-		if (gRiftConnected && gRift3DEnabled)
+		if (gRift3DEnabled)
 		{
 			gAgentCamera.calcRiftValues();
 		}

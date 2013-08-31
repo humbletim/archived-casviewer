@@ -412,8 +412,6 @@ extern OVR::Ptr<OVR::HMDDevice> gRiftHMD;
 extern OVR::Ptr<OVR::SensorDevice> gRiftSensor;
 extern OVR::SensorFusion gRiftFusionResult;
 extern OVR::HMDInfo gRiftHMDInfo;
-extern BOOL gRiftHMDInfoLoaded;
-extern BOOL gRiftConnected;
 extern U32 gRiftHResolution;
 extern U32 gRiftVResolution;
 extern F32 gRiftHScreenSize;
