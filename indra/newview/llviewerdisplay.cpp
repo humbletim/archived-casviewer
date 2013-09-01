@@ -129,6 +129,8 @@ BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
 BOOL gRift3DEnabled = FALSE;
 BOOL gRift3DConfigured = FALSE;
+BOOL gRiftStanding = FALSE;
+BOOL gRiftStrafe = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
 // </CV:David>
 

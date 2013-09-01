@@ -46,6 +46,7 @@ public:
 typedef enum e_keyboard_mode
 {
 	MODE_FIRST_PERSON,
+	MODE_SECOND_PERSON,  // <CV:David>
 	MODE_THIRD_PERSON,
 	MODE_EDIT,
 	MODE_EDIT_AVATAR,
@@ -78,6 +79,7 @@ public:
 	struct Keys : public LLInitParam::Block<Keys>
 	{
 		Optional<KeyMode>	first_person,
+							second_person,  // <CV:David>
 							third_person,
 							edit,
 							sitting,

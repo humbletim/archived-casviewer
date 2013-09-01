@@ -219,6 +219,8 @@ public:
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();
 	void onClickResetRiftEyeSeparation();
+	void onChangeRiftOperationMode();
+	void onRiftStrafeEnable();
 	// </CV:David>
 
 private:

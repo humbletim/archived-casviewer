@@ -1372,7 +1372,7 @@
           name="DisplayRift"
           value="2"
           tool_tip="Select this if you have an Oculus Rift VR headset you want to use."
-          top_pad="170"
+          top_pad="152"
           width="150" />
       </radio_group>
 
@@ -1473,13 +1473,12 @@
        left="54"
        top="118"
        word_wrap="true"
-       height="120">
+       height="108">
 To display in stereoscopic 3D on Windows using a GeForce graphics card with NVIDIA 3D Vision you need:
         - GeForce driver 314.07 or later.
         - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
         - Your monitor set to 120Hz.
         - Full Screen mode turned on in the Graphics > General tab.
-
 Other computer configurations will likely require similar.
       </text>
 
@@ -1493,7 +1492,7 @@ Other computer configurations will likely require similar.
        initial_value="65"
        layout="topleft"
        top_pad="10"
-       top="258"
+       top="240"
        left="54"
        max_val="80"
        min_val="50"
@@ -1528,14 +1527,56 @@ Other computer configurations will likely require similar.
          function="Pref.ResetRiftEyeSeparation" />
       </button>
 
+      <radio_group
+      control_name="RiftOperationMode"
+      follows="left|top"
+      height="50"
+      layout="topleft"
+      name="RiftOperationMode"
+      left="54"
+      top_pad="5"
+      width="440">
+        <radio_group.commit_callback
+          function="Pref.ChangeRiftOperationMode" />
+        <radio_item
+          height="16"
+          label="Seated operation"
+          layout="topleft"
+          name="RiftSeated"
+          value="0"
+          width="50" />
+        <radio_item
+          height="16"
+          label="Standing operation"
+          layout="topleft"
+          name="RiftStanding"
+          value="1"
+          width="50" />
+      </radio_group>
+      <check_box
+       control_name="RiftStrafe"
+       height="16"
+       initial_value="false"
+       label="Left/right keys strafe"
+       layout="topleft"
+       left="200"
+       name="RiftStrafe"
+       tool_tip="Shift-left and shift-right turn."
+       top="265"
+       width="180">
+        <check_box.commit_callback
+           function="Pref.RiftStrafeEnable" />
+      </check_box>
+
       <text
        name="DisplayRiftHelp"
        follows="left|top"
        layout="topleft"
        left="54"
-       top="284"
+       top="312"
        word_wrap="true"
-       height="80">
+       height="80"
+       width="430">
 To display on an Oculus Rift you need:
         - Your computer configured to duplicate your desktop display on the Rift.
         - Full Screen mode turned on in the Graphics > General tab.

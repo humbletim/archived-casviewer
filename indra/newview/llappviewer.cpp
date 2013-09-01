@@ -1100,6 +1100,13 @@ bool LLAppViewer::init()
 	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
 	gRift3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+	if (gRift3DConfigured)
+	{
+		gRiftStanding = gSavedSettings.getU32("RiftOperationMode") == RIFT_OPERATE_STANDING;
+		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
+		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
+		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
+	}
 
 	BOOL riftHMDInfoLoaded = FALSE;
 

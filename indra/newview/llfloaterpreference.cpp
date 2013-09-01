@@ -498,6 +498,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
+	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -1583,6 +1585,10 @@ void LLFloaterPreference::refreshEnabledState()
 	disableUnavailableSettings();
 
 	getChildView("block_list")->setEnabled(LLLoginInstance::getInstance()->authSuccess());
+
+	// <CV:David>
+	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
+	// </CV:David>
 }
 
 void LLFloaterPreference::disableUnavailableSettings()
@@ -3544,6 +3550,21 @@ void LLFloaterPreference::onClickResetScreenDistance()
 void LLFloaterPreference::onClickResetRiftEyeSeparation()
 {
 	gSavedSettings.setF32("RiftEyeSeparation", 65.0f);
+}
+
+void LLFloaterPreference::onChangeRiftOperationMode()
+{
+	U32 riftOperationMode = getChild<LLRadioGroup>("RiftOperationMode")->getValue().asInteger();
+	gRiftStanding = riftOperationMode == RIFT_OPERATE_STANDING;
+	llinfos << "Oculus Rift: Operation mode = " << riftOperationMode << llendl;
+
+	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
+}
+
+void LLFloaterPreference::onRiftStrafeEnable()
+{
+	gRiftStrafe = getChild<LLCheckBoxCtrl>("RiftStrafe")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Strafe = " << gRiftStrafe << llendl;
 }
 // </CV:David>
 

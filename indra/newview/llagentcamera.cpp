@@ -2973,7 +2973,16 @@ void LLAgentCamera::calcRiftValues()
 	OVR::Quatf hmdOrientation = gRiftFusionResult.GetOrientation();
 	float yaw, roll, pitch;
 	hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
-	mEyeYaw += (yaw - mLastRiftYaw);
+
+	F32 deltaYaw = yaw - mLastRiftYaw;
+	if (gRiftStanding)
+	{
+		gAgent.rotate(deltaYaw, LLVector3::z_axis);
+	}
+	else
+	{
+		mEyeYaw += deltaYaw;
+	}
 	mLastRiftYaw = yaw;
 
 	mRiftYaw = LLQuaternion(mEyeYaw, LLVector3::z_axis);
