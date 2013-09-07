@@ -7227,13 +7227,11 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
-	// <CV:David>
-	//gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-	//gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-	//gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-	//gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
-	//glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-	// </CV:David>
+	gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
+	gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
+	gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
+	gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 
 	tc2.setVec((F32) mScreen.getWidth(),
 			(F32) mScreen.getHeight());
