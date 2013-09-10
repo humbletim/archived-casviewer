@@ -1218,13 +1218,6 @@ void LLAgentCamera::updateCamera()
 		mCameraUpVector = mFollowCam.getUpVector();
 	}
 
-	// <CV:David>
-	if (gRift3DEnabled)
-	{
-		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * mAgentRot;
-	}
-	// /CV:David>
-
 	if (mSitCameraEnabled)
 	{
 		if (mSitCameraReferenceObject->isDead())
@@ -1455,9 +1448,30 @@ void LLAgentCamera::updateCamera()
 	mCameraPositionAgent = gAgent.getPosAgentFromGlobal(camera_pos_global);
 
 	// Move the camera
+	// <CV:David>
+	//LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
+	////LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, camera_skyward, focus_agent);
+	if (gRift3DEnabled)
+	{
+		// Alter look direction per Rift orientation; 1st and 3rd person.
+		
+		LLQuaternion focusRotation;
+		focusRotation.shortestArc(LLVector3::x_axis, LLVector3(mFocusGlobal - camera_pos_global));
+		F32 focusRoll, focusPitch, focusYaw;
+		focusRotation.getEulerAngles(&focusRoll, &focusPitch, &focusYaw);
+		LLQuaternion focusPitchAndYaw = LLQuaternion(focusPitch, LLVector3::y_axis) * LLQuaternion(focusYaw, LLVector3::z_axis);
 
-	LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
-	//LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, camera_skyward, focus_agent);
+		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * focusPitchAndYaw;
+
+		LLVector3 rift_focus_agent = mCameraPositionAgent + LLVector3::x_axis * mRiftPitch * mRiftYaw * focusPitchAndYaw;
+
+		LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, rift_focus_agent);
+	}
+	else
+	{
+		LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
+	}
+	// </CV:David>
 	
 	// Change FOV
 	LLViewerCamera::getInstance()->setView(LLViewerCamera::getInstance()->getDefaultFOV() / (1.f + mCameraCurrentFOVZoomFactor));
@@ -1577,14 +1591,6 @@ LLVector3d LLAgentCamera::calcFocusPositionTargetGlobal()
 		mFocusTargetGlobal = gAgent.getPosGlobalFromAgent(mFollowCam.getSimulatedFocus());
 		return mFocusTargetGlobal;
 	}
-	// <CV:David>
-	else if (mCameraMode == CAMERA_MODE_MOUSELOOK && gRift3DEnabled)
-	{
-		LLVector3d at_axis = LLVector3d(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
-		mFocusTargetGlobal = calcCameraPositionTargetGlobal() + at_axis;
-		return mFocusTargetGlobal;
-	}
-	// </CV:David>
 	else if (mCameraMode == CAMERA_MODE_MOUSELOOK)
 	{
 		LLVector3d at_axis(1.0, 0.0, 0.0);
