@@ -892,8 +892,22 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	const char* buttonstatestr = "";
 	S32 x = pos.mX;
 	S32 y = pos.mY;
-	x = llround((F32)x / mDisplayScale.mV[VX]);
-	y = llround((F32)y / mDisplayScale.mV[VY]);
+	// <CV:David>
+	// Improve the mouse click location when using the Oculus Rift; not perfect but a useful improvement, e.g., for selecting a 3rd person orbit point.
+	//x = llround((F32)x / mDisplayScale.mV[VX]);
+	//y = llround((F32)y / mDisplayScale.mV[VY]);
+	if (gRift3DEnabled)
+	{
+		F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+		x = llround(gRiftDistortionScale * ((F32)((2 * x) % gRiftHResolution) + lensOffset) / mDisplayScale.mV[VX]);
+		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
+	}
+	else
+	{
+		x = llround((F32)x / mDisplayScale.mV[VX]);
+		y = llround((F32)y / mDisplayScale.mV[VY]);
+	}
+	// </CV:David>
 
 	// only send mouse clicks to UI if UI is visible
 	if(gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
