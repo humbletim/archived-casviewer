@@ -209,7 +209,7 @@ const LLMatrix4 &LLViewerCamera::getModelview() const
 
 void LLViewerCamera::calcProjection(const F32 far_distance) const
 {
-	F32 fov_y, z_far, z_near, aspect, f, p02, p03;
+	F32 fov_y, z_far, z_near, aspect, f;
 	fov_y = getView();
 	z_far = far_distance;
 	z_near = getNear();
@@ -220,10 +220,12 @@ void LLViewerCamera::calcProjection(const F32 far_distance) const
 	mProjectionMatrix.setZero();
 	mProjectionMatrix.mMatrix[0][0] = f/aspect;
 	// <CV:David>
-	p03 = - mCameraOffset * f / aspect;
-	p02 = - p03 / mScreenDistance;
-	mProjectionMatrix.mMatrix[0][2] = p02;
-	mProjectionMatrix.mMatrix[0][3] = p03;
+	// Using the OS cursor means that the following is not needed and in fact should not be used.
+	//F32 p02, p03;
+	//p03 = - mCameraOffset * f / aspect;
+	//p02 = - p03 / mScreenDistance;
+	//mProjectionMatrix.mMatrix[2][0] = p02;
+	//mProjectionMatrix.mMatrix[3][0] = p03;
 	// </CV:David>
 	mProjectionMatrix.mMatrix[1][1] = f;
 	mProjectionMatrix.mMatrix[2][2] = (z_far + z_near)/(z_near - z_far);
@@ -412,7 +414,10 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		proj_mat = translate*proj_mat;
 	}
 
-	calcProjection(z_far); // Update the projection matrix cache
+	// <CV:David>
+	// The following statement no longer does anything useful.
+	//calcProjection(z_far); // Update the projection matrix cache
+	// </CV:David>
 
 	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
 
