@@ -239,8 +239,8 @@
 
 // <CV:David>
 #include "llviewermenu.h"
-#include <LibOVR\Include\OVR.h>
-#include <LibOVR\Include\OVRVersion.h>
+#include "OVR.h"
+#include "OVRVersion.h"
 // </CV:David>
 
 
