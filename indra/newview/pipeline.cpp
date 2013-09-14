@@ -10257,7 +10257,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		F32 distance = (pos-camera.getOrigin()).length();
 		F32 fov = atanf(tdim.mV[1]/distance)*2.f*RAD_TO_DEG;
 		F32 aspect = tdim.mV[0]/tdim.mV[1];
-		glh::matrix4f persp = gl_perspective(fov, aspect, 1.f, 256.f);
+		glh::matrix4f persp = gl_perspective(fov, aspect, 1.f, 256.f, TRUE);
 		glh_set_current_projection(persp);
 		gGL.loadMatrix(persp.m);
 
