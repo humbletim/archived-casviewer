@@ -9872,6 +9872,15 @@ class CVCheckStereoscopic3D : public view_listener_t
 		return new_value;
 	}
 };
+
+class CVAllowStereoscopic3D: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool new_value = (gOutputType == OUTPUT_TYPE_STEREO);
+		return new_value;
+	}
+};
 // </CV:David>
 
 // <FS:Zi> Make sure to call this before any of the UI is set up, so all text editors can
@@ -10036,6 +10045,7 @@ void initialize_menus()
 	// <CV:David>
 	view_listener_t::addMenu(new CVToggleStereoscopic3D(), "World.ToggleStereoscopic3D");
 	view_listener_t::addMenu(new CVCheckStereoscopic3D(), "World.CheckStereoscopic3D");
+	view_listener_t::addMenu(new CVAllowStereoscopic3D(), "World.AllowStereoscopic3D");
 	enable.add("World.EnableStereoscopic3D", boost::bind(&stereoscopic_3d_enabled));
 	enable.add("World.ConfigureStereoscopic3D", boost::bind(&stereoscopic_3d_configured));
 	// </CV:David>
