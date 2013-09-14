@@ -927,11 +927,17 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 
 // <CV:David> Stereoscopic 3D
 
+void LLViewerCamera::calcMonoValues()
+{
+	// Reset so that frustum planes are updated.
+	mCameraOffset = 0.f;
+}
+
 void LLViewerCamera::calcStereoValues()
 {
 	// Remember default mono camera details.
-	mStereoCameraFOV = this->getView();
-	mStereoCameraPosition = this->getOrigin();
+	mStereoCameraFOV = getView();
+	mStereoCameraPosition = getOrigin();
 	mStereoPointOfInterest = mLastPointOfInterest;
 
 	// Retrieve latest stereo values.
@@ -957,8 +963,8 @@ void LLViewerCamera::moveToLeftEye()
 	mCameraOffset = -mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
-	this->setView(mStereoCameraFOV);
-	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setView(mStereoCameraFOV);
+	updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
 void LLViewerCamera::moveToRightEye()
@@ -967,15 +973,15 @@ void LLViewerCamera::moveToRightEye()
 	mCameraOffset = mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
-	this->setView(mStereoCameraFOV);
-	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setView(mStereoCameraFOV);
+	updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
 void LLViewerCamera::moveToCenter()
 {
 	mCameraOffset = 0.f;
-	this->setView(mStereoCameraFOV);
-	this->updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
+	setView(mStereoCameraFOV);
+	updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
 }
 
 void LLViewerCamera::moveToStereoCullFrustum()
@@ -983,8 +989,8 @@ void LLViewerCamera::moveToStereoCullFrustum()
 	mCameraOffset = 0.f;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
 	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCullCameraDeltaForwards;
-	this->setView(mStereoCullCameraFOV);
-	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setView(mStereoCullCameraFOV);
+	updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
 }
 
 // </CV:David>
