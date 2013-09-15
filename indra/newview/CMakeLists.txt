@@ -50,6 +50,7 @@ include(CMakeCopyIfDifferent)
 include(LLAppearance)
 include(Growl)
 include(ColladaDom)
+include(OculusSDK)
 
 # <FS:ND> if using ndPhysicsstub this variable will be unset, we don't need to build any stub code viewer side in that case
 if( LLPHYSICSEXTENSIONS_SRC_DIR )
@@ -94,11 +95,12 @@ include_directories(
     ${LIBS_PREBUILD_DIR}/include/hunspell
     ${OPENAL_LIB_INCLUDE_DIRS}
     ${LIBS_PREBUILT_DIR}/include/collada/1.4
+    ${LLAPPEARANCE_INCLUDE_DIRS}
     ${GROWL_INCLUDE_DIRS}
     ${TEAPOT_INCLUDE_DIRS}# <FS:AW opensim currency support>
     ${CMAKE_BINARY_DIR}/newview #<FS:TS> Flickr upload
     ${COLLADA_INCLUDE_DIRS}
-    ${LLAPPEARANCE_INCLUDE_DIRS}
+    ${OCULUS_INCLUDE_DIRS}
     )
 
 include_directories(SYSTEM
@@ -2105,6 +2107,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${TCMALLOC_LIBRARIES}
     ${LLAPPEARANCE_LIBRARIES}
     ${GROWL_LIBRARY}
+    ${OCULUS_LIBRARY}
     )
 	
 if (WINDOWS)

@@ -36,6 +36,7 @@ set(cmake_SOURCE_FILES
     FindHUNSPELL.cmake
     FindJsonCpp.cmake
     FindNDOF.cmake
+    FindOculusSDK.cmake	# [FS:CR] Oculus Rift Support
     FindOpenJPEG.cmake
     FindSCP.cmake
     FindXmlRpcEpi.cmake
@@ -84,6 +85,7 @@ set(cmake_SOURCE_FILES
     Linking.cmake
     MediaPluginBase.cmake
     NDOF.cmake
+    OculusSDK.cmake	# [FS:CR] Oculus Rift Support
     OPENAL.cmake
     OpenGL.cmake
     OpenJPEG.cmake
