@@ -2239,6 +2239,7 @@
               <key>name</key>
               <string>ReleaseFS</string>
             </map>
+            <!-- FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_AVX</key>
             <map>
               <key>configure</key>
@@ -2256,6 +2257,7 @@
               <key>name</key>
               <string>ReleaseFS_AVX</string>
             </map>
+            <!-- END FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_open</key>
             <map>
               <key>configure</key>
@@ -2528,6 +2530,7 @@
               <key>name</key>
               <string>ReleaseFS</string>
             </map>
+            <!-- FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_AVX</key>
             <map>
               <key>build</key>
@@ -2554,6 +2557,7 @@
               <key>name</key>
               <string>ReleaseFS_AVX</string>
             </map>
+            <!-- END FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_open</key>
             <map>
               <key>build</key>
@@ -2815,6 +2819,7 @@
               <key>name</key>
               <string>ReleaseFS</string>
             </map>
+            <!-- FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_AVX</key>
             <map>
               <key>build</key>
@@ -2839,6 +2844,7 @@
               <key>name</key>
               <string>ReleaseFS_AVX</string>
             </map>
+            <!-- END FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_open</key>
             <map>
               <key>build</key>
@@ -3226,6 +3232,7 @@
               <key>name</key>
               <string>ReleaseFS</string>
             </map>
+            <!-- FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_AVX</key>
             <map>
               <key>build</key>
@@ -3262,6 +3269,7 @@
               <key>name</key>
               <string>ReleaseFS_AVX</string>
             </map>
+            <!-- END FS:Ansariel: [AVX Optimization] -->
             <key>ReleaseFS_open</key>
             <map>
               <key>build</key>
