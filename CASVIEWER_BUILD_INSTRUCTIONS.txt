@@ -21,12 +21,8 @@ To use the package in building the viewer for a Windows build:
   will have already done this step.
 - In a command prompt, change to your viewer source root directory.
 - Then: set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
-- Then: autobuild installables add ovr-sdk license=OVR license_file=LICENSES\ovr-sdk.txt platform=windows hash=<md5 value> 
-  url=file:///<sdk path>	
-  Your my_autobuild.xml file will now include a section for "ovr-sdk".
-  Note: If you've previously done this step and are now just wanting to update to use a newer package you've made, use 
-  "edit" instead of "add" in the command and leave out the license and license_file parameters.
-- Then: autobuild install ovr-sdk
+- Then: autobuild installables edit OVR platform=windows hash=<md5 value> url=file:///<sdk path>	
+- Then, before doing an autobuild configure or autobuild build command, remember to: set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
 
 Setting up Mac OSX and Linux SDK versions will be similar along the lines of the FMOD instructions for these platforms.
 
@@ -34,6 +30,7 @@ Setting up Mac OSX and Linux SDK versions will be similar along the lines of the
 For building the viewer, the Firestorm target names such as ReleaseFS_open are retained.
 
 For example, to build your own private version without installer:
+set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
 autobuild configure -c ReleaseFS_open -- -DPACKAGE:BOOL=FALSE
 autobuild build -c ReleaseFS_open --no-configure
 
