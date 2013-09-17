@@ -1067,6 +1067,7 @@ bool LLAppViewer::init()
 	LL_INFOS("InitInfo") << "Output type: " << gOutputType << LL_ENDL;
 	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
 	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
+	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
 	// </CV:David>
 
 	// Prepare for out-of-memory situations, during which we will crash on
