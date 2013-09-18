@@ -444,7 +444,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	//calcProjection(z_far); // Update the projection matrix cache
 	// </CV:David>
 
-	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, TRUE);
+	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 
 	gGL.loadMatrix(proj_mat.m);
 
@@ -488,9 +488,9 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	}
 
 	// <CV:David>
-	// Update only for mono and stereo clipping cameras; don't update for stereo left and right cameras otherwise lose objects near the edge of the screen.
+	// Update only for mono and stereo clipping or selection cameras; don't update for stereo left and right cameras otherwise lose objects near the edge of the screen.
 	//updateFrustumPlanes(*this);
-	if (mCameraOffset == 0.f) {
+	if (mCameraOffset == 0.f || for_selection) {
 		updateFrustumPlanes(*this);
 	}
 	// </CV:David>
