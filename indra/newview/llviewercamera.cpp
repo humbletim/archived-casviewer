@@ -942,14 +942,13 @@ void LLViewerCamera::calcStereoValues()
 	// Remember default mono camera details.
 	mStereoCameraFOV = getView();
 	mStereoCameraPosition = getOrigin();
-	mStereoPointOfInterest = mLastPointOfInterest;
 
 	// Retrieve latest stereo values.
 	mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
 	mScreenDistance = gSavedSettings.getF32("ScreenDistance");
 
 	// Delta position for left camera.
-	mStereoCameraDeltaLeft = mEyeSeparation / 2 * getLeftAxis();
+	mStereoCameraDeltaLeft = mEyeSeparation / 2 * mYAxis;
 
 	// Stereo culling frustum camera parameters.
 	F32 aspect, width, separation, deltaZ;
@@ -957,7 +956,7 @@ void LLViewerCamera::calcStereoValues()
 	width = 2.0f * aspect * tan(mStereoCameraFOV*0.5f) * mScreenDistance;
 	separation = mEyeSeparation / width;
 	deltaZ = mScreenDistance / (1 + 1 / separation);
-	mStereoCullCameraDeltaForwards = deltaZ * getAtAxis();
+	mStereoCullCameraDeltaForwards = deltaZ * mXAxis;
 	mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
 }
 
@@ -966,9 +965,8 @@ void LLViewerCamera::moveToLeftEye()
 	// Move both camera and POI so that left and rights views are parallel.
 	mCameraOffset = -mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
-	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
 	setView(mStereoCameraFOV);
-	updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setOrigin(new_position);
 }
 
 void LLViewerCamera::moveToRightEye()
@@ -976,25 +974,23 @@ void LLViewerCamera::moveToRightEye()
 	// Move both camera and POI so that left and rights views are parallel.
 	mCameraOffset = mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
-	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
 	setView(mStereoCameraFOV);
-	updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setOrigin(new_position);
 }
 
 void LLViewerCamera::moveToCenter()
 {
 	mCameraOffset = 0.f;
 	setView(mStereoCameraFOV);
-	updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
+	setOrigin(mStereoCameraPosition);
 }
 
 void LLViewerCamera::moveToStereoCullFrustum()
 {
 	mCameraOffset = 0.f;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
-	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCullCameraDeltaForwards;
 	setView(mStereoCullCameraFOV);
-	updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setOrigin(new_position);
 }
 
 // </CV:David>

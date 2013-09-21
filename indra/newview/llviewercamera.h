@@ -158,7 +158,6 @@ protected:
 	// <CV:David> Stereoscopic 3D
 	F32 mStereoCameraFOV;
 	LLVector3 mStereoCameraPosition;
-	LLVector3 mStereoPointOfInterest;
 	LLVector3 mStereoCameraDeltaLeft;
 	F32 mStereoCullCameraFOV;
 	LLVector3 mStereoCullCameraDeltaForwards;
