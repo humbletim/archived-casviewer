@@ -59,6 +59,10 @@
 // System includes
 #include <iomanip> // for setprecision
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 // <CV:David>
@@ -67,6 +71,7 @@ F32 mScreenDistance = 1.f;  // Distance of rendering screen from camera.
 F32 mCameraOffset = 0.f;  // Offset from default camera position for left(-ve) /right(+ve) eye.
 F32 mRiftEyeSeparation;  // Distance between pupils.
 F32 mRiftProjectionOffset;
+F32 mSimulatorFOV = 0.f;
 // </CV:David>
 
 //glu pick matrix implementation borrowed from Mesa3D
@@ -908,27 +913,49 @@ BOOL LLViewerCamera::areVertsVisible(LLViewerObject* volumep, BOOL all_verts)
 
 // changes local camera and broadcasts change
 /* virtual */ void LLViewerCamera::setView(F32 vertical_fov_rads)
+// <CV:David>
 {
-	F32 old_fov = LLViewerCamera::getInstance()->getView();
+	setView(vertical_fov_rads, FALSE);
+}
+// </CV:David>
+
+// <CV:David>
+/* virtual */ void LLViewerCamera::setView(F32 vertical_fov_rads, BOOL stereo_update_simulator)
+// </CV:David>
+{
+	// <CV:David>
+	//F32 old_fov = LLViewerCamera::getInstance()->getView();
+	// </CV:David>
 
 	// cap the FoV
 	vertical_fov_rads = llclamp(vertical_fov_rads, getMinView(), getMaxView());
 
-	if (vertical_fov_rads == old_fov) return;
+	// <CV:David>
+	//if (vertical_fov_rads == old_fov) return;
+	if (vertical_fov_rads == mSimulatorFOV) return;
 
-	// send the new value to the simulator
-	LLMessageSystem* msg = gMessageSystem;
-	msg->newMessageFast(_PREHASH_AgentFOV);
-	msg->nextBlockFast(_PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
+	if (!gStereoscopic3DEnabled || stereo_update_simulator)
+	{
+		mSimulatorFOV = vertical_fov_rads;
+	// </CV:David>
+llinfos << "Send FOV to simulator: " << vertical_fov_rads << llendl;
+		// send the new value to the simulator
+		LLMessageSystem* msg = gMessageSystem;
+		msg->newMessageFast(_PREHASH_AgentFOV);
+		msg->nextBlockFast(_PREHASH_AgentData);
+		msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+		msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+		msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 
-	msg->nextBlockFast(_PREHASH_FOVBlock);
-	msg->addU32Fast(_PREHASH_GenCounter, 0);
-	msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
+		msg->nextBlockFast(_PREHASH_FOVBlock);
+		msg->addU32Fast(_PREHASH_GenCounter, 0);
+		msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
 
-	gAgent.sendReliableMessage();
+		gAgent.sendReliableMessage();
+
+	//<CV:David>
+	}
+	//</CV:David>
 
 	// sync the camera with the new value
 	LLCamera::setView(vertical_fov_rads); // call base implementation
@@ -1004,7 +1031,7 @@ void LLViewerCamera::moveToLeftEye()
 	mCameraOffset = -mEyeSeparation / 2;
 	mRiftProjectionOffset = -gRiftProjectionOffset;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
-	setView(mStereoCameraFOV);
+	setView(mStereoCameraFOV, FALSE);
 	setAspect(mStereoCameraAspect);
 	setOrigin(new_position);
 }
@@ -1015,7 +1042,7 @@ void LLViewerCamera::moveToRightEye()
 	mCameraOffset = mEyeSeparation / 2;
 	mRiftProjectionOffset = gRiftProjectionOffset;
 	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
-	setView(mStereoCameraFOV);
+	setView(mStereoCameraFOV, FALSE);
 	setAspect(mStereoCameraAspect);
 	setOrigin(new_position);
 }
@@ -1024,7 +1051,7 @@ void LLViewerCamera::moveToCenter()
 {
 	mCameraOffset = 0.f;
 	mRiftProjectionOffset = 0.f;
-	setView(mStereoCameraFOV);
+	setView(mStereoCameraFOV, TRUE);
 	setAspect(mStereoCameraAspect);
 	setOrigin(mStereoCameraPosition);
 }
@@ -1034,7 +1061,7 @@ void LLViewerCamera::moveToStereoCullFrustum()
 	mCameraOffset = 0.f;
 	mRiftProjectionOffset = 0.f;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
-	setView(mStereoCullCameraFOV);
+	setView(mStereoCullCameraFOV, TRUE);
 	setAspect(mStereoCullCameraAspect);
 	setOrigin(new_position);
 }
