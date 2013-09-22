@@ -9860,6 +9860,7 @@ class CVToggleStereoscopic3D : public view_listener_t
 	{
 		gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
 		gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+		llinfos << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << llendl;
 		return true;
 	}
 };

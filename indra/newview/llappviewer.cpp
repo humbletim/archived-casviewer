@@ -1068,6 +1068,10 @@ bool LLAppViewer::init()
 	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
 	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+	if (gStereoscopic3DEnabled)
+	{
+		llinfos << "Stereoscopic 3D: Enter stereoscopic 3D mode" << llendl;
+	}
 	// </CV:David>
 
 	// Prepare for out-of-memory situations, during which we will crash on

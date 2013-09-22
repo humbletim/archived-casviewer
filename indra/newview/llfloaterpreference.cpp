@@ -3520,6 +3520,10 @@ void LLFloaterPreference::applySelection(LLScrollListCtrl* control,BOOL all)
 // <CV:David>
 void LLFloaterPreference::onChangeOutputType()
 {
+	if (gStereoscopic3DEnabled)
+	{
+		llinfos << "Stereoscopic 3D: Leave stereoscopic 3D mode" << llendl;
+	}
 	gStereoscopic3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
 }
