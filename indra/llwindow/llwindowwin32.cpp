@@ -1205,7 +1205,14 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 
 	gGLManager.initWGL();
 	
-	if (wglChoosePixelFormatARB)
+	// <CV:David>
+	// Work around AMD HD Catalyst driver not working with stereoscopic 3D.
+	// Fix was required for Catalyst 13.8 15 Nov 2013 driver and AMD Radeon HD 7970.
+	//if (wglChoosePixelFormatARB)
+	std::string mGLVendor = std::string((const char *)glGetString(GL_VENDOR));
+	LLStringUtil::toUpper(mGLVendor);
+	if (wglChoosePixelFormatARB && !(stereo && mGLVendor.substr(0,4) == "ATI "))
+	// </CV:David>
 	{
 		// OK, at this point, use the ARB wglChoosePixelFormatsARB function to see if we
 		// can get exactly what we want.

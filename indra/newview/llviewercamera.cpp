@@ -56,13 +56,19 @@
 // System includes
 #include <iomanip> // for setprecision
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 // <CV:David>
 F32 mEyeSeparation;  // Distance between stereo eyes.
-F32 mScreenDistance;  // Distance of rendering screen from camera.
-F32 mCameraOffset;  // Offset from default camera position for left(-ve) /right(+ve) eye.
+F32 mScreenDistance = 1.6f;  // Distance of rendering screen from camera.
+F32 mCameraOffset = 0.f;  // Offset from default camera position for left(-ve) /right(+ve) eye.
+F32 mSimulatorFOV = 0.f;
 // </CV:David>
+
 
 //glu pick matrix implementation borrowed from Mesa3D
 glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint* viewport)
@@ -86,13 +92,17 @@ glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height
 	return glh::matrix4f(m);
 }
 
-glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
+glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display)
 {
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
 
 	// <CV:David>
-	GLfloat p03 = - mCameraOffset * f / aspect;
-	GLfloat p02 = p03 / mScreenDistance;
+	GLfloat p02 = 0.f, p03 = 0.f;
+	if (display)
+	{
+		p03 = - mCameraOffset * f / aspect;
+		p02 = p03 / mScreenDistance;
+	}
 	// </CV:David>
 
 	return glh::matrix4f(f/aspect, 0, p02, p03,
@@ -209,7 +219,7 @@ const LLMatrix4 &LLViewerCamera::getModelview() const
 
 void LLViewerCamera::calcProjection(const F32 far_distance) const
 {
-	F32 fov_y, z_far, z_near, aspect, f, p02, p03;
+	F32 fov_y, z_far, z_near, aspect, f;
 	fov_y = getView();
 	z_far = far_distance;
 	z_near = getNear();
@@ -220,10 +230,12 @@ void LLViewerCamera::calcProjection(const F32 far_distance) const
 	mProjectionMatrix.setZero();
 	mProjectionMatrix.mMatrix[0][0] = f/aspect;
 	// <CV:David>
-	p03 = - mCameraOffset * f / aspect;
-	p02 = - p03 / mScreenDistance;
-	mProjectionMatrix.mMatrix[0][2] = p02;
-	mProjectionMatrix.mMatrix[0][3] = p03;
+	// Using the OS cursor means that the following is not needed and in fact should not be used.
+	//F32 p02, p03;
+	//p03 = - mCameraOffset * f / aspect;
+	//p02 = - p03 / mScreenDistance;
+	//mProjectionMatrix.mMatrix[2][0] = p02;
+	//mProjectionMatrix.mMatrix[3][0] = p03;
 	// </CV:David>
 	mProjectionMatrix.mMatrix[1][1] = f;
 	mProjectionMatrix.mMatrix[2][2] = (z_far + z_near)/(z_near - z_far);
@@ -412,9 +424,12 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		proj_mat = translate*proj_mat;
 	}
 
-	calcProjection(z_far); // Update the projection matrix cache
+	// <CV:David>
+	// The following statement no longer does anything useful.
+	//calcProjection(z_far); // Update the projection matrix cache
+	// </CV:David>
 
-	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
+	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 
 	gGL.loadMatrix(proj_mat.m);
 
@@ -458,9 +473,9 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	}
 
 	// <CV:David>
-	// Update only for mono and stereo clipping cameras; don't update for stereo left and right cameras otherwise lose objects near the edge of the screen.
+	// Update only for mono and stereo clipping or selection cameras; don't update for stereo left and right cameras otherwise lose objects near the edge of the screen.
 	//updateFrustumPlanes(*this);
-	if (mCameraOffset == 0.f) {
+	if (mCameraOffset == 0.f || for_selection) {
 		updateFrustumPlanes(*this);
 	}
 	// </CV:David>
@@ -878,27 +893,49 @@ BOOL LLViewerCamera::areVertsVisible(LLViewerObject* volumep, BOOL all_verts)
 
 // changes local camera and broadcasts change
 /* virtual */ void LLViewerCamera::setView(F32 vertical_fov_rads)
+// <CV:David>
 {
-	F32 old_fov = LLViewerCamera::getInstance()->getView();
+	setView(vertical_fov_rads, FALSE);
+}
+// </CV:David>
+
+// <CV:David>
+/* virtual */ void LLViewerCamera::setView(F32 vertical_fov_rads, BOOL stereo_update_simulator)
+// </CV:David>
+{
+	// <CV:David>
+	//F32 old_fov = LLViewerCamera::getInstance()->getView();
+	// </CV:David>
 
 	// cap the FoV
 	vertical_fov_rads = llclamp(vertical_fov_rads, getMinView(), getMaxView());
 
-	if (vertical_fov_rads == old_fov) return;
+	// <CV:David>
+	//if (vertical_fov_rads == old_fov) return;
+	if (vertical_fov_rads == mSimulatorFOV) return;
 
-	// send the new value to the simulator
-	LLMessageSystem* msg = gMessageSystem;
-	msg->newMessageFast(_PREHASH_AgentFOV);
-	msg->nextBlockFast(_PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
+	if (!gStereoscopic3DEnabled || stereo_update_simulator)
+	{
+		mSimulatorFOV = vertical_fov_rads;
+	// </CV:David>
 
-	msg->nextBlockFast(_PREHASH_FOVBlock);
-	msg->addU32Fast(_PREHASH_GenCounter, 0);
-	msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
+		// send the new value to the simulator
+		LLMessageSystem* msg = gMessageSystem;
+		msg->newMessageFast(_PREHASH_AgentFOV);
+		msg->nextBlockFast(_PREHASH_AgentData);
+		msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+		msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+		msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 
-	gAgent.sendReliableMessage();
+		msg->nextBlockFast(_PREHASH_FOVBlock);
+		msg->addU32Fast(_PREHASH_GenCounter, 0);
+		msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
+
+		gAgent.sendReliableMessage();
+
+	//<CV:David>
+	}
+	//</CV:David>
 
 	// sync the camera with the new value
 	LLCamera::setView(vertical_fov_rads); // call base implementation
@@ -922,19 +959,24 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 
 // <CV:David> Stereoscopic 3D
 
+void LLViewerCamera::calcMonoValues()
+{
+	// Reset so that frustum planes are updated.
+	mCameraOffset = 0.f;
+}
+
 void LLViewerCamera::calcStereoValues()
 {
 	// Remember default mono camera details.
-	mStereoCameraFOV = this->getView();
-	mStereoCameraPosition = this->getOrigin();
-	mStereoPointOfInterest = mLastPointOfInterest;
+	mStereoCameraFOV = getView();
+	mStereoCameraPosition = getOrigin();
 
 	// Retrieve latest stereo values.
 	mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
 	mScreenDistance = gSavedSettings.getF32("ScreenDistance");
 
 	// Delta position for left camera.
-	mStereoCameraDeltaLeft = mEyeSeparation / 2 * getLeftAxis();
+	mStereoCameraDeltaLeft = mEyeSeparation / 2 * mYAxis;
 
 	// Stereo culling frustum camera parameters.
 	F32 aspect, width, separation, deltaZ;
@@ -942,7 +984,7 @@ void LLViewerCamera::calcStereoValues()
 	width = 2.0f * aspect * tan(mStereoCameraFOV*0.5f) * mScreenDistance;
 	separation = mEyeSeparation / width;
 	deltaZ = mScreenDistance / (1 + 1 / separation);
-	mStereoCullCameraDeltaForwards = deltaZ * getAtAxis();
+	mStereoCullCameraDeltaForwards = deltaZ * mXAxis;
 	mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
 }
 
@@ -951,9 +993,8 @@ void LLViewerCamera::moveToLeftEye()
 	// Move both camera and POI so that left and rights views are parallel.
 	mCameraOffset = -mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
-	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCameraDeltaLeft;
-	this->setView(mStereoCameraFOV);
-	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setView(mStereoCameraFOV, FALSE);
+	setOrigin(new_position);
 }
 
 void LLViewerCamera::moveToRightEye()
@@ -961,25 +1002,23 @@ void LLViewerCamera::moveToRightEye()
 	// Move both camera and POI so that left and rights views are parallel.
 	mCameraOffset = mEyeSeparation / 2;
 	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
-	LLVector3 new_point_of_interest = mStereoPointOfInterest - mStereoCameraDeltaLeft;
-	this->setView(mStereoCameraFOV);
-	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setView(mStereoCameraFOV, FALSE);
+	setOrigin(new_position);
 }
 
 void LLViewerCamera::moveToCenter()
 {
 	mCameraOffset = 0.f;
-	this->setView(mStereoCameraFOV);
-	this->updateCameraLocation(mStereoCameraPosition, getUpAxis(), mStereoPointOfInterest);
+	setView(mStereoCameraFOV, TRUE);
+	setOrigin(mStereoCameraPosition);
 }
 
 void LLViewerCamera::moveToStereoCullFrustum()
 {
 	mCameraOffset = 0.f;
 	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
-	LLVector3 new_point_of_interest = mStereoPointOfInterest + mStereoCullCameraDeltaForwards;
-	this->setView(mStereoCullCameraFOV);
-	this->updateCameraLocation(new_position, getUpAxis(), new_point_of_interest);
+	setView(mStereoCullCameraFOV, TRUE);
+	setOrigin(new_position);
 }
 
 // </CV:David>

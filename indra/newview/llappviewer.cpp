@@ -1062,6 +1062,18 @@ bool LLAppViewer::init()
 	}
 	LL_INFOS("InitInfo") << "Hardware test initialization done." << LL_ENDL ;
 
+	// <CV:David>
+	gOutputType = gSavedSettings.getU32("OutputType");
+	LL_INFOS("InitInfo") << "Output type: " << gOutputType << LL_ENDL;
+	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
+	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
+	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+	if (gStereoscopic3DEnabled)
+	{
+		llinfos << "Stereoscopic 3D: Enter stereoscopic 3D mode" << llendl;
+	}
+	// </CV:David>
+
 	// Prepare for out-of-memory situations, during which we will crash on
 	// purpose and save a dump.
 #if LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD && LL_USE_SMARTHEAP
@@ -3459,12 +3471,6 @@ bool LLAppViewer::initWindow()
 
 	// always start windowed
 	BOOL ignorePixelDepth = gSavedSettings.getBOOL("IgnorePixelDepth");
-	// <CV:David>
-	U32 output_type = gSavedSettings.getU32("OutputType");
-	gOutputType = output_type;
-	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
-	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
-	// </CV:David>
 
 	LLViewerWindow::Params window_params;
 	window_params
@@ -3478,7 +3484,7 @@ bool LLAppViewer::initWindow()
 		.min_height(gSavedSettings.getU32("MinWindowHeight"))
 		.fullscreen(gSavedSettings.getBOOL("FullScreen"))
 		.ignore_pixel_depth(ignorePixelDepth)
-		.output_type(output_type);
+		.output_type(gOutputType);
 
 	gViewerWindow = new LLViewerWindow(window_params);
 

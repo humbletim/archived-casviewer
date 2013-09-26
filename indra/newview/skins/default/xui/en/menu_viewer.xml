@@ -1092,7 +1092,8 @@
 		</menu>
       <menu_item_check
        label="Stereoscopic 3D"
-       name="Stereoscopic 3D">
+       name="stereoscopic_3d"
+       shortcut="control|alt|3">
         <menu_item_check.on_check
          function="World.CheckStereoscopic3D" />
         <menu_item_check.on_click

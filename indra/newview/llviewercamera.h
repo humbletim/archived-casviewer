@@ -111,6 +111,7 @@ public:
 	LLVector3 roundToPixel(const LLVector3 &pos_agent);
 
 	// Sets the current matrix
+	void setView(F32 vertical_fov_rads, BOOL stereo_update_simulator);  // <CV:David>
 	/* virtual */ void setView(F32 vertical_fov_rads);
 
 	void setDefaultFOV(F32 fov) ;
@@ -128,6 +129,7 @@ public:
 	S16 getZoomSubRegion() { return mZoomSubregion; } 
 
 	// <CV:David> Stereoscopic 3D
+	void calcMonoValues();
 	void calcStereoValues();
 	void moveToLeftEye();
 	void moveToRightEye();
@@ -157,7 +159,6 @@ protected:
 	// <CV:David> Stereoscopic 3D
 	F32 mStereoCameraFOV;
 	LLVector3 mStereoCameraPosition;
-	LLVector3 mStereoPointOfInterest;
 	LLVector3 mStereoCameraDeltaLeft;
 	F32 mStereoCullCameraFOV;
 	LLVector3 mStereoCullCameraDeltaForwards;
