@@ -276,7 +276,7 @@ void FSFloaterIM::sendMsg()
 
 				if (utf8_text.find("/me ") == 0 || utf8_text.find("/me'") == 0)
 				{
-					utf8_text.insert(4,("(FS " + LLVersionInfo::getShortVersion() + skinIndicator +
+					utf8_text.insert(4,("(CAS " + LLVersionInfo::getShortVersion() + skinIndicator +
 #ifdef OPENSIM
 					" os" +
 #endif
@@ -284,7 +284,7 @@ void FSFloaterIM::sendMsg()
 				}
 				else
 				{
-					utf8_text.insert(0,("(FS " + LLVersionInfo::getShortVersion() + skinIndicator +
+					utf8_text.insert(0,("(CAS " + LLVersionInfo::getShortVersion() + skinIndicator +
 #ifdef OPENSIM
 					" os" +
 #endif
