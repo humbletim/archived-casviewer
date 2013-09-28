@@ -938,7 +938,6 @@ BOOL LLViewerCamera::areVertsVisible(LLViewerObject* volumep, BOOL all_verts)
 	{
 		mSimulatorFOV = vertical_fov_rads;
 	// </CV:David>
-llinfos << "Send FOV to simulator: " << vertical_fov_rads << llendl;
 		// send the new value to the simulator
 		LLMessageSystem* msg = gMessageSystem;
 		msg->newMessageFast(_PREHASH_AgentFOV);
