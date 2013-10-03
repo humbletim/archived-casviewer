@@ -7713,49 +7713,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	}
 
 	// <CV:David>
-	if (gRift3DEnabled)
-	{
-		LLGLSLShader* shader = &gRiftDistortProgram;
-		shader->bind();
-	
-		S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
-		if (channel > -1)
-		{
-			mScreen.bindTexture(0, channel);
-			gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
-		}
-
-		gGLViewport[0] = gRiftCurrentEye * gRiftHFrame;
-		gGLViewport[1] = 0;
-		gGLViewport[2] = gRiftHFrame;
-		gGLViewport[3] = gRiftVFrame;
-		glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-
-		F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
-		F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
-		F32 lensCenterV = gRiftVFrame / 2.f;
-
-		shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, gRiftHFrame, gRiftVFrame);
-		shader->uniform2f(LLShaderMgr::RIFT_SAMPLE_SIZE, gRiftHSample, gRiftVSample);
-		shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
-		shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, gRiftHFrame / 2.f, gRiftAspect * gRiftVFrame / 2.f);
-		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_IN, lensCenterH, lensCenterV);
-		shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_OUT, lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
-		shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
-
-		gGL.begin(LLRender::TRIANGLE_STRIP);
-			gGL.vertex2f(-1,-1);
-			gGL.vertex2f(-1,3);
-			gGL.vertex2f(3,-1);
-		gGL.end();
-		gGL.flush();
-
-		shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
-		shader->unbind();
-	}
-	// </CV:David>
-
-	// <CV:David>
 	//if (LLRenderTarget::sUseFBO)
 	if (!gRift3DEnabled && LLRenderTarget::sUseFBO)
 	// </CV:David>
@@ -7775,6 +7732,64 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkTextureChannels();
 
 }
+
+// <CV:David>
+void LLPipeline:: riftDistort()
+{
+	gGL.matrixMode(LLRender::MM_PROJECTION);
+	gGL.pushMatrix();
+	gGL.loadIdentity();
+	gGL.matrixMode(LLRender::MM_MODELVIEW);
+	gGL.pushMatrix();
+	gGL.loadIdentity();
+
+	LLGLDisable blend(GL_BLEND);
+	LLGLDisable test(GL_ALPHA_TEST);
+
+	LLGLSLShader* shader = &gRiftDistortProgram;
+	shader->bind();
+	
+	S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+	if (channel > -1)
+	{
+		mScreen.bindTexture(0, channel);
+		gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
+	}
+
+	gGLViewport[0] = gRiftCurrentEye * gRiftHFrame;
+	gGLViewport[1] = 0;
+	gGLViewport[2] = gRiftHFrame;
+	gGLViewport[3] = gRiftVFrame;
+	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+
+	F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
+	F32 lensCenterV = gRiftVFrame / 2.f;
+
+	shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, gRiftHFrame, gRiftVFrame);
+	shader->uniform2f(LLShaderMgr::RIFT_SAMPLE_SIZE, gRiftHSample, gRiftVSample);
+	shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
+	shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, gRiftHFrame / 2.f, gRiftAspect * gRiftVFrame / 2.f);
+	shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_IN, lensCenterH, lensCenterV);
+	shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_OUT, lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
+	shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
+
+	gGL.begin(LLRender::TRIANGLE_STRIP);
+		gGL.vertex2f(-1,-1);
+		gGL.vertex2f(-1,3);
+		gGL.vertex2f(3,-1);
+	gGL.end();
+	gGL.flush();
+
+	shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+	shader->unbind();
+
+	gGL.matrixMode(LLRender::MM_PROJECTION);
+	gGL.popMatrix();
+	gGL.matrixMode(LLRender::MM_MODELVIEW);
+	gGL.popMatrix();
+}
+// </CV:David>
 
 static LLFastTimer::DeclareTimer FTM_BIND_DEFERRED("Bind Deferred");
 

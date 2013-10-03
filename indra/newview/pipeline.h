@@ -144,6 +144,7 @@ public:
 	void generateImpostor(LLVOAvatar* avatar);
 	void bindScreenToTexture();
 	void renderBloom(BOOL for_snapshot, F32 zoom_factor = 1.f, int subfield = 0);
+	void riftDistort();  // <CV:David>
 
 	void init();
 	void cleanup();

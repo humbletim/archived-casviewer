@@ -1456,6 +1456,13 @@ void render_ui(F32 zoom_factor, int subfield)
 		{
 			gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
 		}
+
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			gPipeline.mScreen.bindTarget();
+		}
+		// </CV:David>
 		
 		// <CV:David>
 		//render_hud_elements();
@@ -1465,6 +1472,7 @@ void render_ui(F32 zoom_factor, int subfield)
 			render_hud_elements();
 			render_hud_attachments();
 		}
+		// </CV:David>
 	}
 
 	LLGLSDefault gls_default;
@@ -1501,6 +1509,7 @@ void render_ui(F32 zoom_factor, int subfield)
 			{
 				render_ui_2d();
 			}
+			// </CV:David>
 			LLGLState::checkStates();
 		}
 		gGL.flush();
@@ -1512,6 +1521,14 @@ void render_ui(F32 zoom_factor, int subfield)
 		}
 
 		LLVertexBuffer::unbind();
+
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			gPipeline.mScreen.flush();
+			gPipeline.riftDistort();
+		}
+		// </CV:David>
 	}
 
 	if (!gSnapshot)
