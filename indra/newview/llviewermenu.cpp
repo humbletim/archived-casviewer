@@ -4680,6 +4680,10 @@ void handle_reset_view()
 		}
 		else
 		{
+			if (LLViewerJoystick::getInstance()->getOverrideCamera())
+			{
+				LLViewerJoystick::getInstance()->setOverrideCamera(FALSE);
+			}
 			gAgentCamera.changeCameraToMouselook(TRUE);
 			return;
 		}
