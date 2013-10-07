@@ -3632,28 +3632,6 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	}
 }
 
-// <CV:David>
-void LLViewerWindow::setRiftlookRect(U32 render_type)
-{
-	S32 width = mWindowRectRaw.getWidth();
-	if (render_type == RENDER_RIFT_LEFT)
-	{
-		mWorldViewRectRaw.mLeft = 0;
-		mWorldViewRectRaw.mRight = width / 2;
-	}
-	else if (render_type == RENDER_RIFT_RIGHT)
-	{
-		mWorldViewRectRaw.mLeft = width / 2;
-		mWorldViewRectRaw.mRight = width;
-	}
-	else
-	{
-		mWorldViewRectRaw.mLeft = 0;
-		mWorldViewRectRaw.mRight = width;
-	}
-}
-// </CV:David>
-
 void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
@@ -4967,26 +4945,10 @@ void LLViewerWindow::setup2DRender()
 
 void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset)
 {
-	// <CV:David>
-	//gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
-	//gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
-	//gGLViewport[2] = mWindowRectRaw.getWidth();
-	//gGLViewport[3] = mWindowRectRaw.getHeight();
-	if (!gRift3DEnabled)
-	{
-		gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
-		gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
-		gGLViewport[2] = mWindowRectRaw.getWidth();
-		gGLViewport[3] = mWindowRectRaw.getHeight();
-	}
-	else
-	{
-		gGLViewport[0] = mWorldViewRectRaw.mLeft + x_offset;
-		gGLViewport[1] = mWorldViewRectRaw.mBottom + y_offset;
-		gGLViewport[2] = mWorldViewRectRaw.getWidth();
-		gGLViewport[3] = mWorldViewRectRaw.getHeight();
-	}
-	// </CV:David>
+	gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
+	gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
+	gGLViewport[2] = mWindowRectRaw.getWidth();
+	gGLViewport[3] = mWindowRectRaw.getHeight();
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 

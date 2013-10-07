@@ -709,7 +709,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Left eye ...
 			gRiftCurrentEye = 0;
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			gViewerWindow->setRiftlookRect(RENDER_RIFT_LEFT);
 			render_frame(RENDER_RIFT_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();  // Note: UI rendering code flushes output to the framebuffer.
@@ -717,12 +716,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			gRiftCurrentEye = 1;
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			gViewerWindow->setRiftlookRect(RENDER_RIFT_RIGHT);
 			render_frame(RENDER_RIFT_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
-
-			gViewerWindow->setRiftlookRect(0);
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{

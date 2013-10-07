@@ -9902,7 +9902,7 @@ void setRiftlook(bool on)
 		}
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
-			gViewerWindow->reshape(gRiftHSample * 2, gRiftVSample);
+			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
 		}
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);

@@ -7493,6 +7493,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.bindTarget();
 			}
+			// <CV:David>
+			else if (gRift3DEnabled)
+			{
+				mScreen.bindTarget();  // Reuse mScreen FBO.
+			}
+			// </CV:David>
 			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
 			
 			bindDeferredShader(*shader);
@@ -7521,6 +7527,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.flush();
 			}
+			// <CV:David>
+			else if (gRift3DEnabled)
+			{
+				mScreen.flush();
+			}
+			// </CV:David>
 		}
 
 		if (multisample)
@@ -7655,8 +7667,15 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
-		buff->setBuffer(mask);
-		buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		// <CV:David>
+		//buff->setBuffer(mask);
+		//buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		if (!gRift3DEnabled)
+		{
+			buff->setBuffer(mask);
+			buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		}
+		// </CV:David>
 		
 		if (LLGLSLShader::sNoFixedFunction)
 		{
