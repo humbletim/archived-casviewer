@@ -1460,12 +1460,11 @@ void render_ui(F32 zoom_factor, int subfield)
 		}
 		// </CV:David>
 		
+		render_hud_elements();
 		// <CV:David>
-		//render_hud_elements();
 		//render_hud_attachments();
 		if (!gRift3DEnabled)
 		{
-			render_hud_elements();
 			render_hud_attachments();
 		}
 		// </CV:David>
