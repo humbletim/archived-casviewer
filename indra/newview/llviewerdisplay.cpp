@@ -1498,13 +1498,7 @@ void render_ui(F32 zoom_factor, int subfield)
 				render_disconnected_background();
 			}
 
-			// <CV:David>
-			//render_ui_2d();
-			if (!gRift3DEnabled)
-			{
-				render_ui_2d();
-			}
-			// </CV:David>
+			render_ui_2d();
 			LLGLState::checkStates();
 		}
 		gGL.flush();
@@ -1643,6 +1637,16 @@ void render_ui_3d()
 
 void render_ui_2d()
 {
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		gPipeline.mScreen.flush();
+		gPipeline.mUIScreen.bindTarget();
+		gGL.setColorMask(true, true);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	// </CV:David>
+
 	LLGLSUIDefault gls_ui;
 
 	/////////////////////////////////////////////////////////////
@@ -1755,7 +1759,33 @@ void render_ui_2d()
 		gViewerWindow->draw();
 	}
 
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		gPipeline.mUIScreen.flush();
 
+		gPipeline.mScreen.bindTarget();
+		gSplatTextureRectProgram.bind();
+		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+
+		S32 offset = (gRiftCurrentEye == 0) ? 90 : -90;
+		S32 width = gRiftHSample;
+		S32 height = gRiftVSample;
+		LLGLEnable blend(GL_BLEND);
+		gGL.setColorMask(true, false);
+		gGL.color4f(1,1,1,1);
+		gGL.begin(LLRender::QUADS);
+			gGL.texCoord2f(0, height);		gGL.vertex2i(offset, height);
+			gGL.texCoord2f(0, 0);			gGL.vertex2i(offset, 0);
+			gGL.texCoord2f(width, 0);		gGL.vertex2i(offset + width, 0);
+			gGL.texCoord2f(width, height);	gGL.vertex2i(offset + width, height);
+		gGL.end();
+		gGL.flush();
+
+		gSplatTextureRectProgram.unbind();
+		gPipeline.mScreen.flush();
+	}
+	// </CV:David>
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);

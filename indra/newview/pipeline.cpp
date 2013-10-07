@@ -944,7 +944,10 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		resY /= res_mod;
 	}
 
-	if (RenderUIBuffer)
+	// <CV:David>
+	//if (RenderUIBuffer)
+	if (gRift3DConfigured || RenderUIBuffer)
+	// </CV:David>
 	{
 		if (!mUIScreen.allocate(resX,resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE))
 		{
