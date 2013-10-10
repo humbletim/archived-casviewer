@@ -500,6 +500,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -3566,6 +3567,11 @@ void LLFloaterPreference::onRiftStrafeEnable()
 {
 	gRiftStrafe = getChild<LLCheckBoxCtrl>("RiftStrafe")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Strafe = " << gRiftStrafe << llendl;
+}
+
+void LLFloaterPreference::onClickResetRiftUIDepth()
+{
+	gSavedSettings.setU32("RiftUIDepth", 90);
 }
 // </CV:David>
 

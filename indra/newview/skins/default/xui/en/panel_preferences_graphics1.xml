@@ -1568,12 +1568,45 @@ Other computer configurations will likely require similar.
            function="Pref.RiftStrafeEnable" />
       </check_box>
 
+      <slider
+       control_name="RiftUIDepth"
+       decimal_digits="0"
+       label="UI depth:"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="65"
+       layout="topleft"
+       top_pad="10"
+       top="312"
+       left="54"
+       max_val="120"
+       min_val="80"
+       name="RiftUIDepth"
+       width="314"
+       label_width="100"
+       tool_tip="Adjusts the depth the UI is displayed at."/>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="50"
+       name="ResetRiftUIDepth"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftUIDepth" />
+      </button>
+
       <text
        name="DisplayRiftHelp"
        follows="left|top"
        layout="topleft"
        left="54"
-       top="312"
+       top="338"
        word_wrap="true"
        height="80"
        width="430">
@@ -1581,9 +1614,6 @@ To display on an Oculus Rift you need:
         - Your computer configured to duplicate your desktop display on the Rift.
         - Full Screen mode turned on in the Graphics > General tab.
         - Basic Shaders or better turned on in the Graphics > General tab.
-          (Advanced Lighting Model or better recommended.)
-        - Antialiasing is recommended in the Graphics > Hardware Settings tab.
-          (Requires Advanced Lighting Model to be on.)
       </text>
 
     </panel>

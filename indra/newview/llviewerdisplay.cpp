@@ -1768,7 +1768,8 @@ void render_ui_2d()
 		gSplatTextureRectProgram.bind();
 		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
 
-		S32 offset = (gRiftCurrentEye == 0) ? 90 : -90;
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 offset = (gRiftCurrentEye == 0) ? uiDepth : -uiDepth;
 		S32 width = gRiftHSample;
 		S32 height = gRiftVSample;
 		LLGLEnable blend(GL_BLEND);
