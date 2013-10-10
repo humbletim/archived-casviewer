@@ -2577,7 +2577,10 @@ void LLViewerWindow::draw()
 		LLToolMgr::getInstance()->getCurrentTool()->draw();
         // Only show Mouselookinstructions if FSShowMouselookInstruction is TRUE
 		static LLCachedControl<bool> fsShowMouselookInstructions(gSavedSettings, "FSShowMouselookInstructions");
-		if( fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		// <CV:David>
+		//if( fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		if( !gRift3DEnabled && fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		// </CV:David>
 		{
 			drawMouselookInstructions();
 			stop_glerror();
