@@ -1664,7 +1664,11 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	// the size of a window or fullscreen context may have been adjusted slightly...)
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	
-	mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	// <CV:David>
+	//mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	F32 pixel_aspect_ratio = gRift3DConfigured && p.fullscreen ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	mDisplayScale.setVec(llmax(1.f / pixel_aspect_ratio, 1.f), llmax(pixel_aspect_ratio, 1.f));
+	// </CV:David>
 	mDisplayScale *= ui_scale_factor;
 	LLUI::setScaleFactor(mDisplayScale);
 
@@ -5409,7 +5413,11 @@ void LLViewerWindow::calcDisplayScale()
 {
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	LLVector2 display_scale;
-	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	// <CV:David>
+	//mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	F32 pixel_aspect_ratio = gRift3DConfigured && mWindow->getFullscreen() ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	display_scale.setVec(llmax(1.f / pixel_aspect_ratio, 1.f), llmax(pixel_aspect_ratio, 1.f));
+	// </CV:David>
 	display_scale *= ui_scale_factor;
 
 	// limit minimum display scale
