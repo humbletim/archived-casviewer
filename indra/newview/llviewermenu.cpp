@@ -4670,16 +4670,29 @@ void handle_reset_view()
 		gAgentCamera.resetView();
 	// </FS:Zi>
 
+	// <CV:David>
+	// Esc from 3rd person to 1st person by Griff Golding.
+	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
+	{
+		if (gAgentCamera.cameraMouselook())
+		{
+			setRiftlook(FALSE);
+		}
+		else
+		{
+			if (LLViewerJoystick::getInstance()->getOverrideCamera())
+			{
+				LLViewerJoystick::getInstance()->setOverrideCamera(FALSE);
+			}
+			gAgentCamera.changeCameraToMouselook(TRUE);
+			return;
+		}
+	}
+	// </CV:David>
+
 	gAgentCamera.switchCameraPreset(CAMERA_PRESET_REAR_VIEW);
 	reset_view_final( TRUE );
 	LLFloaterCamera::resetCameraMode();
-
-	// <CV:David>
-	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
-	{
-		setRiftlook(FALSE);
-	}
-	// </CV:David>
 }
 
 // <FS:Zi> Add reset camera angles menu
