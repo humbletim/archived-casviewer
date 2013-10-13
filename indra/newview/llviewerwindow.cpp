@@ -892,20 +892,19 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	const char* buttonstatestr = "";
 	S32 x = pos.mX;
 	S32 y = pos.mY;
+	x = llround((F32)x / mDisplayScale.mV[VX]);
+	y = llround((F32)y / mDisplayScale.mV[VY]);
 	// <CV:David>
-	// Improve the mouse click location when using the Oculus Rift; not perfect but a useful improvement, e.g., for selecting a 3rd person orbit point.
-	//x = llround((F32)x / mDisplayScale.mV[VX]);
-	//y = llround((F32)y / mDisplayScale.mV[VY]);
+	S32 sample_x, sample_y;
 	if (gRift3DEnabled)
 	{
-		F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
-		x = llround(gRiftDistortionScale * ((F32)((2 * x) % gRiftHResolution) + lensOffset) / mDisplayScale.mV[VX]);
-		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
+		sample_x = llround(gRiftDistortionScale * (F32)(pos.mX % gRiftHFrame) / mDisplayScale.mV[VX]);
+		sample_y = llround(gRiftDistortionScale * (F32)pos.mY / mDisplayScale.mV[VY]);
 	}
 	else
 	{
-		x = llround((F32)x / mDisplayScale.mV[VX]);
-		y = llround((F32)y / mDisplayScale.mV[VY]);
+		sample_x = x;
+		sample_y = y;
 	}
 	// </CV:David>
 
@@ -975,7 +974,10 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 		{
 			S32 local_x;
 			S32 local_y;
-			mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
+			// <CV:David>
+			//mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
+			mouse_captor->screenPointToLocal( sample_x, sample_y, &local_x, &local_y );
+			// </CV:David>
 			if (LLView::sDebugMouseHandling)
 			{
 				llinfos << buttonname << " Mouse " << buttonstatestr << " handled by captor " << mouse_captor->getName() << llendl;
@@ -1003,12 +1005,18 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 		//}
 
 		// Mark the click as handled and return if we aren't within the root view to avoid spurious bugs
-		if( !mRootView->pointInView(x, y) )
+		// <CV:David>
+		//if( !mRootView->pointInView(x, y) )
+		if( !mRootView->pointInView(sample_x, sample_y) )
+		// <CV:David>
 		{
 			return TRUE;
 		}
 		// Give the UI views a chance to process the click
-		if( mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) )
+		// <CV:David>
+		//if( mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) )
+		if( mRootView->handleAnyMouseClick(sample_x, sample_y, mask, clicktype, down) )
+		// </CV:David>
 		{
 			if (LLView::sDebugMouseHandling)
 			{
@@ -1023,7 +1031,10 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	}
 
 	// Do not allow tool manager to handle mouseclicks if we have disconnected	
-	if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
+	// <CV:David>
+	//if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
+	if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( sample_x, sample_y, mask, clicktype, down ) )
+	// <CV:David>
 	{
 		return TRUE;
 	}
@@ -1067,6 +1078,19 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
+	// <CV:David>
+	S32 sample_x, sample_y;
+	if (gRift3DEnabled)
+	{
+		sample_x = llround(gRiftDistortionScale * (F32)(pos.mX % gRiftHFrame) / mDisplayScale.mV[VX]);
+		sample_y = llround(gRiftDistortionScale * (F32)pos.mY / mDisplayScale.mV[VY]);
+	}
+	else
+	{
+		sample_x = x;
+		sample_y = y;
+	}
+	// <CV:David>
 
 	BOOL down = TRUE;
 	BOOL handle = handleAnyMouseClick(window,pos,mask,LLMouseHandler::CLICK_RIGHT,down);
@@ -1080,7 +1104,10 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 		// If the current tool didn't process the click, we should show
 		// the pie menu.  This can be done by passing the event to the pie
 		// menu tool.
-		LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
+		// <CV:David>
+		//LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
+		LLToolPie::getInstance()->handleRightMouseDown(sample_x, sample_y, mask);
+		// <CV:David>
 		// show_context_menu( x, y, mask );
 	}
 
@@ -2964,8 +2991,12 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = getWorldViewWidthScaled() / 2;
-		S32 y = getWorldViewHeightScaled() / 2;
+		// <CV:David>
+		//S32 x = getWorldViewWidthScaled() / 2;
+		//S32 y = getWorldViewHeightScaled() / 2;
+		S32 x = gRift3DEnabled ? gRiftHFrame / 2 : getWindowWidthScaled() / 2;
+		S32 y = gRift3DEnabled ? gRiftVFrame / 2 : getWindowHeightScaled() / 2;
+		// <CV:David>
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3048,6 +3079,14 @@ void LLViewerWindow::updateUI()
 
 	S32 x = mCurrentMousePoint.mX;
 	S32 y = mCurrentMousePoint.mY;
+
+	//<CV:David>
+	if (gRift3DEnabled)
+	{
+		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame));
+		y = llround(gRiftDistortionScale * (F32)y);
+	}
+	// </CV:David>
 
 	MASK	mask = gKeyboard->currentMask(TRUE);
 
@@ -3643,14 +3682,24 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
+	// <CV:David>
+	S32 max_width = gRift3DEnabled ? gRiftHResolution : getWindowWidthScaled();
+	S32 max_height = gRift3DEnabled ? gRiftVResolution : getWindowHeightScaled();
+	// </CV:David>
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
 	}
-	else if (point.mX > getWindowWidthScaled())
+	// <CV:David>
+	//else if (point.mX > getWindowWidthScaled())
+	//{
+	//	mCurrentMousePoint.mX = getWindowWidthScaled();
+	//}
+	else if (point.mX > max_width)
 	{
-		mCurrentMousePoint.mX = getWindowWidthScaled();
+		mCurrentMousePoint.mX = max_width;
 	}
+	// </CV:David>
 	else
 	{
 		mCurrentMousePoint.mX = point.mX;
@@ -3660,10 +3709,16 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	{
 		mCurrentMousePoint.mY = 0;
 	}
-	else if (point.mY > getWindowHeightScaled() )
+	// <CV:David>
+	//else if (point.mY > getWindowHeightScaled() )
+	//{
+	//	mCurrentMousePoint.mY = getWindowHeightScaled();
+	//}
+	else if (point.mY > max_height )
 	{
-		mCurrentMousePoint.mY = getWindowHeightScaled();
+		mCurrentMousePoint.mY = max_height;
 	}
+	// <CV:David>
 	else
 	{
 		mCurrentMousePoint.mY = point.mY;
