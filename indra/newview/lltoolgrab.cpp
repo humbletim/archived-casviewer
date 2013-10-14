@@ -60,6 +60,10 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 const S32 SLOP_DIST_SQ = 4;
 
 // Override modifier key behavior with these buttons
@@ -126,18 +130,33 @@ BOOL LLToolGrab::handleDoubleClick(S32 x, S32 y, MASK mask)
 
 BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 {
+	// <CV:David>
+	S32 sample_x = x;
+	if (gRift3DEnabled)
+	{
+		S32 delta_x = llround((gSavedSettings.getF32("RiftEyeSeparation") / (2000.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
+		sample_x = (gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? sample_x + delta_x : sample_x - delta_x;
+	}
+	// </CV:David>
+
 	if (gDebugClicks)
 	{
 		llinfos << "LLToolGrab handleMouseDown" << llendl;
 	}
 
 	// call the base class to propogate info to sim
-	LLTool::handleMouseDown(x, y, mask);
+	// <CV:David>
+	//LLTool::handleMouseDown(x, y, mask);
+	LLTool::handleMouseDown(sample_x, y, mask);
+	// </CV:David>
 	
 	if (!gAgent.leftButtonGrabbed())
 	{
 		// can grab transparent objects (how touch event propagates, scripters rely on this)
-		gViewerWindow->pickAsync(x, y, mask, pickCallback, TRUE);
+		// <CV:David>
+		//gViewerWindow->pickAsync(x, y, mask, pickCallback, TRUE);
+		gViewerWindow->pickAsync(sample_x, y, mask, pickCallback, TRUE);
+		// </CV:David>
 	}
 	return TRUE;
 }
