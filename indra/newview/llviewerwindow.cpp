@@ -900,6 +900,8 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	{
 		sample_x = llround(gRiftDistortionScale * (F32)(pos.mX % gRiftHFrame) / mDisplayScale.mV[VX]);
 		sample_y = llround(gRiftDistortionScale * (F32)pos.mY / mDisplayScale.mV[VY]);
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		sample_x = sample_x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	else
 	{
@@ -1084,6 +1086,8 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 	{
 		sample_x = llround(gRiftDistortionScale * (F32)(pos.mX % gRiftHFrame) / mDisplayScale.mV[VX]);
 		sample_y = llround(gRiftDistortionScale * (F32)pos.mY / mDisplayScale.mV[VY]);
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		sample_x = sample_x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	else
 	{
@@ -3085,6 +3089,8 @@ void LLViewerWindow::updateUI()
 	{
 		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame));
 		y = llround(gRiftDistortionScale * (F32)y);
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	// </CV:David>
 

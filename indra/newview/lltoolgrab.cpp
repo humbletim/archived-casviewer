@@ -136,6 +136,8 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 	{
 		S32 delta_x = llround((gSavedSettings.getF32("RiftEyeSeparation") / (2000.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
 		sample_x = (gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? sample_x + delta_x : sample_x - delta_x;
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		sample_x = sample_x - ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	// </CV:David>
 
