@@ -131,13 +131,12 @@ BOOL LLToolGrab::handleDoubleClick(S32 x, S32 y, MASK mask)
 BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 {
 	// <CV:David>
-	S32 sample_x = x;
 	if (gRift3DEnabled)
 	{
 		S32 delta_x = llround((gSavedSettings.getF32("RiftEyeSeparation") / (2000.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
-		sample_x = (gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? sample_x + delta_x : sample_x - delta_x;
+		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? delta_x : -delta_x);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		sample_x = sample_x - ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		x = x - ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	// </CV:David>
 
@@ -147,18 +146,12 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 	}
 
 	// call the base class to propogate info to sim
-	// <CV:David>
-	//LLTool::handleMouseDown(x, y, mask);
-	LLTool::handleMouseDown(sample_x, y, mask);
-	// </CV:David>
+	LLTool::handleMouseDown(x, y, mask);
 	
 	if (!gAgent.leftButtonGrabbed())
 	{
 		// can grab transparent objects (how touch event propagates, scripters rely on this)
-		// <CV:David>
-		//gViewerWindow->pickAsync(x, y, mask, pickCallback, TRUE);
-		gViewerWindow->pickAsync(sample_x, y, mask, pickCallback, TRUE);
-		// </CV:David>
+		gViewerWindow->pickAsync(x, y, mask, pickCallback, TRUE);
 	}
 	return TRUE;
 }

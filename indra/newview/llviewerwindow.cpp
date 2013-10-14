@@ -892,21 +892,20 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	const char* buttonstatestr = "";
 	S32 x = pos.mX;
 	S32 y = pos.mY;
-	x = llround((F32)x / mDisplayScale.mV[VX]);
-	y = llround((F32)y / mDisplayScale.mV[VY]);
 	// <CV:David>
-	S32 sample_x, sample_y;
+	//x = llround((F32)x / mDisplayScale.mV[VX]);
+	//y = llround((F32)y / mDisplayScale.mV[VY]);
 	if (gRift3DEnabled)
 	{
-		sample_x = llround(gRiftDistortionScale * (F32)(pos.mX % gRiftHFrame) / mDisplayScale.mV[VX]);
-		sample_y = llround(gRiftDistortionScale * (F32)pos.mY / mDisplayScale.mV[VY]);
+		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame) / mDisplayScale.mV[VX]);
+		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		sample_x = sample_x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	else
 	{
-		sample_x = x;
-		sample_y = y;
+		x = llround((F32)x / mDisplayScale.mV[VX]);
+		y = llround((F32)y / mDisplayScale.mV[VY]);
 	}
 	// </CV:David>
 
@@ -976,10 +975,7 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 		{
 			S32 local_x;
 			S32 local_y;
-			// <CV:David>
-			//mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
-			mouse_captor->screenPointToLocal( sample_x, sample_y, &local_x, &local_y );
-			// </CV:David>
+			mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
 			if (LLView::sDebugMouseHandling)
 			{
 				llinfos << buttonname << " Mouse " << buttonstatestr << " handled by captor " << mouse_captor->getName() << llendl;
@@ -1007,18 +1003,12 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 		//}
 
 		// Mark the click as handled and return if we aren't within the root view to avoid spurious bugs
-		// <CV:David>
-		//if( !mRootView->pointInView(x, y) )
-		if( !mRootView->pointInView(sample_x, sample_y) )
-		// <CV:David>
+		if( !mRootView->pointInView(x, y) )
 		{
 			return TRUE;
 		}
 		// Give the UI views a chance to process the click
-		// <CV:David>
-		//if( mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) )
-		if( mRootView->handleAnyMouseClick(sample_x, sample_y, mask, clicktype, down) )
-		// </CV:David>
+		if( mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) )
 		{
 			if (LLView::sDebugMouseHandling)
 			{
@@ -1033,10 +1023,7 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	}
 
 	// Do not allow tool manager to handle mouseclicks if we have disconnected	
-	// <CV:David>
-	//if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
-	if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( sample_x, sample_y, mask, clicktype, down ) )
-	// <CV:David>
+	if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
 	{
 		return TRUE;
 	}
@@ -1078,21 +1065,20 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 {
 	S32 x = pos.mX;
 	S32 y = pos.mY;
-	x = llround((F32)x / mDisplayScale.mV[VX]);
-	y = llround((F32)y / mDisplayScale.mV[VY]);
 	// <CV:David>
-	S32 sample_x, sample_y;
+	//x = llround((F32)x / mDisplayScale.mV[VX]);
+	//y = llround((F32)y / mDisplayScale.mV[VY]);
 	if (gRift3DEnabled)
 	{
-		sample_x = llround(gRiftDistortionScale * (F32)(pos.mX % gRiftHFrame) / mDisplayScale.mV[VX]);
-		sample_y = llround(gRiftDistortionScale * (F32)pos.mY / mDisplayScale.mV[VY]);
+		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame) / mDisplayScale.mV[VX]);
+		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		sample_x = sample_x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
 	}
 	else
 	{
-		sample_x = x;
-		sample_y = y;
+		x = llround((F32)x / mDisplayScale.mV[VX]);
+		y = llround((F32)y / mDisplayScale.mV[VY]);
 	}
 	// <CV:David>
 
@@ -1108,10 +1094,7 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 		// If the current tool didn't process the click, we should show
 		// the pie menu.  This can be done by passing the event to the pie
 		// menu tool.
-		// <CV:David>
-		//LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
-		LLToolPie::getInstance()->handleRightMouseDown(sample_x, sample_y, mask);
-		// <CV:David>
+		LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
 		// show_context_menu( x, y, mask );
 	}
 
