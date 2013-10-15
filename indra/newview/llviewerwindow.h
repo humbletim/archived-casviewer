@@ -429,6 +429,9 @@ private:
 	void			schedulePick(LLPickInfo& pick_info);
 	S32				getChatConsoleBottomPad(); // Vertical padding for child console rect, varied by bottom clutter
 	LLRect			getChatConsoleRect(); // Get optimal cosole rect.
+	// <CV:David>
+	LLVector2		riftUndistort(U32 x, U32 y);
+	// </CV:David>
 
 private:
 	LLWindow*		mWindow;						// graphical window object

@@ -897,10 +897,11 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	//y = llround((F32)y / mDisplayScale.mV[VY]);
 	if (gRift3DEnabled)
 	{
-		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame) / mDisplayScale.mV[VX]);
-		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
+		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
 	}
 	else
 	{
@@ -1070,10 +1071,11 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 	//y = llround((F32)y / mDisplayScale.mV[VY]);
 	if (gRift3DEnabled)
 	{
-		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame) / mDisplayScale.mV[VX]);
-		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
+		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
 	}
 	else
 	{
@@ -3070,10 +3072,11 @@ void LLViewerWindow::updateUI()
 	//<CV:David>
 	if (gRift3DEnabled)
 	{
-		x = llround(gRiftDistortionScale * (F32)(x % gRiftHFrame));
-		y = llround(gRiftDistortionScale * (F32)y);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = fboXY[0] + uiDelta;
+		y = fboXY[1];
 	}
 	// </CV:David>
 
@@ -5534,6 +5537,38 @@ LLRect LLViewerWindow::getChatConsoleRect()
 
 	return console_rect;
 }
+
+// <CV:David>
+LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
+{
+	// Convert screen coordinate in Rift distorted image to sample coordinate in undistorted sample frame buffer.
+
+	LLVector2 coord((F32)(x % gRiftHFrame) + 0.5, (F32)y + 0.5);
+
+	F32 lensOffset = (x > gRiftHFrame) ? -gRiftLensOffset : gRiftLensOffset;
+	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
+	F32 lensCenterV = gRiftVFrame / 2.f;
+
+	LLVector2 scale_in, scale_out, lens_center_in, lens_center_out;
+	scale_in = LLVector2(2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
+	scale_out = LLVector2(gRiftHFrame / 2.f, (gRiftAspect * gRiftVFrame) / 2.f);
+	lens_center_in = LLVector2(lensCenterH, lensCenterV);
+	lens_center_out = LLVector2(lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
+
+	LLVector2 theta = (coord - lens_center_in);
+	theta[0] = theta[0] * scale_in[0];
+	theta[1] = theta[1] * scale_in[1];  // Scales to [-1, 1]
+
+	F32 rSq =  theta * theta;
+
+	LLVector2 rVector = theta * (gRiftDistortionK[0] + gRiftDistortionK[1] * rSq + gRiftDistortionK[2] * rSq * rSq + gRiftDistortionK[3] * rSq * rSq * rSq);
+
+	coord = lens_center_out + LLVector2(rVector[0] * scale_out[0], rVector[1] * scale_out[1]); 
+
+	return LLVector2((U32)llclamp(llround(coord[0]), 0, (S32)gRiftHSample), (U32)llclamp(llround(coord[1]), 0, (S32)gRiftVSample));
+}
+// </CV:David>
+
 //----------------------------------------------------------------------------
 
 
