@@ -7784,7 +7784,7 @@ void LLPipeline:: riftDistort()
 	gGLViewport[3] = gRiftVFrame;
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 
-	F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+	F32 lensOffset = (1 - gRiftCurrentEye * 2) * gRiftLensOffset;
 	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
 	F32 lensCenterV = gRiftVFrame / 2.f;
 

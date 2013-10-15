@@ -2981,7 +2981,7 @@ void LLViewerWindow::moveCursorToCenter()
 		// <CV:David>
 		//S32 x = getWorldViewWidthScaled() / 2;
 		//S32 y = getWorldViewHeightScaled() / 2;
-		S32 x = gRift3DEnabled ? gRiftHFrame / 2 : getWindowWidthScaled() / 2;
+		S32 x = gRift3DEnabled ? gRiftHFrame / 2 + llround(gRiftLensOffset) : getWindowWidthScaled() / 2;
 		S32 y = gRift3DEnabled ? gRiftVFrame / 2 : getWindowHeightScaled() / 2;
 		// <CV:David>
 	
