@@ -2192,7 +2192,7 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	// <CV:David>
 	if (gRift3DEnabled)
 	{
-		OVR::Quatf hmdOrientation = gRiftFusionResult.GetOrientation();
+		OVR::Quatf hmdOrientation = gRiftFusionResult->GetOrientation();
 		float yaw, pitch, roll;
 		hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
 		mLastRiftYaw = yaw;
@@ -2976,7 +2976,7 @@ void LLAgentCamera::loadCameraPosition()
 
 void LLAgentCamera::calcRiftValues()
 {
-	OVR::Quatf hmdOrientation = gRiftFusionResult.GetOrientation();
+	OVR::Quatf hmdOrientation = gRiftFusionResult->GetOrientation();
 	float yaw, roll, pitch;
 	hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
 

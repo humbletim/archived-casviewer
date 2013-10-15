@@ -410,7 +410,7 @@ extern BOOL gPeriodicSlowFrame;
 extern OVR::Ptr<OVR::DeviceManager> gRiftManager;
 extern OVR::Ptr<OVR::HMDDevice> gRiftHMD;
 extern OVR::Ptr<OVR::SensorDevice> gRiftSensor;
-extern OVR::SensorFusion gRiftFusionResult;
+extern OVR::SensorFusion* gRiftFusionResult;
 extern OVR::HMDInfo gRiftHMDInfo;
 extern U32 gRiftHResolution;
 extern U32 gRiftVResolution;
