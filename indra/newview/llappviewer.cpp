@@ -355,7 +355,7 @@ BOOL gLogoutInProgress = FALSE;
 OVR::Ptr<OVR::DeviceManager> gRiftManager;
 OVR::Ptr<OVR::HMDDevice> gRiftHMD;
 OVR::Ptr<OVR::SensorDevice> gRiftSensor;
-OVR::SensorFusion gRiftFusionResult;
+OVR::SensorFusion* gRiftFusionResult;
 OVR::HMDInfo gRiftHMDInfo;
 U32 gRiftHResolution;
 U32 gRiftVResolution;
@@ -1121,6 +1121,7 @@ bool LLAppViewer::init()
 		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
 
 		OVR::System::Init();
+		gRiftFusionResult = new OVR::SensorFusion();
 		gRiftManager = *OVR::DeviceManager::Create();
 		gRiftHMD = *gRiftManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
 
@@ -1139,7 +1140,7 @@ bool LLAppViewer::init()
 		if (gRiftSensor)
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
-			gRiftFusionResult.AttachToSensor(gRiftSensor);
+			gRiftFusionResult->AttachToSensor(gRiftSensor);
 
 			OVR::SensorFusion sensorFusion;
 			sensorFusion.AttachToSensor(gRiftSensor);
