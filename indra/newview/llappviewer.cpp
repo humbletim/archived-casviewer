@@ -1113,6 +1113,8 @@ bool LLAppViewer::init()
 		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
 		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
 		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
+		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
 	}
 
 	BOOL riftHMDInfoLoaded = FALSE;

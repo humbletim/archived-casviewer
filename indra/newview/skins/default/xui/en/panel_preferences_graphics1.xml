@@ -1372,7 +1372,7 @@
           name="DisplayRift"
           value="2"
           tool_tip="Select this if you have an Oculus Rift VR headset you want to use."
-          top_pad="152"
+          top_pad="50"
           width="150" />
       </radio_group>
 
@@ -1466,22 +1466,6 @@
          function="Pref.ResetScreenDistance" />
       </button>
 
-      <text
-       name="DisplayStereoHelp"
-       follows="left|top"
-       layout="topleft"
-       left="54"
-       top="118"
-       word_wrap="true"
-       height="108">
-To display in stereoscopic 3D on Windows using a GeForce graphics card with NVIDIA 3D Vision you need:
-        - GeForce driver 314.07 or later.
-        - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
-        - Your monitor set to 120Hz.
-        - Full Screen mode turned on in the Graphics > General tab.
-Other computer configurations will likely require similar.
-      </text>
-
       <slider
        control_name="RiftEyeSeparation"
        decimal_digits="0"
@@ -1492,7 +1476,7 @@ Other computer configurations will likely require similar.
        initial_value="65"
        layout="topleft"
        top_pad="10"
-       top="240"
+       top="138"
        left="54"
        max_val="80"
        min_val="50"
@@ -1562,7 +1546,7 @@ Other computer configurations will likely require similar.
        left="200"
        name="RiftStrafe"
        tool_tip="Shift-left and shift-right turn."
-       top="265"
+       top="163"
        width="180">
         <check_box.commit_callback
            function="Pref.RiftStrafeEnable" />
@@ -1578,7 +1562,7 @@ Other computer configurations will likely require similar.
        initial_value="65"
        layout="topleft"
        top_pad="10"
-       top="312"
+       top="210"
        left="54"
        max_val="120"
        min_val="80"
@@ -1601,21 +1585,32 @@ Other computer configurations will likely require similar.
          function="Pref.ResetRiftUIDepth" />
       </button>
 
-      <text
-       name="DisplayRiftHelp"
-       follows="left|top"
-       layout="topleft"
-       left="54"
-       top="338"
-       word_wrap="true"
-       height="80"
-       width="430">
-To display on an Oculus Rift you need:
-        - Your computer configured to duplicate your desktop display on the Rift.
-        - Full Screen mode turned on in the Graphics > General tab.
-        - Basic Shaders or better turned on in the Graphics > General tab.
-      </text>
-
+      <radio_group
+      control_name="RiftMouseMode"
+      follows="left|top"
+      height="50"
+      layout="topleft"
+      name="RiftMouseMode"
+      left="54"
+      top_pad="6"
+      width="440">
+        <radio_group.commit_callback
+          function="Pref.ChangeRiftMouseMode" />
+        <radio_item
+          height="16"
+          label="Mouse moves cursor; Alt-mouse moves view"
+          layout="topleft"
+          name="MouseCursor"
+          value="0"
+          width="50" />
+        <radio_item
+          height="16"
+          label="Mouse moves view; Alt-mouse moves cursor"
+          layout="topleft"
+          name="MouseCamera"
+          value="1"
+          width="50" />
+      </radio_group>
     </panel>
   </tab_container>
 </panel>

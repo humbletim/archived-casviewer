@@ -222,6 +222,7 @@ public:
 	void onChangeRiftOperationMode();
 	void onRiftStrafeEnable();
 	void onClickResetRiftUIDepth();
+	void onChangeRiftMouseMode();
 	// </CV:David>
 
 private:

@@ -434,7 +434,17 @@ BOOL LLToolGrab::handleHover(S32 x, S32 y, MASK mask)
 {
 	if (!gViewerWindow->getLeftMouseDown())
 	{
-		gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+		// <CV:David>
+		//gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+		if (!gRift3DEnabled)
+		{
+			gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+		}
+		else
+		{
+			LLToolPie::getInstance()->handleHover(x, y, mask);
+		}
+		// </CV:David>
 		setMouseCapture(FALSE);
 		return TRUE;
 	}
@@ -914,7 +924,17 @@ void LLToolGrab::handleHoverInactive(S32 x, S32 y, MASK mask)
 {
 	// JC - TODO - change cursor based on gGrabBtnVertical, gGrabBtnSpin
 	lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (inactive-not over editable object)" << llendl;		
-	gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+	// <CV:David>
+	//gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+	if (!gRift3DEnabled || !gRiftMouseCursor)
+	{
+		gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+	}
+	else
+	{
+		gViewerWindow->setCursor(UI_CURSOR_ARROW);
+	}
+	// </CV:David>
 }
 
 // User is trying to do something that's not allowed.
