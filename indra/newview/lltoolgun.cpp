@@ -99,8 +99,11 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 
 		// get mouse movement delta
 		S32 dx = -gViewerWindow->getCurrentMouseDX();
-		S32 dy = -gViewerWindow->getCurrentMouseDY();
-		
+		// <CV:David>
+		//S32 dy = -gViewerWindow->getCurrentMouseDY();
+		S32 dy = (gRift3DEnabled && gRiftMouseHorizontal) ? 0 : -gViewerWindow->getCurrentMouseDY();
+		// </CV:David>
+
 		if (dx != 0 || dy != 0)
 		{
 			// ...actually moved off center

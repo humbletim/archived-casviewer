@@ -1115,6 +1115,8 @@ bool LLAppViewer::init()
 		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
 		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
 		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
+		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << LL_ENDL;
 	}
 
 	BOOL riftHMDInfoLoaded = FALSE;

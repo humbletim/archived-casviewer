@@ -62,6 +62,7 @@ extern BOOL gRiftStrafe;
 const U32 RIFT_MOUSE_CURSOR = 0;
 const U32 RIFT_MOUSE_CAMERA = 1;
 extern BOOL gRiftMouseCursor;
+extern BOOL gRiftMouseHorizontal;
 extern S32 gRiftCurrentEye;
 const U32 RENDER_NORMAL = 0;
 const U32 RENDER_STEREO_LEFT = 1;

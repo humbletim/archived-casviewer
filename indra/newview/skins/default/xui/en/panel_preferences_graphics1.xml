@@ -1611,6 +1611,20 @@
           value="1"
           width="50" />
       </radio_group>
+      <check_box
+       control_name="RiftMouseHorizontal"
+       height="16"
+       initial_value="false"
+       label="Mouse moves view horizontally only"
+       layout="topleft"
+       left="54"
+       name="RiftMouseHorizontal"
+       tool_tip="Mouse moves Riftlook view horizontally only."
+       top_pad="0"
+       width="50">
+        <check_box.commit_callback
+           function="Pref.RiftMouseHorizontalEnable" />
+      </check_box>
     </panel>
   </tab_container>
 </panel>

@@ -132,6 +132,7 @@ BOOL gRift3DConfigured = FALSE;
 BOOL gRiftStanding = FALSE;
 BOOL gRiftStrafe = FALSE;
 BOOL gRiftMouseCursor = TRUE;
+BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
 // </CV:David>
 

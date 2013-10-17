@@ -502,6 +502,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
+	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -3580,6 +3581,12 @@ void LLFloaterPreference::onChangeRiftMouseMode()
 	U32 riftMouseMode = getChild<LLRadioGroup>("RiftMouseMode")->getValue().asInteger();
 	gRiftMouseCursor = riftMouseMode == RIFT_MOUSE_CURSOR;
 	llinfos << "Oculus Rift: Mouse mode = " << riftMouseMode << llendl;
+}
+
+void LLFloaterPreference::onRiftMouseHorizontalEnable()
+{
+	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
 }
 // </CV:David>
 

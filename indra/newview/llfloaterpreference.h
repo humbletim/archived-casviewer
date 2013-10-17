@@ -223,6 +223,7 @@ public:
 	void onRiftStrafeEnable();
 	void onClickResetRiftUIDepth();
 	void onChangeRiftMouseMode();
+	void onRiftMouseHorizontalEnable();
 	// </CV:David>
 
 private:
