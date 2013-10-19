@@ -447,7 +447,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// of TeleportRequest to the source simulator
 
 			// Reset view angle if in mouselook. Fixes camera angle getting stuck on teleport. -Zi
-			if(gAgentCamera.cameraMouselook())
+			// <CV:David>
+			//if(gAgentCamera.cameraMouselook())
+			if (gAgentCamera.cameraMouselook() && !gRift3DEnabled)
+			// <CV:David>
 			{
 				// If someone knows how to call "View.ZoomDefault" by hand, we should do that instead of
 				// replicating the behavior here. -Zi

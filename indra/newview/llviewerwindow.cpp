@@ -5579,7 +5579,12 @@ bool LLViewerWindow::onAlert(const LLSD& notify)
 
 	// If we're in mouselook, the mouse is hidden and so the user can't click 
 	// the dialog buttons.  In that case, change to First Person instead.
-	if( gAgentCamera.cameraMouselook() )
+	// <CV:David>
+	// But don't change if UI is shown in mouselook because user presumably knows how to use mouse.
+	// And don't change if in Riftlook because it breaks the immersion.
+	//if( gAgentCamera.cameraMouselook() )
+	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("FSShowInterfaceInMouselook") && !gRift3DEnabled)
+	// </CV:David>
 	{
 		gAgentCamera.changeCameraToDefault();
 	}

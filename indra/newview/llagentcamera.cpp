@@ -331,7 +331,13 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera, BOOL moveme
 
 	if (change_camera && !gSavedSettings.getBOOL("FreezeTime"))
 	{
-		changeCameraToDefault();
+		// <CV:David>
+		//changeCameraToDefault();
+		if (!gRift3DEnabled)
+		{
+			changeCameraToDefault();
+		}
+		// <CV:David>
 		
 		if (LLViewerJoystick::getInstance()->getOverrideCamera())
 		{
@@ -350,7 +356,13 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera, BOOL moveme
 			LLFloaterReg::hideInstance("build");
 
 			// Switch back to basic toolset
-			LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+			// <CV:David>
+			//LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+			if (!gRift3DEnabled)
+			{
+				LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+			}
+			// </CV:David>
 		}
 		
 		gViewerWindow->showCursor();
