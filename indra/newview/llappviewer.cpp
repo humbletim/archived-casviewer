@@ -372,6 +372,7 @@ U32 gRiftVFrame;
 U32 gRiftHSample;
 U32 gRiftVSample;
 F32 gRiftDistortionK[4];
+F32 gRiftLensOffset;
 // </CV:David>
 
 ////////////////////////////////////////////////////////////
@@ -1112,6 +1113,10 @@ bool LLAppViewer::init()
 		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
 		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
 		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
+		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
+		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << LL_ENDL;
 	}
 
 	BOOL riftHMDInfoLoaded = FALSE;
@@ -1212,6 +1217,7 @@ bool LLAppViewer::init()
 		gRiftVFrame = gRiftVResolution;
 		gRiftHSample = floor(gRiftDistortionScale * gRiftHFrame / 10 + 0.5) * 10;
 		gRiftVSample = floor(gRiftHSample / gRiftAspect + 0.5);
+		gRiftLensOffset = (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
 
 		llinfos << "Oculus Rift: Resolution = " << gRiftHResolution << " x " << gRiftVResolution << llendl;
 		llinfos << "Oculus Rift: Screen size = " << std::setprecision(6) << gRiftHScreenSize << " x " << gRiftVScreenSize << std::setprecision(2) << llendl;

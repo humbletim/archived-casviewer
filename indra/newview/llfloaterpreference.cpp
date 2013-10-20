@@ -500,6 +500,9 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
+	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -3566,6 +3569,24 @@ void LLFloaterPreference::onRiftStrafeEnable()
 {
 	gRiftStrafe = getChild<LLCheckBoxCtrl>("RiftStrafe")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Strafe = " << gRiftStrafe << llendl;
+}
+
+void LLFloaterPreference::onClickResetRiftUIDepth()
+{
+	gSavedSettings.setU32("RiftUIDepth", 90);
+}
+
+void LLFloaterPreference::onChangeRiftMouseMode()
+{
+	U32 riftMouseMode = getChild<LLRadioGroup>("RiftMouseMode")->getValue().asInteger();
+	gRiftMouseCursor = riftMouseMode == RIFT_MOUSE_CURSOR;
+	llinfos << "Oculus Rift: Mouse mode = " << riftMouseMode << llendl;
+}
+
+void LLFloaterPreference::onRiftMouseHorizontalEnable()
+{
+	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
 }
 // </CV:David>
 

@@ -131,6 +131,8 @@ BOOL gRift3DEnabled = FALSE;
 BOOL gRift3DConfigured = FALSE;
 BOOL gRiftStanding = FALSE;
 BOOL gRiftStrafe = FALSE;
+BOOL gRiftMouseCursor = TRUE;
+BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
 // </CV:David>
 
@@ -445,7 +447,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// of TeleportRequest to the source simulator
 
 			// Reset view angle if in mouselook. Fixes camera angle getting stuck on teleport. -Zi
-			if(gAgentCamera.cameraMouselook())
+			// <CV:David>
+			//if(gAgentCamera.cameraMouselook())
+			if (gAgentCamera.cameraMouselook() && !gRift3DEnabled)
+			// <CV:David>
 			{
 				// If someone knows how to call "View.ZoomDefault" by hand, we should do that instead of
 				// replicating the behavior here. -Zi
@@ -709,7 +714,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Left eye ...
 			gRiftCurrentEye = 0;
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			gViewerWindow->setRiftlookRect(RENDER_RIFT_LEFT);
 			render_frame(RENDER_RIFT_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();  // Note: UI rendering code flushes output to the framebuffer.
@@ -717,12 +721,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			gRiftCurrentEye = 1;
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-			gViewerWindow->setRiftlookRect(RENDER_RIFT_RIGHT);
 			render_frame(RENDER_RIFT_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
-
-			gViewerWindow->setRiftlookRect(0);
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
@@ -1456,15 +1457,22 @@ void render_ui(F32 zoom_factor, int subfield)
 		{
 			gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
 		}
-		
+
 		// <CV:David>
-		//render_hud_elements();
+		if (gRift3DEnabled)
+		{
+			gPipeline.mScreen.bindTarget();
+		}
+		// </CV:David>
+		
+		render_hud_elements();
+		// <CV:David>
 		//render_hud_attachments();
 		if (!gRift3DEnabled)
 		{
-			render_hud_elements();
 			render_hud_attachments();
 		}
+		// </CV:David>
 	}
 
 	LLGLSDefault gls_default;
@@ -1495,12 +1503,7 @@ void render_ui(F32 zoom_factor, int subfield)
 				render_disconnected_background();
 			}
 
-			// <CV:David>
-			//render_ui_2d();
-			if (!gRift3DEnabled)
-			{
-				render_ui_2d();
-			}
+			render_ui_2d();
 			LLGLState::checkStates();
 		}
 		gGL.flush();
@@ -1512,6 +1515,14 @@ void render_ui(F32 zoom_factor, int subfield)
 		}
 
 		LLVertexBuffer::unbind();
+
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			gPipeline.mScreen.flush();
+			gPipeline.riftDistort();
+		}
+		// </CV:David>
 	}
 
 	if (!gSnapshot)
@@ -1631,6 +1642,16 @@ void render_ui_3d()
 
 void render_ui_2d()
 {
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		gPipeline.mScreen.flush();
+		gPipeline.mUIScreen.bindTarget();
+		gGL.setColorMask(true, true);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	// </CV:David>
+
 	LLGLSUIDefault gls_ui;
 
 	/////////////////////////////////////////////////////////////
@@ -1743,7 +1764,34 @@ void render_ui_2d()
 		gViewerWindow->draw();
 	}
 
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		gPipeline.mUIScreen.flush();
 
+		gPipeline.mScreen.bindTarget();
+		gSplatTextureRectProgram.bind();
+		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 offset = (gRiftCurrentEye == 0) ? uiDepth : -uiDepth;
+		S32 width = gRiftHSample;
+		S32 height = gRiftVSample;
+		LLGLEnable blend(GL_BLEND);
+		gGL.setColorMask(true, false);
+		gGL.color4f(1,1,1,1);
+		gGL.begin(LLRender::QUADS);
+			gGL.texCoord2f(0, height);		gGL.vertex2i(offset, height);
+			gGL.texCoord2f(0, 0);			gGL.vertex2i(offset, 0);
+			gGL.texCoord2f(width, 0);		gGL.vertex2i(offset + width, 0);
+			gGL.texCoord2f(width, height);	gGL.vertex2i(offset + width, height);
+		gGL.end();
+		gGL.flush();
+
+		gSplatTextureRectProgram.unbind();
+		gPipeline.mScreen.flush();
+	}
+	// </CV:David>
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);

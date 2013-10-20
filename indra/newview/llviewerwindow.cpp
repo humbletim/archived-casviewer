@@ -893,14 +893,15 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	S32 x = pos.mX;
 	S32 y = pos.mY;
 	// <CV:David>
-	// Improve the mouse click location when using the Oculus Rift; not perfect but a useful improvement, e.g., for selecting a 3rd person orbit point.
 	//x = llround((F32)x / mDisplayScale.mV[VX]);
 	//y = llround((F32)y / mDisplayScale.mV[VY]);
 	if (gRift3DEnabled)
 	{
-		F32 lensOffset = (1 - gRiftCurrentEye * 2) * (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
-		x = llround(gRiftDistortionScale * ((F32)((2 * x) % gRiftHResolution) + lensOffset) / mDisplayScale.mV[VX]);
-		y = llround(gRiftDistortionScale * (F32)y / mDisplayScale.mV[VY]);
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
+		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
 	}
 	else
 	{
@@ -1065,8 +1066,23 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 {
 	S32 x = pos.mX;
 	S32 y = pos.mY;
-	x = llround((F32)x / mDisplayScale.mV[VX]);
-	y = llround((F32)y / mDisplayScale.mV[VY]);
+	// <CV:David>
+	//x = llround((F32)x / mDisplayScale.mV[VX]);
+	//y = llround((F32)y / mDisplayScale.mV[VY]);
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
+		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
+	}
+	else
+	{
+		x = llround((F32)x / mDisplayScale.mV[VX]);
+		y = llround((F32)y / mDisplayScale.mV[VY]);
+	}
+	// <CV:David>
 
 	BOOL down = TRUE;
 	BOOL handle = handleAnyMouseClick(window,pos,mask,LLMouseHandler::CLICK_RIGHT,down);
@@ -2581,7 +2597,10 @@ void LLViewerWindow::draw()
 		LLToolMgr::getInstance()->getCurrentTool()->draw();
         // Only show Mouselookinstructions if FSShowMouselookInstruction is TRUE
 		static LLCachedControl<bool> fsShowMouselookInstructions(gSavedSettings, "FSShowMouselookInstructions");
-		if( fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		// <CV:David>
+		//if( fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		if( !gRift3DEnabled && fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		// </CV:David>
 		{
 			drawMouselookInstructions();
 			stop_glerror();
@@ -2961,8 +2980,12 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = getWorldViewWidthScaled() / 2;
-		S32 y = getWorldViewHeightScaled() / 2;
+		// <CV:David>
+		//S32 x = getWorldViewWidthScaled() / 2;
+		//S32 y = getWorldViewHeightScaled() / 2;
+		S32 x = gRift3DEnabled ? gRiftHFrame / 2 + llround(gRiftLensOffset) : getWindowWidthScaled() / 2;
+		S32 y = gRift3DEnabled ? gRiftVFrame / 2 : getWindowHeightScaled() / 2;
+		// <CV:David>
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3045,6 +3068,17 @@ void LLViewerWindow::updateUI()
 
 	S32 x = mCurrentMousePoint.mX;
 	S32 y = mCurrentMousePoint.mY;
+
+	//<CV:David>
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = fboXY[0] + uiDelta;
+		y = fboXY[1];
+	}
+	// </CV:David>
 
 	MASK	mask = gKeyboard->currentMask(TRUE);
 
@@ -3636,40 +3670,28 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	}
 }
 
-// <CV:David>
-void LLViewerWindow::setRiftlookRect(U32 render_type)
-{
-	S32 width = mWindowRectRaw.getWidth();
-	if (render_type == RENDER_RIFT_LEFT)
-	{
-		mWorldViewRectRaw.mLeft = 0;
-		mWorldViewRectRaw.mRight = width / 2;
-	}
-	else if (render_type == RENDER_RIFT_RIGHT)
-	{
-		mWorldViewRectRaw.mLeft = width / 2;
-		mWorldViewRectRaw.mRight = width;
-	}
-	else
-	{
-		mWorldViewRectRaw.mLeft = 0;
-		mWorldViewRectRaw.mRight = width;
-	}
-}
-// </CV:David>
-
 void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
+	// <CV:David>
+	S32 max_width = gRift3DEnabled ? gRiftHResolution : getWindowWidthScaled();
+	S32 max_height = gRift3DEnabled ? gRiftVResolution : getWindowHeightScaled();
+	// </CV:David>
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
 	}
-	else if (point.mX > getWindowWidthScaled())
+	// <CV:David>
+	//else if (point.mX > getWindowWidthScaled())
+	//{
+	//	mCurrentMousePoint.mX = getWindowWidthScaled();
+	//}
+	else if (point.mX > max_width)
 	{
-		mCurrentMousePoint.mX = getWindowWidthScaled();
+		mCurrentMousePoint.mX = max_width;
 	}
+	// </CV:David>
 	else
 	{
 		mCurrentMousePoint.mX = point.mX;
@@ -3679,10 +3701,16 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	{
 		mCurrentMousePoint.mY = 0;
 	}
-	else if (point.mY > getWindowHeightScaled() )
+	// <CV:David>
+	//else if (point.mY > getWindowHeightScaled() )
+	//{
+	//	mCurrentMousePoint.mY = getWindowHeightScaled();
+	//}
+	else if (point.mY > max_height )
 	{
-		mCurrentMousePoint.mY = getWindowHeightScaled();
+		mCurrentMousePoint.mY = max_height;
 	}
+	// <CV:David>
 	else
 	{
 		mCurrentMousePoint.mY = point.mY;
@@ -4971,26 +4999,10 @@ void LLViewerWindow::setup2DRender()
 
 void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset)
 {
-	// <CV:David>
-	//gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
-	//gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
-	//gGLViewport[2] = mWindowRectRaw.getWidth();
-	//gGLViewport[3] = mWindowRectRaw.getHeight();
-	if (!gRift3DEnabled)
-	{
-		gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
-		gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
-		gGLViewport[2] = mWindowRectRaw.getWidth();
-		gGLViewport[3] = mWindowRectRaw.getHeight();
-	}
-	else
-	{
-		gGLViewport[0] = mWorldViewRectRaw.mLeft + x_offset;
-		gGLViewport[1] = mWorldViewRectRaw.mBottom + y_offset;
-		gGLViewport[2] = mWorldViewRectRaw.getWidth();
-		gGLViewport[3] = mWorldViewRectRaw.getHeight();
-	}
-	// </CV:David>
+	gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
+	gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
+	gGLViewport[2] = mWindowRectRaw.getWidth();
+	gGLViewport[3] = mWindowRectRaw.getHeight();
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
@@ -5525,6 +5537,38 @@ LLRect LLViewerWindow::getChatConsoleRect()
 
 	return console_rect;
 }
+
+// <CV:David>
+LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
+{
+	// Convert screen coordinate in Rift distorted image to sample coordinate in undistorted sample frame buffer.
+
+	LLVector2 coord((F32)(x % gRiftHFrame) + 0.5, (F32)y + 0.5);
+
+	F32 lensOffset = (x > gRiftHFrame) ? -gRiftLensOffset : gRiftLensOffset;
+	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
+	F32 lensCenterV = gRiftVFrame / 2.f;
+
+	LLVector2 scale_in, scale_out, lens_center_in, lens_center_out;
+	scale_in = LLVector2(2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
+	scale_out = LLVector2(gRiftHFrame / 2.f, (gRiftAspect * gRiftVFrame) / 2.f);
+	lens_center_in = LLVector2(lensCenterH, lensCenterV);
+	lens_center_out = LLVector2(lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
+
+	LLVector2 theta = (coord - lens_center_in);
+	theta[0] = theta[0] * scale_in[0];
+	theta[1] = theta[1] * scale_in[1];  // Scales to [-1, 1]
+
+	F32 rSq =  theta * theta;
+
+	LLVector2 rVector = theta * (gRiftDistortionK[0] + gRiftDistortionK[1] * rSq + gRiftDistortionK[2] * rSq * rSq + gRiftDistortionK[3] * rSq * rSq * rSq);
+
+	coord = lens_center_out + LLVector2(rVector[0] * scale_out[0], rVector[1] * scale_out[1]); 
+
+	return LLVector2((U32)llclamp(llround(coord[0]), 0, (S32)gRiftHSample), (U32)llclamp(llround(coord[1]), 0, (S32)gRiftVSample));
+}
+// </CV:David>
+
 //----------------------------------------------------------------------------
 
 
@@ -5535,7 +5579,12 @@ bool LLViewerWindow::onAlert(const LLSD& notify)
 
 	// If we're in mouselook, the mouse is hidden and so the user can't click 
 	// the dialog buttons.  In that case, change to First Person instead.
-	if( gAgentCamera.cameraMouselook() )
+	// <CV:David>
+	// But don't change if UI is shown in mouselook because user presumably knows how to use mouse.
+	// And don't change if in Riftlook because it breaks the immersion.
+	//if( gAgentCamera.cameraMouselook() )
+	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("FSShowInterfaceInMouselook") && !gRift3DEnabled)
+	// </CV:David>
 	{
 		gAgentCamera.changeCameraToDefault();
 	}

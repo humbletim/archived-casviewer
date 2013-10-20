@@ -214,13 +214,16 @@ public:
 	void onQuitConfirmed(const LLSD& notification,const LLSD& response);	// callback for finished restore dialog
 // </FS:Zi>
 
-	// <CV:David> Stereoscopic 3D
+	// <CV:David>
 	void onChangeOutputType();
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();
 	void onClickResetRiftEyeSeparation();
 	void onChangeRiftOperationMode();
 	void onRiftStrafeEnable();
+	void onClickResetRiftUIDepth();
+	void onChangeRiftMouseMode();
+	void onRiftMouseHorizontalEnable();
 	// </CV:David>
 
 private:

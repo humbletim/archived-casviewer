@@ -427,6 +427,7 @@ extern U32 gRiftVFrame;
 extern U32 gRiftHSample;
 extern U32 gRiftVSample;
 extern F32 gRiftDistortionK[4];
+extern F32 gRiftLensOffset;
 // </CV:David>
 
 #endif // LL_LLAPPVIEWER_H

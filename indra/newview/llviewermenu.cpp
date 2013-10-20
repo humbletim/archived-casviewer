@@ -9915,7 +9915,7 @@ void setRiftlook(bool on)
 		}
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
-			gViewerWindow->reshape(gRiftHSample * 2, gRiftVSample);
+			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
 		}
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
@@ -9939,6 +9939,10 @@ void setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
+
+	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
+	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
+	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
 }
 	
 class CVToggle3D : public view_listener_t
