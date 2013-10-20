@@ -409,6 +409,9 @@ private:
 // <CV:David>
 public:
 	void			calcRiftValues();
+	LLQuaternion	getRiftPitch()	{ return mRiftPitch; }
+	LLQuaternion	getRiftRoll()	{ return mRiftRoll; }
+	LLQuaternion	getRiftYaw()	{ return mRiftYaw; }
 
 private:
 	LLQuaternion	mRiftYaw;

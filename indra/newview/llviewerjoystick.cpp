@@ -47,6 +47,10 @@
 #include "llfocusmgr.h"
 #include "llmoveview.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 // ----------------------------------------------------------------------------
 // Constants
 
@@ -987,7 +991,22 @@ void LLViewerJoystick::moveFlycam(bool reset)
 		sFlycamZoom += sDelta[6];
 	}
 
-	LLMatrix3 mat(sFlycamRotation);
+	// <CV:David>
+	//	LLMatrix3 mat(sFlycamRotation);
+	LLMatrix3 mat;
+	if (gRift3DEnabled)
+	{
+		LLQuaternion riftPitch = gAgentCamera.getRiftPitch();
+		LLQuaternion riftRoll = gAgentCamera.getRiftRoll();
+		LLQuaternion riftYaw = gAgentCamera.getRiftYaw();
+		LLQuaternion riftRotation = riftPitch * riftRoll * riftYaw * sFlycamRotation;
+		mat = LLMatrix3(riftRotation);
+	}
+	else
+	{
+		mat = LLMatrix3(sFlycamRotation);
+	}
+	// </CV:David>
 
 	LLViewerCamera::getInstance()->setView(sFlycamZoom);
 	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition);
