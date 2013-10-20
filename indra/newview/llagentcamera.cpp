@@ -1518,6 +1518,9 @@ void LLAgentCamera::updateCamera()
 		LLVector3 torso_scale = torso_joint->getScale();
 		LLVector3 chest_scale = chest_joint->getScale();
 
+		// <CV:David> Fix by Adeon Writer.
+		// Don't shorten avatar skeleton otherwise attachments don't line up properly when show avatar in mouselook.
+		/*
 		// shorten avatar skeleton to avoid foot interpenetration
 		if (!gAgentAvatarp->mInAir)
 		{
@@ -1532,6 +1535,8 @@ void LLAgentCamera::updateCamera()
 			chest_joint->setScale(LLVector3(1.f, 1.f, scale_factor));
 			diff.mV[VZ] = 0.f;
 		}
+		*/
+		// <CV:David>
 
 		gAgentAvatarp->mPelvisp->setPosition(gAgentAvatarp->mPelvisp->getPosition() + diff);
 
