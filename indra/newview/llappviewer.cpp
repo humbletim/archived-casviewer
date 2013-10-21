@@ -1107,6 +1107,7 @@ bool LLAppViewer::init()
 	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
 	gRift3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
 	if (gRift3DConfigured)
 	{
 		gRiftStanding = gSavedSettings.getU32("RiftOperationMode") == RIFT_OPERATE_STANDING;
@@ -6010,6 +6011,13 @@ void LLAppViewer::handleLoginComplete()
 	// we logged in successfully, so save settings on logout
 	lldebugs << "Login successful, per account settings will be saved on logout." << llendl;
 	mSavePerAccountSettings=true;
+
+	// <CV:David> Automatically toggle into Riftlook if "--riftlook" command line parameter specified.
+	if (gSavedSettings.getBOOL("RiftStartupInRiftlook"))
+	{
+		setRiftlook(TRUE);
+	}
+	// </CV:David>
 }
 
 void LLAppViewer::launchUpdater()
