@@ -698,7 +698,10 @@ void LLViewerPartSim::updateSimulation()
 		LLViewerObject* vobj = mViewerPartGroups[i]->mVOPartGroupp;
 
 		S32 visirate = 1;
-		if (vobj)
+		// <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
+		//if (vobj)
+		if (vobj && vobj->mDrawable)
+		// </CV:David>
 		{
 			LLSpatialGroup* group = vobj->mDrawable->getSpatialGroup();
 			if (group && !group->isVisible()) // && !group->isState(LLSpatialGroup::OBJECT_DIRTY))
@@ -709,7 +712,10 @@ void LLViewerPartSim::updateSimulation()
 
 		if ((LLDrawable::getCurrentFrame()+mViewerPartGroups[i]->mID)%visirate == 0)
 		{
-			if (vobj)
+			// <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
+			//if (vobj)
+			if (vobj && vobj->mDrawable)
+			// </CV:David>
 			{
 				gPipeline.markRebuild(vobj->mDrawable, LLDrawable::REBUILD_ALL, TRUE);
 			}

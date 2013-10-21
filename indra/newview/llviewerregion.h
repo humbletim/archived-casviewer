@@ -372,10 +372,12 @@ public:
 	};
 
 	void showReleaseNotes();
+	void reInitPartitions();  // <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
 
 protected:
 	void disconnectAllNeighbors();
 	void initStats();
+	void initPartitions();  // <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
 
 public:
 	LLWind  mWind;
