@@ -1017,7 +1017,7 @@ void LLViewerCamera::calcStereoValues()
 		deltaZ = gRiftEyeToScreen * gRiftLensSeparation / (gRiftHScreenSize - gRiftLensSeparation);  // Use lens rather than eye separation because it's collimated light.
 		mStereoCullCameraDeltaForwards = -deltaZ * mXAxis;
 		mStereoCullCameraFOV = mStereoCameraFOV;
-		mStereoCullCameraAspect = mStereoCameraAspect;
+		mStereoCullCameraAspect = gRiftVScreenSize / (gRiftHScreenSize - gRiftLensSeparation);
 	}
 
 	// Delta position for left camera.
