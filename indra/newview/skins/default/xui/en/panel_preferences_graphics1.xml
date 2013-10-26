@@ -1541,7 +1541,7 @@
        control_name="RiftStrafe"
        height="16"
        initial_value="false"
-       label="Left/right keys strafe"
+       label="Left/right keys strafe; Shift-left/right keys turn"
        layout="topleft"
        left="200"
        name="RiftStrafe"
