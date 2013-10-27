@@ -1588,7 +1588,7 @@
       <radio_group
       control_name="RiftMouseMode"
       follows="left|top"
-      height="50"
+      height="42"
       layout="topleft"
       name="RiftMouseMode"
       left="54"
@@ -1625,6 +1625,17 @@
         <check_box.commit_callback
            function="Pref.RiftMouseHorizontalEnable" />
       </check_box>
+      <check_box
+       control_name="RiftHoverText"
+       height="16"
+       initial_value="false"
+       label="Show hover text"
+       layout="topleft"
+       left="54"
+       name="RiftMouseHorizontal"
+       tool_tip="Show hover text in Riftlook view."
+       top_pad="8"
+       width="50" />
     </panel>
   </tab_container>
 </panel>

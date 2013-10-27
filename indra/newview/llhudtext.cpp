@@ -49,6 +49,9 @@
 // [RLVa:KB] - Checked: 2010-03-27 (RLVa-1.4.0a)
 #include "rlvhandler.h"
 // [/RLVa:KB]
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 #include <boost/tokenizer.hpp>
 
 const F32 SPRING_STRENGTH = 0.7f;
@@ -390,6 +393,14 @@ void LLHUDText::updateVisibility()
 		mVisible = FALSE;
 		return;
 	}
+
+	// <CV:David>
+	if (gRift3DEnabled && !gSavedSettings.getBOOL("RiftHoverText"))
+	{
+		mVisible = FALSE;
+		return;
+	}
+	// </CV:David>
 
 	// for now, all text on hud objects is visible
 	if (mOnHUDAttachment)
