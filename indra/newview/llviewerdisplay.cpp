@@ -689,6 +689,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			{
 				render_ui();
 			}
+			LLSpatialGroup::sNoDelete = FALSE;
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
@@ -704,6 +705,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			render_frame(RENDER_STEREO_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();  // Note: UI rendering code entwines 2D and 3D to easiest just to render 2D twice, once for each eye.
+			LLSpatialGroup::sNoDelete = FALSE;
 
 			// Right eye ...
 			glDrawBuffer(GL_BACK_RIGHT);
@@ -711,6 +713,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			render_frame(RENDER_STEREO_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
+			LLSpatialGroup::sNoDelete = FALSE;
 
 			glDrawBuffer(GL_BACK);  // Needed so that snapshot on exit doesn't include UI.
 		}
@@ -722,9 +725,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gViewerWindow->getWindow()->swapBuffers();
 		}
 		gDisplaySwapBuffers = TRUE;
-		// </CV:David>
 
-		LLSpatialGroup::sNoDelete = FALSE;
+		//LLSpatialGroup::sNoDelete = FALSE;
+		// </CV:David>
 		
 		// <	FS:ND>FIRE-9943; resizeScreenTexture will try to disable deferred mode in low memory situations.
 		// Depending	 on the state of the pipeline. this can trigger illegal deletion of drawables.
