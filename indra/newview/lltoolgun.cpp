@@ -61,14 +61,20 @@ LLToolGun::LLToolGun( LLToolComposite* composite )
 void LLToolGun::handleSelect()
 {
 	gViewerWindow->hideCursor();
-	gViewerWindow->moveCursorToCenter();
+	// <CV:David>
+	// Jumping the cursor to the centre of the screen when using it to interact with objects is annoying.
+	//gViewerWindow->moveCursorToCenter();
+	// <CV:David>
 	gViewerWindow->getWindow()->setMouseClipping(TRUE);
 	mIsSelected = TRUE;
 }
 
 void LLToolGun::handleDeselect()
 {
-	gViewerWindow->moveCursorToCenter();
+	// <CV:David>
+	// Jumping the cursor to the centre of the screen when using it to interact with objects is annoying.
+	//gViewerWindow->moveCursorToCenter();
+	// <CV:David>
 	gViewerWindow->showCursor();
 	gViewerWindow->getWindow()->setMouseClipping(FALSE);
 	mIsSelected = FALSE;
@@ -131,7 +137,10 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 				gSavedSettings.setVector3("SkySunDefaultPosition", LLViewerCamera::getInstance()->getAtAxis());
 			}
 
-			gViewerWindow->moveCursorToCenter();
+			// <CV:David>
+			// Jumping the cursor to the centre of the screen when using it to interact with objects is annoying.
+			//gViewerWindow->moveCursorToCenter();
+			// <CV:David>
 			gViewerWindow->hideCursor();
 		}
 
