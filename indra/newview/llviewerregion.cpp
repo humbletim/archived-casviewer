@@ -391,7 +391,15 @@ LLViewerRegion::LLViewerRegion(const U64 &handle,
 
 	// Create the object lists
 	initStats();
+// <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
+	initPartitions();
+}
+// </CV:David>
 
+// <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
+void LLViewerRegion::initPartitions()
+{
+// </CV:David>
 	//create object partitions
 	//MUST MATCH declaration of eObjectPartitions
 	mImpl->mObjectPartition.push_back(new LLHUDPartition());		//PARTITION_HUD
@@ -407,6 +415,14 @@ LLViewerRegion::LLViewerRegion(const U64 &handle,
 	mImpl->mObjectPartition.push_back(NULL);						//PARTITION_NONE
 }
 
+// <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
+void LLViewerRegion::reInitPartitions()
+{
+	std::for_each(mImpl->mObjectPartition.begin(), mImpl->mObjectPartition.end(), DeletePointer());
+	mImpl->mObjectPartition.clear();
+	initPartitions();
+}
+// </CV:David>
 
 void LLViewerRegion::initStats()
 {

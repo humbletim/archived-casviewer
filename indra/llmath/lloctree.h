@@ -396,6 +396,7 @@ public:
 				child->insert(data);
 			}
 		}
+#ifndef OPENSIM  // <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
 		else 
 		{
 			//it's not in here, give it to the root
@@ -411,6 +412,7 @@ public:
 
 			node->insert(data);
 		}
+#endif  // <CV:David>
 
 		return false;
 	}
