@@ -2179,7 +2179,13 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	//gViewerWindow->stopGrab();
 	LLSelectMgr::getInstance()->deselectAll();
 	gViewerWindow->hideCursor();
-	gViewerWindow->moveCursorToCenter();
+	// <CV:David>
+	//gViewerWindow->moveCursorToCenter();
+	if (!gRift3DEnabled || !gRiftMouseCursor)
+	{
+		gViewerWindow->moveCursorToCenter();
+	}
+	// </CV:David>
 
 	if (mCameraMode != CAMERA_MODE_MOUSELOOK)
 	{
