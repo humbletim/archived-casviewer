@@ -566,17 +566,19 @@ LLAgent::~LLAgent()
 //-----------------------------------------------------------------------------
 void LLAgent::onAppFocusGained()
 {
-	// <CV:David>
-	if (gOutputType == OUTPUT_TYPE_RIFT)
-	{
-		gRift3DEnabled = FALSE;
-		gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-	}
-	// </CV:David>
-
 	if (CAMERA_MODE_MOUSELOOK == gAgentCamera.getCameraMode() && gSavedSettings.getBOOL("FSLeaveMouselookOnFocus"))
 	{
-		gAgentCamera.changeCameraToDefault();
+		// <CV:David>
+		//gAgentCamera.changeCameraToDefault();
+		if (gRift3DEnabled)
+		{
+			setRiftlook(false);
+		}
+		else
+		{
+			gAgentCamera.changeCameraToDefault();
+		}
+		// </CV:David>
 		LLToolMgr::getInstance()->clearSavedTool();
 	}
 }
