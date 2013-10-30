@@ -1447,6 +1447,13 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 		}
 		
 		// SL-53351: Make sure we're not in mouselook when minimised, to prevent control issues
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			setRiftlook(false);
+		}
+		else
+		// </CV:David>
 		if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
 		{
 			gAgentCamera.changeCameraToDefault();
