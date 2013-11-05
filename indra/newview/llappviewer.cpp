@@ -241,6 +241,10 @@
 #include "llviewermenu.h"
 #include "OVR.h"
 #include "OVRVersion.h"
+
+#if LL_WINDOWS
+	#include "caskinectcontroller.h"
+#endif
 // </CV:David>
 
 
@@ -373,6 +377,12 @@ U32 gRiftHSample;
 U32 gRiftVSample;
 F32 gRiftDistortionK[4];
 F32 gRiftLensOffset;
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+	CASKinectController* gKinectController = NULL;
+#endif
 // </CV:David>
 
 ////////////////////////////////////////////////////////////
@@ -1252,6 +1262,16 @@ bool LLAppViewer::init()
 	}
 	// </CV:David>
 
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gSavedSettings.getBOOL("KinectEnabled"))
+		{
+			gKinectController = new CASKinectController();
+			llinfos << "Kinect Controller: Created" << llendl;
+		}
+	#endif
+	// </CV:David>
+
 	// Prepare for out-of-memory situations, during which we will crash on
 	// purpose and save a dump.
 #if LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD && LL_USE_SMARTHEAP
@@ -2048,6 +2068,17 @@ bool LLAppViewer::cleanup()
 	LLError::logToFixedBuffer(NULL);
 
 	llinfos << "Cleaning Up" << llendflush;
+
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+			llinfos << "Kinect Controller: Deleted" << llendflush;
+		}
+	#endif
+	// </CV:David>
 
 	// <CV:David>
 	if (gRift3DConfigured)

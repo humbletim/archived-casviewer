@@ -143,6 +143,7 @@
 #include "growlmanager.h"
 #include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 
+#include "llappviewer.h"  // <CV:David>
 #include "llviewerdisplay.h"  // <CV:David>
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
@@ -503,6 +504,12 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
+	// </CV:David>
+
+	// <CV:David>
+	#if LL_WINDOWS
+		mCommitCallbackRegistrar.add("Pref.KinectEnable",	boost::bind(&LLFloaterPreference::onKinectEnable, this));
+	#endif
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -3594,6 +3601,33 @@ void LLFloaterPreference::onRiftMouseHorizontalEnable()
 	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
 }
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+
+void LLFloaterPreference::onKinectEnable()
+{
+	if (getChild<LLCheckBoxCtrl>("KinectEnabled")->getValue().asBoolean())
+	{
+		if (!gKinectController)
+		{
+			gKinectController = new CASKinectController();
+			llinfos << "Kinect Controller: Created" << llendl;
+		}
+	}
+	else
+	{
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+			llinfos << "Kinect Controller: Deleted" << llendflush;
+		}
+	}
+}
+
+#endif
 // </CV:David>
 
 // <FS:Kadah>

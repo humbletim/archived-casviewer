@@ -479,7 +479,10 @@
        left="10"
        name="KinectEnabled"
        width="200"
-       top_pad="0" />
+       top_pad="0">
+        <check_box.commit_callback
+           function="Pref.KinectEnable" />
+      </check_box>
     </panel>
     
     <!-- Firestorm -->
