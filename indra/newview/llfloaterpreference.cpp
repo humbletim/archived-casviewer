@@ -1591,6 +1591,12 @@ void LLFloaterPreference::refreshEnabledState()
 
 	// <CV:David>
 	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
+
+	#if LL_WINDOWS
+		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
+	#else
+		getChild<LLUICtrl>("KinectEnabled")->setEnabled(false);
+	#endif
 	// </CV:David>
 }
 

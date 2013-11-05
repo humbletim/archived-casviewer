@@ -470,6 +470,16 @@
              function="Floater.Show"
              parameter="pref_joystick" />
         </button>
+      <check_box
+       control_name="KinectEnabled"
+       follows="left|top"
+       height="20"
+       label="Enable Kinect for Windows"
+       layout="topleft"
+       left="10"
+       name="KinectEnabled"
+       width="200"
+       top_pad="0" />
     </panel>
     
     <!-- Firestorm -->
