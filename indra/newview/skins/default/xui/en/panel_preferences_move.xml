@@ -399,7 +399,7 @@
         <combo_box
          height="23"
          layout="topleft"
-         left_pad="10"
+         left_pad="22"
          top_delta="-6"
          name="single_click_action_combo"
          width="200">
@@ -429,7 +429,7 @@
         <combo_box
          height="23"
          layout="topleft"
-         left_pad="10"
+         left_pad="22"
          top_delta="-6"
          name="double_click_action_combo"
          width="200">
@@ -448,13 +448,23 @@
             <combo_box.commit_callback
              function="Pref.ClickActionChange"/>
         </combo_box>
+        <check_box
+         control_name="JoystickEnabled"
+         follows="left|top"
+         height="20"
+         label="Enable joystick (SpaceNavigator)"
+         layout="topleft"
+         left="10"
+         name="enable_joystick"
+         width="200"
+         top_pad="10" />
         <button
          follows="top|left"
-         height="23"
+         height="20"
          label="Joystick Configuration"
-         left="100"
+         layout="topleft"
+         left_pad="10"
          name="joystick_setup_button"
-         top_pad="5"
          width="155">
             <button.commit_callback
              function="Floater.Show"
