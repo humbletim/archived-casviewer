@@ -31,16 +31,56 @@
 
 #include "caskinectcontroller.h"
 
+#include <ObjBase.h>
+#include "NuiApi.h"
+
+typedef HRESULT (WINAPI *NuiGetSensorCountType)(int*);
+	NuiGetSensorCountType NuiGetSensorCountFunc;
+typedef HRESULT (WINAPI *NuiCreateSensorByIndexType)(int, INuiSensor**);
+	NuiCreateSensorByIndexType NuiCreateSensorByIndexFunc;
+
+INuiSensor*		mKinectSensor;			// Kinect sensor that is being used.
+
+
 // Public ----------------------------------------------------------------------
 
 CASKinectController::CASKinectController()
 {
 	llinfos << "Kinect controller created" << llendl;
 	loadKinectDLL();
+
+	// Number of Kinect sensors.
+	int numSensors = 0;
+	NuiGetSensorCountFunc(&numSensors);
+	llinfos << "Number of Kinect sensors = " << numSensors << llendl;
+
+	// Find the first active Kinect sensor.
+	mKinectSensor = NULL;
+	for (int i = 0; i < numSensors; i++)
+	{
+		INuiSensor* kinectSensor;
+		if (SUCCEEDED(NuiCreateSensorByIndexFunc(i, &kinectSensor)))
+		{
+			if (SUCCEEDED(kinectSensor->NuiStatus()))
+			{
+				mKinectSensor = kinectSensor;
+				break;
+			}
+
+			kinectSensor->Release();
+		}
+	}
 }
 
 CASKinectController::~CASKinectController()
 {
+	if (mKinectSensor)
+	{
+		mKinectSensor->NuiShutdown();
+		mKinectSensor->Release();
+		mKinectSensor = NULL;
+	}
+
 	unloadKinectDLL();
 	llinfos << "Kinect controller destroyed" << llendl;
 }
@@ -50,6 +90,7 @@ bool CASKinectController::kinectConfigured()
 	return (mKinectDLL != NULL);
 }
 
+
 // Private ---------------------------------------------------------------------
 
 void CASKinectController::loadKinectDLL()
@@ -57,6 +98,15 @@ void CASKinectController::loadKinectDLL()
 	mKinectDLL = LoadLibrary(L"Kinect10");
 	if (mKinectDLL != NULL)
 	{
+		NuiGetSensorCountFunc = (NuiGetSensorCountType)::GetProcAddress(mKinectDLL, "NuiGetSensorCount");
+		NuiCreateSensorByIndexFunc = (NuiCreateSensorByIndexType)::GetProcAddress(mKinectDLL, "NuiCreateSensorByIndex");
+
+		if (NuiGetSensorCountFunc == NULL ||
+			NuiCreateSensorByIndexFunc == NULL)
+		{
+			llwarns << "Could not load Kinect library functions!" << llendl;
+			unloadKinectDLL();
+		}
 	}
 	else
 	{
@@ -68,6 +118,9 @@ void CASKinectController::unloadKinectDLL()
 {
 	if (mKinectDLL)
 	{
+		NuiGetSensorCountFunc = NULL;
+		NuiCreateSensorByIndexFunc = NULL;
+
 		FreeLibrary(mKinectDLL);
 		mKinectDLL = NULL;
 	}
