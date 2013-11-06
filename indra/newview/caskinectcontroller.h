@@ -35,6 +35,14 @@ class CASKinectController
 public:
 	CASKinectController();
 	~CASKinectController();
+
+	bool kinectConfigured();
+
+private:
+	HMODULE mKinectDLL;
+
+	void loadKinectDLL();
+	void unloadKinectDLL();
 };
 
 #endif  // LL_WINDOWS

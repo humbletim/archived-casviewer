@@ -3613,7 +3613,13 @@ void LLFloaterPreference::onKinectEnable()
 		if (!gKinectController)
 		{
 			gKinectController = new CASKinectController();
-			llinfos << "Kinect Controller: Created" << llendl;
+			if (!gKinectController->kinectConfigured())
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
 		}
 	}
 	else
@@ -3622,7 +3628,6 @@ void LLFloaterPreference::onKinectEnable()
 		{
 			delete gKinectController;
 			gKinectController = NULL;
-			llinfos << "Kinect Controller: Deleted" << llendflush;
 		}
 	}
 }

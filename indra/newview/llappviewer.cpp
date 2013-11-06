@@ -1262,16 +1262,6 @@ bool LLAppViewer::init()
 	}
 	// </CV:David>
 
-	// <CV:David>
-	#if LL_WINDOWS
-		if (gSavedSettings.getBOOL("KinectEnabled"))
-		{
-			gKinectController = new CASKinectController();
-			llinfos << "Kinect Controller: Created" << llendl;
-		}
-	#endif
-	// </CV:David>
-
 	// Prepare for out-of-memory situations, during which we will crash on
 	// purpose and save a dump.
 #if LL_WINDOWS && LL_RELEASE_FOR_DOWNLOAD && LL_USE_SMARTHEAP
@@ -1510,6 +1500,22 @@ bool LLAppViewer::init()
 	}
 
 	LLAgentLanguage::init();
+
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gSavedSettings.getBOOL("KinectEnabled"))
+		{
+			gKinectController = new CASKinectController();
+			if (!gKinectController->kinectConfigured())
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
+		}
+	#endif
+	// </CV:David>
 
 	// initializing the settings sanity checker
 	SanityCheck::instance().init();
@@ -2075,7 +2081,6 @@ bool LLAppViewer::cleanup()
 		{
 			delete gKinectController;
 			gKinectController = NULL;
-			llinfos << "Kinect Controller: Deleted" << llendflush;
 		}
 	#endif
 	// </CV:David>

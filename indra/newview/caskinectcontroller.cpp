@@ -31,12 +31,46 @@
 
 #include "caskinectcontroller.h"
 
+// Public ----------------------------------------------------------------------
+
 CASKinectController::CASKinectController()
 {
+	llinfos << "Kinect controller created" << llendl;
+	loadKinectDLL();
 }
 
 CASKinectController::~CASKinectController()
 {
+	unloadKinectDLL();
+	llinfos << "Kinect controller destroyed" << llendl;
+}
+
+bool CASKinectController::kinectConfigured()
+{
+	return (mKinectDLL != NULL);
+}
+
+// Private ---------------------------------------------------------------------
+
+void CASKinectController::loadKinectDLL()
+{	
+	mKinectDLL = LoadLibrary(L"Kinect10");
+	if (mKinectDLL != NULL)
+	{
+	}
+	else
+	{
+		llwarns << "Could not load Kinect library!" << llendl;
+	}
+}
+
+void CASKinectController::unloadKinectDLL()
+{
+	if (mKinectDLL)
+	{
+		FreeLibrary(mKinectDLL);
+		mKinectDLL = NULL;
+	}
 }
 
 #endif  // LL_WINDOWS
