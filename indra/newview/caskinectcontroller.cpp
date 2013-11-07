@@ -39,37 +39,60 @@ typedef HRESULT (WINAPI *NuiGetSensorCountType)(int*);
 typedef HRESULT (WINAPI *NuiCreateSensorByIndexType)(int, INuiSensor**);
 	NuiCreateSensorByIndexType NuiCreateSensorByIndexFunc;
 
-INuiSensor*		mKinectSensor;			// Kinect sensor that is being used.
+HMODULE			mKinectDLL;					// Dynamically loaded Kinect DLL.
+INuiSensor*		mKinectSensor;				// Kinect sensor that is being used.
+HANDLE			mSkeletonEvent;				// New skeleton data event.
+bool			mKinectConfigured = false;	// Has the Kinect been set up OK?
 
 
 // Public ----------------------------------------------------------------------
 
 CASKinectController::CASKinectController()
 {
+	mKinectConfigured = false;
+
 	llinfos << "Kinect controller created" << llendl;
 	loadKinectDLL();
 
 	// Number of Kinect sensors.
 	int numSensors = 0;
-	NuiGetSensorCountFunc(&numSensors);
-	llinfos << "Number of Kinect sensors = " << numSensors << llendl;
+	if (mKinectDLL)
+	{
+		NuiGetSensorCountFunc(&numSensors);
+		llinfos << "Number of Kinect sensors = " << numSensors << llendl;
+	}
 
 	// Find the first active Kinect sensor.
 	mKinectSensor = NULL;
-	for (int i = 0; i < numSensors; i++)
+	if (numSensors)
 	{
-		INuiSensor* kinectSensor;
-		if (SUCCEEDED(NuiCreateSensorByIndexFunc(i, &kinectSensor)))
+		for (int i = 0; i < numSensors; i++)
 		{
-			if (SUCCEEDED(kinectSensor->NuiStatus()))
+			INuiSensor* kinectSensor;
+			if (SUCCEEDED(NuiCreateSensorByIndexFunc(i, &kinectSensor)))
 			{
-				mKinectSensor = kinectSensor;
-				break;
-			}
+				if (SUCCEEDED(kinectSensor->NuiStatus()))
+				{
+					mKinectSensor = kinectSensor;
+					break;
+				}
 
-			kinectSensor->Release();
+				kinectSensor->Release();
+			}
 		}
 	}
+
+	// Set up to process skeleton data.
+	if (mKinectSensor)
+	{
+		if (SUCCEEDED(mKinectSensor->NuiInitialize(NUI_INITIALIZE_FLAG_USES_SKELETON)))
+		{
+			mSkeletonEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+			mKinectConfigured = SUCCEEDED(mKinectSensor->NuiSkeletonTrackingEnable(mSkeletonEvent, 0));
+		}
+	}
+
+	llinfos << "Kinect sensor configured = " << mKinectConfigured << llendl;
 }
 
 CASKinectController::~CASKinectController()
@@ -77,6 +100,12 @@ CASKinectController::~CASKinectController()
 	if (mKinectSensor)
 	{
 		mKinectSensor->NuiShutdown();
+
+		if (mSkeletonEvent && (mSkeletonEvent != INVALID_HANDLE_VALUE))
+		{
+			CloseHandle(mSkeletonEvent);
+		}
+
 		mKinectSensor->Release();
 		mKinectSensor = NULL;
 	}
@@ -87,7 +116,14 @@ CASKinectController::~CASKinectController()
 
 bool CASKinectController::kinectConfigured()
 {
-	return (mKinectDLL != NULL);
+	return mKinectConfigured;
+}
+
+void CASKinectController::processSkeletonFrame()
+{
+	if (mKinectConfigured && WaitForSingleObject(mSkeletonEvent, 0) == WAIT_OBJECT_0)
+	{
+	}
 }
 
 

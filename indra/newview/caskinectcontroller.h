@@ -38,9 +38,9 @@ public:
 
 	bool kinectConfigured();
 
-private:
-	HMODULE mKinectDLL;
+	void processSkeletonFrame();
 
+private:
 	void loadKinectDLL();
 	void unloadKinectDLL();
 };

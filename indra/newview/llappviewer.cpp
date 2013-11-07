@@ -1733,6 +1733,16 @@ bool LLAppViewer::mainLoop()
 						gAgent.moveUp(-1);
 					}
 					// </FS:Ansariel>
+
+					// <CV:David>
+					// Process a skeleton frame is one is ready and available.
+					#if LL_WINDOWS
+						if (gKinectController)
+						{
+							gKinectController->processSkeletonFrame();
+						}
+					#endif
+					// </CV:David>
 				}
 
 				// Update state based on messages, user input, object idle.
