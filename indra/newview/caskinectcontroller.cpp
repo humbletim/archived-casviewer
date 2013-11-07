@@ -34,25 +34,49 @@
 #include <ObjBase.h>
 #include "NuiApi.h"
 
-typedef HRESULT (WINAPI *NuiGetSensorCountType)(int*);
-	NuiGetSensorCountType NuiGetSensorCountFunc;
-typedef HRESULT (WINAPI *NuiCreateSensorByIndexType)(int, INuiSensor**);
-	NuiCreateSensorByIndexType NuiCreateSensorByIndexFunc;
 
-int findClosestSkeleton(NUI_SKELETON_FRAME*);
-bool isStartGesture(NUI_SKELETON_DATA*);
-bool isStopGesture(NUI_SKELETON_DATA*);
+// Header ------------------------------------------------------------------------------------------
+//
+// The Kinect work is implemented in a class hidden from the rest of the viewer code because
+// otherwise there is a clash between types used in the viewer code and the Kinect code plus
+// required libraries (ObjBase.h).
 
-HMODULE			mKinectDLL;					// Dynamically loaded Kinect DLL.
-INuiSensor*		mKinectSensor;				// Kinect sensor that is being used.
-HANDLE			mSkeletonEvent;				// New skeleton data event.
-bool			mKinectConfigured;			// Has the Kinect been set up OK?
-bool			mControlling;				// Is the Kinect currently being used to control movement?
+class CASKinectHandler
+{
+public:
+
+	CASKinectHandler();
+	~CASKinectHandler();
+
+	bool kinectConfigured()				{ return mKinectConfigured; }
+	void processSkeletonFrame();
+
+private:
+
+	typedef HRESULT (WINAPI *NuiGetSensorCountType)(int*);
+		NuiGetSensorCountType NuiGetSensorCountFunc;
+	typedef HRESULT (WINAPI *NuiCreateSensorByIndexType)(int, INuiSensor**);
+		NuiCreateSensorByIndexType NuiCreateSensorByIndexFunc;
+
+	void loadKinectDLL();
+	void unloadKinectDLL();
+
+	int findClosestSkeleton(NUI_SKELETON_FRAME*);
+
+	bool isStartGesture(NUI_SKELETON_DATA*);
+	bool isStopGesture(NUI_SKELETON_DATA*);
+
+	HMODULE		mKinectDLL;				// Dynamically loaded Kinect DLL.
+	INuiSensor*	mKinectSensor;			// Kinect sensor that is being used.
+	HANDLE		mSkeletonEvent;			// New skeleton data event.
+	bool		mKinectConfigured;		// Has the Kinect been set up OK?
+	bool		mControlling;			// Is the Kinect currently being used to control movement?
+};
 
 
-// Public ----------------------------------------------------------------------
+// Public ------------------------------------------------------------------------------------------
 
-CASKinectController::CASKinectController()
+CASKinectHandler::CASKinectHandler()
 {
 	mKinectConfigured = false;
 
@@ -102,7 +126,7 @@ CASKinectController::CASKinectController()
 	llinfos << "Kinect sensor configured = " << mKinectConfigured << llendl;
 }
 
-CASKinectController::~CASKinectController()
+CASKinectHandler::~CASKinectHandler()
 {
 	if (mKinectSensor)
 	{
@@ -121,12 +145,7 @@ CASKinectController::~CASKinectController()
 	llinfos << "Kinect controller destroyed" << llendl;
 }
 
-bool CASKinectController::kinectConfigured()
-{
-	return mKinectConfigured;
-}
-
-void CASKinectController::processSkeletonFrame()
+void CASKinectHandler::processSkeletonFrame()
 {
 	NUI_SKELETON_FRAME skeletonFrame;
 	NUI_SKELETON_DATA skeletonData;
@@ -165,9 +184,9 @@ void CASKinectController::processSkeletonFrame()
 }
 
 
-// Private ---------------------------------------------------------------------
+// Private -----------------------------------------------------------------------------------------
 
-void CASKinectController::loadKinectDLL()
+void CASKinectHandler::loadKinectDLL()
 {	
 	mKinectDLL = LoadLibrary(L"Kinect10");
 	if (mKinectDLL != NULL)
@@ -188,7 +207,7 @@ void CASKinectController::loadKinectDLL()
 	}
 }
 
-void CASKinectController::unloadKinectDLL()
+void CASKinectHandler::unloadKinectDLL()
 {
 	if (mKinectDLL)
 	{
@@ -200,7 +219,7 @@ void CASKinectController::unloadKinectDLL()
 	}
 }
 
-int findClosestSkeleton(NUI_SKELETON_FRAME* skeletonFrame)
+int CASKinectHandler::findClosestSkeleton(NUI_SKELETON_FRAME* skeletonFrame)
 {
 	int skeleton = -1;
 
@@ -222,7 +241,7 @@ int findClosestSkeleton(NUI_SKELETON_FRAME* skeletonFrame)
 	return skeleton;
 }
 
-bool isStartGesture(NUI_SKELETON_DATA* skeletonData)
+bool CASKinectHandler::isStartGesture(NUI_SKELETON_DATA* skeletonData)
 {
 	// Both hands above both elbows and both elbows above both shoulders
 	// And both hands inside both shoulders
@@ -240,7 +259,7 @@ bool isStartGesture(NUI_SKELETON_DATA* skeletonData)
 		&& (leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x);
 }
 
-bool isStopGesture(NUI_SKELETON_DATA* skeletonData)
+bool CASKinectHandler::isStopGesture(NUI_SKELETON_DATA* skeletonData)
 {
 	// Both elbows below shoulders and each wrist on opposite side of body
 	Vector4 leftHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
@@ -251,6 +270,30 @@ bool isStopGesture(NUI_SKELETON_DATA* skeletonData)
 
 	return (leftHand.y < leftShoulder.y) && (rightHand.y < rightShoulder.y)
 		&& (leftHand.x > position.x) && (rightHand.x < position.x);
+}
+
+
+// Controller --------------------------------------------------------------------------------------
+
+CASKinectController::CASKinectController()
+{
+	mKinectHandler = new CASKinectHandler();
+}
+
+CASKinectController::~CASKinectController()
+{
+	delete mKinectHandler;
+	mKinectHandler = NULL;
+}
+
+bool CASKinectController::kinectConfigured()
+{
+	return mKinectHandler->kinectConfigured();
+}
+
+void CASKinectController::processSkeletonFrame()
+{
+	mKinectHandler->processSkeletonFrame();
 }
 
 #endif  // LL_WINDOWS

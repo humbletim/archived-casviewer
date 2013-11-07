@@ -30,6 +30,8 @@
 
 #if LL_WINDOWS
 
+class CASKinectHandler;
+
 class CASKinectController
 {
 public:
@@ -37,12 +39,10 @@ public:
 	~CASKinectController();
 
 	bool kinectConfigured();
-
 	void processSkeletonFrame();
 
 private:
-	void loadKinectDLL();
-	void unloadKinectDLL();
+	CASKinectHandler* mKinectHandler;
 };
 
 #endif  // LL_WINDOWS
