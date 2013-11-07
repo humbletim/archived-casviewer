@@ -39,10 +39,15 @@ typedef HRESULT (WINAPI *NuiGetSensorCountType)(int*);
 typedef HRESULT (WINAPI *NuiCreateSensorByIndexType)(int, INuiSensor**);
 	NuiCreateSensorByIndexType NuiCreateSensorByIndexFunc;
 
+int findClosestSkeleton(NUI_SKELETON_FRAME*);
+bool isStartGesture(NUI_SKELETON_DATA*);
+bool isStopGesture(NUI_SKELETON_DATA*);
+
 HMODULE			mKinectDLL;					// Dynamically loaded Kinect DLL.
 INuiSensor*		mKinectSensor;				// Kinect sensor that is being used.
 HANDLE			mSkeletonEvent;				// New skeleton data event.
-bool			mKinectConfigured = false;	// Has the Kinect been set up OK?
+bool			mKinectConfigured;			// Has the Kinect been set up OK?
+bool			mControlling;				// Is the Kinect currently being used to control movement?
 
 
 // Public ----------------------------------------------------------------------
@@ -92,6 +97,8 @@ CASKinectController::CASKinectController()
 		}
 	}
 
+	mControlling = false;
+
 	llinfos << "Kinect sensor configured = " << mKinectConfigured << llendl;
 }
 
@@ -121,8 +128,39 @@ bool CASKinectController::kinectConfigured()
 
 void CASKinectController::processSkeletonFrame()
 {
-	if (mKinectConfigured && WaitForSingleObject(mSkeletonEvent, 0) == WAIT_OBJECT_0)
+	NUI_SKELETON_FRAME skeletonFrame;
+	NUI_SKELETON_DATA skeletonData;
+
+	if (!mKinectConfigured || !WaitForSingleObject(mSkeletonEvent, 0) == WAIT_OBJECT_0)
 	{
+		return;
+	}
+
+	if (FAILED(mKinectSensor->NuiSkeletonGetNextFrame(0, &skeletonFrame)))
+	{
+		return;
+	}
+
+	mKinectSensor->NuiTransformSmooth(&skeletonFrame, NULL);
+
+	int skeleton = findClosestSkeleton(&skeletonFrame);
+	if (skeleton == -1)
+	{
+		mControlling = false;
+		return;
+	}
+	skeletonData = skeletonFrame.SkeletonData[skeleton];
+
+	if (mControlling && isStopGesture(&skeletonData))
+	{
+		mControlling = false;
+		return;
+	}
+
+	if (!mControlling && isStartGesture(&skeletonData))
+	{
+		mControlling = true;
+		return;
 	}
 }
 
@@ -160,6 +198,59 @@ void CASKinectController::unloadKinectDLL()
 		FreeLibrary(mKinectDLL);
 		mKinectDLL = NULL;
 	}
+}
+
+int findClosestSkeleton(NUI_SKELETON_FRAME* skeletonFrame)
+{
+	int skeleton = -1;
+
+	for (int i = 0; i < NUI_SKELETON_COUNT; i++)
+	{
+		if(skeletonFrame->SkeletonData[i].eTrackingState == NUI_SKELETON_TRACKED)
+		{
+			if (skeleton == -1)
+			{
+				skeleton = i;
+			}
+			else if (skeletonFrame->SkeletonData[i].Position.z < skeletonFrame->SkeletonData[skeleton].Position.z)
+			{
+				skeleton = i;
+			}
+		}
+	}
+
+	return skeleton;
+}
+
+bool isStartGesture(NUI_SKELETON_DATA* skeletonData)
+{
+	// Both hands above both elbows and both elbows above both shoulders
+	// And both hands inside both shoulders
+	// And both elbows outside both shoulders
+	Vector4 leftHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
+	Vector4 rightHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT];
+	Vector4 leftElbow = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
+	Vector4 rightElbow = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT];
+	Vector4 leftShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
+	Vector4 rightShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
+
+	return (leftHand.y > leftElbow.y) && (rightHand.y > rightElbow.y)
+		&& (leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
+		&& (leftHand.x > leftShoulder.x) && (rightHand.x < rightShoulder.x)
+		&& (leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x);
+}
+
+bool isStopGesture(NUI_SKELETON_DATA* skeletonData)
+{
+	// Both elbows below shoulders and each wrist on opposite side of body
+	Vector4 leftHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
+	Vector4 rightHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT];
+	Vector4 leftShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
+	Vector4 rightShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
+	Vector4 position = skeletonData->Position;
+
+	return (leftHand.y < leftShoulder.y) && (rightHand.y < rightShoulder.y)
+		&& (leftHand.x > position.x) && (rightHand.x < position.x);
 }
 
 #endif  // LL_WINDOWS
