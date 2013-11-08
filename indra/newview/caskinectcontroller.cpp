@@ -30,6 +30,7 @@
 #if LL_WINDOWS
 
 #include "caskinectcontroller.h"
+#include "llagent.h"
 
 #include <ObjBase.h>
 #include "NuiApi.h"
@@ -65,12 +66,15 @@ private:
 
 	bool isStartGesture(NUI_SKELETON_DATA*);
 	bool isStopGesture(NUI_SKELETON_DATA*);
+	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val <= max; }
 
 	HMODULE		mKinectDLL;				// Dynamically loaded Kinect DLL.
 	INuiSensor*	mKinectSensor;			// Kinect sensor that is being used.
 	HANDLE		mSkeletonEvent;			// New skeleton data event.
 	bool		mKinectConfigured;		// Has the Kinect been set up OK?
 	bool		mControlling;			// Is the Kinect currently being used to control movement?
+	bool		mAgentRunning;			// Agent is running forwards.
+	Vector4		mZeroPosition;			// The home position of zero movement.
 };
 
 
@@ -122,6 +126,7 @@ CASKinectHandler::CASKinectHandler()
 	}
 
 	mControlling = false;
+	mAgentRunning = false;
 
 	llinfos << "Kinect sensor configured = " << mKinectConfigured << llendl;
 }
@@ -165,6 +170,11 @@ void CASKinectHandler::processSkeletonFrame()
 	int skeleton = findClosestSkeleton(&skeletonFrame);
 	if (skeleton == -1)
 	{
+		if (mAgentRunning)
+		{
+			gAgent.clearTempRun();
+			mAgentRunning = false;
+		}
 		mControlling = false;
 		return;
 	}
@@ -172,14 +182,100 @@ void CASKinectHandler::processSkeletonFrame()
 
 	if (mControlling && isStopGesture(&skeletonData))
 	{
+		if (mAgentRunning)
+		{
+			gAgent.clearTempRun();
+			mAgentRunning = false;
+		}
 		mControlling = false;
 		return;
 	}
 
 	if (!mControlling && isStartGesture(&skeletonData))
 	{
+		mZeroPosition = skeletonData.Position;
 		mControlling = true;
 		return;
+	}
+
+	if (mControlling)
+	{
+		F32 positionDeadZone = 0.2f;
+		F32 rotationDeadZone = positionDeadZone / 2.f;
+		F32 walkMin = positionDeadZone / 2.f;
+		F32 walkMax = 1.5f * positionDeadZone;
+		F32 runMax = 2.5f * positionDeadZone;
+		F32 strafeMin = positionDeadZone / 2.f;
+		F32 strafeMax = 1.5f * positionDeadZone;
+		F32 turnMin = rotationDeadZone;
+		F32 turnMax = 2.f * rotationDeadZone;
+
+		// Move according to position.
+		Vector4 position = skeletonData.Position;
+		F32 deltaX = position.x - mZeroPosition.x;
+		F32 deltaZ = position.z - mZeroPosition.z;
+
+		// Only move if within tolerance of zero position.
+		if (inRange(deltaX, -strafeMax, strafeMax) && inRange(deltaZ, -runMax, walkMax))
+		{
+			// Forwards / backwards.
+			if (inRange(deltaZ, -runMax, -walkMax))
+			{
+				if (!mAgentRunning)
+				{
+					gAgent.setTempRun();
+					mAgentRunning = true;
+				}
+				gAgent.moveAtNudge(1);
+			}
+			else
+			{
+				if (mAgentRunning)
+				{
+					gAgent.clearTempRun();
+					mAgentRunning = false;
+				}
+
+				if (inRange(deltaZ, -walkMax, -walkMin))
+				{
+					gAgent.moveAtNudge(1);
+				}
+				else if (inRange(deltaZ, walkMin, walkMax))
+				{
+					gAgent.moveAtNudge(-1);
+				}
+			}
+
+			// Left / right.
+			if (inRange(deltaX, -strafeMax, -strafeMin))
+			{
+				gAgent.moveLeftNudge(1);
+			}
+			else if (inRange(deltaX, strafeMin, strafeMax))
+			{
+				gAgent.moveLeftNudge(-1);
+			}
+
+			// Turn.
+			NUI_SKELETON_POSITION_TRACKING_STATE stateShoulderLeft, stateShoulderRight;
+			stateShoulderLeft = skeletonData.eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_LEFT];
+			stateShoulderRight = skeletonData.eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
+
+			if (stateShoulderLeft != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderLeft != NUI_SKELETON_POSITION_INFERRED
+				&& stateShoulderRight != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderRight != NUI_SKELETON_POSITION_INFERRED)
+			{
+				F32 deltaShoulder = skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].z - skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].z;
+
+				if (inRange(deltaShoulder, -turnMax, -turnMin))
+				{
+					gAgent.moveYaw(1.f);
+				}
+				else if (inRange(deltaShoulder, turnMin, turnMax))
+				{
+					gAgent.moveYaw(-1.f);
+				}
+			}
+		}
 	}
 }
 
