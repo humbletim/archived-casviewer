@@ -64,9 +64,18 @@ private:
 	void unloadKinectDLL();
 
 	int findClosestSkeleton(NUI_SKELETON_FRAME*);
+	
+	typedef enum e_kinect_gesture
+	{
+		KG_NONE,
+		KG_STOP_CONTROLLING,
+		KG_START_CONTROLLING,
+		KG_FLY_UP,
+		KG_FLY_DOWN
+	} EKinectGesture;
+	
+	EKinectGesture getGesture(NUI_SKELETON_DATA*);
 
-	bool isStartGesture(NUI_SKELETON_DATA*);
-	bool isStopGesture(NUI_SKELETON_DATA*);
 	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val <= max; }
 
 	HMODULE		mKinectDLL;				// Dynamically loaded Kinect DLL.
@@ -181,22 +190,40 @@ void CASKinectHandler::processSkeletonFrame()
 	}
 	skeletonData = skeletonFrame.SkeletonData[skeleton];
 
-	if (mControlling && isStopGesture(&skeletonData))
+	switch (getGesture(&skeletonData))
 	{
-		if (mAgentRunning)
+	case KG_STOP_CONTROLLING:
+		if (mControlling)
 		{
-			gAgent.clearTempRun();
-			mAgentRunning = false;
+			if (mAgentRunning)
+			{
+				gAgent.clearTempRun();
+				mAgentRunning = false;
+			}
+			mControlling = false;
+			return;
 		}
-		mControlling = false;
-		return;
-	}
-
-	if (!mControlling && isStartGesture(&skeletonData))
-	{
+		break;
+	case KG_START_CONTROLLING:
 		mZeroPosition = skeletonData.Position;
 		mControlling = true;
 		return;
+	case KG_FLY_UP:
+		if (mControlling)
+		{
+			if (!gAgent.getFlying())
+			{
+				gAgent.setFlying(true);
+			}
+			gAgent.moveUp(1);
+		}
+		break;
+	case KG_FLY_DOWN:
+		if (mControlling && gAgent.getFlying())
+		{
+			gAgent.moveUp(-1);
+		}
+		break;
 	}
 
 	if (mControlling)
@@ -338,35 +365,56 @@ int CASKinectHandler::findClosestSkeleton(NUI_SKELETON_FRAME* skeletonFrame)
 	return skeleton;
 }
 
-bool CASKinectHandler::isStartGesture(NUI_SKELETON_DATA* skeletonData)
+CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA* skeletonData)
 {
-	// Both hands above both elbows and both elbows above both shoulders
-	// And both hands inside both shoulders
-	// And both elbows outside both shoulders
 	Vector4 leftHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
 	Vector4 rightHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT];
 	Vector4 leftElbow = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_LEFT];
 	Vector4 rightElbow = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_ELBOW_RIGHT];
 	Vector4 leftShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
 	Vector4 rightShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
+	Vector4 position = skeletonData->Position;
+	const F32 flyDownMin = 0.2f - 0.01f * (F32)gSavedSettings.getU32("KinectSensitivity");
 
-	return (leftHand.y > leftElbow.y) && (rightHand.y > rightElbow.y)
+	EKinectGesture gesture = KG_NONE;
+
+	// Stop controlling:
+	// - Both elbows below shoulders and each wrist on opposite side of body.
+	if ((leftHand.y < leftShoulder.y) && (rightHand.y < rightShoulder.y)
+		&& (leftHand.x > position.x) && (rightHand.x < position.x))
+	{
+		gesture = KG_STOP_CONTROLLING;
+	}
+	// Start controlling:
+	// - Both hands above both elbows and both elbows above both shoulders.
+	// - Both hands inside both shoulders.
+	// - Both elbows outside both shoulders.
+	else if ((leftHand.y > leftElbow.y) && (rightHand.y > rightElbow.y)
 		&& (leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
 		&& (leftHand.x > leftShoulder.x) && (rightHand.x < rightShoulder.x)
-		&& (leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x);
-}
+		&& (leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x))
+	{
+		gesture = KG_START_CONTROLLING;
+	}
+	// Fly up:
+	// - Both elbows outside both shoulders.
+	// - Both hands outside both shoulders.
+	// - Hands and elbows above shoulders;
+	else if ((leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x)
+		&& (leftHand.x < leftShoulder.x) && (rightHand.x > rightShoulder.x)
+		&& (leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
+		&& (leftHand.y > leftShoulder.y) && (rightHand.y > rightShoulder.y))
+	{
+		gesture = KG_FLY_UP;
+	}
+	// Fly down:
+	// - Body position lowered.
+	else if ((mZeroPosition.y - position.y) > flyDownMin)
+	{
+		gesture = KG_FLY_DOWN;
+	}
 
-bool CASKinectHandler::isStopGesture(NUI_SKELETON_DATA* skeletonData)
-{
-	// Both elbows below shoulders and each wrist on opposite side of body
-	Vector4 leftHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_LEFT];
-	Vector4 rightHand = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_WRIST_RIGHT];
-	Vector4 leftShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
-	Vector4 rightShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
-	Vector4 position = skeletonData->Position;
-
-	return (leftHand.y < leftShoulder.y) && (rightHand.y < rightShoulder.y)
-		&& (leftHand.x > position.x) && (rightHand.x < position.x);
+	return gesture;
 }
 
 
