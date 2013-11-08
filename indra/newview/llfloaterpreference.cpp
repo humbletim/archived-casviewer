@@ -509,6 +509,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	// <CV:David>
 	#if LL_WINDOWS
 		mCommitCallbackRegistrar.add("Pref.KinectEnable",	boost::bind(&LLFloaterPreference::onKinectEnable, this));
+		mCommitCallbackRegistrar.add("Pref.ResetKinectSensitivity",	boost::bind(&LLFloaterPreference::onClickResetKinectSensitivity, this));
 	#endif
 	// </CV:David>
 
@@ -3630,6 +3631,14 @@ void LLFloaterPreference::onKinectEnable()
 			gKinectController = NULL;
 		}
 	}
+
+	getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
+	getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
+}
+
+void LLFloaterPreference::onClickResetKinectSensitivity()
+{
+	gSavedSettings.setU32("KinectSensitivity", 5);
 }
 
 #endif

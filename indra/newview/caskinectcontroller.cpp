@@ -31,6 +31,7 @@
 
 #include "caskinectcontroller.h"
 #include "llagent.h"
+#include "llviewercontrol.h"
 
 #include <ObjBase.h>
 #include "NuiApi.h"
@@ -200,7 +201,7 @@ void CASKinectHandler::processSkeletonFrame()
 
 	if (mControlling)
 	{
-		F32 positionDeadZone = 0.2f;
+		F32 positionDeadZone = 0.3f - 0.02f * (F32)gSavedSettings.getU32("KinectSensitivity");
 		F32 rotationDeadZone = positionDeadZone / 2.f;
 		F32 walkMin = positionDeadZone / 2.f;
 		F32 walkMax = 1.5f * positionDeadZone;

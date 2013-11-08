@@ -229,6 +229,7 @@ public:
 	// <CV:David>
 	#if LL_WINDOWS
 		void onKinectEnable();
+		void onClickResetKinectSensitivity();
 	#endif
 	// </CV:David>
 
