@@ -83,7 +83,10 @@ private:
 	HANDLE		mSkeletonEvent;			// New skeleton data event.
 	bool		mKinectConfigured;		// Has the Kinect been set up OK?
 	bool		mControlling;			// Is the Kinect currently being used to control movement?
-	bool		mAgentRunning;			// Agent is running forwards.
+	bool		mWalking;				// Currently walking forwards or backwards.
+	bool		mRunning;				// Currently running forwards.
+	bool		mStrafing;				// Currently strading left or right.
+	F32			mHysterisis;	// To prevent avatar "flickering" when changing back from walking, running, or strafing.
 	Vector4		mZeroPosition;			// The home position of zero movement.
 };
 
@@ -136,7 +139,10 @@ CASKinectHandler::CASKinectHandler()
 	}
 
 	mControlling = false;
-	mAgentRunning = false;
+	mWalking = false;
+	mRunning = false;
+	mStrafing = false;
+	mHysterisis = 0.01f;
 
 	llinfos << "Kinect sensor configured = " << mKinectConfigured << llendl;
 }
@@ -180,11 +186,13 @@ void CASKinectHandler::processSkeletonFrame()
 	int skeleton = findClosestSkeleton(&skeletonFrame);
 	if (skeleton == -1)
 	{
-		if (mAgentRunning)
+		mWalking = false;
+		if (mRunning)
 		{
 			gAgent.clearTempRun();
-			mAgentRunning = false;
+			mRunning = false;
 		}
+		mStrafing = false;
 		mControlling = false;
 		return;
 	}
@@ -195,11 +203,13 @@ void CASKinectHandler::processSkeletonFrame()
 	case KG_STOP_CONTROLLING:
 		if (mControlling)
 		{
-			if (mAgentRunning)
+			mWalking = false;
+			if (mRunning)
 			{
 				gAgent.clearTempRun();
-				mAgentRunning = false;
+				mRunning = false;
 			}
+			mStrafing = false;
 			mControlling = false;
 			return;
 		}
@@ -228,12 +238,12 @@ void CASKinectHandler::processSkeletonFrame()
 
 	if (mControlling)
 	{
-		F32 positionDeadZone = 0.3f - 0.02f * (F32)gSavedSettings.getU32("KinectSensitivity");
+		F32 positionDeadZone = 0.22f - 0.02f * (F32)gSavedSettings.getU32("KinectSensitivity");
 		F32 rotationDeadZone = positionDeadZone / 2.f;
-		F32 walkMin = positionDeadZone / 2.f;
-		F32 walkMax = 1.5f * positionDeadZone;
+		F32 walkMin = positionDeadZone / 2.f - (mWalking ? mHysterisis : 0.f);
+		F32 walkMax = 1.5f * positionDeadZone - (mRunning ? mHysterisis : 0.f);
 		F32 runMax = 2.5f * positionDeadZone;
-		F32 strafeMin = positionDeadZone / 2.f;
+		F32 strafeMin = positionDeadZone / 2.f - (mStrafing ? mHysterisis : 0.f);
 		F32 strafeMax = 1.5f * positionDeadZone;
 		F32 turnMin = rotationDeadZone;
 		F32 turnMax = 2.f * rotationDeadZone;
@@ -249,27 +259,30 @@ void CASKinectHandler::processSkeletonFrame()
 			// Forwards / backwards.
 			if (inRange(deltaZ, -runMax, -walkMax))
 			{
-				if (!mAgentRunning)
+				mWalking = false;
+				if (!mRunning)
 				{
 					gAgent.setTempRun();
-					mAgentRunning = true;
+					mRunning = true;
 				}
 				gAgent.moveAtNudge(1);
 			}
 			else
 			{
-				if (mAgentRunning)
+				if (mRunning)
 				{
 					gAgent.clearTempRun();
-					mAgentRunning = false;
+					mRunning = false;
 				}
 
 				if (inRange(deltaZ, -walkMax, -walkMin))
 				{
+					mWalking = true;
 					gAgent.moveAtNudge(1);
 				}
 				else if (inRange(deltaZ, walkMin, walkMax))
 				{
+					mWalking = true;
 					gAgent.moveAtNudge(-1);
 				}
 			}
@@ -277,10 +290,12 @@ void CASKinectHandler::processSkeletonFrame()
 			// Left / right.
 			if (inRange(deltaX, -strafeMax, -strafeMin))
 			{
+				mStrafing = true;
 				gAgent.moveLeftNudge(1);
 			}
 			else if (inRange(deltaX, strafeMin, strafeMax))
 			{
+				mStrafing = true;
 				gAgent.moveLeftNudge(-1);
 			}
 
