@@ -238,15 +238,16 @@ void CASKinectHandler::processSkeletonFrame()
 
 	if (mControlling)
 	{
-		F32 positionDeadZone = 0.22f - 0.02f * (F32)gSavedSettings.getU32("KinectSensitivity");
-		F32 rotationDeadZone = positionDeadZone / 2.f;
+		F32 sensitivity = (F32)gSavedSettings.getU32("KinectSensitivity");
+		F32 positionDeadZone = 0.22f - 0.02f * sensitivity;
+		F32 rotationDeadZone = positionDeadZone / 5.f;
 		F32 walkMin = positionDeadZone / 2.f - (mWalking ? mHysterisis : 0.f);
 		F32 walkMax = 1.5f * positionDeadZone - (mRunning ? mHysterisis : 0.f);
 		F32 runMax = 2.5f * positionDeadZone;
 		F32 strafeMin = positionDeadZone / 2.f - (mStrafing ? mHysterisis : 0.f);
 		F32 strafeMax = 1.5f * positionDeadZone;
 		F32 turnMin = rotationDeadZone;
-		F32 turnMax = 2.f * rotationDeadZone;
+		F32 turnMax = rotationDeadZone + 5.f * (10.f - sensitivity);
 
 		// Move according to position.
 		Vector4 position = skeletonData.Position;
@@ -307,15 +308,15 @@ void CASKinectHandler::processSkeletonFrame()
 			if (stateShoulderLeft != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderLeft != NUI_SKELETON_POSITION_INFERRED
 				&& stateShoulderRight != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderRight != NUI_SKELETON_POSITION_INFERRED)
 			{
-				F32 deltaShoulder = skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].z - skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].z;
+				F32 deltaShoulder = skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].z - skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].z;
 
 				if (inRange(deltaShoulder, -turnMax, -turnMin))
 				{
-					gAgent.moveYaw(1.f);
+					gAgent.moveYaw((5.f + sensitivity) * (deltaShoulder + rotationDeadZone));
 				}
 				else if (inRange(deltaShoulder, turnMin, turnMax))
 				{
-					gAgent.moveYaw(-1.f);
+					gAgent.moveYaw((5.f + sensitivity) * (deltaShoulder - rotationDeadZone));
 				}
 			}
 		}
