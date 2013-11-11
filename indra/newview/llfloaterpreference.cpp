@@ -498,6 +498,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onChangeRiftPredictionDelta, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onClickResetRiftPredictionDelta, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
@@ -3554,6 +3556,23 @@ void LLFloaterPreference::onClickResetScreenDistance()
 void LLFloaterPreference::onClickResetRiftEyeSeparation()
 {
 	gSavedSettings.setF32("RiftEyeSeparation", 65.0f);
+}
+
+void LLFloaterPreference::onChangeRiftPredictionDelta()
+{
+	if (gRift3DEnabled)
+	{
+		gRiftFusionResult->SetPrediction(getChild<LLSliderCtrl>("RiftPredictionDelta")->getValue().asReal() / 1000.f);
+	}
+}
+
+void LLFloaterPreference::onClickResetRiftPredictionDelta()
+{
+	gSavedSettings.setF32("RiftPredictionDelta", 20.0f);
+	if (gRift3DEnabled)
+	{
+		gRiftFusionResult->SetPrediction(0.02f);
+	}
 }
 
 void LLFloaterPreference::onChangeRiftOperationMode()

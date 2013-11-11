@@ -219,6 +219,8 @@ public:
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();
 	void onClickResetRiftEyeSeparation();
+	void onChangeRiftPredictionDelta();
+	void onClickResetRiftPredictionDelta();
 	void onChangeRiftOperationMode();
 	void onRiftStrafeEnable();
 	void onClickResetRiftUIDepth();

@@ -1110,6 +1110,8 @@ bool LLAppViewer::init()
 
 	if (gRift3DConfigured)
 	{
+		LL_INFOS("InitInfo") << "Oculus Rift: Eye separation = " << std::setprecision(3) << gSavedSettings.getF32("RiftEyeSeparation") / 1000.f << LL_ENDL;;
+		LL_INFOS("InitInfo") << "Oculus Rift: Prediction delta = " << gSavedSettings.getF32("RiftPredictionDelta") / 1000.f << std::setprecision(2) << LL_ENDL;
 		gRiftStanding = gSavedSettings.getU32("RiftOperationMode") == RIFT_OPERATE_STANDING;
 		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
 		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
@@ -1147,10 +1149,8 @@ bool LLAppViewer::init()
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
 			gRiftFusionResult->AttachToSensor(gRiftSensor);
-
-			OVR::SensorFusion sensorFusion;
-			sensorFusion.AttachToSensor(gRiftSensor);
-			sensorFusion.SetPredictionEnabled(TRUE);
+			gRiftFusionResult->SetPredictionEnabled(TRUE);
+			gRiftFusionResult->SetPrediction(gSavedSettings.getF32("RiftPredictionDelta") / 1000.f);
 		}
 		else
 		{
@@ -1233,7 +1233,6 @@ bool LLAppViewer::init()
 		llinfos << "Oculus Rift: DistortionK = " << std::setprecision(3) << gRiftHMDInfo.DistortionK[0] << ", " << gRiftHMDInfo.DistortionK[1] << ", " << gRiftHMDInfo.DistortionK[2] << ", " << gRiftHMDInfo.DistortionK[3] << std::setprecision(2) << llendl;
 
 		/*
-		llinfos << "Oculus Rift: Eye separation = " << std::setprecision(6) << gSavedSettings.getF32("RiftEyeSeparation") / 1000.f << std::setprecision(2) << llendl;
 		stereo.SetIPD(gSavedSettings.getF32("RiftEyeSeparation") / 1000.f);
 		OVR::Util::Render::StereoEyeParams leftEye = stereo.GetEyeRenderParams(OVR::Util::Render::StereoEye_Left);
 		OVR::Util::Render::Viewport leftVP = leftEye.VP;

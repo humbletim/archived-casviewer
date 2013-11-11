@@ -20511,6 +20511,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <real>65.0</real>
     </map>
+    <key>RiftPredictionDelta</key>
+    <map>
+      <key>Comment</key>
+      <string>How far into the future to predict Rift orientation in milliseconds.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>20.0</real>
+    </map>
     <key>Rift3DEnabled</key>
     <map>
       <key>Comment</key>

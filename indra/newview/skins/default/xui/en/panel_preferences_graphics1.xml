@@ -1511,6 +1511,52 @@
          function="Pref.ResetRiftEyeSeparation" />
       </button>
 
+      <slider
+       control_name="RiftPredictionDelta"
+       decimal_digits="0"
+       label="Prediction delta:"
+       follows="left|top"
+       height="16"
+       increment="5"
+       initial_value="20"
+       layout="topleft"
+       left="54"
+       max_val="50"
+       min_val="0"
+       name="RiftPredictionDelta"
+       width="314"
+       label_width="100"
+       tool_tip="How far into the future to predict the Rift's orientation.">
+        <slider.commit_callback
+         function="Pref.ChangeRiftPredictionDelta" />
+      </slider>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="324"
+       name="RiftPreductionDeltaUnitsText"
+       top_delta="0"
+       width="32">
+        ms
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetRiftPredictionDelta"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftPredictionDelta" />
+      </button>
+
       <radio_group
       control_name="RiftOperationMode"
       follows="left|top"
@@ -1518,7 +1564,7 @@
       layout="topleft"
       name="RiftOperationMode"
       left="54"
-      top_pad="5"
+      top_pad="4"
       width="440">
         <radio_group.commit_callback
           function="Pref.ChangeRiftOperationMode" />
@@ -1546,7 +1592,7 @@
        left="200"
        name="RiftStrafe"
        tool_tip="Shift-left and shift-right turn."
-       top="163"
+       top="184"
        width="180">
         <check_box.commit_callback
            function="Pref.RiftStrafeEnable" />
@@ -1561,8 +1607,7 @@
        increment="1"
        initial_value="65"
        layout="topleft"
-       top_pad="10"
-       top="210"
+       top="226"
        left="54"
        max_val="120"
        min_val="80"
@@ -1592,7 +1637,7 @@
       layout="topleft"
       name="RiftMouseMode"
       left="54"
-      top_pad="6"
+      top_pad="4"
       width="440">
         <radio_group.commit_callback
           function="Pref.ChangeRiftMouseMode" />
@@ -1620,7 +1665,7 @@
        left="54"
        name="RiftMouseHorizontal"
        tool_tip="Mouse moves Riftlook view horizontally only."
-       top_pad="0"
+       top_pad="2"
        width="50">
         <check_box.commit_callback
            function="Pref.RiftMouseHorizontalEnable" />
