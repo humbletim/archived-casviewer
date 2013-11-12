@@ -11177,7 +11177,7 @@ You cannot undo this action.
    icon="notifymodal.tga"
    name="KinectNotInitialized"
    type="alertmodal">
-Cannot initialize Kinect for Windows.
+Cannot initialize Microsoft Kinect.
     <tag>confirm</tag>
     <usetemplate
      name="okbutton"

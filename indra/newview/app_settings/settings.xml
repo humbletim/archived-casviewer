@@ -20602,7 +20602,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>KinectEnabled</key>
     <map>
       <key>Comment</key>
-      <string>Enable Kinect for Windows.</string>
+      <string>Enable Microsoft Kinect.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
