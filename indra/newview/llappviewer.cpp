@@ -1433,6 +1433,22 @@ bool LLAppViewer::init()
 	gSimLastTime = gRenderStartTime.getElapsedTimeF32();
 	gSimFrames = (F32)gFrameCount;
 
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gSavedSettings.getBOOL("KinectEnabled"))
+		{
+			gKinectController = new CASKinectController();
+			if (!gKinectController->kinectConfigured())
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
+		}
+	#endif
+	// </CV:David>
+
 	LLViewerJoystick::getInstance()->init(false);
 
 	try {
@@ -1500,22 +1516,6 @@ bool LLAppViewer::init()
 	}
 
 	LLAgentLanguage::init();
-
-	// <CV:David>
-	#if LL_WINDOWS
-		if (gSavedSettings.getBOOL("KinectEnabled"))
-		{
-			gKinectController = new CASKinectController();
-			if (!gKinectController->kinectConfigured())
-			{
-				gSavedSettings.setBOOL("KinectEnabled", FALSE);
-				LLNotificationsUtil::add("KinectNotInitialized");
-				delete gKinectController;
-				gKinectController = NULL;
-			}
-		}
-	#endif
-	// </CV:David>
 
 	// initializing the settings sanity checker
 	SanityCheck::instance().init();
@@ -2086,16 +2086,6 @@ bool LLAppViewer::cleanup()
 	llinfos << "Cleaning Up" << llendflush;
 
 	// <CV:David>
-	#if LL_WINDOWS
-		if (gKinectController)
-		{
-			delete gKinectController;
-			gKinectController = NULL;
-		}
-	#endif
-	// </CV:David>
-
-	// <CV:David>
 	if (gRift3DConfigured)
 	{
 		gRiftSensor.Clear();
@@ -2284,6 +2274,16 @@ bool LLAppViewer::cleanup()
 	// Turn off Space Navigator and similar devices
 	LLViewerJoystick::getInstance()->terminate();
 	
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+		}
+	#endif
+	// </CV:David>
+
 	llinfos << "Cleaning up Objects" << llendflush;
 	
 	LLViewerObject::cleanupVOClasses();
