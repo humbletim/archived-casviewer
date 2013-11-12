@@ -65,14 +65,14 @@ private:
 
 	int findClosestSkeleton(NUI_SKELETON_FRAME*);
 	
-	typedef enum e_kinect_gesture
+	enum EKinectGesture
 	{
 		KG_NONE,
 		KG_STOP_CONTROLLING,
 		KG_START_CONTROLLING,
 		KG_FLY_UP,
 		KG_FLY_DOWN
-	} EKinectGesture;
+	};
 	
 	EKinectGesture getGesture(NUI_SKELETON_DATA*);
 
