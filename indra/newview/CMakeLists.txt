@@ -114,6 +114,7 @@ set(viewer_SOURCE_FILES
     ao.cpp
     aoengine.cpp
     aoset.cpp
+    caskinectcontroller.cpp
     chatbar_as_cmdline.cpp
     exoflickr.cpp
     exoflickrauth.cpp
@@ -782,6 +783,7 @@ set(viewer_HEADER_FILES
     ao.h
     aoengine.h
     aoset.h
+    caskinectcontroller.h
     chatbar_as_cmdline.h
     exoflickr.h
     exoflickrauth.h

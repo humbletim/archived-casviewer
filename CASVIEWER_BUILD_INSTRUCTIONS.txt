@@ -31,12 +31,9 @@ Setting up Mac OSX and Linux SDK versions will be similar along the lines of the
 
 Kinect for Windows SDK
 
-If building a Windows viewer you need to download and install the Kinect for Windows SDK. Then you need to add the following 
-configuration items to those you've already customized for Microsoft.Cpp.Win32.user for the viewer build.
-VC++ as follows:
-- Properties > VC++ Directories > Include directories, add: $(KINECTSDK10_DIR)\inc
-- Properties > VC++ Directories > Library directories, add: $(KINECTSDK10_DIR)\lib\x86		(May not be required.)
-- Properties > Linker > Input > Additional Libraries, add: kinect10.lib						(May not be required.)
+If building a Windows viewer you need to download and install the Kinect for Windows SDK. Then you need:
+- Copy Nui*.h from C:\Program Files\Microsoft SDKs\Kinect\v1.8\inc into \Viewer\build-vc100\packages\include.
+- Copy Kinect10.lib from C:\Program Files\Microsoft SDKs\Kinect\v1.8\lib\x86 into build-vc100\packages\lib\debug and \release.
 
 
 For building the viewer, the Firestorm target names such as ReleaseFS_open are retained.
