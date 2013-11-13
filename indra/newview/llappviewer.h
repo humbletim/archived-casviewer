@@ -38,6 +38,12 @@
 #include "OVRVersion.h"
 // </CV:David>
 
+// <CV:David>
+#if LL_WINDOWS
+	#include "caskinectcontroller.h"
+#endif
+// </CV:David>
+
 class LLCommandLineParser;
 class LLFrameTimer;
 class LLPumpIO;
@@ -428,6 +434,12 @@ extern U32 gRiftHSample;
 extern U32 gRiftVSample;
 extern F32 gRiftDistortionK[4];
 extern F32 gRiftLensOffset;
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+	extern CASKinectController* gKinectController;
+#endif
 // </CV:David>
 
 #endif // LL_LLAPPVIEWER_H

@@ -3,6 +3,8 @@ See the Firestorm build instruction text files plus the instructions at the foll
 - http://wiki.secondlife.com/wiki/Get_source_and_compile
 
 
+Oculus Rift SDK
+
 You need to provision, package, and install the Oculus Rift SDK yourself: the Oculus Rift SDK is packaged up with autobuild 
 in the same manner as FMOD. The resultant package file however cannot be put online for distribution because per the SDK 
 license, "source redistributions must include the whole of the Oculus SDK".
@@ -25,6 +27,13 @@ To use the package in building the viewer for a Windows build:
 - Then, before doing an autobuild configure or autobuild build command, remember to: set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
 
 Setting up Mac OSX and Linux SDK versions will be similar along the lines of the FMOD instructions for these platforms.
+
+
+Kinect for Windows SDK
+
+If building a Windows viewer you need to download and install the Kinect for Windows SDK. Then you need:
+- Copy Nui*.h from C:\Program Files\Microsoft SDKs\Kinect\v1.8\inc into \Viewer\build-vc100\packages\include.
+- Copy Kinect10.lib from C:\Program Files\Microsoft SDKs\Kinect\v1.8\lib\x86 into build-vc100\packages\lib\debug and \release.
 
 
 For building the viewer, the Firestorm target names such as ReleaseFS_open are retained.

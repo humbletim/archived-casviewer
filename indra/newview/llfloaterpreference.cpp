@@ -143,6 +143,7 @@
 #include "growlmanager.h"
 #include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 
+#include "llappviewer.h"  // <CV:David>
 #include "llviewerdisplay.h"  // <CV:David>
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
@@ -505,6 +506,13 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
+	// </CV:David>
+
+	// <CV:David>
+	#if LL_WINDOWS
+		mCommitCallbackRegistrar.add("Pref.KinectEnable",	boost::bind(&LLFloaterPreference::onKinectEnable, this));
+		mCommitCallbackRegistrar.add("Pref.ResetKinectSensitivity",	boost::bind(&LLFloaterPreference::onClickResetKinectSensitivity, this));
+	#endif
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -1593,6 +1601,12 @@ void LLFloaterPreference::refreshEnabledState()
 
 	// <CV:David>
 	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
+
+	#if LL_WINDOWS
+		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
+	#else
+		getChild<LLUICtrl>("KinectEnabled")->setEnabled(false);
+	#endif
 	// </CV:David>
 }
 
@@ -3607,6 +3621,46 @@ void LLFloaterPreference::onRiftMouseHorizontalEnable()
 	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
 }
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+
+void LLFloaterPreference::onKinectEnable()
+{
+	if (getChild<LLCheckBoxCtrl>("KinectEnabled")->getValue().asBoolean())
+	{
+		if (!gKinectController)
+		{
+			gKinectController = new CASKinectController();
+			if (!gKinectController->kinectConfigured())
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
+		}
+	}
+	else
+	{
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+		}
+	}
+
+	getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
+	getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
+}
+
+void LLFloaterPreference::onClickResetKinectSensitivity()
+{
+	gSavedSettings.setU32("KinectSensitivity", 5);
+}
+
+#endif
 // </CV:David>
 
 // <FS:Kadah>

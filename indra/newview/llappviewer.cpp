@@ -241,6 +241,10 @@
 #include "llviewermenu.h"
 #include "OVR.h"
 #include "OVRVersion.h"
+
+#if LL_WINDOWS
+	#include "caskinectcontroller.h"
+#endif
 // </CV:David>
 
 
@@ -373,6 +377,12 @@ U32 gRiftHSample;
 U32 gRiftVSample;
 F32 gRiftDistortionK[4];
 F32 gRiftLensOffset;
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+	CASKinectController* gKinectController = NULL;
+#endif
 // </CV:David>
 
 ////////////////////////////////////////////////////////////
@@ -1422,6 +1432,22 @@ bool LLAppViewer::init()
 	gSimLastTime = gRenderStartTime.getElapsedTimeF32();
 	gSimFrames = (F32)gFrameCount;
 
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gSavedSettings.getBOOL("KinectEnabled"))
+		{
+			gKinectController = new CASKinectController();
+			if (!gKinectController->kinectConfigured())
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
+		}
+	#endif
+	// </CV:David>
+
 	LLViewerJoystick::getInstance()->init(false);
 
 	try {
@@ -1706,6 +1732,16 @@ bool LLAppViewer::mainLoop()
 						gAgent.moveUp(-1);
 					}
 					// </FS:Ansariel>
+
+					// <CV:David>
+					// Process a skeleton frame is one is ready and available.
+					#if LL_WINDOWS
+						if (gKinectController)
+						{
+							gKinectController->processSkeletonFrame();
+						}
+					#endif
+					// </CV:David>
 				}
 
 				// Update state based on messages, user input, object idle.
@@ -2237,6 +2273,16 @@ bool LLAppViewer::cleanup()
 	// Turn off Space Navigator and similar devices
 	LLViewerJoystick::getInstance()->terminate();
 	
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+		}
+	#endif
+	// </CV:David>
+
 	llinfos << "Cleaning up Objects" << llendflush;
 	
 	LLViewerObject::cleanupVOClasses();
