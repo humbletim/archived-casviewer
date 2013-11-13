@@ -63,6 +63,8 @@ private:
 	void loadKinectDLL();
 	void unloadKinectDLL();
 
+	bool getFileVersion(LPCWSTR file, int* major, int* minor, int* revision, int* build);
+
 	int findClosestSkeleton(NUI_SKELETON_FRAME*);
 	
 	enum EKinectGesture
@@ -328,9 +330,17 @@ void CASKinectHandler::processSkeletonFrame()
 
 void CASKinectHandler::loadKinectDLL()
 {	
-	mKinectDLL = LoadLibrary(L"Kinect10");
+	LPCWSTR kinectLibrary = L"Kinect10";
+
+	mKinectDLL = LoadLibrary(kinectLibrary);
 	if (mKinectDLL != NULL)
 	{
+		int major, minor, revision, build;
+		if (getFileVersion(kinectLibrary, &major, &minor, &revision, &build))
+		{
+			llinfos << "Kinect DLL version: " << major << "." << minor << "." << revision << "." << build << llendl;
+		}
+		
 		NuiGetSensorCountFunc = (NuiGetSensorCountType)::GetProcAddress(mKinectDLL, "NuiGetSensorCount");
 		NuiCreateSensorByIndexFunc = (NuiCreateSensorByIndexType)::GetProcAddress(mKinectDLL, "NuiCreateSensorByIndex");
 
@@ -357,6 +367,51 @@ void CASKinectHandler::unloadKinectDLL()
 		FreeLibrary(mKinectDLL);
 		mKinectDLL = NULL;
 	}
+}
+
+bool CASKinectHandler::getFileVersion(LPCWSTR file, int* major, int* minor, int* revision, int* build)
+{
+	DWORD  verHandle = NULL;
+	UINT   size      = 0;
+	LPBYTE lpBuffer  = NULL;
+	DWORD  verSize   = GetFileVersionInfoSize(file, &verHandle);
+
+	if (verSize != NULL)
+	{
+		LPSTR verData = new char[verSize];
+
+		if (GetFileVersionInfo(file, verHandle, verSize, verData))
+		{
+
+			if (VerQueryValue(verData, TEXT("\\"), (VOID FAR* FAR*)&lpBuffer, &size))
+			{
+				if (size)
+				{
+					VS_FIXEDFILEINFO *verInfo = (VS_FIXEDFILEINFO *)lpBuffer;
+					if (verInfo->dwSignature == 0xfeef04bd)
+					{
+						#ifdef ND_BUILD64BIT_ARCH
+							major = (verInfo->dwProductVersionMS >> 16) & 0xff;
+							minor = (verInfo->dwProductVersionMS >> 0) & 0xff;
+							revision = (verInfo->dwProductVersionLS >> 16) & 0xff;
+							build = (verInfo->dwProductVersionLS >> 0) & 0xff;
+
+						#else
+							*major = HIWORD(verInfo->dwProductVersionMS);
+							*minor = LOWORD(verInfo->dwProductVersionMS);
+							*revision = HIWORD(verInfo->dwProductVersionLS);
+							*build = LOWORD(verInfo->dwProductVersionLS);
+						#endif
+						return true;
+					}
+				}
+			}
+
+		}
+		delete[] verData;
+	}
+
+	return false;
 }
 
 int CASKinectHandler::findClosestSkeleton(NUI_SKELETON_FRAME* skeletonFrame)
