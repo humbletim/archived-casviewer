@@ -486,6 +486,10 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 
 	mCommitCallbackRegistrar.add("Pref.ClickActionChange",				boost::bind(&LLFloaterPreference::onClickActionChange, this));
 
+	// <CV:David>
+	mCommitCallbackRegistrar.add("Pref.ChangeWalkSpeed",		boost::bind(&LLFloaterPreference::onChangeWalkSpeed, this));
+	// </CV:David>
+
 	// <FS:Zi> Backup settings
 	mCommitCallbackRegistrar.add("Pref.SetBackupSettingsPath",	boost::bind(&LLFloaterPreference::onClickSetBackupSettingsPath, this));
 	mCommitCallbackRegistrar.add("Pref.BackupSettings",			boost::bind(&LLFloaterPreference::onClickBackupSettings, this));
@@ -2131,6 +2135,13 @@ void LLFloaterPreference::updateClickActionControls()
 	getChild<LLComboBox>("single_click_action_combo")->setValue((int)click_to_walk);
 	getChild<LLComboBox>("double_click_action_combo")->setValue(dbl_click_to_teleport ? 2 : (int)dbl_click_to_walk);
 }
+
+// <CV:David>
+void LLFloaterPreference::onChangeWalkSpeed()
+{
+	gAgent.setWalkSpeed(getChild<LLSliderCtrl>("WalkSpeed")->getValue().asInteger());
+}
+// </CV:David>
 
 // <FS:PP> Load UI Sounds tabs settings
 void LLFloaterPreference::updateUISoundsControls()

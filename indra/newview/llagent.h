@@ -352,6 +352,19 @@ public:
 	BOOL			getAFK() const;
 	static const F32 MIN_AFK_TIME;
 	
+// <CV:David>
+	//--------------------------------------------------------------------
+	// Walk
+	//--------------------------------------------------------------------
+public:
+	void			setWalkSpeed(U32 speed) { mWalkSpeed = speed; }
+	void			calcWalkSpeedFlag();
+
+private:
+	U32				mWalkSpeed;
+	U32				mWalkSpeedFlag;
+// </CV:David>
+
 	//--------------------------------------------------------------------
 	// Run
 	//--------------------------------------------------------------------

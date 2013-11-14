@@ -215,6 +215,10 @@ public:
 // </FS:Zi>
 
 	// <CV:David>
+	void onChangeWalkSpeed();
+	// </CV:David>
+
+	// <CV:David>
 	void onChangeOutputType();
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();

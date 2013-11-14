@@ -520,6 +520,10 @@ void LLAgent::init()
 		mTeleportFailedSlot = LLViewerParcelMgr::getInstance()->setTeleportFailedCallback(boost::bind(&LLAgent::handleTeleportFailed, this));
 	}
 
+	// <CV:David>
+	mWalkSpeed = gSavedSettings.getU32("WalkSpeed");
+	// <CV:David>
+
 	mInitialized = TRUE;
 }
 
@@ -595,6 +599,46 @@ void LLAgent::ageChat()
 	}
 }
 
+// <CV:David>
+void LLAgent::calcWalkSpeedFlag()
+{
+	// Calculate once per main loop.
+	// Sending AGENT_CONTROL_STOP along with the direction flags causes the simulator to move the avatar slowly.
+	// Sending AGENT_CONTROL_STOP every Nth time has the effect of making the avatar move at a slower speed.
+	// Flying speed is controlled by sending or not sending the "fly" messages, not by sending AGENT_CONTROL_STOP.
+	// Works quite well in Second Life but not very well if at all in OpenSim.
+
+	static int count = 0;
+	count = (count + 1) % 4;
+
+	if (!getRunning())
+	{
+		switch (mWalkSpeed)
+		{
+		case AGENT_WALK_SLOW:  // Always send, unless flying in which case send 3 out of 4 times
+			mWalkSpeedFlag = (getFlying() && (count == 0)) ? 0 : AGENT_CONTROL_STOP;
+			break;
+		case AGENT_WALK_MEDIUM_SLOW:  // Send 3 out of 4 times
+			mWalkSpeedFlag = (count == 0) ? 0 : AGENT_CONTROL_STOP;
+			break;
+		case AGENT_WALK_MEDIUM:  // Send every second time
+			mWalkSpeedFlag = (count % 2 == 0) ? 0 : AGENT_CONTROL_STOP;
+			break;
+		case AGENT_WALK_MEDIUM_FAST:  // Send 1 out of 4 times
+			mWalkSpeedFlag = (count != 0) ? 0 : AGENT_CONTROL_STOP;
+			break;
+		case AGENT_WALK_FAST:  // Never send
+			mWalkSpeedFlag = 0;
+			break;
+		}
+	}
+	else
+	{
+		mWalkSpeedFlag = 0;  // Run full speed
+	}
+}
+// </CV:David>
+
 //-----------------------------------------------------------------------------
 // moveAt()
 //-----------------------------------------------------------------------------
@@ -608,14 +652,28 @@ void LLAgent::moveAt(S32 direction, bool reset)
 
 	gAgentCamera.setAtKey(LLAgentCamera::directionToKey(direction));
 
-	if (direction > 0)
+	// <CV:David>
+	//if (direction > 0)
+	//{
+	//	setControlFlags(AGENT_CONTROL_AT_POS | AGENT_CONTROL_FAST_AT);
+	//}
+	//else if (direction < 0)
+	//{
+	//	setControlFlags(AGENT_CONTROL_AT_NEG | AGENT_CONTROL_FAST_AT);
+	//}
+	// The AGENT_CONTROL_FAST_AT flag appears to do nothing but leave it in just in case.
+	if (!getFlying() || mWalkSpeedFlag == 0)
 	{
-		setControlFlags(AGENT_CONTROL_AT_POS | AGENT_CONTROL_FAST_AT);
+		if (direction > 0)
+		{
+			setControlFlags(AGENT_CONTROL_AT_POS | AGENT_CONTROL_FAST_AT | mWalkSpeedFlag);
+		}
+		else if (direction < 0)
+		{
+			setControlFlags(AGENT_CONTROL_AT_NEG | AGENT_CONTROL_FAST_AT | mWalkSpeedFlag);
+		}
 	}
-	else if (direction < 0)
-	{
-		setControlFlags(AGENT_CONTROL_AT_NEG | AGENT_CONTROL_FAST_AT);
-	}
+	// </CV:David>
 
 	if (reset)
 	{
@@ -667,14 +725,28 @@ void LLAgent::moveLeft(S32 direction)
 
 	gAgentCamera.setLeftKey(LLAgentCamera::directionToKey(direction));
 
-	if (direction > 0)
+	// <CV:David>
+	//if (direction > 0)
+	//{
+	//	setControlFlags(AGENT_CONTROL_LEFT_POS | AGENT_CONTROL_FAST_LEFT);
+	//}
+	//else if (direction < 0)
+	//{
+	//	setControlFlags(AGENT_CONTROL_LEFT_NEG | AGENT_CONTROL_FAST_LEFT);
+	//}
+	// The AGENT_CONTROL_FAST_LEFT flag appears to do nothing but leave it in just in case.
+	if (!getFlying() || mWalkSpeedFlag == 0)
 	{
-		setControlFlags(AGENT_CONTROL_LEFT_POS | AGENT_CONTROL_FAST_LEFT);
+		if (direction > 0)
+		{
+			setControlFlags(AGENT_CONTROL_LEFT_POS | AGENT_CONTROL_FAST_LEFT | mWalkSpeedFlag);
+		}
+		else if (direction < 0)
+		{
+			setControlFlags(AGENT_CONTROL_LEFT_NEG | AGENT_CONTROL_FAST_LEFT | mWalkSpeedFlag);
+		}
 	}
-	else if (direction < 0)
-	{
-		setControlFlags(AGENT_CONTROL_LEFT_NEG | AGENT_CONTROL_FAST_LEFT);
-	}
+	// </CV:David>
 
 // <FS:CR> FIRE-8798: Option to prevent camera reset on movement
 	//gAgentCamera.resetView();
@@ -723,23 +795,30 @@ void LLAgent::moveUp(S32 direction)
 
 	gAgentCamera.setUpKey(LLAgentCamera::directionToKey(direction));
 
-	if (direction > 0)
+	// <CV:David>
+	if (mWalkSpeedFlag == 0)
 	{
-		setControlFlags(AGENT_CONTROL_UP_POS | AGENT_CONTROL_FAST_UP);
-		// <FS:Ansariel> Chalice Yao's crouch toggle
-		gAgentCamera.resetView(TRUE, FALSE, TRUE);
-		// </FS:Ansariel>
-	}
-	else if (direction < 0)
-	{
-		setControlFlags(AGENT_CONTROL_UP_NEG | AGENT_CONTROL_FAST_UP);
-		// <FS:Ansariel> Chalice Yao's crouch toggle
-		if (!gSavedSettings.getBOOL("FSCrouchToggleStatus") || !gSavedSettings.getBOOL("FSCrouchToggle"))
+	// </CV:David>
+		if (direction > 0)
 		{
+			setControlFlags(AGENT_CONTROL_UP_POS | AGENT_CONTROL_FAST_UP);
+			// <FS:Ansariel> Chalice Yao's crouch toggle
 			gAgentCamera.resetView(TRUE, FALSE, TRUE);
+			// </FS:Ansariel>
 		}
-		// </FS:Ansariel>
+		else if (direction < 0)
+		{
+			setControlFlags(AGENT_CONTROL_UP_NEG | AGENT_CONTROL_FAST_UP);
+			// <FS:Ansariel> Chalice Yao's crouch toggle
+			if (!gSavedSettings.getBOOL("FSCrouchToggleStatus") || !gSavedSettings.getBOOL("FSCrouchToggle"))
+			{
+				gAgentCamera.resetView(TRUE, FALSE, TRUE);
+			}
+			// </FS:Ansariel>
+		}
+	// <CV:David>
 	}
+	// </CV:David<>
 
 	// <FS:Ansariel> Chalice Yao's crouch toggle
 	//gAgentCamera.resetView();
@@ -2101,8 +2180,12 @@ void LLAgent::propagate(const F32 dt)
 	}
 
 	// handle rotation based on keyboard levels
-	const F32 YAW_RATE = 90.f * DEG_TO_RAD;				// radians per second
-	yaw(YAW_RATE * gAgentCamera.getYawKey() * dt);
+	// <CV:David>
+	//const F32 YAW_RATE = 90.f * DEG_TO_RAD;				// radians per second
+	//yaw(YAW_RATE * gAgentCamera.getYawKey() * dt);
+	F32 yaw_rate = (30.f + mWalkSpeed * 12.f) * DEG_TO_RAD;	// radians per second
+	yaw(yaw_rate * gAgentCamera.getYawKey() * dt);
+	// <CV:David>
 
 	const F32 PITCH_RATE = 90.f * DEG_TO_RAD;			// radians per second
 	pitch(PITCH_RATE * gAgentCamera.getPitchKey() * dt);

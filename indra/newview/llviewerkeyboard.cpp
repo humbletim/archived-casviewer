@@ -60,7 +60,10 @@
 const F32 FLY_TIME = 0.5f;
 const F32 FLY_FRAMES = 4;
 
-const F32 NUDGE_TIME = 0.25f;  // in seconds
+// <CV:David>
+//const F32 NUDGE_TIME = 0.25f;		// in seconds
+const F32 NUDGE_TIME = 0.02f;		// in seconds
+// </CV:David>
 const S32 NUDGE_FRAMES = 2;
 const F32 ORBIT_NUDGE_RATE = 0.05f;  // fraction of normal speed
 const F32 YAW_NUDGE_RATE = 0.05f;  // fraction of normal speed
