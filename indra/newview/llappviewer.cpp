@@ -1741,7 +1741,7 @@ bool LLAppViewer::mainLoop()
 					#if LL_WINDOWS
 						if (gKinectController)
 						{
-							gKinectController->processSkeletonFrame();
+							gKinectController->scanKinect();
 						}
 					#endif
 					// </CV:David>
