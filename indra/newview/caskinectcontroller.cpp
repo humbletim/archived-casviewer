@@ -43,6 +43,8 @@
 // otherwise there is a clash between types used in the viewer code and the Kinect code plus
 // required libraries (ObjBase.h).
 
+const F32 NUDGE_TIME = 0.02f;		// In seconds.
+
 class CASKinectHandler
 {
 public:
@@ -78,6 +80,7 @@ private:
 	
 	EKinectGesture getGesture(NUI_SKELETON_DATA*);
 	F32 getShoulderDelta(NUI_SKELETON_DATA*);
+	F32 getMovingTime();
 	void stopMoving();
 
 	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val <= max; }
@@ -87,6 +90,7 @@ private:
 	HANDLE		mSkeletonEvent;			// New skeleton data event.
 	bool		mKinectConfigured;		// Has the Kinect been set up OK?
 	bool		mControlling;			// Is the Kinect currently being used to control movement?
+	LLFrameTimer	mMovingTimer;		// How long have been moving.
 	bool		mWalking;				// Currently walking forwards or backwards.
 	bool		mRunning;				// Currently running forwards.
 	bool		mStrafing;				// Currently strafing left or right.
@@ -270,6 +274,8 @@ void CASKinectHandler::scanKinect()
 		// Only move if within tolerance of zero position.
 		if (inRange(deltaX, -strafeMax, strafeMax) && inRange(deltaZ, -runMax, walkMax))
 		{
+			F32 time = getMovingTime();
+
 			// Forwards / backwards.
 			if (inRange(deltaZ, -runMax, -walkMax))
 			{
@@ -279,7 +285,7 @@ void CASKinectHandler::scanKinect()
 					gAgent.setTempRun();
 					mRunning = true;
 				}
-				gAgent.moveAtNudge(1);
+				gAgent.moveAt(1);
 			}
 			else
 			{
@@ -292,12 +298,26 @@ void CASKinectHandler::scanKinect()
 				if (inRange(deltaZ, -walkMax, -walkMin))
 				{
 					mWalking = true;
-					gAgent.moveAtNudge(1);
+					if (time < NUDGE_TIME)
+					{
+						gAgent.moveAtNudge(1);  // Need an initial nudge to get moving at slowest walk speed.
+					}
+					else
+					{
+						gAgent.moveAt(1);
+					}
 				}
 				else if (inRange(deltaZ, walkMin, walkMax))
 				{
 					mWalking = true;
-					gAgent.moveAtNudge(-1);
+					if (time < NUDGE_TIME)
+					{
+						gAgent.moveAtNudge(-1);
+					}
+					else
+					{
+						gAgent.moveAt(-1);
+					}
 				}
 				else
 				{
@@ -309,12 +329,26 @@ void CASKinectHandler::scanKinect()
 			if (inRange(deltaX, -strafeMax, -strafeMin))
 			{
 				mStrafing = true;
-				gAgent.moveLeftNudge(1);
+				if (time < NUDGE_TIME)
+				{
+					gAgent.moveLeftNudge(1);
+				}
+				else
+				{
+					gAgent.moveLeft(1);
+				}
 			}
 			else if (inRange(deltaX, strafeMin, strafeMax))
 			{
 				mStrafing = true;
-				gAgent.moveLeftNudge(-1);
+				if (time < NUDGE_TIME)
+				{
+					gAgent.moveLeftNudge(-1);
+				}
+				else
+				{
+					gAgent.moveLeft(-1);
+				}
 			}
 			else
 			{
@@ -515,6 +549,19 @@ F32 CASKinectHandler::getShoulderDelta(NUI_SKELETON_DATA* skeletonData)
 	}
 
 	return deltaShoulder;
+}
+
+F32 CASKinectHandler::getMovingTime()
+{
+	if (mRunning || mWalking || mStrafing)
+	{
+		return mMovingTimer.getElapsedTimeF32();
+	}
+	else
+	{
+		mMovingTimer.reset();
+		return 0.f;
+	}
 }
 
 void CASKinectHandler::stopMoving()
