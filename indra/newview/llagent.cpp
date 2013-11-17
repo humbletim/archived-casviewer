@@ -600,48 +600,58 @@ void LLAgent::ageChat()
 }
 
 // <CV:David>
-void LLAgent::calcWalkSpeedFlag()
+void LLAgent::updateWalkSpeed()
 {
-	// Calculate once per main loop.
+	// Calculate once per main loop iteration.
 	// Sending AGENT_CONTROL_STOP along with the direction flags causes the simulator to move the avatar slowly.
 	// Sending AGENT_CONTROL_STOP every Nth time has the effect of making the avatar move at a slower speed.
 	// Flying speed is controlled by sending or not sending the "fly" messages, not by sending AGENT_CONTROL_STOP.
 	// Works quite well in Second Life but not very well if at all in OpenSim.
 
+	// Variable speed flags to use the current main loop iteration ...
 	static int count = 0;
 	count = (count + 1) % 4;
 
 	if (!getRunning())
 	{
-		switch (mWalkSpeed)
-		{
-		case AGENT_WALK_SLOW:  // Always send, unless flying in which case send 3 out of 4 times
-			mWalkSpeedFlag = (getFlying() && (count == 0)) ? 0 : AGENT_CONTROL_STOP;
-			break;
-		case AGENT_WALK_MEDIUM_SLOW:  // Send 3 out of 4 times
-			mWalkSpeedFlag = (count == 0) ? 0 : AGENT_CONTROL_STOP;
-			break;
-		case AGENT_WALK_MEDIUM:  // Send every second time
-			mWalkSpeedFlag = (count % 2 == 0) ? 0 : AGENT_CONTROL_STOP;
-			break;
-		case AGENT_WALK_MEDIUM_FAST:  // Send 1 out of 4 times
-			mWalkSpeedFlag = (count != 0) ? 0 : AGENT_CONTROL_STOP;
-			break;
-		case AGENT_WALK_FAST:  // Never send
-			mWalkSpeedFlag = 0;
-			break;
-		}
+		mWalkSpeedFlags[0] = (getFlying() && (count == 0)) ? 0 : AGENT_CONTROL_STOP;
+		mWalkSpeedFlags[1] = (count == 0) ? 0 : AGENT_CONTROL_STOP;
+		mWalkSpeedFlags[2] = (count % 2 == 0) ? 0 : AGENT_CONTROL_STOP;
+		mWalkSpeedFlags[3] = (count != 0) ? 0 : AGENT_CONTROL_STOP;
+		mWalkSpeedFlags[4] = 0;
 	}
 	else
 	{
-		mWalkSpeedFlag = 0;  // Run full speed
+		mWalkSpeedFlags[0] = 0;
+		mWalkSpeedFlags[1] = 0;
+		mWalkSpeedFlags[2] = 0;
+		mWalkSpeedFlags[3] = 0;
+		mWalkSpeedFlags[4] = 0;
 	}
+
+	// Default, keyboard walk speed ...
+	mWalkSpeedFlag = mWalkSpeedFlags[mWalkSpeed - 1];
 }
 // </CV:David>
 
 //-----------------------------------------------------------------------------
 // moveAt()
 //-----------------------------------------------------------------------------
+// <CV:David>
+void LLAgent::moveAt(F32 velocity)
+{
+	// Moves at variable speed.
+
+	S32 direction = (velocity >= 0) ? 1 : -1;
+
+	U32 speed = min(llfloor(abs(velocity) * (F32)mWalkSpeed), mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
+	mWalkSpeedFlag = mWalkSpeedFlags[speed];
+llinfos << "velocity, speed = " << velocity << ", " << speed << llendl;
+
+	moveAt(direction);
+}
+// </CV:David>
+
 void LLAgent::moveAt(S32 direction, bool reset)
 {
 	mMoveTimer.reset();
@@ -715,6 +725,20 @@ void LLAgent::moveAtNudge(S32 direction)
 //-----------------------------------------------------------------------------
 // moveLeft()
 //-----------------------------------------------------------------------------
+// <CV:David>
+void LLAgent::moveLeft(F32 velocity)
+{
+	// Moves at variable speed.
+
+	S32 direction = (velocity >= 0) ? 1 : -1;
+
+	U32 speed = min(llfloor(abs(velocity) * (F32)mWalkSpeed), mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
+	mWalkSpeedFlag = mWalkSpeedFlags[speed];
+
+	moveLeft(direction);
+}
+// </CV:David>
+
 void LLAgent::moveLeft(S32 direction)
 {
 	mMoveTimer.reset();

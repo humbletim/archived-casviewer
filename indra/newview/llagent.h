@@ -358,11 +358,12 @@ public:
 	//--------------------------------------------------------------------
 public:
 	void			setWalkSpeed(U32 speed) { mWalkSpeed = speed; }
-	void			calcWalkSpeedFlag();
+	void			updateWalkSpeed();
 
 private:
 	U32				mWalkSpeed;
 	U32				mWalkSpeedFlag;
+	U32				mWalkSpeedFlags[5];
 // </CV:David>
 
 	//--------------------------------------------------------------------
@@ -528,6 +529,10 @@ public:
 	void			moveUp(S32 direction);
 	void			moveYaw(F32 mag, bool reset_view = true);
 	void			movePitch(F32 mag);
+	// <CV:David>
+	void			moveAt(F32 velocity);
+	void			moveLeft(F32 velocity);
+	// </CV:David>
 
 	//--------------------------------------------------------------------
  	// Move the avatar's frame
