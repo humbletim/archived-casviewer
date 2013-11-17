@@ -466,7 +466,11 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	Vector4 leftShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
 	Vector4 rightShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
 	Vector4 position = skeletonData->Position;
-	const F32 flyDownMin = 0.2f - 0.01f * (F32)gSavedSettings.getU32("KinectSensitivity");
+
+	const F32 kinectSensitivity = (F32)gSavedSettings.getU32("KinectSensitivity");
+	const F32 flyMin = 14.f - 0.1f * kinectSensitivity;
+	const F32 flyMax = 60.f - 1.f * kinectSensitivity;
+	const F32 flyDownMin = 0.2f - 0.01f * kinectSensitivity;
 
 	EKinectGesture gesture = KG_NONE;
 
@@ -488,16 +492,34 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	{
 		gesture = KG_START_CONTROLLING;
 	}
-	// Fly up:
+	// Flying:
 	// - Both elbows outside both shoulders.
-	// - Both hands outside both shoulders.
-	// - Hands and elbows above shoulders;
+	// - Both hands outside both elbows.
 	else if ((leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x)
-		&& (leftHand.x < leftShoulder.x) && (rightHand.x > rightShoulder.x)
-		&& (leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
-		&& (leftHand.y > leftShoulder.y) && (rightHand.y > rightShoulder.y))
+		&& (leftHand.x < leftElbow.x) && (rightHand.x > rightElbow.x))
 	{
-		gesture = KG_FLY_UP;
+		F32 leftHandAngle = -angleOf(leftShoulder, leftHand);
+		F32 rightHandAngle = angleOf(rightShoulder, rightHand);
+
+		// Fly-up:
+		// - Both elbows below shoulders;
+		// - Both hands below elbows;
+		// - Hands between min and max degrees below horizontal;
+		if ((leftElbow.y < leftShoulder.y) && (rightElbow.y < rightShoulder.y)
+			&& (leftHand.y < leftElbow.y) && (rightHand.y < rightElbow.y)
+			&& inRange(leftHandAngle, -flyMax, -flyMin) && inRange(rightHandAngle, -flyMax, -flyMin))
+		{
+			gesture = KG_FLY_UP;
+		}
+		// Fly-down B:
+		// - Both hands and elbows above shoulders;
+		// - Hands between min and max degrees above horizontal;
+		else if ((leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
+			&& (leftHand.y > leftElbow.y) && (rightHand.y > rightElbow.y)
+			&& inRange(leftHandAngle, flyMin, flyMax) && inRange(rightHandAngle, flyMin, flyMax))
+		{
+			gesture = KG_FLY_DOWN;
+		}
 	}
 	// Fly down:
 	// - Body position lowered.
