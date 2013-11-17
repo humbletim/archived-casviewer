@@ -1722,10 +1722,10 @@ bool LLAppViewer::mainLoop()
 					&& !gViewerWindow->getShowProgress()
 					&& !gFocusMgr.focusLocked())
 				{
-					joystick->scanJoystick();
 					// <CV:David>
 					gAgent.updateWalkSpeed();
 					// </CV:David>
+					joystick->scanJoystick();
 					gKeyboard->scanKeyboard();
 					// <FS:Ansariel> Chalice Yao's crouch toggle
 					static LLCachedControl<bool> fsCrouchToggle(gSavedSettings, "FSCrouchToggle");
