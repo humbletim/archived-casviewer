@@ -52,7 +52,7 @@ public:
 	CASKinectHandler();
 	~CASKinectHandler();
 
-	bool kinectConfigured()				{ return mKinectConfigured; }
+	bool kinectConfigured() { return mKinectConfigured; }
 	void scanKinect();
 
 private:
@@ -83,24 +83,25 @@ private:
 	F32 getMovingTime();
 	void stopMoving();
 
-	bool inline inRange(F32 val, F32 min, F32 max)	{ return min < val && val < max; }
-	S32 inline sign(F32 val) { return (val >= 0) ? 1 : -1; }
+	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val < max; }
+	S32 sign(F32 val) { return (val >= 0) ? 1 : -1; }
+	F32 angleOf(Vector4 joint1, Vector4 joint2) { return RAD_TO_DEG * atan((joint2.y - joint1.y) / (joint2.x - joint1.x)); }
 
-	HMODULE		mKinectDLL;				// Dynamically loaded Kinect DLL.
-	INuiSensor*	mKinectSensor;			// Kinect sensor that is being used.
-	HANDLE		mSkeletonEvent;			// New skeleton data event.
-	bool		mKinectConfigured;		// Has the Kinect been set up OK?
-	bool		mControlling;			// Is the Kinect currently being used to control movement?
-	LLFrameTimer	mMovingTimer;		// How long have been moving.
-	bool		mWalking;				// Currently walking forwards or backwards.
-	bool		mRunning;				// Currently running forwards.
-	bool		mStrafing;				// Currently strafing left or right.
-	U32			mFramesSkipped;			// Number of frames skipped. Stop controlling if gets too large.
-	S32			mSensedGesture;			// Most recently sensed gesture.
-	Vector4		mSensedPosition;		// Most recently sensed skeleton position.
-	F32			mSensedShoulderDelta;	// Most recently sensed delta between shoulders.
-	F32			mHysterisis;			// To prevent avatar "flickering" when changing back from walking, running, or strafing.
-	Vector4		mZeroPosition;			// The home position of zero movement.
+	HMODULE			mKinectDLL;				// Dynamically loaded Kinect DLL.
+	INuiSensor*		mKinectSensor;			// Kinect sensor that is being used.
+	HANDLE			mSkeletonEvent;			// New skeleton data event.
+	bool			mKinectConfigured;		// Has the Kinect been set up OK?
+	bool			mControlling;			// Is the Kinect currently being used to control movement?
+	LLFrameTimer	mMovingTimer;			// How long have been moving.
+	bool			mWalking;				// Currently walking forwards or backwards.
+	bool			mRunning;				// Currently running forwards.
+	bool			mStrafing;				// Currently strafing left or right.
+	U32				mFramesSkipped;			// Number of frames skipped. Stop controlling if gets too large.
+	S32				mSensedGesture;			// Most recently sensed gesture.
+	Vector4			mSensedPosition;		// Most recently sensed skeleton position.
+	F32				mSensedShoulderDelta;	// Most recently sensed delta between shoulders.
+	F32				mHysterisis;			// To prevent avatar "flickering" when changing back from walking, running, or strafing.
+	Vector4			mZeroPosition;			// The home position of zero movement.
 };
 
 
