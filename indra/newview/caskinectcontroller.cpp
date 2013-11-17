@@ -83,7 +83,8 @@ private:
 	F32 getMovingTime();
 	void stopMoving();
 
-	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val <= max; }
+	bool inline inRange(F32 val, F32 min, F32 max)	{ return min < val && val < max; }
+	S32 inline sign(F32 val) { return (val >= 0) ? 1 : -1; }
 
 	HMODULE		mKinectDLL;				// Dynamically loaded Kinect DLL.
 	INuiSensor*	mKinectSensor;			// Kinect sensor that is being used.
@@ -268,16 +269,16 @@ void CASKinectHandler::scanKinect()
 		F32 turnMax = rotationDeadZone + 5.f * (10.f - sensitivity);
 
 		// Move according to latest sensed position.
-		F32 deltaX = mSensedPosition.x - mZeroPosition.x;
-		F32 deltaZ = mSensedPosition.z - mZeroPosition.z;
+		F32 deltaX = mZeroPosition.x - mSensedPosition.x;
+		F32 deltaZ = mZeroPosition.z - mSensedPosition.z;
 
 		// Only move if within tolerance of zero position.
-		if (inRange(deltaX, -strafeMax, strafeMax) && inRange(deltaZ, -runMax, walkMax))
+		if (inRange(deltaX, -strafeMax, strafeMax) && inRange(deltaZ, -walkMax, runMax))
 		{
 			F32 time = getMovingTime();
 
 			// Forwards / backwards.
-			if (inRange(deltaZ, -runMax, -walkMax))
+			if (inRange(deltaZ, walkMax, runMax))
 			{
 				mWalking = false;
 				if (!mRunning)
@@ -295,28 +296,16 @@ void CASKinectHandler::scanKinect()
 					mRunning = false;
 				}
 
-				if (inRange(deltaZ, -walkMax, -walkMin))
+				if (inRange(abs(deltaZ), walkMin, walkMax))
 				{
 					mWalking = true;
 					if (time < NUDGE_TIME)
 					{
-						gAgent.moveAtNudge(1);  // Need an initial nudge to get moving at slowest walk speed.
+						gAgent.moveAtNudge(sign(deltaZ));  // Need an initial nudge to get moving at slowest walk speed.
 					}
 					else
 					{
-						gAgent.moveAt(1);
-					}
-				}
-				else if (inRange(deltaZ, walkMin, walkMax))
-				{
-					mWalking = true;
-					if (time < NUDGE_TIME)
-					{
-						gAgent.moveAtNudge(-1);
-					}
-					else
-					{
-						gAgent.moveAt(-1);
+						gAgent.moveAt(sign(deltaZ) * (abs(deltaZ) - walkMin) / (walkMax - walkMin));
 					}
 				}
 				else
@@ -326,28 +315,16 @@ void CASKinectHandler::scanKinect()
 			}
 
 			// Left / right.
-			if (inRange(deltaX, -strafeMax, -strafeMin))
+			if (inRange(abs(deltaX), strafeMin, strafeMax))
 			{
 				mStrafing = true;
 				if (time < NUDGE_TIME)
 				{
-					gAgent.moveLeftNudge(1);
+					gAgent.moveLeftNudge(sign(deltaX));
 				}
 				else
 				{
-					gAgent.moveLeft(1);
-				}
-			}
-			else if (inRange(deltaX, strafeMin, strafeMax))
-			{
-				mStrafing = true;
-				if (time < NUDGE_TIME)
-				{
-					gAgent.moveLeftNudge(-1);
-				}
-				else
-				{
-					gAgent.moveLeft(-1);
+					gAgent.moveLeft(sign(deltaX) * (abs(deltaX) - strafeMin) / (strafeMax - strafeMin));
 				}
 			}
 			else
@@ -356,13 +333,9 @@ void CASKinectHandler::scanKinect()
 			}
 
 			// Turn.
-			if (inRange(mSensedShoulderDelta, -turnMax, -turnMin))
+			if (inRange(abs(mSensedShoulderDelta), turnMin, turnMax))
 			{
-				gAgent.moveYaw((5.f + sensitivity) * (mSensedShoulderDelta + rotationDeadZone));
-			}
-			else if (inRange(mSensedShoulderDelta, turnMin, turnMax))
-			{
-				gAgent.moveYaw((5.f + sensitivity) * (mSensedShoulderDelta - rotationDeadZone));
+				gAgent.moveYaw(sign(mSensedShoulderDelta) * (5.f + sensitivity) * (abs(mSensedShoulderDelta) - rotationDeadZone));
 			}
 		}
 		else
