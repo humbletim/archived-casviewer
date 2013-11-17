@@ -1724,7 +1724,7 @@ bool LLAppViewer::mainLoop()
 				{
 					joystick->scanJoystick();
 					// <CV:David>
-					gAgent.calcWalkSpeedFlag();
+					gAgent.updateWalkSpeed();
 					// </CV:David>
 					gKeyboard->scanKeyboard();
 					// <FS:Ansariel> Chalice Yao's crouch toggle
