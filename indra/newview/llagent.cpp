@@ -646,7 +646,6 @@ void LLAgent::moveAt(F32 velocity)
 
 	U32 speed = min(llfloor(abs(velocity) * (F32)mWalkSpeed), mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
 	mWalkSpeedFlag = mWalkSpeedFlags[speed];
-llinfos << "velocity, speed = " << velocity << ", " << speed << llendl;
 
 	moveAt(direction);
 }
