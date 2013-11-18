@@ -1,5 +1,6 @@
 Please keep this updated with major user-facing features added to the CtrlAltStudio Viewer beyond Firestorm and LL-snowstorm
 
-FEATURE			LICENSE
+FEATURE					LICENSE
 
-Oculus Rift SDK	https://developer.oculusvr.com/license
+Oculus Rift SDK			https://developer.oculusvr.com/license
+Kinect for Windows SDK	http://www.microsoft.com/en-us/kinectforwindows/develop/sdk-eula.aspx
