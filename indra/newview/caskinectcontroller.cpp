@@ -102,6 +102,7 @@ private:
 	F32				mSensedShoulderDelta;	// Most recently sensed delta between shoulders.
 	F32				mHysterisis;			// To prevent avatar "flickering" when changing back from walking, running, or strafing.
 	Vector4			mZeroPosition;			// The home position of zero movement.
+	F32				mVerticalVelocity;		// How fast to fly up or down.
 };
 
 
@@ -251,10 +252,10 @@ void CASKinectHandler::scanKinect()
 			{
 				gAgent.setFlying(true);
 			}
-			gAgent.moveUp(1);
+			gAgent.moveUp(mVerticalVelocity);
 			break;
 		case KG_FLY_DOWN:
-			gAgent.moveUp(-1);
+			gAgent.moveUp(mVerticalVelocity);
 			break;
 		}
 
@@ -510,6 +511,7 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 			&& inRange(leftHandAngle, -flyMax, -flyMin) && inRange(rightHandAngle, -flyMax, -flyMin))
 		{
 			gesture = KG_FLY_UP;
+			mVerticalVelocity = -(leftHandAngle + rightHandAngle + 2.f * flyMin) / (2.f * (flyMax - flyMin));  // 0.0 ... 1.0
 		}
 		// Fly-down B:
 		// - Both hands and elbows above shoulders;
@@ -519,6 +521,7 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 			&& inRange(leftHandAngle, flyMin, flyMax) && inRange(rightHandAngle, flyMin, flyMax))
 		{
 			gesture = KG_FLY_DOWN;
+			mVerticalVelocity = -(leftHandAngle + rightHandAngle - 2.f * flyMin) / (2.f * (flyMax - flyMin));  // 0.0 ... 1.0
 		}
 	}
 	// Fly down:
@@ -526,6 +529,7 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	else if ((mZeroPosition.y - position.y) > flyDownMin)
 	{
 		gesture = KG_FLY_DOWN;
+		mVerticalVelocity = -min((mZeroPosition.y - position.y - flyDownMin) * 10.0f , 1.f); 
 	}
 
 	return gesture;

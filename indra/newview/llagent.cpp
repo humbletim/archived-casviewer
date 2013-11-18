@@ -808,6 +808,21 @@ void LLAgent::moveLeftNudge(S32 direction)
 //-----------------------------------------------------------------------------
 // moveUp()
 //-----------------------------------------------------------------------------
+
+// <CV:David>
+void LLAgent::moveUp(F32 velocity)
+{
+	// Moves at variable speed.
+
+	S32 direction = (velocity >= 0) ? 1 : -1;
+
+	U32 speed = min(llfloor(abs(velocity) * (F32)mWalkSpeed), mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
+	mWalkSpeedFlag = mWalkSpeedFlags[speed];
+
+	moveUp(direction);
+}
+// </CV:David>
+
 void LLAgent::moveUp(S32 direction)
 {
 	mMoveTimer.reset();
