@@ -471,7 +471,7 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	const F32 kinectSensitivity = (F32)gSavedSettings.getU32("KinectSensitivity");
 	const F32 flyMin = 14.f - 0.1f * kinectSensitivity;
 	const F32 flyMax = 60.f - 1.f * kinectSensitivity;
-	const F32 flyDownMin = 0.2f - 0.01f * kinectSensitivity;
+	const F32 flyDownMin = 0.175f - 0.01f * kinectSensitivity;
 
 	EKinectGesture gesture = KG_NONE;
 
