@@ -43,6 +43,8 @@
 // otherwise there is a clash between types used in the viewer code and the Kinect code plus
 // required libraries (ObjBase.h).
 
+const F32 NUDGE_TIME = 0.02f;		// In seconds.
+
 class CASKinectHandler
 {
 public:
@@ -50,8 +52,8 @@ public:
 	CASKinectHandler();
 	~CASKinectHandler();
 
-	bool kinectConfigured()				{ return mKinectConfigured; }
-	void processSkeletonFrame();
+	bool kinectConfigured() { return mKinectConfigured; }
+	void scanKinect();
 
 private:
 
@@ -77,19 +79,30 @@ private:
 	};
 	
 	EKinectGesture getGesture(NUI_SKELETON_DATA*);
+	F32 getShoulderDelta(NUI_SKELETON_DATA*);
+	F32 getMovingTime();
+	void stopMoving();
 
-	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val <= max; }
+	bool inRange(F32 val, F32 min, F32 max)	{ return min < val && val < max; }
+	S32 sign(F32 val) { return (val >= 0) ? 1 : -1; }
+	F32 angleOf(Vector4 joint1, Vector4 joint2) { return RAD_TO_DEG * atan((joint2.y - joint1.y) / (joint2.x - joint1.x)); }
 
-	HMODULE		mKinectDLL;				// Dynamically loaded Kinect DLL.
-	INuiSensor*	mKinectSensor;			// Kinect sensor that is being used.
-	HANDLE		mSkeletonEvent;			// New skeleton data event.
-	bool		mKinectConfigured;		// Has the Kinect been set up OK?
-	bool		mControlling;			// Is the Kinect currently being used to control movement?
-	bool		mWalking;				// Currently walking forwards or backwards.
-	bool		mRunning;				// Currently running forwards.
-	bool		mStrafing;				// Currently strading left or right.
-	F32			mHysterisis;	// To prevent avatar "flickering" when changing back from walking, running, or strafing.
-	Vector4		mZeroPosition;			// The home position of zero movement.
+	HMODULE			mKinectDLL;				// Dynamically loaded Kinect DLL.
+	INuiSensor*		mKinectSensor;			// Kinect sensor that is being used.
+	HANDLE			mSkeletonEvent;			// New skeleton data event.
+	bool			mKinectConfigured;		// Has the Kinect been set up OK?
+	bool			mControlling;			// Is the Kinect currently being used to control movement?
+	LLFrameTimer	mMovingTimer;			// How long have been moving.
+	bool			mWalking;				// Currently walking forwards or backwards.
+	bool			mRunning;				// Currently running forwards.
+	bool			mStrafing;				// Currently strafing left or right.
+	U32				mFramesSkipped;			// Number of frames skipped. Stop controlling if gets too large.
+	S32				mSensedGesture;			// Most recently sensed gesture.
+	Vector4			mSensedPosition;		// Most recently sensed skeleton position.
+	F32				mSensedShoulderDelta;	// Most recently sensed delta between shoulders.
+	F32				mHysterisis;			// To prevent avatar "flickering" when changing back from walking, running, or strafing.
+	Vector4			mZeroPosition;			// The home position of zero movement.
+	F32				mVerticalVelocity;		// How fast to fly up or down.
 };
 
 
@@ -140,6 +153,7 @@ CASKinectHandler::CASKinectHandler()
 		}
 	}
 
+	mFramesSkipped = 0;
 	mControlling = false;
 	mWalking = false;
 	mRunning = false;
@@ -168,78 +182,83 @@ CASKinectHandler::~CASKinectHandler()
 	llinfos << "Kinect controller destroyed" << llendl;
 }
 
-void CASKinectHandler::processSkeletonFrame()
+void CASKinectHandler::scanKinect()
 {
+	// Processes a new Kinect skeleton frame if there is one, otherwise continues controlling per previous frame.
+
 	NUI_SKELETON_FRAME skeletonFrame;
 	NUI_SKELETON_DATA skeletonData;
 
-	if (!mKinectConfigured || !WaitForSingleObject(mSkeletonEvent, 0) == WAIT_OBJECT_0)
+	if (!mKinectConfigured)
 	{
-		return;
-	}
-
-	if (FAILED(mKinectSensor->NuiSkeletonGetNextFrame(0, &skeletonFrame)))
-	{
-		return;
-	}
-
-	mKinectSensor->NuiTransformSmooth(&skeletonFrame, NULL);
-
-	int skeleton = findClosestSkeleton(&skeletonFrame);
-	if (skeleton == -1)
-	{
-		mWalking = false;
-		if (mRunning)
-		{
-			gAgent.clearTempRun();
-			mRunning = false;
-		}
-		mStrafing = false;
+		stopMoving();
 		mControlling = false;
 		return;
 	}
-	skeletonData = skeletonFrame.SkeletonData[skeleton];
 
-	switch (getGesture(&skeletonData))
+	static U32 frames_skipped;
+	if (WaitForSingleObject(mSkeletonEvent, 0) == WAIT_OBJECT_0 && SUCCEEDED(mKinectSensor->NuiSkeletonGetNextFrame(0, &skeletonFrame)))
 	{
-	case KG_STOP_CONTROLLING:
-		if (mControlling)
+		frames_skipped = 0;
+
+		mKinectSensor->NuiTransformSmooth(&skeletonFrame, NULL);
+
+		int skeleton = findClosestSkeleton(&skeletonFrame);
+		if (skeleton == -1)
 		{
-			mWalking = false;
-			if (mRunning)
-			{
-				gAgent.clearTempRun();
-				mRunning = false;
-			}
-			mStrafing = false;
+			stopMoving();
 			mControlling = false;
 			return;
 		}
-		break;
-	case KG_START_CONTROLLING:
-		mZeroPosition = skeletonData.Position;
-		mControlling = true;
-		return;
-	case KG_FLY_UP:
-		if (mControlling)
+		skeletonData = skeletonFrame.SkeletonData[skeleton];
+
+		mSensedGesture = getGesture(&skeletonData);
+		mSensedPosition = skeletonData.Position;
+		mSensedShoulderDelta = getShoulderDelta(&skeletonData);
+
+		switch (mSensedGesture)
 		{
-			if (!gAgent.getFlying())
+		case KG_STOP_CONTROLLING:
+			if (mControlling)
 			{
-				gAgent.setFlying(true);
+				stopMoving();
+				mControlling = false;
+				return;
 			}
-			gAgent.moveUp(1);
+			break;
+		case KG_START_CONTROLLING:
+			mZeroPosition = mSensedPosition;
+			mControlling = true;
+			return;
 		}
-		break;
-	case KG_FLY_DOWN:
-		if (mControlling && gAgent.getFlying())
+	}
+	else
+	{
+		// Just in case.
+		if (++frames_skipped > 25)
 		{
-			gAgent.moveUp(-1);
+			stopMoving();
+			mControlling = false;
+			return;
 		}
-		break;
 	}
 
 	if (mControlling)
 	{
+		switch (mSensedGesture)
+		{
+		case KG_FLY_UP:
+			if (!gAgent.getFlying())
+			{
+				gAgent.setFlying(true);
+			}
+			gAgent.moveUp(mVerticalVelocity);
+			break;
+		case KG_FLY_DOWN:
+			gAgent.moveUp(mVerticalVelocity);
+			break;
+		}
+
 		F32 sensitivity = (F32)gSavedSettings.getU32("KinectSensitivity");
 		F32 positionDeadZone = 0.22f - 0.02f * sensitivity;
 		F32 rotationDeadZone = positionDeadZone / 5.f;
@@ -251,16 +270,17 @@ void CASKinectHandler::processSkeletonFrame()
 		F32 turnMin = rotationDeadZone;
 		F32 turnMax = rotationDeadZone + 5.f * (10.f - sensitivity);
 
-		// Move according to position.
-		Vector4 position = skeletonData.Position;
-		F32 deltaX = position.x - mZeroPosition.x;
-		F32 deltaZ = position.z - mZeroPosition.z;
+		// Move according to latest sensed position.
+		F32 deltaX = mZeroPosition.x - mSensedPosition.x;
+		F32 deltaZ = mZeroPosition.z - mSensedPosition.z;
 
 		// Only move if within tolerance of zero position.
-		if (inRange(deltaX, -strafeMax, strafeMax) && inRange(deltaZ, -runMax, walkMax))
+		if (inRange(deltaX, -strafeMax, strafeMax) && inRange(deltaZ, -walkMax, runMax))
 		{
+			F32 time = getMovingTime();
+
 			// Forwards / backwards.
-			if (inRange(deltaZ, -runMax, -walkMax))
+			if (inRange(deltaZ, walkMax, runMax))
 			{
 				mWalking = false;
 				if (!mRunning)
@@ -268,7 +288,7 @@ void CASKinectHandler::processSkeletonFrame()
 					gAgent.setTempRun();
 					mRunning = true;
 				}
-				gAgent.moveAtNudge(1);
+				gAgent.moveAt(1);
 			}
 			else
 			{
@@ -278,49 +298,51 @@ void CASKinectHandler::processSkeletonFrame()
 					mRunning = false;
 				}
 
-				if (inRange(deltaZ, -walkMax, -walkMin))
+				if (inRange(abs(deltaZ), walkMin, walkMax))
 				{
 					mWalking = true;
-					gAgent.moveAtNudge(1);
+					if (time < NUDGE_TIME)
+					{
+						gAgent.moveAtNudge(sign(deltaZ));  // Need an initial nudge to get moving at slowest walk speed.
+					}
+					else
+					{
+						gAgent.moveAt(sign(deltaZ) * (abs(deltaZ) - walkMin) / (walkMax - walkMin));
+					}
 				}
-				else if (inRange(deltaZ, walkMin, walkMax))
+				else
 				{
-					mWalking = true;
-					gAgent.moveAtNudge(-1);
+					mWalking = false;
 				}
 			}
 
 			// Left / right.
-			if (inRange(deltaX, -strafeMax, -strafeMin))
+			if (inRange(abs(deltaX), strafeMin, strafeMax))
 			{
 				mStrafing = true;
-				gAgent.moveLeftNudge(1);
+				if (time < NUDGE_TIME)
+				{
+					gAgent.moveLeftNudge(sign(deltaX));
+				}
+				else
+				{
+					gAgent.moveLeft(sign(deltaX) * (abs(deltaX) - strafeMin) / (strafeMax - strafeMin));
+				}
 			}
-			else if (inRange(deltaX, strafeMin, strafeMax))
+			else
 			{
-				mStrafing = true;
-				gAgent.moveLeftNudge(-1);
+				mStrafing = false;
 			}
 
 			// Turn.
-			NUI_SKELETON_POSITION_TRACKING_STATE stateShoulderLeft, stateShoulderRight;
-			stateShoulderLeft = skeletonData.eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_LEFT];
-			stateShoulderRight = skeletonData.eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
-
-			if (stateShoulderLeft != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderLeft != NUI_SKELETON_POSITION_INFERRED
-				&& stateShoulderRight != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderRight != NUI_SKELETON_POSITION_INFERRED)
+			if (inRange(abs(mSensedShoulderDelta), turnMin, turnMax))
 			{
-				F32 deltaShoulder = skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].z - skeletonData.SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].z;
-
-				if (inRange(deltaShoulder, -turnMax, -turnMin))
-				{
-					gAgent.moveYaw((5.f + sensitivity) * (deltaShoulder + rotationDeadZone));
-				}
-				else if (inRange(deltaShoulder, turnMin, turnMax))
-				{
-					gAgent.moveYaw((5.f + sensitivity) * (deltaShoulder - rotationDeadZone));
-				}
+				gAgent.moveYaw(sign(mSensedShoulderDelta) * (5.f + sensitivity) * (abs(mSensedShoulderDelta) - rotationDeadZone));
 			}
+		}
+		else
+		{
+			stopMoving();
 		}
 	}
 }
@@ -445,7 +467,11 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	Vector4 leftShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT];
 	Vector4 rightShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
 	Vector4 position = skeletonData->Position;
-	const F32 flyDownMin = 0.2f - 0.01f * (F32)gSavedSettings.getU32("KinectSensitivity");
+
+	const F32 kinectSensitivity = (F32)gSavedSettings.getU32("KinectSensitivity");
+	const F32 flyMin = 14.f - 0.1f * kinectSensitivity;
+	const F32 flyMax = 60.f - 1.f * kinectSensitivity;
+	const F32 flyDownMin = 0.175f - 0.01f * kinectSensitivity;
 
 	EKinectGesture gesture = KG_NONE;
 
@@ -467,25 +493,86 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	{
 		gesture = KG_START_CONTROLLING;
 	}
-	// Fly up:
+	// Flying:
 	// - Both elbows outside both shoulders.
-	// - Both hands outside both shoulders.
-	// - Hands and elbows above shoulders;
+	// - Both hands outside both elbows.
 	else if ((leftElbow.x < leftShoulder.x) && (rightElbow.x > rightShoulder.x)
-		&& (leftHand.x < leftShoulder.x) && (rightHand.x > rightShoulder.x)
-		&& (leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
-		&& (leftHand.y > leftShoulder.y) && (rightHand.y > rightShoulder.y))
+		&& (leftHand.x < leftElbow.x) && (rightHand.x > rightElbow.x))
 	{
-		gesture = KG_FLY_UP;
+		F32 leftHandAngle = -angleOf(leftShoulder, leftHand);
+		F32 rightHandAngle = angleOf(rightShoulder, rightHand);
+
+		// Fly-up:
+		// - Both elbows below shoulders;
+		// - Both hands below elbows;
+		// - Hands between min and max degrees below horizontal;
+		if ((leftElbow.y < leftShoulder.y) && (rightElbow.y < rightShoulder.y)
+			&& (leftHand.y < leftElbow.y) && (rightHand.y < rightElbow.y)
+			&& inRange(leftHandAngle, -flyMax, -flyMin) && inRange(rightHandAngle, -flyMax, -flyMin))
+		{
+			gesture = KG_FLY_UP;
+			mVerticalVelocity = -(leftHandAngle + rightHandAngle + 2.f * flyMin) / (2.f * (flyMax - flyMin));  // 0.0 ... 1.0
+		}
+		// Fly-down B:
+		// - Both hands and elbows above shoulders;
+		// - Hands between min and max degrees above horizontal;
+		else if ((leftElbow.y > leftShoulder.y) && (rightElbow.y > rightShoulder.y)
+			&& (leftHand.y > leftElbow.y) && (rightHand.y > rightElbow.y)
+			&& inRange(leftHandAngle, flyMin, flyMax) && inRange(rightHandAngle, flyMin, flyMax))
+		{
+			gesture = KG_FLY_DOWN;
+			mVerticalVelocity = -(leftHandAngle + rightHandAngle - 2.f * flyMin) / (2.f * (flyMax - flyMin));  // 0.0 ... 1.0
+		}
 	}
 	// Fly down:
 	// - Body position lowered.
 	else if ((mZeroPosition.y - position.y) > flyDownMin)
 	{
 		gesture = KG_FLY_DOWN;
+		mVerticalVelocity = -min((mZeroPosition.y - position.y - flyDownMin) * 10.0f , 1.f); 
 	}
 
 	return gesture;
+}
+
+F32 CASKinectHandler::getShoulderDelta(NUI_SKELETON_DATA* skeletonData)
+{
+	NUI_SKELETON_POSITION_TRACKING_STATE stateShoulderLeft, stateShoulderRight;
+	stateShoulderLeft = skeletonData->eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_LEFT];
+	stateShoulderRight = skeletonData->eSkeletonPositionTrackingState[NUI_SKELETON_POSITION_SHOULDER_RIGHT];
+
+	F32 deltaShoulder = 0.f;
+	if (stateShoulderLeft != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderLeft != NUI_SKELETON_POSITION_INFERRED
+		&& stateShoulderRight != NUI_SKELETON_POSITION_NOT_TRACKED && stateShoulderRight != NUI_SKELETON_POSITION_INFERRED)
+	{
+		deltaShoulder = skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_LEFT].z - skeletonData->SkeletonPositions[NUI_SKELETON_POSITION_SHOULDER_RIGHT].z;
+	}
+
+	return deltaShoulder;
+}
+
+F32 CASKinectHandler::getMovingTime()
+{
+	if (mRunning || mWalking || mStrafing)
+	{
+		return mMovingTimer.getElapsedTimeF32();
+	}
+	else
+	{
+		mMovingTimer.reset();
+		return 0.f;
+	}
+}
+
+void CASKinectHandler::stopMoving()
+{
+	mWalking = false;
+	if (mRunning)
+	{
+		gAgent.clearTempRun();
+		mRunning = false;
+	}
+	mStrafing = false;
 }
 
 
@@ -507,9 +594,9 @@ bool CASKinectController::kinectConfigured()
 	return mKinectHandler->kinectConfigured();
 }
 
-void CASKinectController::processSkeletonFrame()
+void CASKinectController::scanKinect()
 {
-	mKinectHandler->processSkeletonFrame();
+	mKinectHandler->scanKinect();
 }
 
 #endif  // LL_WINDOWS

@@ -532,6 +532,7 @@ public:
 	// <CV:David>
 	void			moveAt(F32 velocity);
 	void			moveLeft(F32 velocity);
+	void			moveUp(F32 velocity);
 	// </CV:David>
 
 	//--------------------------------------------------------------------

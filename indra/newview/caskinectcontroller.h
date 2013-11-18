@@ -39,7 +39,7 @@ public:
 	~CASKinectController();
 
 	bool kinectConfigured();
-	void processSkeletonFrame();
+	void scanKinect();
 
 private:
 	CASKinectHandler* mKinectHandler;
