@@ -516,7 +516,7 @@
          control_name="KinectEnabled"
          follows="left|top"
          height="20"
-         label="Enable Microsoft Kinect"
+         label="Enable Kinect for Windows"
          layout="topleft"
          left="10"
          name="KinectEnabled"

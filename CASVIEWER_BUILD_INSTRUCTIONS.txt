@@ -33,7 +33,6 @@ Kinect for Windows SDK
 
 If building a Windows viewer you need to download and install the Kinect for Windows SDK. Then you need:
 - Copy Nui*.h from C:\Program Files\Microsoft SDKs\Kinect\v1.8\inc into \Viewer\build-vc100\packages\include.
-- Copy Kinect10.lib from C:\Program Files\Microsoft SDKs\Kinect\v1.8\lib\x86 into build-vc100\packages\lib\debug and \release.
 
 
 For building the viewer, the Firestorm target names such as ReleaseFS_open are retained.
