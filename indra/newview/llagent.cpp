@@ -599,6 +599,9 @@ void LLAgent::ageChat()
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Walk Speed
+//-----------------------------------------------------------------------------
 // <CV:David>
 void LLAgent::updateWalkSpeed()
 {
@@ -631,6 +634,24 @@ void LLAgent::updateWalkSpeed()
 
 	// Default, keyboard walk speed ...
 	mWalkSpeedFlag = mWalkSpeedFlags[mWalkSpeed - 1];
+}
+
+void LLAgent::increaseWalkSpeed()
+{
+	if (mWalkSpeed < MAX_WALK_SPEED)
+	{
+		mWalkSpeed++;
+		gSavedSettings.setU32("WalkSpeed", mWalkSpeed);
+	}
+}
+
+void LLAgent::decreaseWalkSpeed()
+{
+	if (mWalkSpeed > MIN_WALK_SPEED)
+	{
+		mWalkSpeed--;
+		gSavedSettings.setU32("WalkSpeed", mWalkSpeed);
+	}
 }
 // </CV:David>
 

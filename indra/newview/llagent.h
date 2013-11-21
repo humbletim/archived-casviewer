@@ -358,12 +358,16 @@ public:
 	//--------------------------------------------------------------------
 public:
 	void			setWalkSpeed(U32 speed) { mWalkSpeed = speed; }
+	void			increaseWalkSpeed();
+	void			decreaseWalkSpeed();
 	void			updateWalkSpeed();
 
 private:
+	static const U32 MIN_WALK_SPEED = 1;
+	static const U32 MAX_WALK_SPEED = 5;
 	U32				mWalkSpeed;
 	U32				mWalkSpeedFlag;
-	U32				mWalkSpeedFlags[5];
+	U32				mWalkSpeedFlags[MAX_WALK_SPEED];
 // </CV:David>
 
 	//--------------------------------------------------------------------
