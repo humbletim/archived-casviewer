@@ -1608,8 +1608,12 @@ void LLFloaterPreference::refreshEnabledState()
 
 	#if LL_WINDOWS
 		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
+		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
+		getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
 	#else
 		getChild<LLUICtrl>("KinectEnabled")->setEnabled(false);
+		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(false);
+		getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(false);
 	#endif
 	// </CV:David>
 }
