@@ -1677,7 +1677,7 @@
        label="Show hover text"
        layout="topleft"
        left="54"
-       name="RiftMouseHorizontal"
+       name="RiftHoverText"
        tool_tip="Show hover text in Riftlook view."
        top_pad="8"
        width="50" />
