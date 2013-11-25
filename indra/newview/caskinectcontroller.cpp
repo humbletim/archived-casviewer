@@ -53,6 +53,7 @@ public:
 	~CASKinectHandler();
 
 	bool kinectConfigured() { return mKinectConfigured; }
+	void swapFlyUpAndFlyDown(bool);
 	void scanKinect();
 
 private:
@@ -91,6 +92,7 @@ private:
 	INuiSensor*		mKinectSensor;			// Kinect sensor that is being used.
 	HANDLE			mSkeletonEvent;			// New skeleton data event.
 	bool			mKinectConfigured;		// Has the Kinect been set up OK?
+	bool			mSwapFlyUpAndFlyDown;	// Swap fly up and fly down arm gestures?
 	bool			mControlling;			// Is the Kinect currently being used to control movement?
 	LLFrameTimer	mMovingTimer;			// How long have been moving.
 	bool			mWalking;				// Currently walking forwards or backwards.
@@ -182,6 +184,12 @@ CASKinectHandler::~CASKinectHandler()
 
 	unloadKinectDLL();
 	llinfos << "Kinect controller destroyed" << llendl;
+}
+
+void CASKinectHandler::swapFlyUpAndFlyDown(bool swap)
+{
+	mSwapFlyUpAndFlyDown = swap;
+	llinfos << "Swap fly up and fly down = " << swap << llendl;
 }
 
 void CASKinectHandler::scanKinect()
@@ -512,8 +520,16 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 			&& (leftHand.y < leftElbow.y) && (rightHand.y < rightElbow.y)
 			&& inRange(leftHandAngle, -flyMax, -flyMin) && inRange(rightHandAngle, -flyMax, -flyMin))
 		{
-			gesture = KG_FLY_UP;
 			mVerticalVelocity = -(leftHandAngle + rightHandAngle + 2.f * flyMin) / (2.f * (flyMax - flyMin));  // 0.0 ... 1.0
+			if (!mSwapFlyUpAndFlyDown)
+			{
+				gesture = KG_FLY_UP;
+			}
+			else
+			{
+				gesture = KG_FLY_DOWN;
+				mVerticalVelocity = -mVerticalVelocity;
+			}
 		}
 		// Fly-down B:
 		// - Both hands and elbows above shoulders;
@@ -522,8 +538,16 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 			&& (leftHand.y > leftElbow.y) && (rightHand.y > rightElbow.y)
 			&& inRange(leftHandAngle, flyMin, flyMax) && inRange(rightHandAngle, flyMin, flyMax))
 		{
-			gesture = KG_FLY_DOWN;
 			mVerticalVelocity = -(leftHandAngle + rightHandAngle - 2.f * flyMin) / (2.f * (flyMax - flyMin));  // 0.0 ... 1.0
+			if (!mSwapFlyUpAndFlyDown)
+			{
+				gesture = KG_FLY_DOWN;
+			}
+			else
+			{
+				gesture = KG_FLY_UP;
+				mVerticalVelocity = -mVerticalVelocity;
+			}
 		}
 	}
 	// Fly down:
@@ -594,6 +618,11 @@ CASKinectController::~CASKinectController()
 bool CASKinectController::kinectConfigured()
 {
 	return mKinectHandler->kinectConfigured();
+}
+
+void CASKinectController::swapFlyUpAndFlyDown(bool swap)
+{
+	mKinectHandler->swapFlyUpAndFlyDown(swap);
 }
 
 void CASKinectController::scanKinect()

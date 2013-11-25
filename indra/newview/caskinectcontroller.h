@@ -39,6 +39,7 @@ public:
 	~CASKinectController();
 
 	bool kinectConfigured();
+	void swapFlyUpAndFlyDown(bool);
 	void scanKinect();
 
 private:

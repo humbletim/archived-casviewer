@@ -556,6 +556,19 @@
           <button.commit_callback
            function="Pref.ResetKinectSensitivity" />
         </button>
+        <check_box
+         control_name="KinectSwapFlyUpAndFlyDown"
+         follows="left|top"
+         height="20"
+         label="Swap fly up and fly down arm gestures"
+         layout="topleft"
+         left="46"
+         name="KinectSwapFlyUpAndFlyDown"
+         width="200"
+         top_pad="2">
+          <check_box.commit_callback
+             function="Pref.KinectSwapFlyUpAndFlyDown" />
+        </check_box>
     </panel>
     
     <!-- Firestorm -->
