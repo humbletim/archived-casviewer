@@ -165,6 +165,8 @@ CASKinectHandler::CASKinectHandler()
 
 CASKinectHandler::~CASKinectHandler()
 {
+	mKinectConfigured = false;
+
 	if (mKinectSensor)
 	{
 		mKinectSensor->NuiShutdown();
