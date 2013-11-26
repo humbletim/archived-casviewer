@@ -118,9 +118,20 @@ LLTimer throttle_timer;//<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
 
 static bool handleRenderAvatarMouselookChanged(const LLSD& newvalue)
 {
-	LLVOAvatar::sVisibleInFirstPerson = newvalue.asBoolean();
+	// <CV:David>
+	//LLVOAvatar::sVisibleInFirstPerson = newvalue.asBoolean();
+	LLVOAvatar::sVisibleInMouselook = newvalue.asBoolean();
+	return true;
+	// </CV:David>
+}
+
+// <CV:David>
+static bool handleRenderAvatarRiftlookChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sVisibleInRiftlook = newvalue.asBoolean();
 	return true;
 }
+// </CV:David>
 
 static bool handleRenderFarClipChanged(const LLSD& newvalue)
 {
@@ -742,6 +753,9 @@ static void handleSetPoseStandLock(const LLSD& newvalue)
 void settings_setup_listeners()
 {
 	gSavedSettings.getControl("FirstPersonAvatarVisible")->getSignal()->connect(boost::bind(&handleRenderAvatarMouselookChanged, _2));
+	// <CV:David>
+	gSavedSettings.getControl("RiftAvatar")->getSignal()->connect(boost::bind(&handleRenderAvatarRiftlookChanged, _2));
+	// </CV:David>
 	gSavedSettings.getControl("RenderFarClip")->getSignal()->connect(boost::bind(&handleRenderFarClipChanged, _2));
 	//<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
 	gSavedSettings.getControl("ThrottleBandwidthKBPS")->getSignal()->connect(boost::bind(&handleBandWidthChanged, _2));

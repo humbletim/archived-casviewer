@@ -51,6 +51,9 @@
 #include "llviewertexlayer.h"
 #include "material_codes.h"		// LL_MCODE_END
 #include "llviewerstats.h"
+// <CV:David>
+#include "llviewerdisplay.h"
+// <CV:David>
 
 extern const LLUUID ANIM_AGENT_BODY_NOISE;
 extern const LLUUID ANIM_AGENT_BREATHE_ROT;
@@ -271,7 +274,12 @@ public:
 	static BOOL		sUseImpostors; //use impostors for far away avatars
 	static BOOL		sShowFootPlane;	// show foot collision plane reported by server
 	static BOOL		sShowCollisionVolumes;	// show skeletal collision volumes
-	static BOOL		sVisibleInFirstPerson;
+	// <CV:David>
+	//static BOOL	sVisibleInFirstPerson;
+	static BOOL		sVisibleInMouselook;
+	static BOOL		sVisibleInRiftlook;
+	static bool		visibleInFirstPerson() { return !gRift3DEnabled && LLVOAvatar::sVisibleInMouselook || gRift3DEnabled && LLVOAvatar::sVisibleInRiftlook; }
+	// </CV:David>
 	static S32		sNumLODChangesThisFrame;
 	static S32		sNumVisibleChatBubbles;
 	static BOOL		sDebugInvisible;
