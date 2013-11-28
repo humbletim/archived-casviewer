@@ -9931,6 +9931,7 @@ void setRiftlook(bool on)
 		}
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
+		gSavedSettings.setF32("CameraAngle", gRiftFOV);
 		gAgentCamera.changeCameraToMouselook(TRUE);
 	}
 	else
@@ -9948,6 +9949,7 @@ void setRiftlook(bool on)
 			}
 		}
 		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
+		gSavedSettings.setF32("CameraAngle", DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
