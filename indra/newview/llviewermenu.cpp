@@ -7085,6 +7085,18 @@ void handle_recreate_lsl_bridge()
 	FSLSLBridge::instance().recreateBridge();
 }
 
+// <CV:David>
+void handle_walk_faster()
+{
+	gAgent.increaseWalkSpeed();
+}
+
+void handle_walk_slower()
+{
+	gAgent.decreaseWalkSpeed();
+}
+// </CV:David>
+
 class LLFloaterVisible : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -9919,6 +9931,7 @@ void setRiftlook(bool on)
 		}
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
+		gSavedSettings.setF32("CameraAngle", gRiftFOV);
 		gAgentCamera.changeCameraToMouselook(TRUE);
 	}
 	else
@@ -9936,6 +9949,7 @@ void setRiftlook(bool on)
 			}
 		}
 		LLViewerCamera::getInstance()->setDefaultFOV(DEFAULT_FIELD_OF_VIEW);
+		gSavedSettings.setF32("CameraAngle", DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
@@ -10070,6 +10084,10 @@ void initialize_menus()
 	commit.add("Agent.ToggleMicrophone", boost::bind(&LLAgent::toggleMicrophone, _2));
 	enable.add("Agent.IsMicrophoneOn", boost::bind(&LLAgent::isMicrophoneOn, _2));
 	enable.add("Agent.IsActionAllowed", boost::bind(&LLAgent::isActionAllowed, _2));
+	// <CV:David>
+	commit.add("Agent.WalkFaster", boost::bind(&handle_walk_faster));
+	commit.add("Agent.WalkSlower", boost::bind(&handle_walk_slower));
+	// </CV:David>
 
 	// File menu
 	init_menu_file();

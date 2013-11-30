@@ -79,6 +79,9 @@
 #include "rlvhandler.h"
 #include "rlvlocks.h"
 // [/RLVa:KB]
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 
 #if LL_MSVC
 // disable boost::lexical_cast warning
@@ -1253,7 +1256,10 @@ void LLVOAvatarSelf::updateAttachmentVisibility(U32 camera_mode)
 			switch (camera_mode)
 			{
 				case CAMERA_MODE_MOUSELOOK:
-					if (LLVOAvatar::sVisibleInFirstPerson && attachment->getVisibleInFirstPerson())
+					// <CV:David>
+					//if (LLVOAvatar::sVisibleInFirstPerson && attachment->getVisibleInFirstPerson())
+					if (LLVOAvatar::visibleInFirstPerson() && attachment->getVisibleInFirstPerson())
+					// <CV:David>
 					{
 						attachment->setAttachmentVisibility(TRUE);
 					}

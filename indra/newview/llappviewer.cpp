@@ -643,7 +643,11 @@ static void settings_to_globals()
 	LLVOAvatar::sLODFactor				= gSavedSettings.getF32("RenderAvatarLODFactor");
 	LLVOAvatar::sPhysicsLODFactor		= gSavedSettings.getF32("RenderAvatarPhysicsLODFactor");
 	LLVOAvatar::sMaxVisible				= (U32)gSavedSettings.getS32("RenderAvatarMaxVisible");
-	LLVOAvatar::sVisibleInFirstPerson	= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	// <CV:David>
+	//LLVOAvatar::sVisibleInFirstPerson	= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	LLVOAvatar::sVisibleInMouselook		= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	LLVOAvatar::sVisibleInRiftlook		= gSavedSettings.getBOOL("RiftAvatar");
+	// <CV:David>
 	// clamp auto-open time to some minimum usable value
 	LLFolderView::sAutoOpenTime			= llmax(0.25f, gSavedSettings.getF32("FolderAutoOpenDelay"));
 	LLSelectMgr::sRectSelectInclusive	= gSavedSettings.getBOOL("RectangleSelectInclusive");

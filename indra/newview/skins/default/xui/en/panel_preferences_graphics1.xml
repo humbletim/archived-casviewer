@@ -1592,11 +1592,52 @@
        left="200"
        name="RiftStrafe"
        tool_tip="Shift-left and shift-right turn."
-       top="184"
+       top="182"
        width="180">
         <check_box.commit_callback
            function="Pref.RiftStrafeEnable" />
       </check_box>
+
+      <check_box
+       control_name="RiftMouseHorizontal"
+       height="16"
+       initial_value="false"
+       label="Mouse moves view horizontally only"
+       layout="topleft"
+       left="54"
+       name="RiftMouseHorizontal"
+       tool_tip="Mouse moves Riftlook view horizontally only."
+       top_pad="26"
+       width="50">
+        <check_box.commit_callback
+           function="Pref.RiftMouseHorizontalEnable" />
+      </check_box>
+      <radio_group
+      control_name="RiftMouseMode"
+      follows="left|top"
+      height="42"
+      layout="topleft"
+      name="RiftMouseMode"
+      left="54"
+      top_pad="2"
+      width="440">
+        <radio_group.commit_callback
+          function="Pref.ChangeRiftMouseMode" />
+        <radio_item
+          height="16"
+          label="Mouse moves cursor; Alt-mouse moves view"
+          layout="topleft"
+          name="MouseCursor"
+          value="0"
+          width="50" />
+        <radio_item
+          height="16"
+          label="Mouse moves view; Alt-mouse moves cursor"
+          layout="topleft"
+          name="MouseCamera"
+          value="1"
+          width="50" />
+      </radio_group>
 
       <slider
        control_name="RiftUIDepth"
@@ -1607,7 +1648,6 @@
        increment="1"
        initial_value="65"
        layout="topleft"
-       top="226"
        left="54"
        max_val="120"
        min_val="80"
@@ -1630,46 +1670,17 @@
          function="Pref.ResetRiftUIDepth" />
       </button>
 
-      <radio_group
-      control_name="RiftMouseMode"
-      follows="left|top"
-      height="42"
-      layout="topleft"
-      name="RiftMouseMode"
-      left="54"
-      top_pad="4"
-      width="440">
-        <radio_group.commit_callback
-          function="Pref.ChangeRiftMouseMode" />
-        <radio_item
-          height="16"
-          label="Mouse moves cursor; Alt-mouse moves view"
-          layout="topleft"
-          name="MouseCursor"
-          value="0"
-          width="50" />
-        <radio_item
-          height="16"
-          label="Mouse moves view; Alt-mouse moves cursor"
-          layout="topleft"
-          name="MouseCamera"
-          value="1"
-          width="50" />
-      </radio_group>
       <check_box
-       control_name="RiftMouseHorizontal"
+       control_name="RiftContextMenus"
        height="16"
-       initial_value="false"
-       label="Mouse moves view horizontally only"
+       initial_value="true"
+       label="Enable context menus"
        layout="topleft"
        left="54"
-       name="RiftMouseHorizontal"
-       tool_tip="Mouse moves Riftlook view horizontally only."
-       top_pad="2"
-       width="50">
-        <check_box.commit_callback
-           function="Pref.RiftMouseHorizontalEnable" />
-      </check_box>
+       name="RiftContextMenus"
+       tool_tip="Enable context menus in Riftlook view."
+       top_pad="6"
+       width="50" />
       <check_box
        control_name="RiftHoverText"
        height="16"
@@ -1677,9 +1688,20 @@
        label="Show hover text"
        layout="topleft"
        left="54"
-       name="RiftMouseHorizontal"
+       name="RiftHoverText"
        tool_tip="Show hover text in Riftlook view."
-       top_pad="8"
+       top_pad="6"
+       width="50" />
+      <check_box
+       control_name="RiftAvatar"
+       height="16"
+       initial_value="true"
+       label="Show avater"
+       layout="topleft"
+       left="54"
+       name="RiftAvatar"
+       tool_tip="Show avatar in Riftlook view."
+       top_pad="6"
        width="50" />
     </panel>
   </tab_container>

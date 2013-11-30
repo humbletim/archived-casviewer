@@ -63,6 +63,7 @@ const F32 FLY_FRAMES = 4;
 // <CV:David>
 //const F32 NUDGE_TIME = 0.25f;		// in seconds
 const F32 NUDGE_TIME = 0.02f;		// in seconds
+const F32 DOUBLE_TAP_TIME = 0.25f;
 // </CV:David>
 const S32 NUDGE_FRAMES = 2;
 const F32 ORBIT_NUDGE_RATE = 0.05f;  // fraction of normal speed
@@ -148,7 +149,7 @@ static void agent_handle_doubletap_run(EKeystate s, LLAgent::EDoubleTapRunMode m
 		 !gAgent.getRunning())
 	{
 		if (gAgent.mDoubleTapRunMode == mode &&
-		    gAgent.mDoubleTapRunTimer.getElapsedTimeF32() < NUDGE_TIME)
+		    gAgent.mDoubleTapRunTimer.getElapsedTimeF32() < DOUBLE_TAP_TIME)
 		{
 			// Same walk-key was pushed again quickly; this is a
 			// double-tap so engage temporary running.

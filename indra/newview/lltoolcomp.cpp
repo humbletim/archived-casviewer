@@ -808,10 +808,15 @@ BOOL LLToolCompGun::handleRightMouseDown(S32 x, S32 y, MASK mask)
 	}
 	// NaCl End
 
-	// <FS:Ansariel> Enable context/pie menu in mouselook
-	//return TRUE;
-	return (!gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"));
-	// </FS:Ansariel>
+	// <CV:David>
+	// Enable context/pie menu in mouselook or Riftlook
+	//// <FS:Ansariel> Enable context/pie menu in mouselook
+	////return TRUE;
+	//return (!gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"));
+	//// </FS:Ansariel>
+	return !( (!gRift3DEnabled && gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"))
+			  || (gRift3DEnabled && gSavedSettings.getBOOL("RiftContextMenu")) );
+	// <CV:David>
 }
 // NaCl - Rightclick-mousewheel zoom
 BOOL LLToolCompGun::handleRightMouseUp(S32 x, S32 y, MASK mask)

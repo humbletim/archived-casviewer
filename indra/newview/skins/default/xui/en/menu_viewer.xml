@@ -153,6 +153,24 @@
                 <menu_item_check.on_enable
                  function="Agent.enableFlying" />
             </menu_item_check>
+          <menu_item_call
+             label="Walk Faster"
+             layout="topleft"
+             shortcut="control|PgUp"
+             name="Walk Faster">
+                <menu_item_call.on_click
+                 function="Agent.WalkFaster"
+                 parameter="" />
+           </menu_item_call>
+          <menu_item_call
+             label="Walk Slower"
+             layout="topleft"
+             shortcut="control|PgDn"
+             name="Walk Slower">
+                <menu_item_call.on_click
+                 function="Agent.WalkSlower"
+                 parameter="" />
+           </menu_item_call>
             <menu_item_check
              label="Always Run"
              name="Always Run"

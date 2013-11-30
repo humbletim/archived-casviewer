@@ -490,10 +490,19 @@
          width="40">
           normal
         </text>
+        <check_box top_pad="8"
+         follows="left|top"
+         height="20"
+         label="Turn avatar around when walking backwards"
+         name="backwardsturnavatar"
+         left="10"
+         width="270"
+         control_name="TurnAroundWhenWalkingBackwards"
+         tool_tip="Turns your avatar around to face the camera when you are walking backwards."/>
         <check_box
          control_name="JoystickEnabled"
          follows="left|top"
-         height="20"
+         height="16"
          label="Enable joystick (SpaceNavigator)"
          layout="topleft"
          left="10"
@@ -816,15 +825,6 @@
          width="270"
          control_name="FSStatusbarShowSimulatorVersion"
          tool_tip="Shows the current simulator channel in the V1-like status bar."/>
-        
-        <check_box top_pad="5"
-         follows="left|top"
-         height="16"
-         label="Turn avatar around when walking backwards"
-         name="backwardsturnavatar"
-         width="270"
-         control_name="TurnAroundWhenWalkingBackwards"
-         tool_tip="Turns your avatar around to face the camera when you are walking backwards."/>
         
 	 </panel>
 </tab_container>
