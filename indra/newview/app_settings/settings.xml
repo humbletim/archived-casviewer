@@ -20599,7 +20599,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>RiftContextMenus</key>
+    <key>RiftContextMenu</key>
     <map>
       <key>Comment</key>
       <string>Show context menus in Riftlook view.</string>

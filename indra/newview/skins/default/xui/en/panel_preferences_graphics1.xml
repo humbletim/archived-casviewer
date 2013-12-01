@@ -1671,13 +1671,13 @@
       </button>
 
       <check_box
-       control_name="RiftContextMenus"
+       control_name="RiftContextMenu"
        height="16"
        initial_value="true"
        label="Enable context menus"
        layout="topleft"
        left="54"
-       name="RiftContextMenus"
+       name="RiftContextMenu"
        tool_tip="Enable context menus in Riftlook view."
        top_pad="6"
        width="50" />
