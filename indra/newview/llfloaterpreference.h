@@ -236,6 +236,7 @@ public:
 	#if LL_WINDOWS
 		void onKinectEnable();
 		void onClickResetKinectSensitivity();
+		void onKinectSwapFlyUpAndFlyDown();
 	#endif
 	// </CV:David>
 

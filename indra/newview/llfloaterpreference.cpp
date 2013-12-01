@@ -516,6 +516,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	#if LL_WINDOWS
 		mCommitCallbackRegistrar.add("Pref.KinectEnable",	boost::bind(&LLFloaterPreference::onKinectEnable, this));
 		mCommitCallbackRegistrar.add("Pref.ResetKinectSensitivity",	boost::bind(&LLFloaterPreference::onClickResetKinectSensitivity, this));
+		mCommitCallbackRegistrar.add("Pref.KinectSwapFlyUpAndFlyDown",	boost::bind(&LLFloaterPreference::onKinectSwapFlyUpAndFlyDown, this));
 	#endif
 	// </CV:David>
 
@@ -1608,8 +1609,14 @@ void LLFloaterPreference::refreshEnabledState()
 
 	#if LL_WINDOWS
 		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
+		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
+		getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
+		getChild<LLUICtrl>("KinectSwapFlyUpAndFlyDown")->setEnabled(gKinectController != NULL);
 	#else
 		getChild<LLUICtrl>("KinectEnabled")->setEnabled(false);
+		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(false);
+		getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(false);
+		getChild<LLUICtrl>("KinectSwapFlyUpAndFlyDown")->setEnabled(false);
 	#endif
 	// </CV:David>
 }
@@ -3664,11 +3671,20 @@ void LLFloaterPreference::onKinectEnable()
 
 	getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
 	getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
+	getChild<LLUICtrl>("KinectSwapFlyUpAndFlyDown")->setEnabled(gKinectController != NULL);
 }
 
 void LLFloaterPreference::onClickResetKinectSensitivity()
 {
 	gSavedSettings.setU32("KinectSensitivity", 5);
+}
+
+void LLFloaterPreference::onKinectSwapFlyUpAndFlyDown()
+{
+	if (gKinectController)
+	{
+		gKinectController->swapFlyUpAndFlyDown(getChild<LLCheckBoxCtrl>("KinectSwapFlyUpAndFlyDown")->getValue().asBoolean());
+	}
 }
 
 #endif
