@@ -1581,6 +1581,7 @@
           layout="topleft"
           name="RiftStanding"
           value="1"
+          top_pad="20"
           width="50" />
       </radio_group>
       <check_box
@@ -1597,6 +1598,20 @@
         <check_box.commit_callback
            function="Pref.RiftStrafeEnable" />
       </check_box>
+      <check_box
+       control_name="RiftHeadReorients"
+       height="16"
+       initial_value="false"
+       label="Head turns view"
+       layout="topleft"
+       left="200"
+       name="RiftHeadReorients"
+       tool_tip="Looking left / right turns view."
+       top="202"
+       width="180">
+        <check_box.commit_callback
+           function="Pref.RiftHeadReorientsEnable" />
+      </check_box>
 
       <check_box
        control_name="RiftMouseHorizontal"
@@ -1607,7 +1622,7 @@
        left="54"
        name="RiftMouseHorizontal"
        tool_tip="Mouse moves Riftlook view horizontally only."
-       top_pad="26"
+       top_pad="20"
        width="50">
         <check_box.commit_callback
            function="Pref.RiftMouseHorizontalEnable" />

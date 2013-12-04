@@ -227,6 +227,7 @@ public:
 	void onClickResetRiftPredictionDelta();
 	void onChangeRiftOperationMode();
 	void onRiftStrafeEnable();
+	void onRiftHeadReorientsEnable();
 	void onClickResetRiftUIDepth();
 	void onChangeRiftMouseMode();
 	void onRiftMouseHorizontalEnable();

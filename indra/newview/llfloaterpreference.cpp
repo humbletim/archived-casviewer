@@ -507,6 +507,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onClickResetRiftPredictionDelta, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
+	mCommitCallbackRegistrar.add("Pref.RiftHeadReorientsEnable",	boost::bind(&LLFloaterPreference::onRiftHeadReorientsEnable, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
@@ -1606,6 +1607,7 @@ void LLFloaterPreference::refreshEnabledState()
 
 	// <CV:David>
 	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
+	getChild<LLUICtrl>("RiftHeadReorients")->setEnabled(!gRiftStanding);
 
 	#if LL_WINDOWS
 		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
@@ -3614,12 +3616,19 @@ void LLFloaterPreference::onChangeRiftOperationMode()
 	llinfos << "Oculus Rift: Operation mode = " << riftOperationMode << llendl;
 
 	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
+	getChild<LLUICtrl>("RiftHeadReorients")->setEnabled(!gRiftStanding);
 }
 
 void LLFloaterPreference::onRiftStrafeEnable()
 {
 	gRiftStrafe = getChild<LLCheckBoxCtrl>("RiftStrafe")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Strafe = " << gRiftStrafe << llendl;
+}
+
+void LLFloaterPreference::onRiftHeadReorientsEnable()
+{
+	gRiftHeadReorients = getChild<LLCheckBoxCtrl>("RiftHeadReorients")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Head reorients = " << gRiftHeadReorients << llendl;
 }
 
 void LLFloaterPreference::onClickResetRiftUIDepth()
