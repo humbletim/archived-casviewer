@@ -508,6 +508,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
 	mCommitCallbackRegistrar.add("Pref.RiftHeadReorientsEnable",	boost::bind(&LLFloaterPreference::onRiftHeadReorientsEnable, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsAfter, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsAfter, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
@@ -1606,9 +1608,6 @@ void LLFloaterPreference::refreshEnabledState()
 	getChildView("block_list")->setEnabled(LLLoginInstance::getInstance()->authSuccess());
 
 	// <CV:David>
-	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
-	getChild<LLUICtrl>("RiftHeadReorients")->setEnabled(!gRiftStanding);
-
 	#if LL_WINDOWS
 		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
 		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
@@ -3614,9 +3613,6 @@ void LLFloaterPreference::onChangeRiftOperationMode()
 	U32 riftOperationMode = getChild<LLRadioGroup>("RiftOperationMode")->getValue().asInteger();
 	gRiftStanding = riftOperationMode == RIFT_OPERATE_STANDING;
 	llinfos << "Oculus Rift: Operation mode = " << riftOperationMode << llendl;
-
-	getChild<LLUICtrl>("RiftStrafe")->setEnabled(!gRiftStanding);
-	getChild<LLUICtrl>("RiftHeadReorients")->setEnabled(!gRiftStanding);
 }
 
 void LLFloaterPreference::onRiftStrafeEnable()
@@ -3629,6 +3625,17 @@ void LLFloaterPreference::onRiftHeadReorientsEnable()
 {
 	gRiftHeadReorients = getChild<LLCheckBoxCtrl>("RiftHeadReorients")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Head reorients = " << gRiftHeadReorients << llendl;
+}
+
+void LLFloaterPreference::onChangeRiftHeadReorientsAfter()
+{
+	gRiftHeadReorientsAfter = getChild<LLSliderCtrl>("RiftHeadReorientsAfter")->getValue().asInteger();
+}
+
+void LLFloaterPreference::onClickResetRiftHeadReorientsAfter()
+{
+	gSavedSettings.setU32("RiftHeadReorientsAfter", RIFT_HEAD_REORIENTS_AFTER_DEFAULT);
+	gRiftHeadReorientsAfter = RIFT_HEAD_REORIENTS_AFTER_DEFAULT;
 }
 
 void LLFloaterPreference::onClickResetRiftUIDepth()

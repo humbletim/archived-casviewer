@@ -228,6 +228,8 @@ public:
 	void onChangeRiftOperationMode();
 	void onRiftStrafeEnable();
 	void onRiftHeadReorientsEnable();
+	void onChangeRiftHeadReorientsAfter();
+	void onClickResetRiftHeadReorientsAfter();
 	void onClickResetRiftUIDepth();
 	void onChangeRiftMouseMode();
 	void onRiftMouseHorizontalEnable();

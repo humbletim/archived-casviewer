@@ -1560,7 +1560,7 @@
       <radio_group
       control_name="RiftOperationMode"
       follows="left|top"
-      height="50"
+      height="90"
       layout="topleft"
       name="RiftOperationMode"
       left="54"
@@ -1581,7 +1581,7 @@
           layout="topleft"
           name="RiftStanding"
           value="1"
-          top_pad="20"
+          top_pad="44"
           width="50" />
       </radio_group>
       <check_box
@@ -1590,10 +1590,10 @@
        initial_value="false"
        label="Left/right keys strafe; Shift-left/right keys turn"
        layout="topleft"
-       left="200"
+       left="74"
        name="RiftStrafe"
        tool_tip="Shift-left and shift-right turn."
-       top="182"
+       top="202"
        width="180">
         <check_box.commit_callback
            function="Pref.RiftStrafeEnable" />
@@ -1602,16 +1602,59 @@
        control_name="RiftHeadReorients"
        height="16"
        initial_value="false"
-       label="Head turns view"
+       label="Head turns view after:"
        layout="topleft"
-       left="200"
+       left="74"
        name="RiftHeadReorients"
        tool_tip="Looking left / right turns view."
-       top="202"
        width="180">
         <check_box.commit_callback
            function="Pref.RiftHeadReorientsEnable" />
       </check_box>
+      <slider
+       control_name="RiftHeadReorientsAfter"
+       decimal_digits="0"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="75"
+       layout="topleft"
+       top_delta="0"
+       left="220"
+       max_val="90"
+       min_val="0"
+       name="RiftHeadReorientsAfter"
+       width="148"
+       tool_tip="How far you must turn in the Rift before the view starts to turn.">
+        <slider.commit_callback
+         function="Pref.ChangeRiftHeadReorientsAfter" />
+      </slider>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="158"
+       name="RiftHeadReorientsAfterUnitsText"
+       top_delta="0"
+       width="32">
+        deg
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetRiftHeadReorientsAfter"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftHeadReorientsAfter" />
+      </button>
 
       <check_box
        control_name="RiftMouseHorizontal"
@@ -1622,7 +1665,7 @@
        left="54"
        name="RiftMouseHorizontal"
        tool_tip="Mouse moves Riftlook view horizontally only."
-       top_pad="20"
+       top_pad="24"
        width="50">
         <check_box.commit_callback
            function="Pref.RiftMouseHorizontalEnable" />
@@ -1698,7 +1741,7 @@
        width="50" />
       <check_box
        control_name="RiftHoverText"
-       height="16"
+       height="14"
        initial_value="false"
        label="Show hover text"
        layout="topleft"
@@ -1709,9 +1752,9 @@
        width="50" />
       <check_box
        control_name="RiftAvatar"
-       height="16"
+       height="14"
        initial_value="true"
-       label="Show avater"
+       label="Show avatar"
        layout="topleft"
        left="54"
        name="RiftAvatar"
