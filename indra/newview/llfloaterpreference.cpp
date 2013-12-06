@@ -3601,7 +3601,7 @@ void LLFloaterPreference::onChangeRiftPredictionDelta()
 
 void LLFloaterPreference::onClickResetRiftPredictionDelta()
 {
-	gSavedSettings.setF32("RiftPredictionDelta", 20.0f);
+	gSavedSettings.setF32("RiftPredictionDelta", 35.0f);
 	if (gRift3DEnabled)
 	{
 		gRiftFusionResult->SetPrediction(0.02f);
