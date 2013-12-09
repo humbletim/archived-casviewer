@@ -9933,6 +9933,7 @@ void setRiftlook(bool on)
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 		gSavedSettings.setF32("CameraAngle", gRiftFOV);
 		gAgentCamera.changeCameraToMouselook(TRUE);
+		gAgentCamera.resetRotatingView();
 	}
 	else
 	{

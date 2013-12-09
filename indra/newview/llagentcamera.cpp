@@ -3016,7 +3016,16 @@ void LLAgentCamera::calcRiftValues()
 		mEyeYaw += deltaYaw;
 		if (gRiftHeadReorients && (fabs(mEyeYaw) > (F32)gRiftHeadReorientsAfter * DEG_TO_RAD))
 		{
-			gAgent.moveYaw(mEyeYaw - (mEyeYaw < 0 ? -1 : 1) * (F32)gRiftHeadReorientsAfter * DEG_TO_RAD);
+			mRotatingView = (mEyeYaw < 0 ? -1 : 1);
+			gAgent.moveYaw(mEyeYaw);
+		}
+		else if ((mRotatingView < 0 && mEyeYaw < .1f * DEG_TO_RAD) || (mRotatingView > 0 && mEyeYaw > .1f * DEG_TO_RAD))
+		{
+			gAgent.moveYaw(mEyeYaw);
+		}
+		else
+		{
+			mRotatingView = 0;
 		}
 	}
 	mLastRiftYaw = yaw;
