@@ -3017,11 +3017,10 @@ void LLAgentCamera::calcRiftValues()
 		if (gRiftHeadReorients && (fabs(mEyeYaw) > (F32)gRiftHeadReorientsAfter * DEG_TO_RAD))
 		{
 			mRotatingView = (mEyeYaw < 0 ? -1 : 1);
-			gAgent.moveYaw(mEyeYaw);
 		}
-		else if ((mRotatingView < 0 && mEyeYaw < .1f * DEG_TO_RAD) || (mRotatingView > 0 && mEyeYaw > .1f * DEG_TO_RAD))
+		if ((mRotatingView < 0 && mEyeYaw < .1f * DEG_TO_RAD) || (mRotatingView > 0 && mEyeYaw > .1f * DEG_TO_RAD))
 		{
-			gAgent.moveYaw(mEyeYaw);
+			gAgent.rotate(mEyeYaw / (30.f - 2 * gAgent.getWalkSpeed()), LLVector3::z_axis);
 		}
 		else
 		{

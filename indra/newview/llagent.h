@@ -361,6 +361,7 @@ public:
 	void			increaseWalkSpeed();
 	void			decreaseWalkSpeed();
 	void			updateWalkSpeed();
+	U32				getWalkSpeed() { return mWalkSpeed; }
 
 private:
 	static const U32 MIN_WALK_SPEED = 1;
