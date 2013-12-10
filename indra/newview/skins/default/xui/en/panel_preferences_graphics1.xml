@@ -1602,12 +1602,12 @@
        control_name="RiftHeadReorients"
        height="16"
        initial_value="false"
-       label="Head turns view after:"
+       label="Head turns avatar after:"
        layout="topleft"
        left="74"
        name="RiftHeadReorients"
        tool_tip="Looking left / right turns view."
-       width="180">
+       width="185">
         <check_box.commit_callback
            function="Pref.RiftHeadReorientsEnable" />
       </check_box>
@@ -1620,11 +1620,11 @@
        initial_value="75"
        layout="topleft"
        top_delta="0"
-       left="220"
+       left="225"
        max_val="90"
        min_val="0"
        name="RiftHeadReorientsAfter"
-       width="148"
+       width="143"
        tool_tip="How far you must turn in the Rift before the view starts to turn.">
         <slider.commit_callback
          function="Pref.ChangeRiftHeadReorientsAfter" />
