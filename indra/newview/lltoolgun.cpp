@@ -137,10 +137,7 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 				gSavedSettings.setVector3("SkySunDefaultPosition", LLViewerCamera::getInstance()->getAtAxis());
 			}
 
-			// <CV:David>
-			// Jumping the cursor to the centre of the screen when using it to interact with objects is annoying.
-			//gViewerWindow->moveCursorToCenter();
-			// <CV:David>
+			gViewerWindow->moveCursorToCenter();
 			gViewerWindow->hideCursor();
 		}
 
