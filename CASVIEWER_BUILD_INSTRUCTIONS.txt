@@ -42,6 +42,8 @@ set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
 autobuild configure -c ReleaseFS_open -- -DPACKAGE:BOOL=FALSE
 autobuild build -c ReleaseFS_open --no-configure
 
+Note: For Max OSX and Linux builds, set configure_casviewer.sh as executable: chmod +x scripts configure_casviewer.sh.
+
 Building and running on Linux has not been fully updated. In particular, while much of the build scripts have been updated, 
 certain Linux-specific files have not been renamed or updated, including:
 - debian
