@@ -59,7 +59,7 @@ const U32 RIFT_OPERATE_SEATED = 0;
 const U32 RIFT_OPERATE_STANDING = 1;
 extern BOOL gRiftStanding;
 extern BOOL gRiftStrafe;
-const U32 RIFT_HEAD_REORIENTS_AFTER_DEFAULT = 30;
+const U32 RIFT_HEAD_REORIENTS_AFTER_DEFAULT = 45;
 extern BOOL gRiftHeadReorients;
 extern U32 gRiftHeadReorientsAfter;
 const U32 RIFT_MOUSE_CURSOR = 0;
