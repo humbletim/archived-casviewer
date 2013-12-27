@@ -2076,7 +2076,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.1</real>
+      <real>0.01</real>
     </map>
     <key>AvatarAxisDeadZone1</key>
     <map>
@@ -2087,7 +2087,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.1</real>
+      <real>0.01</real>
     </map>
     <key>AvatarAxisDeadZone2</key>
     <map>
@@ -2098,7 +2098,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.1</real>
+      <real>0.02</real>
     </map>
     <key>AvatarAxisDeadZone3</key>
     <map>
@@ -2142,7 +2142,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>1.0</real>
+      <real>2.5</real>
     </map>
     <key>AvatarAxisScale1</key>
     <map>
@@ -2153,7 +2153,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>1.0</real>
+      <real>2.5</real>
     </map>
     <key>AvatarAxisScale2</key>
     <map>
@@ -2164,7 +2164,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>1.0</real>
+      <real>2.5</real>
     </map>
     <key>AvatarAxisScale3</key>
     <map>

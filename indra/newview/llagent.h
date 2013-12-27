@@ -535,9 +535,9 @@ public:
 	void			moveYaw(F32 mag, bool reset_view = true);
 	void			movePitch(F32 mag);
 	// <CV:David>
-	void			moveAt(F32 velocity);
-	void			moveLeft(F32 velocity);
-	void			moveUp(F32 velocity);
+	void			moveAt(F32 velocity);	// velocity: -1.0 .. +1.0
+	void			moveLeft(F32 velocity);	// ""
+	void			moveUp(F32 velocity);	// ""
 	// </CV:David>
 
 	//--------------------------------------------------------------------

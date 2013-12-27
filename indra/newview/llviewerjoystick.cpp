@@ -374,6 +374,8 @@ void LLViewerJoystick::agentJump()
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentSlide(F32 inc)
 {
+	// <CV:David>
+	/*
 	if (inc < 0.f)
 	{
 		gAgent.moveLeft(1);
@@ -382,11 +384,24 @@ void LLViewerJoystick::agentSlide(F32 inc)
 	{
 		gAgent.moveLeft(-1);
 	}
+	*/
+	static F32 previousSlideInc = 0.f;		  // Smooth a little.
+
+	if (inc != 0.f)
+	{
+		F32 slide = -(inc + previousSlideInc) / (2.f * gSavedSettings.getF32("JoystickRunThreshold"));
+		gAgent.moveLeft(slide);
+	}
+
+	previousSlideInc = inc;
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentPush(F32 inc)
 {
+	// <CV:David>
+	/*
 	if (inc < 0.f)                            // forward
 	{
 		gAgent.moveAt(1, false);
@@ -395,11 +410,24 @@ void LLViewerJoystick::agentPush(F32 inc)
 	{
 		gAgent.moveAt(-1, false);
 	}
+	*/
+	static F32 previousPushInc = 0.f;		  // Smooth a little.
+
+	if (inc != 0.f)
+	{
+		F32 push = -(inc + previousPushInc) / (2.f * gSavedSettings.getF32("JoystickRunThreshold"));
+		gAgent.moveAt(push);
+	}
+
+	previousPushInc = inc;
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentFly(F32 inc)
 {
+	// <CV:David>
+	/*
 	if (inc < 0.f)
 	{
 		if (! (gAgent.getFlying() ||
@@ -416,6 +444,26 @@ void LLViewerJoystick::agentFly(F32 inc)
 		// crouch
 		gAgent.moveUp(-1);
 	}
+	*/
+	static F32 previousFlyInc = 0.f;		  // Smooth a little.
+
+	if (inc != 0.f)
+	{
+		F32 fly = -(inc + previousFlyInc) / (2.f * gSavedSettings.getF32("JoystickRunThreshold"));
+
+		if ((fly > 0.f) && (! (gAgent.getFlying() ||
+		       !gAgent.canFly() ||
+		       gAgent.upGrabbed() ||
+		       !gSavedSettings.getBOOL("AutomaticFly")) ))
+		{
+			gAgent.setFlying(true);
+		}
+
+		gAgent.moveUp(fly);
+	}
+
+	previousFlyInc = inc;
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
@@ -1148,9 +1196,14 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setBOOL("AutoLeveling", true);
 	gSavedSettings.setBOOL("ZoomDirect", false);
 	
-	gSavedSettings.setF32("AvatarAxisScale0", 1.f * platformScaleAvXZ);
-	gSavedSettings.setF32("AvatarAxisScale1", 1.f * platformScaleAvXZ);
-	gSavedSettings.setF32("AvatarAxisScale2", 1.f);
+	// <CV:David>
+	//gSavedSettings.setF32("AvatarAxisScale0", 1.f * platformScaleAvXZ);
+	//gSavedSettings.setF32("AvatarAxisScale1", 1.f * platformScaleAvXZ);
+	//gSavedSettings.setF32("AvatarAxisScale2", 1.f);
+	gSavedSettings.setF32("AvatarAxisScale0", 1.25f * platformScaleAvXZ);
+	gSavedSettings.setF32("AvatarAxisScale1", 1.25f * platformScaleAvXZ);
+	gSavedSettings.setF32("AvatarAxisScale2", 2.5f * platformScale);
+	// </CV:David>
 	gSavedSettings.setF32("AvatarAxisScale4", .1f * platformScale);
 	gSavedSettings.setF32("AvatarAxisScale5", .1f * platformScale);
 	gSavedSettings.setF32("AvatarAxisScale3", 0.f * platformScale);
@@ -1168,9 +1221,14 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setF32("FlycamAxisScale3", 0.f * platformScale);
 	gSavedSettings.setF32("FlycamAxisScale6", 0.f * platformScale);
 	
-	gSavedSettings.setF32("AvatarAxisDeadZone0", .1f);
-	gSavedSettings.setF32("AvatarAxisDeadZone1", .1f);
-	gSavedSettings.setF32("AvatarAxisDeadZone2", .1f);
+	// <CV:David>
+	//gSavedSettings.setF32("AvatarAxisDeadZone0", .1f);
+	//gSavedSettings.setF32("AvatarAxisDeadZone1", .1f);
+	//gSavedSettings.setF32("AvatarAxisDeadZone2", .1f);
+	gSavedSettings.setF32("AvatarAxisDeadZone0", .01f);
+	gSavedSettings.setF32("AvatarAxisDeadZone1", .01f);
+	gSavedSettings.setF32("AvatarAxisDeadZone2", .02f);
+	// </CV:David>
 	gSavedSettings.setF32("AvatarAxisDeadZone3", 1.f);
 	gSavedSettings.setF32("AvatarAxisDeadZone4", .02f);
 	gSavedSettings.setF32("AvatarAxisDeadZone5", .01f);
