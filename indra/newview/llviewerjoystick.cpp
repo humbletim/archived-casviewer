@@ -72,6 +72,10 @@ F32  LLViewerJoystick::sDelta[] = {0,0,0,0,0,0,0};
 #define MAX_SPACENAVIGATOR_INPUT  3000.0f
 #define MAX_JOYSTICK_INPUT_VALUE  MAX_SPACENAVIGATOR_INPUT
 
+// <CV:David>
+const F32 SAMPLE_TIME = 0.02f;		// Empirically determined. In seconds.
+// </CV:David>
+
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::updateEnabled(bool autoenable)
 {
@@ -162,11 +166,24 @@ LLViewerJoystick::LLViewerJoystick()
 
 	// factor in bandwidth? bandwidth = gViewerStats->mKBitStat
 	mPerfScale = 4000.f / gSysCPU.getMHz(); // hmm.  why?
+
+	// <CV:David>
+	mSampleTimer.start();
+	mNewSample = false;
+	memset(mCurrentMovement, 0, sizeof(mCurrentMovement));
+
+	mMoving = false;
+	mMovingNudges = 0;
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
 LLViewerJoystick::~LLViewerJoystick()
 {
+	// <CV:David>
+	mSampleTimer.stop();
+	// </CV:David>
+
 	if (mDriverState == JDS_INITIALIZED)
 	{
 		terminate();
@@ -390,7 +407,16 @@ void LLViewerJoystick::agentSlide(F32 inc)
 	if (inc != 0.f)
 	{
 		F32 slide = -(inc + previousSlideInc) / (2.f * gSavedSettings.getF32("JoystickRunThreshold"));
-		gAgent.moveLeft(slide);
+
+		if (mMovingNudges < 2)
+		{
+			gAgent.moveLeftNudge(slide < 0 ? -1 : 1);
+			mMovingNudges += 1;
+		}
+		else
+		{
+			gAgent.moveLeft(slide);
+		}
 	}
 
 	previousSlideInc = inc;
@@ -416,7 +442,16 @@ void LLViewerJoystick::agentPush(F32 inc)
 	if (inc != 0.f)
 	{
 		F32 push = -(inc + previousPushInc) / (2.f * gSavedSettings.getF32("JoystickRunThreshold"));
-		gAgent.moveAt(push);
+
+		if (mMovingNudges < 2)
+		{
+			gAgent.moveAtNudge(push < 0 ? -1 : 1);
+			mMovingNudges += 1;
+		}
+		else
+		{
+			gAgent.moveAt(push);
+		}
 	}
 
 	previousPushInc = inc;
@@ -674,6 +709,20 @@ void LLViewerJoystick::moveAvatar(bool reset)
 		return;
 	}
 
+	// <CV:David>
+	if (!mNewSample)
+	{
+		agentSlide(mCurrentMovement[X_I]);
+		agentFly(mCurrentMovement[Y_I]);
+		agentPush(mCurrentMovement[Z_I]);
+		agentPitch(mCurrentMovement[RX_I]);
+		agentYaw(mCurrentMovement[RY_I]);
+		return;
+	}
+
+	mNewSample = false;
+	// </CV:David>
+
 	bool is_zero = true;
 	static bool button_held = false;
 
@@ -783,6 +832,14 @@ void LLViewerJoystick::moveAvatar(bool reset)
 		is_zero = is_zero && (cur_delta[i] == 0.f);
 	}
 
+	// <CV:David>
+	if (!is_zero && !mMoving)
+	{
+		mMovingNudges = 0;
+	}
+	mMoving = !is_zero;
+	// </CV:David>
+
 	if (!is_zero)
 	{
 		// Clear AFK state if moved beyond the deadzone
@@ -824,16 +881,29 @@ void LLViewerJoystick::moveAvatar(bool reset)
 	// Allow forward/backward movement some priority
 	if (dom_axis == Z_I)
 	{
+		// <CV:David>
+		memset(mCurrentMovement, 0, sizeof(mCurrentMovement));
+		// </CV:David>
+
 		agentPush(sDelta[Z_I]);			// forward/back
+		// <CV:David>
+		mCurrentMovement[Z_I] = sDelta[Z_I];
+		// </CV:David>
 		
 		if (fabs(sDelta[X_I])  > .1f)
 		{
 			agentSlide(sDelta[X_I]);	// move sideways
+			// <CV:David>
+			mCurrentMovement[X_I] = sDelta[X_I];
+			// </CV:David>
 		}
 		
 		if (fabs(sDelta[Y_I])  > .1f)
 		{
 			agentFly(sDelta[Y_I]);		// up/down & crouch
+			// <CV:David>
+			mCurrentMovement[Y_I] = sDelta[Y_I];
+			// </CV:David>
 		}
 	
 		// too many rotations during walking can be confusing, so apply
@@ -866,16 +936,32 @@ void LLViewerJoystick::moveAvatar(bool reset)
 			{
 				agentPitch(eff_rx);
 				agentYaw(eff_ry);
+				// <CV:David>
+				mCurrentMovement[RX_I] = eff_rx;
+				mCurrentMovement[RY_I] = eff_ry;
+				// </CV:David>
 			}
 			else
 			{
 				agentPitch(eff_rx);
 				agentYaw(2.f * eff_ry);
+				// <CV:David>
+				mCurrentMovement[RX_I] = eff_rx;
+				mCurrentMovement[RY_I] = 2.f * eff_ry;
+				// </CV:David>
 			}
 		}
 	}
 	else
 	{
+		// <CV:David>
+		mCurrentMovement[X_I] = sDelta[X_I];
+		mCurrentMovement[Y_I] = sDelta[Y_I];
+		mCurrentMovement[Z_I] = sDelta[Z_I];
+		mCurrentMovement[RX_I] = sDelta[RX_I];
+		mCurrentMovement[RY_I] = sDelta[RY_I];
+		// </CV:David>
+
 		agentSlide(sDelta[X_I]);		// move sideways
 		agentFly(sDelta[Y_I]);			// up/down & crouch
 		agentPush(sDelta[Z_I]);			// forward/back
@@ -1112,7 +1198,16 @@ void LLViewerJoystick::scanJoystick()
 	// no need to update the status of the joystick here.
 	if (!mOverrideCamera)
 #endif
-	updateStatus();
+	// <CV:David>
+	//updateStatus();
+	if (mSampleTimer.getElapsedTimeF32() > SAMPLE_TIME)
+	{
+		updateStatus();
+		mNewSample = true;
+		mSampleTimer.reset();
+	}
+	// </CV:David>
+
 
 	// App focus check Needs to happen AFTER updateStatus in case the joystick
 	// is not centred when the app loses focus.
