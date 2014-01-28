@@ -411,6 +411,8 @@ void LLHUDText::updateVisibility()
 		return;
 	}
 		
+	// <CV:David> Don't render text in front of object's position for stereoscopic 3D. Can also leave out for mono.
+	/*
 	if (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= LLViewerCamera::getInstance()->getNear() + 0.1f + mSourceObject->getVObjRadius())
 	{
 		mPositionAgent = LLViewerCamera::getInstance()->getOrigin() + vec_from_camera * ((LLViewerCamera::getInstance()->getNear() + 0.1f) / (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis()));
@@ -419,6 +421,7 @@ void LLHUDText::updateVisibility()
 	{
 		mPositionAgent -= dir_from_camera * mSourceObject->getVObjRadius();
 	}
+	*/
 
 	mLastDistance = (mPositionAgent - LLViewerCamera::getInstance()->getOrigin()).magVec();
 
