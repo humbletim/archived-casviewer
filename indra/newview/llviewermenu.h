@@ -164,6 +164,10 @@ U32 info_display_from_string(std::string info_display);
 bool enable_object_export();
 // </FS:Techwolf Lupindo>
 
+// <CV:David>
+void setRiftlook(bool on);
+// </CV:David>
+
 
 class LLViewerMenuHolderGL : public LLMenuHolderGL
 {

@@ -237,6 +237,16 @@
 #include "llmachineid.h"
 #include "llmainlooprepeater.h"
 
+// <CV:David>
+#include "llviewermenu.h"
+#include "OVR.h"
+#include "OVRVersion.h"
+
+#if LL_WINDOWS
+	#include "caskinectcontroller.h"
+#endif
+// </CV:David>
+
 
 // *FIX: These extern globals should be cleaned up.
 // The globals either represent state/config/resource-storage of either 
@@ -344,6 +354,36 @@ BOOL gPeriodicSlowFrame = FALSE;
 BOOL gCrashOnStartup = FALSE;
 BOOL gLLErrorActivated = FALSE;
 BOOL gLogoutInProgress = FALSE;
+
+// <CV:David>
+OVR::Ptr<OVR::DeviceManager> gRiftManager;
+OVR::Ptr<OVR::HMDDevice> gRiftHMD;
+OVR::Ptr<OVR::SensorDevice> gRiftSensor;
+OVR::SensorFusion* gRiftFusionResult;
+OVR::HMDInfo gRiftHMDInfo;
+U32 gRiftHResolution;
+U32 gRiftVResolution;
+F32 gRiftHScreenSize;
+F32 gRiftVScreenSize;
+F32 gRiftAspect;
+F32 gRiftLensSeparation;
+F32 gRiftProjectionOffset;
+F32 gRiftEyeToScreen;
+F32 gRiftDistortionScale;
+F32 gRiftFOV;
+U32 gRiftHFrame;
+U32 gRiftVFrame;
+U32 gRiftHSample;
+U32 gRiftVSample;
+F32 gRiftDistortionK[4];
+F32 gRiftLensOffset;
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+	CASKinectController* gKinectController = NULL;
+#endif
+// </CV:David>
 
 ////////////////////////////////////////////////////////////
 // Internal globals... that should be removed.
@@ -603,7 +643,11 @@ static void settings_to_globals()
 	LLVOAvatar::sLODFactor				= gSavedSettings.getF32("RenderAvatarLODFactor");
 	LLVOAvatar::sPhysicsLODFactor		= gSavedSettings.getF32("RenderAvatarPhysicsLODFactor");
 	LLVOAvatar::sMaxVisible				= (U32)gSavedSettings.getS32("RenderAvatarMaxVisible");
-	LLVOAvatar::sVisibleInFirstPerson	= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	// <CV:David>
+	//LLVOAvatar::sVisibleInFirstPerson	= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	LLVOAvatar::sVisibleInMouselook		= gSavedSettings.getBOOL("FirstPersonAvatarVisible");
+	LLVOAvatar::sVisibleInRiftlook		= gSavedSettings.getBOOL("RiftAvatar");
+	// <CV:David>
 	// clamp auto-open time to some minimum usable value
 	LLFolderView::sAutoOpenTime			= llmax(0.25f, gSavedSettings.getF32("FolderAutoOpenDelay"));
 	LLSelectMgr::sRectSelectInclusive	= gSavedSettings.getBOOL("RectangleSelectInclusive");
@@ -622,9 +666,9 @@ static void settings_to_globals()
 static void settings_modify()
 {
 	// <CV:David>
-	// Stereoscopic 3D display also needs sUseFBO set if Basic Shaders are turned on.
+	// Stereoscopic 3D and Oculus Rift display also need sUseFBO set if Basic Shaders are turned on.
 	//LLRenderTarget::sUseFBO			= gSavedSettings.getBOOL("RenderDeferred");
-	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO;
+	LLRenderTarget::sUseFBO				= gSavedSettings.getBOOL("RenderDeferred") || gSavedSettings.getBOOL("VertexShaderEnable") && (gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO || gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_RIFT);
 	// </CV:David>
 	LLPipeline::sRenderDeferred			= gSavedSettings.getBOOL("RenderDeferred");
 	LLVOAvatar::sUseImpostors			= gSavedSettings.getBOOL("RenderUseImpostors");
@@ -1065,12 +1109,163 @@ bool LLAppViewer::init()
 	// <CV:David>
 	gOutputType = gSavedSettings.getU32("OutputType");
 	LL_INFOS("InitInfo") << "Output type: " << gOutputType << LL_ENDL;
+
 	gStereoscopic3DConfigured = gOutputType == OUTPUT_TYPE_STEREO;
 	gStereoscopic3DEnabled = gSavedSettings.getBOOL("Stereoscopic3DEnabled") && gStereoscopic3DConfigured;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
 	if (gStereoscopic3DEnabled)
 	{
 		llinfos << "Stereoscopic 3D: Enter stereoscopic 3D mode" << llendl;
+	}
+
+	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
+	gRift3DEnabled = FALSE;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
+	if (gRift3DConfigured)
+	{
+		LL_INFOS("InitInfo") << "Oculus Rift: Eye separation = " << std::setprecision(3) << gSavedSettings.getF32("RiftEyeSeparation") / 1000.f << LL_ENDL;;
+		LL_INFOS("InitInfo") << "Oculus Rift: Prediction delta = " << gSavedSettings.getF32("RiftPredictionDelta") / 1000.f << std::setprecision(2) << LL_ENDL;
+		gRiftStanding = gSavedSettings.getU32("RiftOperationMode") == RIFT_OPERATE_STANDING;
+		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
+		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
+		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
+		gRiftHeadReorients = gSavedSettings.getBOOL("RiftHeadReorients") && !gRiftStanding;
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar = " << gRiftHeadReorients << LL_ENDL;
+		gRiftHeadReorientsAfter = gSavedSettings.getU32("RiftHeadReorientsAfter");
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar after = " << gRiftHeadReorientsAfter << LL_ENDL;
+		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
+		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << LL_ENDL;
+	}
+
+	BOOL riftHMDInfoLoaded = FALSE;
+
+	if (gRift3DConfigured)
+	{
+		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
+
+		OVR::System::Init();
+		gRiftFusionResult = new OVR::SensorFusion();
+		gRiftManager = *OVR::DeviceManager::Create();
+		gRiftHMD = *gRiftManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
+
+		if (gRiftHMD)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD found" << LL_ENDL;
+			riftHMDInfoLoaded = gRiftHMD->GetDeviceInfo(&gRiftHMDInfo);
+			gRiftSensor = *gRiftHMD->GetSensor();
+		}
+		else
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found" << LL_ENDL;
+			gRiftSensor = *gRiftManager->EnumerateDevices<OVR::SensorDevice>().CreateDevice();
+		}
+
+		if (gRiftSensor)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
+			gRiftFusionResult->AttachToSensor(gRiftSensor);
+			gRiftFusionResult->SetPredictionEnabled(TRUE);
+			gRiftFusionResult->SetPrediction(gSavedSettings.getF32("RiftPredictionDelta") / 1000.f);
+		}
+		else
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Sensor not found" << LL_ENDL;
+		}
+
+		if (riftHMDInfoLoaded)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Product name = " << gRiftHMDInfo.ProductName << LL_ENDL;
+		}
+		
+		if (riftHMDInfoLoaded && gRiftSensor)
+		{
+			gRiftHResolution = gRiftHMDInfo.HResolution;
+			gRiftVResolution = gRiftHMDInfo.VResolution;
+			gRiftHScreenSize = gRiftHMDInfo.HScreenSize;
+			gRiftVScreenSize = gRiftHMDInfo.VScreenSize;
+			gRiftLensSeparation = gRiftHMDInfo.LensSeparationDistance;
+			gRiftEyeToScreen = gRiftHMDInfo.EyeToScreenDistance;
+
+			OVR::Util::Render::StereoConfig stereo;
+			stereo.SetFullViewport(OVR::Util::Render::Viewport(0, 0, gRiftHResolution, gRiftVResolution));
+			stereo.SetStereoMode(OVR::Util::Render::Stereo_LeftRight_Multipass);
+			stereo.SetHMDInfo(gRiftHMDInfo);
+			if (gRiftHScreenSize > 0.140f)
+			{
+				stereo.SetDistortionFitPointVP(-1.f, 0.f);  // 7": Fit to side of screen.
+			}
+			else
+			{
+				stereo.SetDistortionFitPointVP(0.f, 1.f);  // 5": Fit to top of screen.
+			}
+
+			gRiftDistortionScale = stereo.GetDistortionScale();
+			gRiftFOV = stereo.GetYFOVRadians();
+
+			gRiftDistortionK[0] = gRiftHMDInfo.DistortionK[0];
+			gRiftDistortionK[1] = gRiftHMDInfo.DistortionK[1];
+			gRiftDistortionK[2] = gRiftHMDInfo.DistortionK[2];
+			gRiftDistortionK[3] = gRiftHMDInfo.DistortionK[3];
+		}
+		else
+		{
+			LL_WARNS("InitInfo") << "Oculus Rift: Using default values because Rift not attached or working correctly." << LL_ENDL;
+
+			gRiftHResolution = 1280;
+			gRiftVResolution = 800;
+			gRiftHScreenSize = 0.149760;
+			gRiftVScreenSize = 0.093600;
+			gRiftLensSeparation = 0.063500;
+			gRiftEyeToScreen = 0.041000;
+
+			gRiftDistortionScale = 1.714606;
+			gRiftFOV = 2.196863;
+
+			gRiftDistortionK[0] = 1.000;
+			gRiftDistortionK[1] = 0.220;
+			gRiftDistortionK[2] = 0.240;
+			gRiftDistortionK[3] = 0.000;
+		}
+
+		gRiftAspect = gRiftHScreenSize / (2.f * gRiftVScreenSize);  // Use physical dimensions not pixels.
+		gRiftProjectionOffset = 1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize;
+		gRiftHFrame = gRiftHResolution / 2;
+		gRiftVFrame = gRiftVResolution;
+		gRiftHSample = floor(gRiftDistortionScale * gRiftHFrame / 10 + 0.5) * 10;
+		gRiftVSample = floor(gRiftHSample / gRiftAspect + 0.5);
+		gRiftLensOffset = (F32)gRiftHFrame / 2.f * (1.f - 2.f * gRiftLensSeparation / gRiftHScreenSize);
+
+		llinfos << "Oculus Rift: Resolution = " << gRiftHResolution << " x " << gRiftVResolution << llendl;
+		llinfos << "Oculus Rift: Screen size = " << std::setprecision(6) << gRiftHScreenSize << " x " << gRiftVScreenSize << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Aspect = " << std::setprecision(3) << gRiftAspect << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Lens separation = " << std::setprecision(6) << gRiftLensSeparation << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Projection offset = " << std::setprecision(6) << gRiftProjectionOffset << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Eye to screen distance = " << std::setprecision(6) << gRiftEyeToScreen << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Unadjusted vertical FOV = " << std::setprecision(6) << 2.f * (atan(gRiftVScreenSize / (2.f * gRiftEyeToScreen))) << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Distortion scale = " << std::setprecision(6) << gRiftDistortionScale << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(2) << llendl;
+		llinfos << "Oculus Rift: Sample resolution = " << gRiftHSample << " x " << gRiftVSample << llendl;
+		llinfos << "Oculus Rift: DistortionK = " << std::setprecision(3) << gRiftHMDInfo.DistortionK[0] << ", " << gRiftHMDInfo.DistortionK[1] << ", " << gRiftHMDInfo.DistortionK[2] << ", " << gRiftHMDInfo.DistortionK[3] << std::setprecision(2) << llendl;
+
+		/*
+		stereo.SetIPD(gSavedSettings.getF32("RiftEyeSeparation") / 1000.f);
+		OVR::Util::Render::StereoEyeParams leftEye = stereo.GetEyeRenderParams(OVR::Util::Render::StereoEye_Left);
+		OVR::Util::Render::Viewport leftVP = leftEye.VP;
+		OVR::Matrix4f leftProjection = leftEye.Projection;
+		OVR::Matrix4f leftViewAdjust = leftEye.ViewAdjust;
+		llinfos << "Oculus Rift: Left viewport = " << leftVP.x << ", " << leftVP.y << ", " << leftVP.w << ", " << leftVP.h << std::setprecision(6) << llendl;
+		llinfos << "Oculus Rift: Left projection =  " << leftProjection.M[0][0] << "  " << leftProjection.M[0][1] << "  " << leftProjection.M[0][2] << "  " << leftProjection.M[0][3] << llendl;
+		llinfos << "                                " << leftProjection.M[1][0] << "  " << leftProjection.M[1][1] << "  " << leftProjection.M[1][2] << "  " << leftProjection.M[1][3] << llendl;
+		llinfos << "                                " << leftProjection.M[2][0] << "  " << leftProjection.M[2][1] << "  " << leftProjection.M[2][2] << "  " << leftProjection.M[2][3] << llendl;
+		llinfos << "                                " << leftProjection.M[3][0] << "  " << leftProjection.M[3][1] << "  " << leftProjection.M[3][2] << "  " << leftProjection.M[3][3] << llendl;
+		llinfos << "Oculus Rift: Left view adjust = " << leftViewAdjust.M[0][0] << "  " << leftViewAdjust.M[0][1] << "  " << leftViewAdjust.M[0][2] << "  " << leftViewAdjust.M[0][3] << llendl;
+		llinfos << "                                " << leftViewAdjust.M[1][0] << "  " << leftViewAdjust.M[1][1] << "  " << leftViewAdjust.M[1][2] << "  " << leftViewAdjust.M[1][3] << llendl;
+		llinfos << "                                " << leftViewAdjust.M[2][0] << "  " << leftViewAdjust.M[2][1] << "  " << leftViewAdjust.M[2][2] << "  " << leftViewAdjust.M[2][3] << llendl;
+		llinfos << "                                " << leftViewAdjust.M[3][0] << "  " << leftViewAdjust.M[3][1] << "  " << leftViewAdjust.M[3][2] << "  " << leftViewAdjust.M[3][3] << std::setprecision(2) << llendl;
+		*/
 	}
 	// </CV:David>
 
@@ -1244,6 +1439,26 @@ bool LLAppViewer::init()
 
 	gSimLastTime = gRenderStartTime.getElapsedTimeF32();
 	gSimFrames = (F32)gFrameCount;
+
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gSavedSettings.getBOOL("KinectEnabled"))
+		{
+			gKinectController = new CASKinectController();
+			if (gKinectController->kinectConfigured())
+			{
+				gKinectController->swapFlyUpAndFlyDown(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
+			}
+			else
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
+		}
+	#endif
+	// </CV:David>
 
 	LLViewerJoystick::getInstance()->init(false);
 
@@ -1519,6 +1734,9 @@ bool LLAppViewer::mainLoop()
 					&& !gViewerWindow->getShowProgress()
 					&& !gFocusMgr.focusLocked())
 				{
+					// <CV:David>
+					gAgent.updateWalkSpeed();
+					// </CV:David>
 					joystick->scanJoystick();
 					gKeyboard->scanKeyboard();
 					// <FS:Ansariel> Chalice Yao's crouch toggle
@@ -1529,6 +1747,16 @@ bool LLAppViewer::mainLoop()
 						gAgent.moveUp(-1);
 					}
 					// </FS:Ansariel>
+
+					// <CV:David>
+					// Process a skeleton frame is one is ready and available.
+					#if LL_WINDOWS
+						if (gKinectController)
+						{
+							gKinectController->scanKinect();
+						}
+					#endif
+					// </CV:David>
 				}
 
 				// Update state based on messages, user input, object idle.
@@ -1871,6 +2099,17 @@ bool LLAppViewer::cleanup()
 
 	llinfos << "Cleaning Up" << llendflush;
 
+	// <CV:David>
+	if (gRift3DConfigured)
+	{
+		gRiftSensor.Clear();
+		gRiftHMD.Clear();
+		gRiftManager.Clear();
+		OVR::System::Destroy();
+		llinfos << "Oculus Rift: Cleaned up" << llendflush;
+	}
+	// </CV:David>
+
 	// <FS:Zi> Backup Settings
 	if(mSaveSettingsOnExit)
 	{
@@ -2049,6 +2288,16 @@ bool LLAppViewer::cleanup()
 	// Turn off Space Navigator and similar devices
 	LLViewerJoystick::getInstance()->terminate();
 	
+	// <CV:David>
+	#if LL_WINDOWS
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+		}
+	#endif
+	// </CV:David>
+
 	llinfos << "Cleaning up Objects" << llendflush;
 	
 	LLViewerObject::cleanupVOClasses();
@@ -3486,6 +3735,15 @@ bool LLAppViewer::initWindow()
 		.ignore_pixel_depth(ignorePixelDepth)
 		.output_type(gOutputType);
 
+	// <CV:David>
+	if (gRift3DConfigured && window_params.fullscreen)
+	{
+		LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHResolution << ", Height = " << gRiftVResolution << LL_ENDL;
+		window_params.width = gRiftHResolution;
+		window_params.height = gRiftVResolution;
+	}
+	// </CV:David>
+
 	gViewerWindow = new LLViewerWindow(window_params);
 
 	LL_INFOS("AppInit") << "gViewerwindow created." << LL_ENDL;
@@ -4130,6 +4388,13 @@ static LLNotificationFunctorRegistration finish_quit_reg("ConfirmQuit", finish_q
 
 void LLAppViewer::userQuit()
 {
+	// <CV:David>
+	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
+	{
+		setRiftlook(FALSE);
+	}
+	// </CV:David>
+	
 	if (gDisconnected || gViewerWindow->getProgressView()->getVisible())
 	{
 		requestQuit();
@@ -5806,6 +6071,13 @@ void LLAppViewer::handleLoginComplete()
 	// we logged in successfully, so save settings on logout
 	lldebugs << "Login successful, per account settings will be saved on logout." << llendl;
 	mSavePerAccountSettings=true;
+
+	// <CV:David> Automatically toggle into Riftlook if "--riftlook" command line parameter specified.
+	if (gSavedSettings.getBOOL("RiftStartupInRiftlook"))
+	{
+		setRiftlook(TRUE);
+	}
+	// </CV:David>
 }
 
 void LLAppViewer::launchUpdater()

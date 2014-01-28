@@ -143,6 +143,7 @@
 #include "growlmanager.h"
 #include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 
+#include "llappviewer.h"  // <CV:David>
 #include "llviewerdisplay.h"  // <CV:David>
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
@@ -485,6 +486,10 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 
 	mCommitCallbackRegistrar.add("Pref.ClickActionChange",				boost::bind(&LLFloaterPreference::onClickActionChange, this));
 
+	// <CV:David>
+	mCommitCallbackRegistrar.add("Pref.ChangeWalkSpeed",		boost::bind(&LLFloaterPreference::onChangeWalkSpeed, this));
+	// </CV:David>
+
 	// <FS:Zi> Backup settings
 	mCommitCallbackRegistrar.add("Pref.SetBackupSettingsPath",	boost::bind(&LLFloaterPreference::onClickSetBackupSettingsPath, this));
 	mCommitCallbackRegistrar.add("Pref.BackupSettings",			boost::bind(&LLFloaterPreference::onClickBackupSettings, this));
@@ -497,6 +502,25 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.UpdateOutputType",		boost::bind(&LLFloaterPreference::onChangeOutputType, this));
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onChangeRiftPredictionDelta, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onClickResetRiftPredictionDelta, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
+	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
+	mCommitCallbackRegistrar.add("Pref.RiftHeadReorientsEnable",	boost::bind(&LLFloaterPreference::onRiftHeadReorientsEnable, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsAfter, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsAfter, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
+	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
+	// </CV:David>
+
+	// <CV:David>
+	#if LL_WINDOWS
+		mCommitCallbackRegistrar.add("Pref.KinectEnable",	boost::bind(&LLFloaterPreference::onKinectEnable, this));
+		mCommitCallbackRegistrar.add("Pref.ResetKinectSensitivity",	boost::bind(&LLFloaterPreference::onClickResetKinectSensitivity, this));
+		mCommitCallbackRegistrar.add("Pref.KinectSwapFlyUpAndFlyDown",	boost::bind(&LLFloaterPreference::onKinectSwapFlyUpAndFlyDown, this));
+	#endif
 	// </CV:David>
 
 	gSavedSettings.getControl("NameTagShowUsernames")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));
@@ -1523,9 +1547,9 @@ void LLFloaterPreference::refreshEnabledState()
 	if (shaders)
 	{
 		// <CV:David>
-		// Reset required for stereoscopic 3D Basic Shaders without Advanced Lighting Model.
+		// Reset required for stereoscopic 3D and Oculus Rift Basic Shaders without Advanced Lighting Model.
 		// Also reset for deferred rendering, for completeness and consistency with llappviewer.cpp''s settings_modify().
-		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO);
+		LLRenderTarget::sUseFBO = gSavedSettings.getBOOL("RenderDeferred") || (gSavedSettings.getBOOL("VertexShaderEnable") && (gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_STEREO || gSavedSettings.getU32("OutputType") == OUTPUT_TYPE_RIFT));
 		LLPipeline::resetRenderDeferred();
 		// </CV:David>
 
@@ -1582,6 +1606,20 @@ void LLFloaterPreference::refreshEnabledState()
 	disableUnavailableSettings();
 
 	getChildView("block_list")->setEnabled(LLLoginInstance::getInstance()->authSuccess());
+
+	// <CV:David>
+	#if LL_WINDOWS
+		getChild<LLUICtrl>("KinectEnabled")->setEnabled(true);
+		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
+		getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
+		getChild<LLUICtrl>("KinectSwapFlyUpAndFlyDown")->setEnabled(gKinectController != NULL);
+	#else
+		getChild<LLUICtrl>("KinectEnabled")->setEnabled(false);
+		getChild<LLUICtrl>("KinectSensitivity")->setEnabled(false);
+		getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(false);
+		getChild<LLUICtrl>("KinectSwapFlyUpAndFlyDown")->setEnabled(false);
+	#endif
+	// </CV:David>
 }
 
 void LLFloaterPreference::disableUnavailableSettings()
@@ -2105,6 +2143,13 @@ void LLFloaterPreference::updateClickActionControls()
 	getChild<LLComboBox>("single_click_action_combo")->setValue((int)click_to_walk);
 	getChild<LLComboBox>("double_click_action_combo")->setValue(dbl_click_to_teleport ? 2 : (int)dbl_click_to_walk);
 }
+
+// <CV:David>
+void LLFloaterPreference::onChangeWalkSpeed()
+{
+	gAgent.setWalkSpeed(getChild<LLSliderCtrl>("WalkSpeed")->getValue().asInteger());
+}
+// </CV:David>
 
 // <FS:PP> Load UI Sounds tabs settings
 void LLFloaterPreference::updateUISoundsControls()
@@ -3526,6 +3571,9 @@ void LLFloaterPreference::onChangeOutputType()
 	}
 	gStereoscopic3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+
+	gRift3DEnabled = FALSE;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
 }
 
 void LLFloaterPreference::onClickResetEyeSeparation()
@@ -3537,6 +3585,125 @@ void LLFloaterPreference::onClickResetScreenDistance()
 {
 	gSavedSettings.setF32("ScreenDistance", 1.6f);
 }
+
+void LLFloaterPreference::onClickResetRiftEyeSeparation()
+{
+	gSavedSettings.setF32("RiftEyeSeparation", 65.0f);
+}
+
+void LLFloaterPreference::onChangeRiftPredictionDelta()
+{
+	if (gRift3DEnabled)
+	{
+		gRiftFusionResult->SetPrediction(getChild<LLSliderCtrl>("RiftPredictionDelta")->getValue().asReal() / 1000.f);
+	}
+}
+
+void LLFloaterPreference::onClickResetRiftPredictionDelta()
+{
+	gSavedSettings.setF32("RiftPredictionDelta", 35.0f);
+	if (gRift3DEnabled)
+	{
+		gRiftFusionResult->SetPrediction(0.02f);
+	}
+}
+
+void LLFloaterPreference::onChangeRiftOperationMode()
+{
+	U32 riftOperationMode = getChild<LLRadioGroup>("RiftOperationMode")->getValue().asInteger();
+	gRiftStanding = riftOperationMode == RIFT_OPERATE_STANDING;
+	llinfos << "Oculus Rift: Operation mode = " << riftOperationMode << llendl;
+}
+
+void LLFloaterPreference::onRiftStrafeEnable()
+{
+	gRiftStrafe = getChild<LLCheckBoxCtrl>("RiftStrafe")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Strafe = " << gRiftStrafe << llendl;
+}
+
+void LLFloaterPreference::onRiftHeadReorientsEnable()
+{
+	gRiftHeadReorients = getChild<LLCheckBoxCtrl>("RiftHeadReorients")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Head reorients = " << gRiftHeadReorients << llendl;
+}
+
+void LLFloaterPreference::onChangeRiftHeadReorientsAfter()
+{
+	gRiftHeadReorientsAfter = getChild<LLSliderCtrl>("RiftHeadReorientsAfter")->getValue().asInteger();
+}
+
+void LLFloaterPreference::onClickResetRiftHeadReorientsAfter()
+{
+	gSavedSettings.setU32("RiftHeadReorientsAfter", RIFT_HEAD_REORIENTS_AFTER_DEFAULT);
+	gRiftHeadReorientsAfter = RIFT_HEAD_REORIENTS_AFTER_DEFAULT;
+}
+
+void LLFloaterPreference::onClickResetRiftUIDepth()
+{
+	gSavedSettings.setU32("RiftUIDepth", 90);
+}
+
+void LLFloaterPreference::onChangeRiftMouseMode()
+{
+	U32 riftMouseMode = getChild<LLRadioGroup>("RiftMouseMode")->getValue().asInteger();
+	gRiftMouseCursor = riftMouseMode == RIFT_MOUSE_CURSOR;
+	llinfos << "Oculus Rift: Mouse mode = " << riftMouseMode << llendl;
+}
+
+void LLFloaterPreference::onRiftMouseHorizontalEnable()
+{
+	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
+	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
+}
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+
+void LLFloaterPreference::onKinectEnable()
+{
+	if (getChild<LLCheckBoxCtrl>("KinectEnabled")->getValue().asBoolean())
+	{
+		if (!gKinectController)
+		{
+			gKinectController = new CASKinectController();
+			if (!gKinectController->kinectConfigured())
+			{
+				gSavedSettings.setBOOL("KinectEnabled", FALSE);
+				LLNotificationsUtil::add("KinectNotInitialized");
+				delete gKinectController;
+				gKinectController = NULL;
+			}
+		}
+	}
+	else
+	{
+		if (gKinectController)
+		{
+			delete gKinectController;
+			gKinectController = NULL;
+		}
+	}
+
+	getChild<LLUICtrl>("KinectSensitivity")->setEnabled(gKinectController != NULL);
+	getChild<LLUICtrl>("ResetKinectSensitivity")->setEnabled(gKinectController != NULL);
+	getChild<LLUICtrl>("KinectSwapFlyUpAndFlyDown")->setEnabled(gKinectController != NULL);
+}
+
+void LLFloaterPreference::onClickResetKinectSensitivity()
+{
+	gSavedSettings.setU32("KinectSensitivity", 5);
+}
+
+void LLFloaterPreference::onKinectSwapFlyUpAndFlyDown()
+{
+	if (gKinectController)
+	{
+		gKinectController->swapFlyUpAndFlyDown(getChild<LLCheckBoxCtrl>("KinectSwapFlyUpAndFlyDown")->getValue().asBoolean());
+	}
+}
+
+#endif
 // </CV:David>
 
 // <FS:Kadah>

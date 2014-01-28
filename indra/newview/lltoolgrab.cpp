@@ -60,6 +60,10 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 const S32 SLOP_DIST_SQ = 4;
 
 // Override modifier key behavior with these buttons
@@ -126,6 +130,16 @@ BOOL LLToolGrab::handleDoubleClick(S32 x, S32 y, MASK mask)
 
 BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 {
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		S32 delta_x = llround((gSavedSettings.getF32("RiftEyeSeparation") / (2000.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
+		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? delta_x : -delta_x);
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		x = x - ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+	}
+	// </CV:David>
+
 	if (gDebugClicks)
 	{
 		llinfos << "LLToolGrab handleMouseDown" << llendl;
@@ -420,7 +434,17 @@ BOOL LLToolGrab::handleHover(S32 x, S32 y, MASK mask)
 {
 	if (!gViewerWindow->getLeftMouseDown())
 	{
-		gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+		// <CV:David>
+		//gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+		if (!gRift3DEnabled)
+		{
+			gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+		}
+		else
+		{
+			LLToolPie::getInstance()->handleHover(x, y, mask);
+		}
+		// </CV:David>
 		setMouseCapture(FALSE);
 		return TRUE;
 	}
@@ -900,7 +924,17 @@ void LLToolGrab::handleHoverInactive(S32 x, S32 y, MASK mask)
 {
 	// JC - TODO - change cursor based on gGrabBtnVertical, gGrabBtnSpin
 	lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (inactive-not over editable object)" << llendl;		
-	gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+	// <CV:David>
+	//gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+	if (!gRift3DEnabled || !gRiftMouseCursor)
+	{
+		gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
+	}
+	else
+	{
+		gViewerWindow->setCursor(UI_CURSOR_ARROW);
+	}
+	// </CV:David>
 }
 
 // User is trying to do something that's not allowed.

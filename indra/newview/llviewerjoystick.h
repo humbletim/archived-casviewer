@@ -98,6 +98,19 @@ private:
 	
 	static F32				sLastDelta[7];
 	static F32				sDelta[7];
+
+	// <CV:David>
+
+	// The SpaceNavigator has a maximum update rate which necessitates continuing previous movement between samples.
+	LLFrameTimer mSampleTimer;
+	bool mNewSample;
+	F32 mCurrentMovement[7];
+
+	// Need to issue two nudges at start of movement in order to start moving at slowest speed.
+	bool mMoving;
+	U32 mMovingNudges;
+
+	// </CV:David>
 };
 
 #endif

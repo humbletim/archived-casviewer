@@ -352,6 +352,25 @@ public:
 	BOOL			getAFK() const;
 	static const F32 MIN_AFK_TIME;
 	
+// <CV:David>
+	//--------------------------------------------------------------------
+	// Walk
+	//--------------------------------------------------------------------
+public:
+	void			setWalkSpeed(U32 speed) { mWalkSpeed = speed; }
+	void			increaseWalkSpeed();
+	void			decreaseWalkSpeed();
+	void			updateWalkSpeed();
+	U32				getWalkSpeed() { return mWalkSpeed; }
+
+private:
+	static const U32 MIN_WALK_SPEED = 1;
+	static const U32 MAX_WALK_SPEED = 5;
+	U32				mWalkSpeed;
+	U32				mWalkSpeedFlag;
+	U32				mWalkSpeedFlags[MAX_WALK_SPEED];
+// </CV:David>
+
 	//--------------------------------------------------------------------
 	// Run
 	//--------------------------------------------------------------------
@@ -515,6 +534,11 @@ public:
 	void			moveUp(S32 direction);
 	void			moveYaw(F32 mag, bool reset_view = true);
 	void			movePitch(F32 mag);
+	// <CV:David>
+	void			moveAt(F32 velocity);	// velocity: -1.0 .. +1.0
+	void			moveLeft(F32 velocity);	// ""
+	void			moveUp(F32 velocity);	// ""
+	// </CV:David>
 
 	//--------------------------------------------------------------------
  	// Move the avatar's frame

@@ -56,6 +56,10 @@
 #include "llviewercamera.h"
 // NaCl End
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 const S32 BUTTON_HEIGHT = 16;
 const S32 BUTTON_WIDTH_SMALL = 32;
 const S32 BUTTON_WIDTH_BIG = 48;
@@ -696,15 +700,41 @@ BOOL LLToolCompGun::handleHover(S32 x, S32 y, MASK mask)
 	if( !gViewerWindow->getLeftMouseDown())
 	{
 		// let ALT switch from gun to grab
-		if ( mCur == mGun && (mask & MASK_ALT) )
+		// <CV:David>
+		//if ( mCur == mGun && (mask & MASK_ALT) )
+		//{
+		//	setCurrentTool( (LLTool*) mGrab );
+		//}
+		//else if ( mCur == mGrab && !(mask & MASK_ALT) )
+		//{
+		//	setCurrentTool( (LLTool*) mGun );
+		//	setMouseCapture(TRUE);
+		//}
+		if (!gRift3DEnabled || !gRiftMouseCursor)
 		{
-			setCurrentTool( (LLTool*) mGrab );
+			if ( mCur == mGun && (mask & MASK_ALT) )
+			{
+				setCurrentTool( (LLTool*) mGrab );
+			}
+			else if ( mCur == mGrab && !(mask & MASK_ALT) )
+			{
+				setCurrentTool( (LLTool*) mGun );
+				setMouseCapture(TRUE);
+			}
 		}
-		else if ( mCur == mGrab && !(mask & MASK_ALT) )
+		else
 		{
-			setCurrentTool( (LLTool*) mGun );
-			setMouseCapture(TRUE);
+			if ( mCur == mGun && !(mask & MASK_ALT) )
+			{
+				setCurrentTool( (LLTool*) mGrab );
+			}
+			else if ( mCur == mGrab && (mask & MASK_ALT) )
+			{
+				setCurrentTool( (LLTool*) mGun );
+				setMouseCapture(TRUE);
+			}
 		}
+		// </CV:David>
 	}
 
 	return TRUE; 
@@ -760,7 +790,11 @@ BOOL LLToolCompGun::handleRightMouseDown(S32 x, S32 y, MASK mask)
 
 	// Returning true will suppress the context menu
 	// NaCl - Rightclick-mousewheel zoom
-	if (!(gKeyboard->currentMask(TRUE) & MASK_ALT))
+	// <CV:David>
+	//if (!(gKeyboard->currentMask(TRUE) & MASK_ALT))
+	if ( (!gRift3DEnabled || !gRiftMouseCursor) && !(gKeyboard->currentMask(TRUE) & MASK_ALT)
+	   ||  gRift3DEnabled && gRiftMouseCursor && (gKeyboard->currentMask(TRUE) & MASK_ALT) )
+	// </CV:David>
 	{
 		static LLCachedControl<LLVector3> _NACL_MLFovValues(gSavedSettings,"_NACL_MLFovValues");
 		static LLCachedControl<F32> CameraAngle(gSavedSettings,"CameraAngle");
@@ -774,10 +808,15 @@ BOOL LLToolCompGun::handleRightMouseDown(S32 x, S32 y, MASK mask)
 	}
 	// NaCl End
 
-	// <FS:Ansariel> Enable context/pie menu in mouselook
-	//return TRUE;
-	return (!gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"));
-	// </FS:Ansariel>
+	// <CV:David>
+	// Enable context/pie menu in mouselook or Riftlook
+	//// <FS:Ansariel> Enable context/pie menu in mouselook
+	////return TRUE;
+	//return (!gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"));
+	//// </FS:Ansariel>
+	return !( (!gRift3DEnabled && gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"))
+			  || (gRift3DEnabled && gSavedSettings.getBOOL("RiftContextMenu")) );
+	// <CV:David>
 }
 // NaCl - Rightclick-mousewheel zoom
 BOOL LLToolCompGun::handleRightMouseUp(S32 x, S32 y, MASK mask)

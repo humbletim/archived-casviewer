@@ -43,6 +43,10 @@
 #include "lltoolmgr.h"
 #include "lltoolgrab.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 // Linden library includes
 #include "llwindow.h"			// setMouseClipping()
 
@@ -101,8 +105,11 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 
 		// get mouse movement delta
 		S32 dx = -gViewerWindow->getCurrentMouseDX();
-		S32 dy = -gViewerWindow->getCurrentMouseDY();
-		
+		// <CV:David>
+		//S32 dy = -gViewerWindow->getCurrentMouseDY();
+		S32 dy = (gRift3DEnabled && gRiftMouseHorizontal) ? 0 : -gViewerWindow->getCurrentMouseDY();
+		// </CV:David>
+
 		if (dx != 0 || dy != 0)
 		{
 			// ...actually moved off center
@@ -152,7 +159,9 @@ void LLToolGun::draw()
 	// <FS:Ansariel> Use faster LLCachedControl
 	//if( gSavedSettings.getBOOL("ShowCrosshairs") )
 	static LLCachedControl<bool> showCrosshairs(gSavedSettings, "ShowCrosshairs");
-	if (showCrosshairs)
+	// <CV:David>
+	//if (showCrosshairs)
+	if (!gRift3DEnabled && showCrosshairs) // </CV:David>
 	{
 		// <FS:Ansariel> Performance tweak
 		//LLUIImagePtr crosshair = LLUI::getUIImage("crosshairs.tga");

@@ -56,6 +56,10 @@
 #include "fscommon.h"
 #include "lltrans.h"
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 using namespace LLAvatarAppearanceDefines;
 
 extern LLMenuBarGL* gMenuBarView;
@@ -327,7 +331,13 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera, BOOL moveme
 
 	if (change_camera && !gSavedSettings.getBOOL("FreezeTime"))
 	{
-		changeCameraToDefault();
+		// <CV:David>
+		//changeCameraToDefault();
+		if (!gRift3DEnabled)
+		{
+			changeCameraToDefault();
+		}
+		// <CV:David>
 		
 		if (LLViewerJoystick::getInstance()->getOverrideCamera())
 		{
@@ -346,7 +356,13 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera, BOOL moveme
 			LLFloaterReg::hideInstance("build");
 
 			// Switch back to basic toolset
-			LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+			// <CV:David>
+			//LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+			if (!gRift3DEnabled)
+			{
+				LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+			}
+			// </CV:David>
 		}
 		
 		gViewerWindow->showCursor();
@@ -1111,6 +1127,15 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 
 	if (!isAgentAvatarValid()) return;
 
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		LLVector3 headLookAxis = LLVector3(LLVector3::x_axis * mRiftPitch * mRiftYaw * mAgentRot);
+		setLookAt(LOOKAT_TARGET_MOUSELOOK, gAgentAvatarp, headLookAxis);
+		return;
+	}
+	// </CV:David>
+
 	LLQuaternion av_inv_rot = ~gAgentAvatarp->mRoot->getWorldRotation();
 	LLVector3 root_at = LLVector3::x_axis * gAgentAvatarp->mRoot->getWorldRotation();
 
@@ -1435,9 +1460,30 @@ void LLAgentCamera::updateCamera()
 	mCameraPositionAgent = gAgent.getPosAgentFromGlobal(camera_pos_global);
 
 	// Move the camera
+	// <CV:David>
+	//LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
+	////LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, camera_skyward, focus_agent);
+	if (gRift3DEnabled)
+	{
+		// Alter look direction per Rift orientation; 1st and 3rd person.
+		
+		LLQuaternion focusRotation;
+		focusRotation.shortestArc(LLVector3::x_axis, LLVector3(mFocusGlobal - camera_pos_global));
+		F32 focusRoll, focusPitch, focusYaw;
+		focusRotation.getEulerAngles(&focusRoll, &focusPitch, &focusYaw);
+		LLQuaternion focusPitchAndYaw = LLQuaternion(focusPitch, LLVector3::y_axis) * LLQuaternion(focusYaw, LLVector3::z_axis);
 
-	LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
-	//LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, camera_skyward, focus_agent);
+		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * focusPitchAndYaw;
+
+		LLVector3 rift_focus_agent = mCameraPositionAgent + LLVector3::x_axis * mRiftPitch * mRiftYaw * focusPitchAndYaw;
+
+		LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, rift_focus_agent);
+	}
+	else
+	{
+		LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
+	}
+	// </CV:David>
 	
 	// Change FOV
 	LLViewerCamera::getInstance()->setView(LLViewerCamera::getInstance()->getDefaultFOV() / (1.f + mCameraCurrentFOVZoomFactor));
@@ -1459,7 +1505,10 @@ void LLAgentCamera::updateCamera()
 	}
 	gAgent.setLastPositionGlobal(global_pos);
 	
-	if (LLVOAvatar::sVisibleInFirstPerson && isAgentAvatarValid() && !gAgentAvatarp->isSitting() && cameraMouselook())
+	// <CV:David>
+	//if (LLVOAvatar::sVisibleInFirstPerson && isAgentAvatarValid() && !gAgentAvatarp->isSitting() && cameraMouselook())
+	if (LLVOAvatar::visibleInFirstPerson() && isAgentAvatarValid() && !gAgentAvatarp->isSitting() && cameraMouselook())
+	// <CV:David>
 	{
 		LLVector3 head_pos = gAgentAvatarp->mHeadp->getWorldPosition() + 
 			LLVector3(0.08f, 0.f, 0.05f) * gAgentAvatarp->mHeadp->getWorldRotation() + 
@@ -2133,7 +2182,13 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	//gViewerWindow->stopGrab();
 	LLSelectMgr::getInstance()->deselectAll();
 	gViewerWindow->hideCursor();
-	gViewerWindow->moveCursorToCenter();
+	// <CV:David>
+	//gViewerWindow->moveCursorToCenter();
+	if (!gRift3DEnabled || !gRiftMouseCursor)
+	{
+		gViewerWindow->moveCursorToCenter();
+	}
+	// </CV:David>
 
 	if (mCameraMode != CAMERA_MODE_MOUSELOOK)
 	{
@@ -2159,6 +2214,17 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 			gAgent.endAnimationUpdateUI();
 		}
 	}
+
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		OVR::Quatf hmdOrientation = gRiftFusionResult->GetPredictedOrientation();
+		float yaw, pitch, roll;
+		hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+		mLastRiftYaw = yaw;
+		mEyeYaw = 0.f;
+	}
+	// </CV:David>
 }
 
 
@@ -2931,6 +2997,54 @@ void LLAgentCamera::loadCameraPosition()
 	setCameraPosAndFocusGlobal(mStoredCameraPos, mStoredCameraFocus, mStoredCameraFocusObjectId);
 }
 // </FS:Ansariel> FIRE-7758: Save/load camera position feature
+
+// <CV:David>
+
+void LLAgentCamera::calcRiftValues()
+{
+	OVR::Quatf hmdOrientation = gRiftFusionResult->GetPredictedOrientation();
+	float yaw, roll, pitch;
+	hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+
+	F32 deltaYaw = yaw - mLastRiftYaw;
+	if (gRiftStanding)
+	{
+		gAgent.rotate(deltaYaw, LLVector3::z_axis);
+	}
+	else
+	{
+		mEyeYaw += deltaYaw;
+		if (gRiftHeadReorients && (fabs(mEyeYaw) > (F32)gRiftHeadReorientsAfter * DEG_TO_RAD))
+		{
+			mRotatingView = (mEyeYaw < 0 ? -1 : 1);
+		}
+		if ((mRotatingView < 0 && mEyeYaw < .1f * DEG_TO_RAD) || (mRotatingView > 0 && mEyeYaw > .1f * DEG_TO_RAD))
+		{
+			gAgent.rotate(mEyeYaw / (30.f - 2 * gAgent.getWalkSpeed()), LLVector3::z_axis);
+		}
+		else
+		{
+			mRotatingView = 0;
+		}
+	}
+	mLastRiftYaw = yaw;
+
+	mRiftYaw = LLQuaternion(mEyeYaw, LLVector3::z_axis);
+	mRiftPitch = LLQuaternion(-pitch, LLVector3::y_axis);
+	mRiftRoll = LLQuaternion(-roll, LLVector3::x_axis);
+
+	mAgentRot = gAgent.getFrameAgent().getQuaternion();
+	if (isAgentAvatarValid() && gAgentAvatarp->getParent())
+	{
+		LLViewerObject* root_object = (LLViewerObject*)gAgentAvatarp->getRoot();
+		if (!root_object->flagCameraDecoupled())
+		{
+			mAgentRot *= ((LLViewerObject*)(gAgentAvatarp->getParent()))->getRenderRotation();
+		}
+	}
+}
+
+// </CV:David>
 
 // EOF
 

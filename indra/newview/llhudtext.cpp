@@ -49,6 +49,9 @@
 // [RLVa:KB] - Checked: 2010-03-27 (RLVa-1.4.0a)
 #include "rlvhandler.h"
 // [/RLVa:KB]
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 #include <boost/tokenizer.hpp>
 
 const F32 SPRING_STRENGTH = 0.7f;
@@ -391,6 +394,14 @@ void LLHUDText::updateVisibility()
 		return;
 	}
 
+	// <CV:David>
+	if (gRift3DEnabled && !gSavedSettings.getBOOL("RiftHoverText"))
+	{
+		mVisible = FALSE;
+		return;
+	}
+	// </CV:David>
+
 	// for now, all text on hud objects is visible
 	if (mOnHUDAttachment)
 	{
@@ -411,7 +422,7 @@ void LLHUDText::updateVisibility()
 		return;
 	}
 		
-	// <CV:David> Don't render text in front of object's position for stereoscopic 3D. Can also leave out for mono.
+	// <CV:David> Don't render text in front of object's position for Rift or stereoscopic 3D. Can also leave out for mono.
 	/*
 	if (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= LLViewerCamera::getInstance()->getNear() + 0.1f + mSourceObject->getVObjRadius())
 	{

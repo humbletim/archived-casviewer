@@ -95,6 +95,30 @@
           </map>
         </map>
       </map>
+      <key>OVR</key>
+      <map>
+        <key>license</key>
+        <string>OVR</string>
+        <key>license_file</key>
+        <string>LICENSES/ovr.txt</string>
+        <key>name</key>
+        <string>OVR</string>
+        <key>platforms</key>
+        <map>
+          <key>darwin</key>
+          <map>
+            <key>archive</key>
+            <map>
+              <key>hash</key>
+              <string>1e0fadfb40b80fb2e4d81dcbe9b0c63f</string>
+              <key>url</key>
+              <string>file:///opt/firestorm/ovr_sdk-0.2.4.b-darwin-20130914.tar.bz2</string>
+            </map>
+            <key>name</key>
+            <string>darwin</string>
+          </map>
+        </map>
+      </map>
       <key>SDL</key>
       <map>
         <key>license</key>

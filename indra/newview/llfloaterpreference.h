@@ -214,10 +214,33 @@ public:
 	void onQuitConfirmed(const LLSD& notification,const LLSD& response);	// callback for finished restore dialog
 // </FS:Zi>
 
-	// <CV:David> Stereoscopic 3D
+	// <CV:David>
+	void onChangeWalkSpeed();
+	// </CV:David>
+
+	// <CV:David>
 	void onChangeOutputType();
 	void onClickResetEyeSeparation();
 	void onClickResetScreenDistance();
+	void onClickResetRiftEyeSeparation();
+	void onChangeRiftPredictionDelta();
+	void onClickResetRiftPredictionDelta();
+	void onChangeRiftOperationMode();
+	void onRiftStrafeEnable();
+	void onRiftHeadReorientsEnable();
+	void onChangeRiftHeadReorientsAfter();
+	void onClickResetRiftHeadReorientsAfter();
+	void onClickResetRiftUIDepth();
+	void onChangeRiftMouseMode();
+	void onRiftMouseHorizontalEnable();
+	// </CV:David>
+
+	// <CV:David>
+	#if LL_WINDOWS
+		void onKinectEnable();
+		void onClickResetKinectSensitivity();
+		void onKinectSwapFlyUpAndFlyDown();
+	#endif
 	// </CV:David>
 
 private:

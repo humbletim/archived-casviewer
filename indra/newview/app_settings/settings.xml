@@ -2076,7 +2076,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.1</real>
+      <real>0.01</real>
     </map>
     <key>AvatarAxisDeadZone1</key>
     <map>
@@ -2087,7 +2087,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.1</real>
+      <real>0.01</real>
     </map>
     <key>AvatarAxisDeadZone2</key>
     <map>
@@ -2098,7 +2098,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.1</real>
+      <real>0.02</real>
     </map>
     <key>AvatarAxisDeadZone3</key>
     <map>
@@ -2142,7 +2142,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>1.0</real>
+      <real>2.5</real>
     </map>
     <key>AvatarAxisScale1</key>
     <map>
@@ -2153,7 +2153,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>1.0</real>
+      <real>2.5</real>
     </map>
     <key>AvatarAxisScale2</key>
     <map>
@@ -2164,7 +2164,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>1.0</real>
+      <real>2.5</real>
     </map>
     <key>AvatarAxisScale3</key>
     <map>
@@ -20448,7 +20448,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>OutputType</key>
     <map>
       <key>Comment</key>
-      <string>Configures the type of output to display: 0) normal, 1) stereoscopic 3D.</string>
+      <string>Configures the type of output to display: 0) normal, 1) stereoscopic 3D, 2) Oculus Rift.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -20481,7 +20481,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>OutputType</key>
     <map>
       <key>Comment</key>
-      <string>Configures the type of output to display: 0) normal, 1) stereoscopic 3D.</string>
+      <string>Configures the type of output to display: 0) normal, 1) stereoscopic 3D, 2) Oculus Rift.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -20498,7 +20498,205 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftEyeSeparation</key>
+    <map>
+      <key>Comment</key>
+      <string>The distance beteen the pulils of the left and right eyes in millimetres.</string>
+      <key>Persist</key>
       <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>65.0</real>
+    </map>
+    <key>RiftPredictionDelta</key>
+    <map>
+      <key>Comment</key>
+      <string>How far into the future to predict Rift orientation in milliseconds.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>35.0</real>
+    </map>
+    <key>Rift3DEnabled</key>
+    <map>
+      <key>Comment</key>
+      <string>Toggles Oculus Rift display when Oculus Rift display output is selected.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftOperationMode</key>
+    <map>
+      <key>Comment</key>
+      <string>Configures the mode of operation: 0) seated, 1) standing.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftStrafe</key>
+    <map>
+      <key>Comment</key>
+      <string>Left/right keys strafe instead of turn.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftHeadReorients</key>
+    <map>
+      <key>Comment</key>
+      <string>Looking left/right causes the avatar to turn.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftHeadReorientsAfter</key>
+    <map>
+      <key>Comment</key>
+      <string>How many degrees you must look left/right before causing the avatar to turn.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>45</integer>
+    </map>
+    <key>RiftUIDepth</key>
+    <map>
+      <key>Comment</key>
+      <string>Adjusts the depth the UI is displayed at.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>90</integer>
+    </map>
+    <key>RiftMouseMode</key>
+    <map>
+      <key>Comment</key>
+      <string>Configures whether the mouse in Riftlook: 0) moves the cursor, 1) moves the camera.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftMouseHorizontal</key>
+    <map>
+      <key>Comment</key>
+      <string>Mouse moves Riftlook view horizontally only.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftStartupInRiftlook</key>
+    <map>
+      <key>Comment</key>
+      <string>For "riftlook" command line option to automatically toggle into Riftlook after login.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RiftContextMenu</key>
+    <map>
+      <key>Comment</key>
+      <string>Show context menus in Riftlook view.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>RiftHoverText</key>
+    <map>
+      <key>Comment</key>
+      <string>Show hover text in Riftlook view.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>RiftAvatar</key>
+    <map>
+      <key>Comment</key>
+      <string>Show avatar in Riftlook view.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>KinectEnabled</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable Kinect for Windows.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>KinectSensitivity</key>
+    <map>
+      <key>Comment</key>
+      <string>Positioning sensitivity: 1 = low; 9 = high.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>5</integer>
+    </map>
+    <key>KinectSwapFlyUpAndFlyDown</key>
+    <map>
+      <key>Comment</key>
+      <string>Swap "fly up" and "fly down" controls.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>WalkSpeed</key>
+    <map>
+      <key>Comment</key>
+      <string>Speed of walking: 1 = slow; 5 = normal.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>5</integer>
     </map>
 </map>
 </llsd>

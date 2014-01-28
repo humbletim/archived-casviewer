@@ -477,14 +477,14 @@
            />
 
   <!-- CtrlAltStudio Viewer command buttons -->
-  <command name="stereoscopic3d"
+  <command name="display3d"
            available_in_toybox="true"
-           icon="stereoscopic3d"
-           label_ref="Command_Stereoscopic3D_Label"
-           tooltip_ref="Command_Stereoscopic3D_Tooltip"
-           execute_function="World.ToggleStereoscopic3D"
-           is_running_function="World.EnableStereoscopic3D"
-           is_enabled_function="World.ConfigureStereoscopic3D"
+           icon="display3d"
+           label_ref="Command_Toggle3D_Label"
+           tooltip_ref="Command_Toggle3D_Tooltip"
+           execute_function="World.Toggle3D"
+           is_running_function="World.EnableViewer3D"
+           is_enabled_function="World.ConfigureViewer3D"
            />
 
 </commands>

@@ -76,6 +76,10 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 extern BOOL gDebugClicks;
 
 static void handle_click_action_play();
@@ -137,10 +141,16 @@ BOOL LLToolPie::handleRightMouseDown(S32 x, S32 y, MASK mask)
 	mPick.mKeyMask = mask;
 
 	// claim not handled so UI focus stays same
-	// <FS:Ansariel> Enable context/pie menu in mouselook
-	//if(gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK)
-	if(gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"))
-	// </FS:Ansariel>
+	// <CV:David>
+	// Enable context/pie menu in mouselook or Riftlook.
+	//// <FS:Ansariel> Enable context/pie menu in mouselook
+	////if(gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK)
+	//if(gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"))
+	//// </FS:Ansariel>
+	// </CV:David>
+	if(gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK 
+		|| (!gRift3DEnabled && gSavedSettings.getBOOL("FSEnableRightclickMenuInMouselook"))
+		|| (gRift3DEnabled && gSavedSettings.getBOOL("RiftContextMenu")))
 	{
 		handleRightClickPick();
 	}
@@ -1903,7 +1913,7 @@ BOOL LLToolPie::handleRightClickPick()
 		LLParcelSelectionHandle selection = LLViewerParcelMgr::getInstance()->selectParcelAt( mPick.mPosGlobal );
 		gMenuHolder->setParcelSelection(selection);
 		// ## Zi: Pie menu
-		if(gSavedSettings.getBOOL("UsePieMenu"))
+		if(!gRift3DEnabled && gSavedSettings.getBOOL("UsePieMenu"))  // <CV:David> Temporarily disable pie menu in Riftlook
 			gPieMenuLand->show(x, y);
 		// ## Zi: Pie menu
 		else
@@ -1915,7 +1925,7 @@ BOOL LLToolPie::handleRightClickPick()
 	else if (mPick.mObjectID == gAgent.getID() )
 	{
 		// ## Zi: Pie menu
-		if(gSavedSettings.getBOOL("UsePieMenu"))
+		if(!gRift3DEnabled && gSavedSettings.getBOOL("UsePieMenu"))  // <CV:David> Temporarily disable pie menu in Riftlook
 		{
 			if(!gPieMenuAvatarSelf)
 			{
@@ -1983,7 +1993,7 @@ BOOL LLToolPie::handleRightClickPick()
 					// <FS:Zi> Pie menu
 					// gMenuAttachmentOther->getChild<LLUICtrl>("Avatar Mute")->setValue(mute_msg);
 					// gMenuAttachmentOther->show(x, y);
-					if(gSavedSettings.getBOOL("UsePieMenu"))
+					if(!gRift3DEnabled && gSavedSettings.getBOOL("UsePieMenu"))  // <CV:David> Temporarily disable pie menu in Riftlook
 					{
 						gPieMenuAttachmentOther->getChild<LLUICtrl>("Avatar Mute")->setValue(mute_msg);
 						gPieMenuAttachmentOther->show(x, y);
@@ -2001,7 +2011,7 @@ BOOL LLToolPie::handleRightClickPick()
 					// <FS:Zi> Pie menu
 					// gMenuAvatarOther->getChild<LLUICtrl>("Avatar Mute")->setValue(mute_msg);
 					// gMenuAvatarOther->show(x, y);
-					if(gSavedSettings.getBOOL("UsePieMenu"))
+					if(!gRift3DEnabled && gSavedSettings.getBOOL("UsePieMenu"))  // <CV:David> Temporarily disable pie menu in Riftlook
 					{
 						gPieMenuAvatarOther->getChild<LLUICtrl>("Avatar Mute")->setValue(mute_msg);
 						gPieMenuAvatarOther->show(x, y);
@@ -2025,7 +2035,7 @@ BOOL LLToolPie::handleRightClickPick()
 		else if (object->isAttachment())
 		{
 			// ## Zi: Pie menu
-			if(gSavedSettings.getBOOL("UsePieMenu"))
+			if(!gRift3DEnabled && gSavedSettings.getBOOL("UsePieMenu"))  // <CV:David> Temporarily disable pie menu in Riftlook
 				gPieMenuAttachmentSelf->show(x, y);
 			// ## Zi: Pie menu
 			else
@@ -2060,7 +2070,7 @@ BOOL LLToolPie::handleRightClickPick()
 				// <FS:Zi> Pie menu
 				// gMenuHolder->getChild<LLUICtrl>("Object Mute")->setValue(mute_msg);
 				// gMenuObject->show(x, y);
-				if(gSavedSettings.getBOOL("UsePieMenu"))
+				if(!gRift3DEnabled && gSavedSettings.getBOOL("UsePieMenu"))  // <CV:David> Temporarily disable pie menu in Riftlook
 				{
 					gPieMenuObject->getChild<LLUICtrl>("Object Mute")->setValue(mute_msg);
 					gPieMenuObject->show(x, y);

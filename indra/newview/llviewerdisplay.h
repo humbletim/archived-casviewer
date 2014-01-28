@@ -50,8 +50,28 @@ extern F32 gLastDrawDistanceStep;
 extern U32 gOutputType;
 const U32 OUTPUT_TYPE_NORMAL = 0;
 const U32 OUTPUT_TYPE_STEREO = 1;
+const U32 OUTPUT_TYPE_RIFT = 2;
 extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
+extern BOOL gRift3DConfigured;
+extern BOOL gRift3DEnabled;
+const U32 RIFT_OPERATE_SEATED = 0;
+const U32 RIFT_OPERATE_STANDING = 1;
+extern BOOL gRiftStanding;
+extern BOOL gRiftStrafe;
+const U32 RIFT_HEAD_REORIENTS_AFTER_DEFAULT = 45;
+extern BOOL gRiftHeadReorients;
+extern U32 gRiftHeadReorientsAfter;
+const U32 RIFT_MOUSE_CURSOR = 0;
+const U32 RIFT_MOUSE_CAMERA = 1;
+extern BOOL gRiftMouseCursor;
+extern BOOL gRiftMouseHorizontal;
+extern S32 gRiftCurrentEye;
+const U32 RENDER_NORMAL = 0;
+const U32 RENDER_STEREO_LEFT = 1;
+const U32 RENDER_STEREO_RIGHT = 2;
+const U32 RENDER_RIFT_LEFT = 3;
+const U32 RENDER_RIFT_RIGHT = 4;
 // </CV:David>
 
 #endif // LL_LLVIEWERDISPLAY_H

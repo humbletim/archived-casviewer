@@ -49,6 +49,9 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 #include "llfloaterwebcontent.h"
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
 
 //
 // Constants
@@ -57,7 +60,11 @@
 const F32 FLY_TIME = 0.5f;
 const F32 FLY_FRAMES = 4;
 
-const F32 NUDGE_TIME = 0.25f;  // in seconds
+// <CV:David>
+//const F32 NUDGE_TIME = 0.25f;		// in seconds
+const F32 NUDGE_TIME = 0.02f;		// in seconds
+const F32 DOUBLE_TAP_TIME = 0.25f;
+// </CV:David>
 const S32 NUDGE_FRAMES = 2;
 const F32 ORBIT_NUDGE_RATE = 0.05f;  // fraction of normal speed
 const F32 YAW_NUDGE_RATE = 0.05f;  // fraction of normal speed
@@ -142,7 +149,7 @@ static void agent_handle_doubletap_run(EKeystate s, LLAgent::EDoubleTapRunMode m
 		 !gAgent.getRunning())
 	{
 		if (gAgent.mDoubleTapRunMode == mode &&
-		    gAgent.mDoubleTapRunTimer.getElapsedTimeF32() < NUDGE_TIME)
+		    gAgent.mDoubleTapRunTimer.getElapsedTimeF32() < DOUBLE_TAP_TIME)
 		{
 			// Same walk-key was pushed again quickly; this is a
 			// double-tap so engage temporary running.
@@ -687,6 +694,13 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 		*mode = MODE_FIRST_PERSON;
 		return TRUE;
 	}
+	// <CV:David>
+	else if (string == "SECOND_PERSON")
+	{
+		*mode = MODE_SECOND_PERSON;
+		return TRUE;
+	}
+	// </CV:David>
 	else if (string == "THIRD_PERSON")
 	{
 		*mode = MODE_THIRD_PERSON;
@@ -832,6 +846,7 @@ LLViewerKeyboard::KeyMode::KeyMode(EKeyboardMode _mode)
 
 LLViewerKeyboard::Keys::Keys()
 :	first_person("first_person", KeyMode(MODE_FIRST_PERSON)),
+	second_person("second_person", KeyMode(MODE_SECOND_PERSON)),  // <CV:David>
 	third_person("third_person", KeyMode(MODE_THIRD_PERSON)),
 	edit("edit", KeyMode(MODE_EDIT)),
 	sitting("sitting", KeyMode(MODE_SITTING)),
@@ -848,6 +863,7 @@ S32 LLViewerKeyboard::loadBindingsXML(const std::string& filename)
 		&& keys.validateBlock())
 	{
 		binding_count += loadBindingMode(keys.first_person);
+		binding_count += loadBindingMode(keys.second_person);  // <CV:David>
 		binding_count += loadBindingMode(keys.third_person);
 		binding_count += loadBindingMode(keys.edit);
 		binding_count += loadBindingMode(keys.sitting);
@@ -940,7 +956,10 @@ S32 LLViewerKeyboard::loadBindings(const std::string& filename)
 		if (!modeFromString(mode_string, &mode))
 		{
 			llinfos << "Unknown mode on line " << line_count << " of key binding file " << filename << llendl;
-			llinfos << "Mode must be one of FIRST_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << llendl;
+			// <CV:David>
+			//llinfos << "Mode must be one of FIRST_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << llendl;
+			llinfos << "Mode must be one of FIRST_PERSON, SECOND_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << llendl;
+			// </CV:David>
 			continue;
 		}
 
@@ -975,7 +994,21 @@ EKeyboardMode LLViewerKeyboard::getMode()
 {
 	if ( gAgentCamera.cameraMouselook() )
 	{
-		return MODE_FIRST_PERSON;
+		// <CV:David>
+		// return MODE_FIRST_PERSON;
+		if (gRift3DEnabled && !gRiftStanding && !gRiftStrafe)
+		{
+			return MODE_THIRD_PERSON;
+		}
+		else if (gRift3DEnabled && !gRiftStanding)  // && gRiftStrafe
+		{
+			return MODE_SECOND_PERSON;
+		}
+		else  // !gRift3DEnabled || gRift3DEnabled && gRiftStanding
+		{
+			return MODE_FIRST_PERSON;
+		}
+		// </CV:David>
 	}
 	else if ( gMorphView && gMorphView->getVisible())
 	{

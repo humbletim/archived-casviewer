@@ -944,7 +944,10 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		resY /= res_mod;
 	}
 
-	if (RenderUIBuffer)
+	// <CV:David>
+	//if (RenderUIBuffer)
+	if (gRift3DConfigured || RenderUIBuffer)
+	// </CV:David>
 	{
 		if (!mUIScreen.allocate(resX,resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE))
 		{
@@ -7242,7 +7245,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 	if (LLPipeline::sRenderDeferred)
 	{
-
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 							!LLToolMgr::getInstance()->inBuildMode() &&
 							RenderDepthOfField;
@@ -7494,6 +7496,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.bindTarget();
 			}
+			// <CV:David>
+			else if (gRift3DEnabled)
+			{
+				mScreen.bindTarget();  // Reuse mScreen FBO.
+			}
+			// </CV:David>
 			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
 			
 			bindDeferredShader(*shader);
@@ -7522,6 +7530,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.flush();
 			}
+			// <CV:David>
+			else if (gRift3DEnabled)
+			{
+				mScreen.flush();
+			}
+			// </CV:David>
 		}
 
 		if (multisample)
@@ -7557,6 +7571,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			
 			mFXAABuffer.flush();
 
+			// <CV:David>
+			if (gRift3DEnabled)
+			{
+				mScreen.bindTarget();  // Reuse mScreen FBO.
+			}
+			// </CV:David>
+
 			shader = &gFXAAProgram;
 			shader->bind();
 
@@ -7567,11 +7588,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-			gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-			gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-			gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-			gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
-			glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+			// <CV:David>
+			//gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
+			//gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
+			//gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
+			//gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+			//glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+			// <CV:David>
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();
@@ -7587,7 +7610,16 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			gGL.end();
 
 			gGL.flush();
+
+			shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mFXAABuffer.getUsage());  // <CV:David>
 			shader->unbind();
+
+			// <CV:David>
+			if (gRift3DEnabled)
+			{
+				mScreen.flush();
+			}
+			// <CV:David>
 		}
 	}
 	else
@@ -7638,8 +7670,15 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
-		buff->setBuffer(mask);
-		buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		// <CV:David>
+		//buff->setBuffer(mask);
+		//buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		if (!gRift3DEnabled)
+		{
+			buff->setBuffer(mask);
+			buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+		}
+		// </CV:David>
 		
 		if (LLGLSLShader::sNoFixedFunction)
 		{
@@ -7695,13 +7734,14 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
-	
-	if (LLRenderTarget::sUseFBO)
+	// <CV:David>
+	//if (LLRenderTarget::sUseFBO)
+	if (!gRift3DEnabled && LLRenderTarget::sUseFBO)
+	// </CV:David>
 	{ //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
 			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
-	
 
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.popMatrix();
@@ -7714,6 +7754,64 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkTextureChannels();
 
 }
+
+// <CV:David>
+void LLPipeline:: riftDistort()
+{
+	gGL.matrixMode(LLRender::MM_PROJECTION);
+	gGL.pushMatrix();
+	gGL.loadIdentity();
+	gGL.matrixMode(LLRender::MM_MODELVIEW);
+	gGL.pushMatrix();
+	gGL.loadIdentity();
+
+	LLGLDisable blend(GL_BLEND);
+	LLGLDisable test(GL_ALPHA_TEST);
+
+	LLGLSLShader* shader = &gRiftDistortProgram;
+	shader->bind();
+	
+	S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+	if (channel > -1)
+	{
+		mScreen.bindTexture(0, channel);
+		gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
+	}
+
+	gGLViewport[0] = gRiftCurrentEye * gRiftHFrame;
+	gGLViewport[1] = 0;
+	gGLViewport[2] = gRiftHFrame;
+	gGLViewport[3] = gRiftVFrame;
+	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+
+	F32 lensOffset = (1 - gRiftCurrentEye * 2) * gRiftLensOffset;
+	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
+	F32 lensCenterV = gRiftVFrame / 2.f;
+
+	shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, gRiftHFrame, gRiftVFrame);
+	shader->uniform2f(LLShaderMgr::RIFT_SAMPLE_SIZE, gRiftHSample, gRiftVSample);
+	shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
+	shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, gRiftHFrame / 2.f, gRiftAspect * gRiftVFrame / 2.f);
+	shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_IN, lensCenterH, lensCenterV);
+	shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_OUT, lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
+	shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
+
+	gGL.begin(LLRender::TRIANGLE_STRIP);
+		gGL.vertex2f(-1,-1);
+		gGL.vertex2f(-1,3);
+		gGL.vertex2f(3,-1);
+	gGL.end();
+	gGL.flush();
+
+	shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
+	shader->unbind();
+
+	gGL.matrixMode(LLRender::MM_PROJECTION);
+	gGL.popMatrix();
+	gGL.matrixMode(LLRender::MM_MODELVIEW);
+	gGL.popMatrix();
+}
+// </CV:David>
 
 static LLFastTimer::DeclareTimer FTM_BIND_DEFERRED("Bind Deferred");
 
@@ -7947,6 +8045,15 @@ void LLPipeline::renderDeferredLighting()
 	}
 
 	{
+
+		// <CV:David>
+		gGLViewport[0] = 0;
+		gGLViewport[1] = 0;
+		gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
+		gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+		glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+		// </CV:David>
+
 		LLFastTimer ftm(FTM_RENDER_DEFERRED);
 
 		LLViewerCamera* camera = LLViewerCamera::getInstance();
@@ -8672,7 +8779,10 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 	if (LLPipeline::sWaterReflections && assertInitialized() && LLDrawPoolWater::sNeedsReflectionUpdate)
 	{
 		BOOL skip_avatar_update = FALSE;
-		if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+		// <CV:David>
+		//if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+		if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::visibleInFirstPerson())
+		// <CV:David>
 		{
 			skip_avatar_update = TRUE;
 		}
@@ -9375,7 +9485,10 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	LLFastTimer t(FTM_GEN_SUN_SHADOW);
 
 	BOOL skip_avatar_update = FALSE;
-	if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+	// <CV:David>
+	//if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+	if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::visibleInFirstPerson())
+	// </CV:David>
 	{
 
 		skip_avatar_update = TRUE;

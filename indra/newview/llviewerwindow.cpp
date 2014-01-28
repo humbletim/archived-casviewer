@@ -212,6 +212,10 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
+// <CV:David>
+#include "llviewerdisplay.h"
+// </CV:David>
+
 #if LL_WINDOWS
 #include <tchar.h> // For Unicode conversion methods
 #endif
@@ -888,8 +892,23 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	const char* buttonstatestr = "";
 	S32 x = pos.mX;
 	S32 y = pos.mY;
-	x = llround((F32)x / mDisplayScale.mV[VX]);
-	y = llround((F32)y / mDisplayScale.mV[VY]);
+	// <CV:David>
+	//x = llround((F32)x / mDisplayScale.mV[VX]);
+	//y = llround((F32)y / mDisplayScale.mV[VY]);
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
+		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
+	}
+	else
+	{
+		x = llround((F32)x / mDisplayScale.mV[VX]);
+		y = llround((F32)y / mDisplayScale.mV[VY]);
+	}
+	// </CV:David>
 
 	// only send mouse clicks to UI if UI is visible
 	if(gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
@@ -1047,8 +1066,23 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 {
 	S32 x = pos.mX;
 	S32 y = pos.mY;
-	x = llround((F32)x / mDisplayScale.mV[VX]);
-	y = llround((F32)y / mDisplayScale.mV[VY]);
+	// <CV:David>
+	//x = llround((F32)x / mDisplayScale.mV[VX]);
+	//y = llround((F32)y / mDisplayScale.mV[VY]);
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
+		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
+	}
+	else
+	{
+		x = llround((F32)x / mDisplayScale.mV[VX]);
+		y = llround((F32)y / mDisplayScale.mV[VY]);
+	}
+	// <CV:David>
 
 	BOOL down = TRUE;
 	BOOL handle = handleAnyMouseClick(window,pos,mask,LLMouseHandler::CLICK_RIGHT,down);
@@ -1413,6 +1447,13 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 		}
 		
 		// SL-53351: Make sure we're not in mouselook when minimised, to prevent control issues
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			setRiftlook(false);
+		}
+		else
+		// </CV:David>
 		if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
 		{
 			gAgentCamera.changeCameraToDefault();
@@ -1646,7 +1687,11 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	// the size of a window or fullscreen context may have been adjusted slightly...)
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	
-	mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	// <CV:David>
+	//mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	F32 pixel_aspect_ratio = gRift3DConfigured && p.fullscreen ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	mDisplayScale.setVec(llmax(1.f / pixel_aspect_ratio, 1.f), llmax(pixel_aspect_ratio, 1.f));
+	// </CV:David>
 	mDisplayScale *= ui_scale_factor;
 	LLUI::setScaleFactor(mDisplayScale);
 
@@ -2341,11 +2386,15 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 		gSavedSettings.setBOOL("WindowMaximized", maximized);
 
 //<FS:KC - fix for EXP-1777/EXP-1832>
-        LLCoordScreen window_size;
-		if (!maximized
-			&& mWindow->getSize(&window_size))
-//		if (!maximized)
+//        LLCoordScreen window_size;
+//		if (!maximized
+//			&& mWindow->getSize(&window_size))
+////		if (!maximized)
 //</FS:KC - fix for EXP-1777/EXP-1832>
+// <CV:David>
+        LLCoordScreen window_size;
+		if (!maximized && mWindow->getSize(&window_size) && !gRift3DConfigured)
+// </CV:David>
 		{
 			U32 min_window_width=gSavedSettings.getU32("MinWindowWidth");
 			U32 min_window_height=gSavedSettings.getU32("MinWindowHeight");
@@ -2555,7 +2604,10 @@ void LLViewerWindow::draw()
 		LLToolMgr::getInstance()->getCurrentTool()->draw();
         // Only show Mouselookinstructions if FSShowMouselookInstruction is TRUE
 		static LLCachedControl<bool> fsShowMouselookInstructions(gSavedSettings, "FSShowMouselookInstructions");
-		if( fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		// <CV:David>
+		//if( fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		if( !gRift3DEnabled && fsShowMouselookInstructions && (gAgentCamera.cameraMouselook() || LLFloaterCamera::inFreeCameraMode()) )
+		// </CV:David>
 		{
 			drawMouselookInstructions();
 			stop_glerror();
@@ -2935,8 +2987,12 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = getWorldViewWidthScaled() / 2;
-		S32 y = getWorldViewHeightScaled() / 2;
+		// <CV:David>
+		//S32 x = getWorldViewWidthScaled() / 2;
+		//S32 y = getWorldViewHeightScaled() / 2;
+		S32 x = gRift3DEnabled ? gRiftHFrame / 2 + llround(gRiftLensOffset) : getWindowWidthScaled() / 2;
+		S32 y = gRift3DEnabled ? gRiftVFrame / 2 : getWindowHeightScaled() / 2;
+		// <CV:David>
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3019,6 +3075,17 @@ void LLViewerWindow::updateUI()
 
 	S32 x = mCurrentMousePoint.mX;
 	S32 y = mCurrentMousePoint.mY;
+
+	//<CV:David>
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		LLVector2 fboXY = riftUndistort(x, y);
+		x = fboXY[0] + uiDelta;
+		y = fboXY[1];
+	}
+	// </CV:David>
 
 	MASK	mask = gKeyboard->currentMask(TRUE);
 
@@ -3614,14 +3681,24 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
+	// <CV:David>
+	S32 max_width = gRift3DEnabled ? gRiftHResolution : getWindowWidthScaled();
+	S32 max_height = gRift3DEnabled ? gRiftVResolution : getWindowHeightScaled();
+	// </CV:David>
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
 	}
-	else if (point.mX > getWindowWidthScaled())
+	// <CV:David>
+	//else if (point.mX > getWindowWidthScaled())
+	//{
+	//	mCurrentMousePoint.mX = getWindowWidthScaled();
+	//}
+	else if (point.mX > max_width)
 	{
-		mCurrentMousePoint.mX = getWindowWidthScaled();
+		mCurrentMousePoint.mX = max_width;
 	}
+	// </CV:David>
 	else
 	{
 		mCurrentMousePoint.mX = point.mX;
@@ -3631,10 +3708,16 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	{
 		mCurrentMousePoint.mY = 0;
 	}
-	else if (point.mY > getWindowHeightScaled() )
+	// <CV:David>
+	//else if (point.mY > getWindowHeightScaled() )
+	//{
+	//	mCurrentMousePoint.mY = getWindowHeightScaled();
+	//}
+	else if (point.mY > max_height )
 	{
-		mCurrentMousePoint.mY = getWindowHeightScaled();
+		mCurrentMousePoint.mY = max_height;
 	}
+	// <CV:David>
 	else
 	{
 		mCurrentMousePoint.mY = point.mY;
@@ -4934,7 +5017,12 @@ void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset)
 void LLViewerWindow::setup3DRender()
 {
 	// setup perspective camera
-	LLViewerCamera::getInstance()->setPerspective(NOT_FOR_SELECTION, mWorldViewRectRaw.mLeft, mWorldViewRectRaw.mBottom,  mWorldViewRectRaw.getWidth(), mWorldViewRectRaw.getHeight(), FALSE, LLViewerCamera::getInstance()->getNear(), MAX_FAR_CLIP*2.f);
+	LLViewerCamera::getInstance()->setPerspective(NOT_FOR_SELECTION, 
+		mWorldViewRectRaw.mLeft, 
+		mWorldViewRectRaw.mBottom,  
+		mWorldViewRectRaw.getWidth(),
+		mWorldViewRectRaw.getHeight(), 
+		FALSE, LLViewerCamera::getInstance()->getNear(), MAX_FAR_CLIP*2.f);
 	setup3DViewport();
 }
 
@@ -5325,7 +5413,18 @@ BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsyn
 
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
-	F32 world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	// <CV:David>
+	//F32 world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	F32 world_aspect;
+	if (gRift3DEnabled)
+	{
+		world_aspect = gRiftAspect;
+	}
+	else
+	{
+		world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	}
+	// </CV:David>
 	return world_aspect;
 }
 
@@ -5333,7 +5432,11 @@ void LLViewerWindow::calcDisplayScale()
 {
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	LLVector2 display_scale;
-	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	// <CV:David>
+	//mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	F32 pixel_aspect_ratio = gRift3DConfigured && mWindow->getFullscreen() ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	display_scale.setVec(llmax(1.f / pixel_aspect_ratio, 1.f), llmax(pixel_aspect_ratio, 1.f));
+	// </CV:David>
 	display_scale *= ui_scale_factor;
 
 	// limit minimum display scale
@@ -5441,6 +5544,38 @@ LLRect LLViewerWindow::getChatConsoleRect()
 
 	return console_rect;
 }
+
+// <CV:David>
+LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
+{
+	// Convert screen coordinate in Rift distorted image to sample coordinate in undistorted sample frame buffer.
+
+	LLVector2 coord((F32)(x % gRiftHFrame) + 0.5, (F32)y + 0.5);
+
+	F32 lensOffset = (x > gRiftHFrame) ? -gRiftLensOffset : gRiftLensOffset;
+	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
+	F32 lensCenterV = gRiftVFrame / 2.f;
+
+	LLVector2 scale_in, scale_out, lens_center_in, lens_center_out;
+	scale_in = LLVector2(2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
+	scale_out = LLVector2(gRiftHFrame / 2.f, (gRiftAspect * gRiftVFrame) / 2.f);
+	lens_center_in = LLVector2(lensCenterH, lensCenterV);
+	lens_center_out = LLVector2(lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
+
+	LLVector2 theta = (coord - lens_center_in);
+	theta[0] = theta[0] * scale_in[0];
+	theta[1] = theta[1] * scale_in[1];  // Scales to [-1, 1]
+
+	F32 rSq =  theta * theta;
+
+	LLVector2 rVector = theta * (gRiftDistortionK[0] + gRiftDistortionK[1] * rSq + gRiftDistortionK[2] * rSq * rSq + gRiftDistortionK[3] * rSq * rSq * rSq);
+
+	coord = lens_center_out + LLVector2(rVector[0] * scale_out[0], rVector[1] * scale_out[1]); 
+
+	return LLVector2((U32)llclamp(llround(coord[0]), 0, (S32)gRiftHSample), (U32)llclamp(llround(coord[1]), 0, (S32)gRiftVSample));
+}
+// </CV:David>
+
 //----------------------------------------------------------------------------
 
 
@@ -5451,7 +5586,12 @@ bool LLViewerWindow::onAlert(const LLSD& notify)
 
 	// If we're in mouselook, the mouse is hidden and so the user can't click 
 	// the dialog buttons.  In that case, change to First Person instead.
-	if( gAgentCamera.cameraMouselook() )
+	// <CV:David>
+	// But don't change if UI is shown in mouselook because user presumably knows how to use mouse.
+	// And don't change if in Riftlook because it breaks the immersion.
+	//if( gAgentCamera.cameraMouselook() )
+	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("FSShowInterfaceInMouselook") && !gRift3DEnabled)
+	// </CV:David>
 	{
 		gAgentCamera.changeCameraToDefault();
 	}

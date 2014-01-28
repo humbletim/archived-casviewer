@@ -127,9 +127,15 @@ void render_disconnected_background();
 U32 gOutputType = OUTPUT_TYPE_NORMAL;
 BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
-const U32 RENDER_NORMAL = 0;
-const U32 RENDER_STEREO_LEFT = 1;
-const U32 RENDER_STEREO_RIGHT = 2;
+BOOL gRift3DEnabled = FALSE;
+BOOL gRift3DConfigured = FALSE;
+BOOL gRiftStanding = FALSE;
+BOOL gRiftStrafe = FALSE;
+BOOL gRiftHeadReorients = FALSE;
+U32 gRiftHeadReorientsAfter = RIFT_HEAD_REORIENTS_AFTER_DEFAULT;
+BOOL gRiftMouseCursor = TRUE;
+BOOL gRiftMouseHorizontal = FALSE;
+S32 gRiftCurrentEye;  // 0 = left, 1 = right
 // </CV:David>
 
 void display_startup()
@@ -443,7 +449,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// of TeleportRequest to the source simulator
 
 			// Reset view angle if in mouselook. Fixes camera angle getting stuck on teleport. -Zi
-			if(gAgentCamera.cameraMouselook())
+			// <CV:David>
+			//if(gAgentCamera.cameraMouselook())
+			if (gAgentCamera.cameraMouselook() && !gRift3DEnabled)
+			// <CV:David>
 			{
 				// If someone knows how to call "View.ZoomDefault" by hand, we should do that instead of
 				// replicating the behavior here. -Zi
@@ -678,7 +687,15 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	{
 
 		// <CV:David>
-		if ((gOutputType == OUTPUT_TYPE_NORMAL) || !gStereoscopic3DEnabled || output_for_snapshot)
+		if (gRift3DEnabled)
+		{
+			gAgentCamera.calcRiftValues();
+		}
+
+		if ((gOutputType == OUTPUT_TYPE_NORMAL) 
+			|| (gOutputType == OUTPUT_TYPE_STEREO && !gStereoscopic3DEnabled) 
+			|| (gOutputType == OUTPUT_TYPE_RIFT && !gRift3DEnabled) 
+			|| output_for_snapshot)
 		{
 			LLViewerCamera::getInstance()->calcMonoValues();
 
@@ -689,6 +706,28 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			{
 				render_ui();
 			}
+			LLSpatialGroup::sNoDelete = FALSE;
+		}
+		else if (gOutputType == OUTPUT_TYPE_RIFT) // && gRift3DEnabled && !output_for_snapshot
+		{
+			// Render into FBO, apply Oculus Rift barrel distortion to FBO, copy required portions of FBO to display.
+			
+			LLViewerCamera::getInstance()->calcStereoValues();
+
+			// Left eye ...
+			gRiftCurrentEye = 0;
+			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			render_frame(RENDER_RIFT_LEFT);
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
+			render_ui();  // Note: UI rendering code flushes output to the framebuffer.
+			LLSpatialGroup::sNoDelete = FALSE;
+
+			// Right eye ...
+			gRiftCurrentEye = 1;
+			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			render_frame(RENDER_RIFT_RIGHT);
+			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
+			render_ui();
 			LLSpatialGroup::sNoDelete = FALSE;
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
@@ -763,12 +802,13 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 {
 
 	// <CV:David> Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
-	if ((render_type == RENDER_STEREO_LEFT) || (render_type == RENDER_STEREO_RIGHT))
+	if (render_type == RENDER_STEREO_LEFT || render_type == RENDER_STEREO_RIGHT || render_type == RENDER_RIFT_LEFT || render_type == RENDER_RIFT_RIGHT)
 	{
 		LLViewerCamera::getInstance()->moveToStereoCullFrustum();
 	}
-	else if ((gOutputType == OUTPUT_TYPE_STEREO) && gStereoscopic3DEnabled)
+	else if (((gOutputType == OUTPUT_TYPE_STEREO) && gStereoscopic3DEnabled) || ((gOutputType == OUTPUT_TYPE_RIFT) && gRift3DEnabled))
 	{
+		// For snapshots and such.
 		LLViewerCamera::getInstance()->moveToCenter();
 	}
 	// </CV:David>
@@ -853,11 +893,11 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 
 	// <CV:David>
 	// Set left / right camera for rendering collected objects.
-	if (render_type == RENDER_STEREO_LEFT)
+	if ((render_type == RENDER_STEREO_LEFT) || (render_type == RENDER_RIFT_LEFT))
 	{
 		LLViewerCamera::getInstance()->moveToLeftEye();
 	}
-	else if (render_type == RENDER_STEREO_RIGHT)
+	else if ((render_type == RENDER_STEREO_RIGHT) || (render_type == RENDER_RIFT_RIGHT))
 	{
 		LLViewerCamera::getInstance()->moveToRightEye();
 	}
@@ -1424,9 +1464,22 @@ void render_ui(F32 zoom_factor, int subfield)
 		{
 			gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
 		}
+
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			gPipeline.mScreen.bindTarget();
+		}
+		// </CV:David>
 		
 		render_hud_elements();
-		render_hud_attachments();
+		// <CV:David>
+		//render_hud_attachments();
+		if (!gRift3DEnabled)
+		{
+			render_hud_attachments();
+		}
+		// </CV:David>
 	}
 
 	LLGLSDefault gls_default;
@@ -1443,7 +1496,13 @@ void render_ui(F32 zoom_factor, int subfield)
 
 			if (!gDisconnected)
 			{
-				render_ui_3d();
+				// <CV:David>
+				//render_ui_3d();
+				if (!gRift3DEnabled)
+				{
+					render_ui_3d();
+				}
+				// </CV:David>
 				LLGLState::checkStates();
 			}
 			else
@@ -1463,6 +1522,14 @@ void render_ui(F32 zoom_factor, int subfield)
 		}
 
 		LLVertexBuffer::unbind();
+
+		// <CV:David>
+		if (gRift3DEnabled)
+		{
+			gPipeline.mScreen.flush();
+			gPipeline.riftDistort();
+		}
+		// </CV:David>
 	}
 
 	if (!gSnapshot)
@@ -1582,6 +1649,16 @@ void render_ui_3d()
 
 void render_ui_2d()
 {
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		gPipeline.mScreen.flush();
+		gPipeline.mUIScreen.bindTarget();
+		gGL.setColorMask(true, true);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	// </CV:David>
+
 	LLGLSUIDefault gls_ui;
 
 	/////////////////////////////////////////////////////////////
@@ -1694,7 +1771,34 @@ void render_ui_2d()
 		gViewerWindow->draw();
 	}
 
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		gPipeline.mUIScreen.flush();
 
+		gPipeline.mScreen.bindTarget();
+		gSplatTextureRectProgram.bind();
+		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 offset = (gRiftCurrentEye == 0) ? uiDepth : -uiDepth;
+		S32 width = gRiftHSample;
+		S32 height = gRiftVSample;
+		LLGLEnable blend(GL_BLEND);
+		gGL.setColorMask(true, false);
+		gGL.color4f(1,1,1,1);
+		gGL.begin(LLRender::QUADS);
+			gGL.texCoord2f(0, height);		gGL.vertex2i(offset, height);
+			gGL.texCoord2f(0, 0);			gGL.vertex2i(offset, 0);
+			gGL.texCoord2f(width, 0);		gGL.vertex2i(offset + width, 0);
+			gGL.texCoord2f(width, height);	gGL.vertex2i(offset + width, height);
+		gGL.end();
+		gGL.flush();
+
+		gSplatTextureRectProgram.unbind();
+		gPipeline.mScreen.flush();
+	}
+	// </CV:David>
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);

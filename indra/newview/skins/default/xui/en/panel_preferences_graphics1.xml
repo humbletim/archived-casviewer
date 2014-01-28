@@ -1340,8 +1340,8 @@
       </text>
       <radio_group
       control_name="OutputType"
-      follows="top|left"
-      height="34"
+      follows="left|top"
+      height="260"
       layout="topleft"
       left_delta="0"
       name="OutputType"
@@ -1357,7 +1357,6 @@
           value="0"
           tool_tip="Select this if you have a normal computer display or want to display normally."
           width="150" />
-
         <radio_item
           height="16"
           label="Stereoscopic 3D (requires restart)"
@@ -1365,6 +1364,15 @@
           name="DisplayStereo"
           value="1"
           tool_tip="Select this if you have a stereo- scopic 3D display and want to display in stereoscopic 3D."
+          width="150" />
+        <radio_item
+          height="16"
+          label="Oculus Rift (requires restart)"
+          layout="topleft"
+          name="DisplayRift"
+          value="2"
+          tool_tip="Select this if you have an Oculus Rift VR headset you want to use."
+          top_pad="50"
           width="150" />
       </radio_group>
 
@@ -1378,6 +1386,7 @@
        initial_value=".065"
        layout="topleft"
        top_pad="10"
+       top="72"
        left="54"
        max_val="0.2"
        min_val="0.0"
@@ -1425,7 +1434,7 @@
        left="54"
        max_val="5.0"
        min_val=".5"
-       name="EyeSeparation"
+       name="ScreenDistance"
        show_text="true"
        width="314"
        label_width="100"
@@ -1456,23 +1465,302 @@
         <button.commit_callback
          function="Pref.ResetScreenDistance" />
       </button>
-      <text
-       name="DisplayStereoHelp"
-       follows="all"
+
+      <slider
+       control_name="RiftEyeSeparation"
+       decimal_digits="0"
+       label="Eye separation:"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="65"
        layout="topleft"
-       left="15"
-       top="126"
-       word_wrap="true"
-       height="80">
-To display in stereoscopic 3D on Windows using a GeForce graphics card with NVIDIA 3D Vision you need:
-        - GeForce driver 314.07 or later.
-        - Stereoscopic 3D display enabled in the NVIDIA Control Panel.
-        - Your monitor set to 120Hz.
-        - Full Screen mode turned on in the Graphics > General tab.
-
-Other computer configurations will likely require similar.
+       top_pad="10"
+       top="138"
+       left="54"
+       max_val="80"
+       min_val="50"
+       name="RiftEyeSeparation"
+       width="314"
+       label_width="100"
+       tool_tip="Distance between pupils of left and right eyes."/>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="324"
+       name="RiftEyeSeparationUnitsText"
+       top_delta="0"
+       width="32">
+        mm
       </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetRiftEyeSeparation"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftEyeSeparation" />
+      </button>
 
+      <slider
+       control_name="RiftPredictionDelta"
+       decimal_digits="0"
+       label="Prediction delta:"
+       follows="left|top"
+       height="16"
+       increment="5"
+       initial_value="20"
+       layout="topleft"
+       left="54"
+       max_val="50"
+       min_val="0"
+       name="RiftPredictionDelta"
+       width="314"
+       label_width="100"
+       tool_tip="How far into the future to predict the Rift's orientation.">
+        <slider.commit_callback
+         function="Pref.ChangeRiftPredictionDelta" />
+      </slider>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="324"
+       name="RiftPreductionDeltaUnitsText"
+       top_delta="0"
+       width="32">
+        ms
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetRiftPredictionDelta"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftPredictionDelta" />
+      </button>
+
+      <radio_group
+      control_name="RiftOperationMode"
+      follows="left|top"
+      height="90"
+      layout="topleft"
+      name="RiftOperationMode"
+      left="54"
+      top_pad="4"
+      width="440">
+        <radio_group.commit_callback
+          function="Pref.ChangeRiftOperationMode" />
+        <radio_item
+          height="16"
+          label="Seated operation"
+          layout="topleft"
+          name="RiftSeated"
+          value="0"
+          width="50" />
+        <radio_item
+          height="16"
+          label="Standing operation"
+          layout="topleft"
+          name="RiftStanding"
+          value="1"
+          top_pad="44"
+          width="50" />
+      </radio_group>
+      <check_box
+       control_name="RiftStrafe"
+       height="16"
+       initial_value="false"
+       label="Left/right keys strafe; Shift-left/right keys turn"
+       layout="topleft"
+       left="74"
+       name="RiftStrafe"
+       tool_tip="Shift-left and shift-right turn."
+       top="202"
+       width="180">
+        <check_box.commit_callback
+           function="Pref.RiftStrafeEnable" />
+      </check_box>
+      <check_box
+       control_name="RiftHeadReorients"
+       height="16"
+       initial_value="false"
+       label="Head turns avatar after:"
+       layout="topleft"
+       left="74"
+       name="RiftHeadReorients"
+       tool_tip="Looking left / right turns view."
+       width="185">
+        <check_box.commit_callback
+           function="Pref.RiftHeadReorientsEnable" />
+      </check_box>
+      <slider
+       control_name="RiftHeadReorientsAfter"
+       decimal_digits="0"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="75"
+       layout="topleft"
+       top_delta="0"
+       left="225"
+       max_val="90"
+       min_val="0"
+       name="RiftHeadReorientsAfter"
+       width="143"
+       tool_tip="How far you must turn in the Rift before the view starts to turn.">
+        <slider.commit_callback
+         function="Pref.ChangeRiftHeadReorientsAfter" />
+      </slider>
+      <text
+       type="string"
+       length="1"
+       follows="left|top"
+       height="12"
+       layout="topleft"
+       left_delta="158"
+       name="RiftHeadReorientsAfterUnitsText"
+       top_delta="0"
+       width="32">
+        deg
+      </text>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="8"
+       name="ResetRiftHeadReorientsAfter"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftHeadReorientsAfter" />
+      </button>
+
+      <check_box
+       control_name="RiftMouseHorizontal"
+       height="16"
+       initial_value="false"
+       label="Mouse moves view horizontally only"
+       layout="topleft"
+       left="54"
+       name="RiftMouseHorizontal"
+       tool_tip="Mouse moves Riftlook view horizontally only."
+       top_pad="24"
+       width="50">
+        <check_box.commit_callback
+           function="Pref.RiftMouseHorizontalEnable" />
+      </check_box>
+      <radio_group
+      control_name="RiftMouseMode"
+      follows="left|top"
+      height="42"
+      layout="topleft"
+      name="RiftMouseMode"
+      left="54"
+      top_pad="2"
+      width="440">
+        <radio_group.commit_callback
+          function="Pref.ChangeRiftMouseMode" />
+        <radio_item
+          height="16"
+          label="Mouse moves cursor; Alt-mouse moves view"
+          layout="topleft"
+          name="MouseCursor"
+          value="0"
+          width="50" />
+        <radio_item
+          height="16"
+          label="Mouse moves view; Alt-mouse moves cursor"
+          layout="topleft"
+          name="MouseCamera"
+          value="1"
+          width="50" />
+      </radio_group>
+
+      <slider
+       control_name="RiftUIDepth"
+       decimal_digits="0"
+       label="UI depth:"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="65"
+       layout="topleft"
+       left="54"
+       max_val="120"
+       min_val="80"
+       name="RiftUIDepth"
+       width="314"
+       label_width="100"
+       tool_tip="Adjusts the depth the UI is displayed at."/>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="50"
+       name="ResetRiftUIDepth"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftUIDepth" />
+      </button>
+
+      <check_box
+       control_name="RiftContextMenu"
+       height="16"
+       initial_value="true"
+       label="Enable context menus"
+       layout="topleft"
+       left="54"
+       name="RiftContextMenu"
+       tool_tip="Enable context menus in Riftlook view."
+       top_pad="6"
+       width="50" />
+      <check_box
+       control_name="RiftHoverText"
+       height="14"
+       initial_value="false"
+       label="Show hover text"
+       layout="topleft"
+       left="54"
+       name="RiftHoverText"
+       tool_tip="Show hover text in Riftlook view."
+       top_pad="6"
+       width="50" />
+      <check_box
+       control_name="RiftAvatar"
+       height="14"
+       initial_value="true"
+       label="Show avatar"
+       layout="topleft"
+       left="54"
+       name="RiftAvatar"
+       tool_tip="Show avatar in Riftlook view."
+       top_pad="6"
+       width="50" />
     </panel>
   </tab_container>
 </panel>

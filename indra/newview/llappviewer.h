@@ -33,6 +33,17 @@
 #include "lltimer.h"
 #include "llappcorehttp.h"
 
+// <CV:David>
+#include "OVR.h"
+#include "OVRVersion.h"
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+	#include "caskinectcontroller.h"
+#endif
+// </CV:David>
+
 class LLCommandLineParser;
 class LLFrameTimer;
 class LLPumpIO;
@@ -400,5 +411,35 @@ extern LLUUID gMoonTextureID;
 
 extern BOOL gRandomizeFramerate;
 extern BOOL gPeriodicSlowFrame;
+
+// <CV:David>
+extern OVR::Ptr<OVR::DeviceManager> gRiftManager;
+extern OVR::Ptr<OVR::HMDDevice> gRiftHMD;
+extern OVR::Ptr<OVR::SensorDevice> gRiftSensor;
+extern OVR::SensorFusion* gRiftFusionResult;
+extern OVR::HMDInfo gRiftHMDInfo;
+extern U32 gRiftHResolution;
+extern U32 gRiftVResolution;
+extern F32 gRiftHScreenSize;
+extern F32 gRiftVScreenSize;
+extern F32 gRiftAspect;
+extern F32 gRiftLensSeparation;
+extern F32 gRiftProjectionOffset;
+extern F32 gRiftEyeToScreen;
+extern F32 gRiftDistortionScale;
+extern F32 gRiftFOV;
+extern U32 gRiftHFrame;
+extern U32 gRiftVFrame;
+extern U32 gRiftHSample;
+extern U32 gRiftVSample;
+extern F32 gRiftDistortionK[4];
+extern F32 gRiftLensOffset;
+// </CV:David>
+
+// <CV:David>
+#if LL_WINDOWS
+	extern CASKinectController* gKinectController;
+#endif
+// </CV:David>
 
 #endif // LL_LLAPPVIEWER_H
