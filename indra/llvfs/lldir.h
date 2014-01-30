@@ -32,7 +32,7 @@
 #define MAX_PATH MAXPATHLEN
 #endif
 
-// these numbers *may* get serialized (really??), so we need to be explicit
+// these numbers are read from settings_files.xml, so we need to be explicit
 typedef enum ELLPath
 {
 	LL_PATH_NONE = 0,
@@ -140,6 +140,7 @@ class LLDir
 	const std::string &getUserSkinDir() const;		// User-specified skin folder with user modifications. e.g. c:\documents and settings\username\application data\second life\skins\curskin
 	const std::string getSkinBaseDir() const;		// folder that contains all installed skins (not user modifications). e.g. c:\program files\second life\skins
 	const std::string &getLLPluginDir() const;		// Directory containing plugins and plugin shell
+	const std::string &getUserName() const;
 
 	// Expanded filename
 	std::string getExpandedFilename(ELLPath location, const std::string &filename) const;
@@ -235,6 +236,7 @@ class LLDir
 // [/SL:KB]
 	virtual std::string getLanguage() const;
 	virtual bool setCacheDir(const std::string &path);
+	virtual void updatePerAccountChatLogsDir();
 
 	virtual void dumpCurrentDirectories();
 
@@ -298,6 +300,25 @@ protected:
 	std::vector<std::string> mSearchSkinDirs;
 	std::string mLanguage;              // Current viewer language
 	std::string mLLPluginDir;			// Location for plugins and plugin shell
+	std::string mUserName;				// Current user name
+
+	// <FS:ND> To avoid doing IO calls (expensive) in walkdSearchedSkinDirs cache results.
+	struct SkinDirFile
+	{
+		std::string mName;
+		mutable bool mExists;
+
+		SkinDirFile( std::string const &aName, bool aExists )
+		: mName( aName )
+		, mExists( aExists )
+		{	}
+
+		bool operator<( SkinDirFile const &aRHS ) const
+		{ return mName < aRHS.mName; }
+	};
+
+	typedef std::set< SkinDirFile > tSkinDirCache;
+	mutable tSkinDirCache mSkinDirCache;
 };
 
 void dir_exists_or_crash(const std::string &dir_name);

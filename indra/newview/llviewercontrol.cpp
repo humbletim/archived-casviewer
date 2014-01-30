@@ -88,6 +88,7 @@
 #include "llpanelplaces.h"
 #include "fsfloaterposestand.h"
 #include "fsfloaterteleporthistory.h"
+#include "fslslbridge.h"
 
 // <CV:David>
 #include "llviewerdisplay.h"
@@ -100,7 +101,9 @@
 BOOL 				gHackGodmode = FALSE;
 #endif
 
-
+// Should you contemplate changing the name "Global", please first grep for
+// that string literal. There are at least a couple other places in the C++
+// code that assume the LLControlGroup named "Global" is gSavedSettings.
 LLControlGroup gSavedSettings("Global");	// saved at end of session
 LLControlGroup gSavedPerAccountSettings("PerAccount"); // saved at end of session
 LLControlGroup gCrashSettings("CrashSettings");	// saved at end of session
@@ -121,8 +124,8 @@ static bool handleRenderAvatarMouselookChanged(const LLSD& newvalue)
 	// <CV:David>
 	//LLVOAvatar::sVisibleInFirstPerson = newvalue.asBoolean();
 	LLVOAvatar::sVisibleInMouselook = newvalue.asBoolean();
-	return true;
 	// </CV:David>
+	return true;
 }
 
 // <CV:David>
@@ -464,6 +467,25 @@ static bool handleRenderDeferredChanged(const LLSD& newvalue)
 	return true;
 }
 
+// This looks a great deal like handleRenderDeferredChanged because
+// Advanced Lighting (Materials) implies bumps and shiny so disabling
+// bumps should further disable that feature.
+//
+static bool handleRenderBumpChanged(const LLSD& newval)
+{
+	LLRenderTarget::sUseFBO = newval.asBoolean();
+	if (gPipeline.isInit())
+	{
+		gPipeline.updateRenderBump();
+		gPipeline.updateRenderDeferred();
+		gPipeline.releaseGLBuffers();
+		gPipeline.createGLBuffers();
+		gPipeline.resetVertexBuffers();
+		LLViewerShaderMgr::instance()->setShaders();
+	}
+	return true;
+}
+
 static bool handleRenderUseImpostorsChanged(const LLSD& newvalue)
 {
 	LLVOAvatar::sUseImpostors = newvalue.asBoolean();
@@ -572,15 +594,6 @@ bool handleVelocityInterpolate(const LLSD& newvalue)
 	}
 	return true;
 }
-
-// [SL:KB] - Patch: UI-DndButtonCommit | Checked: 2011-06-19 (Catznip-2.6.0c) | Added: Catznip-2.6.0c
-bool handleSettingF32Change(const LLSD& sdValue, F32* pValue)
-{
-	if (pValue)
-		*pValue = sdValue.asReal();
-	return true;
-}
-// [/SL:KB]
 
 // ## Zi: Moved Avatar Z offset from RLVa to here
 bool handleAvatarZOffsetChanged(const LLSD& sdValue)
@@ -748,6 +761,36 @@ static void handleSetPoseStandLock(const LLSD& newvalue)
 }
 // </FS:CR> Posestand Ground Lock
 
+// <FS:TT> Client LSL Bridge
+static void handleFlightAssistOptionChanged(const LLSD& newvalue)
+{
+	FSLSLBridge::instance().updateBoolSettingValue("UseLSLFlightAssist", newvalue.asBoolean());
+}
+// </FS:TT>
+
+// <FS:AO> bridge-based radar tags
+static void handlePublishRadarTagOptionChanged(const LLSD& newvalue)
+{
+	FSLSLBridge::instance().updateBoolSettingValue("FSPublishRadarTag", newvalue.asBoolean());
+}
+// </FS:AO>
+
+// <FS:PP> Movelock for Bridge
+static void handleMovelockOptionChanged(const LLSD& newvalue)
+{
+	FSLSLBridge::instance().updateBoolSettingValue("UseMoveLock", newvalue.asBoolean());
+}
+
+static void handleDecimalPrecisionChanged(const LLSD& newvalue)
+{
+	LLFloaterTools* build_tools = LLFloaterReg::findTypedInstance<LLFloaterTools>("build");
+	if (build_tools)
+	{
+		build_tools->changePrecision(newvalue);
+	}
+}
+// </FS:PP>
+
 ////////////////////////////////////////////////////////////////////////////
 
 void settings_setup_listeners()
@@ -799,7 +842,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderDebugTextureBind")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderAutoMaskAlphaDeferred")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderAutoMaskAlphaNonDeferred")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
-	gSavedSettings.getControl("RenderObjectBump")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
+	gSavedSettings.getControl("RenderObjectBump")->getSignal()->connect(boost::bind(&handleRenderBumpChanged, _2));
 	gSavedSettings.getControl("RenderMaxVBOSize")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderDeferredNoise")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderUseImpostors")->getSignal()->connect(boost::bind(&handleRenderUseImpostorsChanged, _2));
@@ -825,6 +868,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("AudioLevelVoice")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("AudioLevelDoppler")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("AudioLevelRolloff")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
+	gSavedSettings.getControl("AudioLevelUnderwaterRolloff")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("MuteAudio")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("MuteMusic")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
 	gSavedSettings.getControl("MuteMedia")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _2));
@@ -913,8 +957,6 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("SpellCheck")->getSignal()->connect(boost::bind(&handleSpellCheckChanged));
 	gSavedSettings.getControl("SpellCheckDictionary")->getSignal()->connect(boost::bind(&handleSpellCheckChanged));
 	gSavedSettings.getControl("LoginLocation")->getSignal()->connect(boost::bind(&handleLoginLocationChanged));
-// [SL:KB] - Patch: UI-DndButtonCommit | Checked: 2011-06-19 (Catznip-2.6.0c) | Added: Catznip-2.6.0c
-	gSavedSettings.getControl("DragAndDropCommitDelay")->getSignal()->connect(boost::bind(&handleSettingF32Change, _2, &DELAY_DRAG_HOVER_COMMIT));
 	// <FS:CR> FIRE-9759 - Temporarily remove AvatarZOffset since it's broken
 	//gSavedPerAccountSettings.getControl("AvatarZOffset")->getSignal()->connect(boost::bind(&handleAvatarZOffsetChanged, _2)); // ## Zi: Moved Avatar Z offset from RLVa to here
 	gSavedSettings.getControl("FSUseV1Menus")->getSignal()->connect(boost::bind(&show_v1_menus));	// V1 menu system	-WoLf
@@ -939,6 +981,11 @@ void settings_setup_listeners()
 	
 	// <FS:CR> Pose stand ground lock
 	gSavedSettings.getControl("FSPoseStandLock")->getSignal()->connect(boost::bind(&handleSetPoseStandLock, _2));
+
+	gSavedSettings.getControl("UseLSLFlightAssist")->getCommitSignal()->connect(boost::bind(&handleFlightAssistOptionChanged, _2));
+	gSavedSettings.getControl("FSPublishRadarTag")->getCommitSignal()->connect(boost::bind(&handlePublishRadarTagOptionChanged, _2));
+	gSavedSettings.getControl("UseMoveLock")->getCommitSignal()->connect(boost::bind(&handleMovelockOptionChanged, _2));
+	gSavedSettings.getControl("FSBuildToolDecimalPrecision")->getCommitSignal()->connect(boost::bind(&handleDecimalPrecisionChanged, _2));
 }
 
 #if TEST_CACHED_CONTROL

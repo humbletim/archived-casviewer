@@ -113,7 +113,6 @@
 #include "llviewernetwork.h"
 #endif // OPENSIM
 // </FS:CR>
-
 //
 // Globals
 //
@@ -705,6 +704,13 @@ void LLStatusBar::setHealth(S32 health)
 	mHealth = health;
 }
 
+// <FS:CR> Hide currency balance in snapshots
+void LLStatusBar::showBalance(bool show)
+{
+	mBoxBalance->setVisible(show);
+}
+// </FS:CR>
+
 S32 LLStatusBar::getBalance() const
 {
 	return mBalance;
@@ -998,8 +1004,18 @@ void LLStatusBar::buildLocationString(std::string& loc_str, bool show_coords)
 void LLStatusBar::setParcelInfoText(const std::string& new_text)
 {
 	const S32 ParcelInfoSpacing = 5;
-	const LLFontGL* font = mParcelInfoText->getDefaultFont();
+	const LLFontGL* font = mParcelInfoText->getFont();
 	S32 new_text_width = font->getWidth(new_text);
+
+        //<FS:TS> Avoid processing the parcel string every frame if it
+        // hasn't changed.
+        static std::string old_text = "";
+        if (new_text == old_text)
+        {
+                return;
+        }
+        old_text = new_text;
+        //</FS:TS>
 
 	mParcelInfoText->setText(new_text);
 
@@ -1359,7 +1375,7 @@ void LLStatusBar::onParcelWLClicked()
 // <FS:CR> FIRE-5118 - Lightshare support
 void LLStatusBar::onLightshareClicked()
 {
-	FSLightshare::getInstance()->processLightshareRefresh();
+	FSLightshare::getInstance()->processLightshareReset();
 }
 // </FS:CR>
 

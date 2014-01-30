@@ -55,6 +55,9 @@ typedef enum {
 	STATE_LOGIN_SHOW,				// Show login screen
 	STATE_LOGIN_WAIT,				// Wait for user input at login screen
 	STATE_LOGIN_CLEANUP,			// Get rid of login screen and start login
+// <FS:Techwolf Lupindo> fsdata support
+	STATE_AGENTS_WAIT,			// Wait for agents.xml to load.
+// </FS:Techwolf Lupindo>
 	STATE_LOGIN_AUTH_INIT,			// Start login to SL servers
 	STATE_LOGIN_CURL_UNSTUCK,		// Update progress to remove "SL appears frozen" msg.
 	STATE_LOGIN_PROCESS_RESPONSE,	// Check authentication reply
@@ -121,8 +124,7 @@ public:
 // </AW: opensim>
 
 	static void setStartSLURL(const LLSLURL& slurl);
-	//static LLSLURL& getStartSLURL();  //FS:TM link  fix: use what we had before 3.4.0 merge
-	static LLSLURL& getStartSLURL() { return sStartSLURL; } 
+	static LLSLURL& getStartSLURL();
 
 	static bool startLLProxy(); // Initialize the SOCKS 5 proxy
 

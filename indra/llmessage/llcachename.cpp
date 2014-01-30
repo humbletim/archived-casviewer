@@ -39,6 +39,8 @@
 
 #include <boost/regex.hpp>
 
+#include "llavatarname.h"	// <FS:CR> FIRE-6659
+
 // llsd serialization constants
 static const std::string AGENTS("agents");
 static const std::string GROUPS("groups");
@@ -281,10 +283,6 @@ LLCacheName::Impl::~Impl()
 	for_each(mReplyQueue.begin(), mReplyQueue.end(), DeletePointer());
 }
 
-// <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-bool LLCacheName::sDontTrimLegacyNames = false;
-// </FS:CR> FIRE-6659: Legacy "Resident" name toggle
-
 boost::signals2::connection LLCacheName::Impl::addPending(const LLUUID& id, const LLCacheNameCallback& callback)
 {
 	PendingReply* reply = new PendingReply(id, LLHost());
@@ -518,7 +516,7 @@ BOOL LLCacheName::getUUID(const std::string& full_name, LLUUID& id)
 std::string LLCacheName::buildFullName(const std::string& first, const std::string& last)
 {
 // <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-	if (!sDontTrimLegacyNames)
+	if (LLAvatarName::trimResidentSurname())
 	{
 // </FS:CR> FIRE-6659: Legacy "Resident" name toggle
 		std::string fullname = first;
@@ -544,7 +542,7 @@ std::string LLCacheName::buildFullName(const std::string& first, const std::stri
 		}
 		else if (fullname.find(" ") == std::string::npos)
 		{
-			fullname+=" Resident";
+			fullname.append(" Resident");
 		}
 		return fullname;
 	}
@@ -555,17 +553,12 @@ std::string LLCacheName::buildFullName(const std::string& first, const std::stri
 std::string LLCacheName::cleanFullName(const std::string& full_name)
 {
 // <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-	if (!sDontTrimLegacyNames)
-	{
-// </FS:CR> FIRE-6659: Legacy "Resident" name toggle
-		return full_name.substr(0, full_name.find(" Resident"));
-// <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-	}
-	return full_name;
+	return (LLAvatarName::trimResidentSurname() ? full_name : full_name.substr(0, full_name.find(" Resident")));
 // </FS:CR> FIRE-6659: Legacy "Resident" name toggle
 }
 
 //static 
+// Transform hard-coded name provided by server to a more legible username
 std::string LLCacheName::buildUsername(const std::string& full_name)
 {
 	// rare, but handle hard-coded error names returned from server
@@ -573,21 +566,6 @@ std::string LLCacheName::buildUsername(const std::string& full_name)
 	{
 		return "(\?\?\?)";
 	}
-	
-// [SL:KB] - Patch: Chat-Logs | Checked: 2010-11-18 (Catznip-2.4.0c) | Added: Catznip-2.4.0c
-	// regexp doesn't play nice with unicode, chop off the display name
-	S32 open_paren = full_name.rfind(" (");
-	if (open_paren != std::string::npos)
-	{
-		std::string username = full_name.substr(open_paren + 2, full_name.length() - open_paren - 3);
-		boost::regex complete_name_regex("^[a-z0-9]+(\\.[a-z]+)?$");
-		boost::match_results<std::string::const_iterator> name_results;
-		if (boost::regex_match(username, name_results, complete_name_regex))
-		{
-			return username;
-		}
-	}
-// [/SL:KB]
 
 	std::string::size_type index = full_name.find(' ');
 	if (index != std::string::npos)
@@ -605,8 +583,9 @@ std::string LLCacheName::buildUsername(const std::string& full_name)
 		return username;
 	}
 
-	// if the input wasn't a correctly formatted legacy name just return it unchanged
-	return full_name;
+	// if the input wasn't a correctly formatted legacy name, just return it  
+	// cleaned up from a potential terminal "Resident"
+	return cleanFullName(full_name);
 }
 
 //static 
@@ -643,14 +622,14 @@ std::string LLCacheName::buildLegacyName(const std::string& complete_name)
 					legacy_name = legacy_name + " " + cap_letter + last_name.substr(1);
 				}
 // <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-				else if (sDontTrimLegacyNames)
+				else if (!LLAvatarName::trimResidentSurname())
 				{
-					legacy_name = legacy_name + " Resident";
+					legacy_name.append(" Resident");
 				}
 			}
-			else if (sDontTrimLegacyNames)
+			else if (!LLAvatarName::trimResidentSurname())
 			{
-				legacy_name = legacy_name + " Resident";
+				legacy_name.append(" Resident");
 // </FS:CR> FIRE-6659: Legacy "Resident" name toggle
 			}
 
@@ -1066,7 +1045,7 @@ void LLCacheName::Impl::processUUIDReply(LLMessageSystem* msg, bool isGroup)
 			if (entry->mLastName.empty())
 			{
 // <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-				if (!sDontTrimLegacyNames)
+				if (!LLAvatarName::trimResidentSurname())
 				{
 // </FS:CR> FIRE-6659: Legacy "Resident" name toggle
 					full_name = cleanFullName(entry->mFirstName);

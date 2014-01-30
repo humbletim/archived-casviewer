@@ -99,8 +99,7 @@ void LLAres::QueryResponder::queryError(int code)
 
 LLAres::LLAres() :
     chan_(NULL),
-    mInitSuccess(false),
-    mListener(new LLAresListener(this))
+    mInitSuccess(false)
 {
 	if (ares_library_init( ARES_LIB_INIT_ALL ) != ARES_SUCCESS ||
 		ares_init(&chan_) != ARES_SUCCESS)
@@ -108,6 +107,45 @@ LLAres::LLAres() :
 		llwarns << "Could not succesfully initialize ares!" << llendl;
 		return;
 	}
+
+// <FS:ND> Write nameserver info to logs. Need at least ares 1.10.o for ares_inet_ntop
+#if (ARES_VERSION >= 0x010A00)
+	ares_addr_node *pServer(0);
+	if( ARES_SUCCESS == ares_get_servers( chan_, &pServer ) && pServer )
+	{
+		ares_addr_node *pCur( pServer );
+		while( pCur )
+		{
+			std::stringstream strm;
+			char aBuffer[ INET6_ADDRSTRLEN +1 ] = {0};
+			
+			switch( pCur->family )
+			{
+				case(  AF_INET ):
+				{
+					ares_inet_ntop( pCur->family, &pCur->addr.addr4, aBuffer, INET6_ADDRSTRLEN );
+					strm << "IPv4 nameserver " << aBuffer;
+					break;
+				}
+				case(  AF_INET6 ):
+				{
+					ares_inet_ntop( pCur->family, &pCur->addr.addr6, aBuffer, INET6_ADDRSTRLEN );
+					strm << "IPv6 nameserver " << aBuffer;
+					break;
+				}
+				default:
+					strm << "Unknown protocol " << pCur->family;
+			}
+			
+			llinfos << strm.str() << llendl;
+			pCur = pCur->next;
+		}
+		ares_free_data( pServer );
+	}
+#endif
+// </FS:ND>
+
+	mListener = boost::shared_ptr< LLAresListener >(new LLAresListener(this));
 
 	mInitSuccess = true;
 }
@@ -161,12 +199,26 @@ void LLAres::getSrvRecords(const std::string &name, SrvResponder *resp)
 }
 	
 void LLAres::rewriteURI(const std::string &uri, UriRewriteResponder *resp)
-{
-	llinfos << "Rewriting " << uri << llendl;
+{	
+	if (resp && uri.size())
+	{
+		LLURI* pURI = new LLURI(uri);
 
-	resp->mUri = LLURI(uri);
-	search("_" + resp->mUri.scheme() + "._tcp." + resp->mUri.hostName(),
-		   RES_SRV, resp);
+		resp->mUri = *pURI;
+
+		delete pURI;
+
+		if (!resp->mUri.scheme().size() || !resp->mUri.hostName().size())
+		{
+			return;
+		}
+
+		//llinfos << "LLAres::rewriteURI (" << uri << ") search: '" << "_" + resp->mUri.scheme() + "._tcp." + resp->mUri.hostName() << "'" << llendl;
+
+		search("_" + resp->mUri.scheme() + "._tcp." + resp->mUri.hostName(), RES_SRV, resp);
+
+		
+	}
 }
 
 LLQueryResponder::LLQueryResponder()

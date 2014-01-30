@@ -38,30 +38,36 @@ class LLLayoutStack;
 class LLChicletBar
 	: public LLSingleton<LLChicletBar>
 	, public LLPanel
+	// <FS:Ansariel> [FS communication UI]
 	, public LLIMSessionObserver
 {
 	LOG_CLASS(LLChicletBar);
 	friend class LLSingleton<LLChicletBar>;
 public:
+	// <FS:Ansariel> [FS communication UI]
 	~LLChicletBar();
 
-	BOOL postBuild();
-
-	LLChicletPanel*	getChicletPanel() { return mChicletPanel; }
-
 	// LLIMSessionObserver observe triggers
-	virtual void sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id);
-	virtual void sessionRemoved(const LLUUID& session_id);
-	void sessionIDUpdated(const LLUUID& old_session_id, const LLUUID& new_session_id);
+	/*virtual*/ void sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id, BOOL has_offline_msg);
+	/*virtual*/ void sessionActivated(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id) {}
+	/*virtual*/ void sessionVoiceOrIMStarted(const LLUUID& session_id) {};
+	/*virtual*/ void sessionRemoved(const LLUUID& session_id);
+	/*virtual*/ void sessionIDUpdated(const LLUUID& old_session_id, const LLUUID& new_session_id);
 
 	S32 getTotalUnreadIMCount();
-
-	/*virtual*/ void reshape(S32 width, S32 height, BOOL called_from_parent);
 
 	/**
 	 * Creates IM Chiclet based on session type (IM chat or Group chat)
 	 */
 	LLIMChiclet* createIMChiclet(const LLUUID& session_id);
+	// </FS:Ansariel> [FS communication UI]
+
+	BOOL postBuild();
+
+	LLChicletPanel*	getChicletPanel() { return mChicletPanel; }
+
+	/*virtual*/ void reshape(S32 width, S32 height, BOOL called_from_parent);
+
 
 	/**
 	 * Shows/hides panel with specified well button (IM or Notification)

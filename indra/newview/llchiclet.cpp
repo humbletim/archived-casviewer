@@ -27,40 +27,40 @@
 #include "llviewerprecompiledheaders.h" // must be first include
 #include "llchiclet.h"
 
-#include "llagent.h"
-#include "llavataractions.h"
 #include "llchicletbar.h"
-#include "lleventtimer.h"
-#include "llgroupactions.h"
-#include "lliconctrl.h"
 // <FS:Ansariel> [FS communication UI]
-//#include "llimfloater.h"
-#include "fsfloaterim.h"
+//#include "llfloaterimsession.h"
+//#include "llfloaterimcontainer.h"
 // </FS:Ansariel> [FS communication UI]
-#include "llimview.h"
 #include "llfloaterreg.h"
 #include "lllocalcliprect.h"
-#include "llmenugl.h"
-#include "llnotifications.h"
-#include "llnotificationsutil.h"
-#include "lloutputmonitorctrl.h"
 #include "llscriptfloater.h"
-#include "llspeakers.h"
-#include "lltextbox.h"
-#include "llvoiceclient.h"
-#include "llgroupmgr.h"
-#include "llnotificationmanager.h"
-#include "lltransientfloatermgr.h"
+#include "llsingleton.h"
 #include "llsyswellwindow.h"
 
+// Firestorm includes
+#include "fsfloaterim.h"
+#include "llagent.h"
+#include "llavataractions.h"
+#include "llgroupactions.h"
+#include "llgroupmgr.h"
+#include "llmenugl.h"
+#include "lloutputmonitorctrl.h"
+#include "llspeakers.h"
+#include "lltransientfloatermgr.h"
+#include "llvoiceclient.h"
+
 static LLDefaultChildRegistry::Register<LLChicletPanel> t1("chiclet_panel");
-static LLDefaultChildRegistry::Register<LLIMWellChiclet> t2_0("chiclet_im_well");
 static LLDefaultChildRegistry::Register<LLNotificationChiclet> t2("chiclet_notification");
-static LLDefaultChildRegistry::Register<LLIMP2PChiclet> t3("chiclet_im_p2p");
-static LLDefaultChildRegistry::Register<LLIMGroupChiclet> t4("chiclet_im_group");
-static LLDefaultChildRegistry::Register<LLAdHocChiclet> t5("chiclet_im_adhoc");
 static LLDefaultChildRegistry::Register<LLScriptChiclet> t6("chiclet_script");
 static LLDefaultChildRegistry::Register<LLInvOfferChiclet> t7("chiclet_offer");
+
+// <FS:Ansariel> [FS communication UI]
+static LLDefaultChildRegistry::Register<LLIMWellChiclet> t2_0("fs_chiclet_im_well");
+static LLDefaultChildRegistry::Register<LLIMP2PChiclet> t3("fs_chiclet_im_p2p");
+static LLDefaultChildRegistry::Register<LLIMGroupChiclet> t4("fs_chiclet_im_group");
+static LLDefaultChildRegistry::Register<LLAdHocChiclet> t5("fs_chiclet_im_adhoc");
+// </FS:Ansariel> [FS communication UI]
 
 boost::signals2::signal<LLChiclet* (const LLUUID&),
 		LLIMChiclet::CollectChicletCombiner<std::list<LLChiclet*> > >
@@ -69,65 +69,10 @@ boost::signals2::signal<LLChiclet* (const LLUUID&),
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-/**
- * Updates the Well's 'Lit' state to flash it when "new messages" are come.
- *
- * It gets callback which will be called 2*N times with passed period. See EXT-3147
- */
-class LLSysWellChiclet::FlashToLitTimer : public LLEventTimer
-{
-public:
-	typedef boost::function<void()> callback_t;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param count - how many times callback should be called (twice to not change original state)
-	 * @param period - how frequently callback should be called
-	 * @param cb - callback to be called each tick
-	 */
-	FlashToLitTimer(S32 count, F32 period, callback_t cb)
-		: LLEventTimer(period)
-		, mCallback(cb)
-		, mFlashCount(2 * count)
-		, mCurrentFlashCount(0)
-	{
-		mEventTimer.stop();
-	}
-
-	BOOL tick()
-	{
-		mCallback();
-
-		if (++mCurrentFlashCount == mFlashCount) mEventTimer.stop();
-		return FALSE;
-	}
-
-	void flash()
-	{
-		mCurrentFlashCount = 0;
-		mEventTimer.start();
-	}
-
-	void stopFlashing()
-	{
-		mEventTimer.stop();
-	}
-
-private:
-	callback_t		mCallback;
-
-	/**
-	 * How many times Well will blink.
-	 */
-	S32 mFlashCount;
-	S32 mCurrentFlashCount;
-};
-
 LLSysWellChiclet::Params::Params()
-: button("button")
-, unread_notifications("unread_notifications")
-, max_displayed_count("max_displayed_count", 99)
+	: button("button")
+	, unread_notifications("unread_notifications")
+	, max_displayed_count("max_displayed_count", 99)
 {
 	button.name = "button";
 	button.tab_stop = FALSE;
@@ -135,30 +80,24 @@ LLSysWellChiclet::Params::Params()
 }
 
 LLSysWellChiclet::LLSysWellChiclet(const Params& p)
-: LLChiclet(p)
-, mButton(NULL)
-, mCounter(0)
-, mMaxDisplayedCount(p.max_displayed_count)
-, mIsNewMessagesState(false)
-, mFlashToLitTimer(NULL)
-, mContextMenu(NULL)
+	: LLChiclet(p)
+	, mButton(NULL)
+	, mCounter(0)
+	, mMaxDisplayedCount(p.max_displayed_count)
+	, mIsNewMessagesState(false)
+	, mFlashToLitTimer(NULL)
+	, mContextMenu(NULL)
 {
 	LLButton::Params button_params = p.button;
 	mButton = LLUICtrlFactory::create<LLButton>(button_params);
 	addChild(mButton);
 
-	// use settings from settings.xml to be able change them via Debug settings. See EXT-5973.
-	// Due to Timer is implemented as derived class from EventTimer it is impossible to change period
-	// in runtime. So, both settings are made as required restart.
-	static S32 flash_to_lit_count = gSavedSettings.getS32("WellIconFlashCount");
-	static F32 flash_period = gSavedSettings.getF32("WellIconFlashPeriod");
-
-	mFlashToLitTimer = new FlashToLitTimer(flash_to_lit_count, flash_period, boost::bind(&LLSysWellChiclet::changeLitState, this));
+	mFlashToLitTimer = new LLFlashTimer(boost::bind(&LLSysWellChiclet::changeLitState, this, _1));
 }
 
 LLSysWellChiclet::~LLSysWellChiclet()
 {
-	delete mFlashToLitTimer;
+	mFlashToLitTimer->unset();
 }
 
 void LLSysWellChiclet::setCounter(S32 counter)
@@ -193,7 +132,7 @@ void LLSysWellChiclet::setToggleState(BOOL toggled) {
 	mButton->setToggleState(toggled);
 }
 
-void LLSysWellChiclet::changeLitState()
+void LLSysWellChiclet::changeLitState(bool blink)
 {
 	setNewMessagesState(!mIsNewMessagesState);
 }
@@ -237,6 +176,7 @@ BOOL LLSysWellChiclet::handleRightMouseDown(S32 x, S32 y, MASK mask)
 	return TRUE;
 }
 
+// <FS:Ansariel> [FS communication UI]
 /************************************************************************/
 /*               LLIMWellChiclet implementation                         */
 /************************************************************************/
@@ -298,7 +238,7 @@ void LLIMWellChiclet::createMenu()
 		boost::bind(&LLIMWellChiclet::enableMenuItem, this, _2));
 
 	mContextMenu = LLUICtrlFactory::getInstance()->createFromFile<LLContextMenu>
-		("menu_im_well_button.xml",
+		("menu_fs_im_well_button.xml",
 		 LLMenuGL::sMenuContainer,
 		 LLViewerMenuHolderGL::child_registry_t::instance());
 }
@@ -314,19 +254,15 @@ void LLIMWellChiclet::messageCountChanged(const LLSD& session_data)
 
 	const LLUUID& session_id = session_data["session_id"];
 	const S32 counter = LLChicletBar::getInstance()->getTotalUnreadIMCount();
-	// <FS:Ansariel> [FS communication UI]
-	//const bool im_not_visible = !LLFloaterReg::instanceVisible("im_container")
-	//	&& !LLFloaterReg::instanceVisible("impanel", session_id);
 	const bool im_not_visible = !LLFloaterReg::instanceVisible("fs_im_container")
 		&& !LLFloaterReg::instanceVisible("fs_impanel", session_id);
-	// </FS:Ansariel> [FS communication UI]
 
 	setNewMessagesState(counter > mCounter	&& im_not_visible);
 
 	// we have to flash to 'Lit' state each time new unread message is coming.
 	if (counter > mCounter && im_not_visible)
 	{
-		mFlashToLitTimer->flash();
+		mFlashToLitTimer->startFlashing();
 	}
 	else if (counter == 0)
 	{
@@ -337,33 +273,19 @@ void LLIMWellChiclet::messageCountChanged(const LLSD& session_data)
 
 	setCounter(counter);
 }
+// </FS:Ansariel> [FS communication UI]
 
 /************************************************************************/
 /*               LLNotificationChiclet implementation                   */
 /************************************************************************/
 LLNotificationChiclet::LLNotificationChiclet(const Params& p)
-: LLSysWellChiclet(p)
-, mUreadSystemNotifications(0)
+:	LLSysWellChiclet(p),
+	mUreadSystemNotifications(0)
 {
-	// connect counter handlers to the signals
-	connectCounterUpdatersToSignal("notify");
-	connectCounterUpdatersToSignal("groupnotify");
-	connectCounterUpdatersToSignal("offer");
-
+	mNotificationChannel.reset(new ChicletNotificationChannel(this));
 	// ensure that notification well window exists, to synchronously
 	// handle toast add/delete events.
 	LLNotificationWellWindow::getInstance()->setSysWellChiclet(this);
-}
-
-void LLNotificationChiclet::connectCounterUpdatersToSignal(const std::string& notification_type)
-{
-	LLNotificationsUI::LLNotificationManager* manager = LLNotificationsUI::LLNotificationManager::getInstance();
-	LLNotificationsUI::LLEventHandler* n_handler = manager->getHandlerForNotification(notification_type);
-	if(n_handler)
-	{
-		n_handler->setNewNotificationCallback(boost::bind(&LLNotificationChiclet::incUreadSystemNotifications, this));
-		n_handler->setDelNotification(boost::bind(&LLNotificationChiclet::decUreadSystemNotifications, this));
-	}
 }
 
 void LLNotificationChiclet::onMenuItemClicked(const LLSD& user_data)
@@ -372,6 +294,8 @@ void LLNotificationChiclet::onMenuItemClicked(const LLSD& user_data)
 	if("close all" == action)
 	{
 		LLNotificationWellWindow::getInstance()->closeAll();
+		// <FS:Ansariel> [FS communication UI] - We have our own IM well button again
+		//LLIMWellWindow::getInstance()->closeAll();
 	}
 }
 
@@ -414,6 +338,30 @@ void LLNotificationChiclet::setCounter(S32 counter)
 	updateWidget(getCounter() == 0);
 	
 }
+
+bool LLNotificationChiclet::ChicletNotificationChannel::filterNotification( LLNotificationPtr notification )
+{
+	bool display_notification;
+	if (   (notification->getName() == "ScriptDialog") // special case for scripts
+		// if there is no toast window for the notification, filter it
+		|| (!LLNotificationWellWindow::getInstance()->findItemByID(notification->getID()))
+		)
+	{
+		display_notification = false;
+	}
+	else if( !(notification->canLogToIM() && notification->hasFormElements())
+			&& (!notification->getPayload().has("give_inventory_notification")
+				|| notification->getPayload()["give_inventory_notification"]))
+	{
+		display_notification = true;
+	}
+	else
+	{
+		display_notification = false;
+	}
+	return display_notification;
+}
+
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -429,12 +377,6 @@ LLChiclet::LLChiclet(const Params& p)
 , mSessionId(LLUUID::null)
 , mShowCounter(p.show_counter)
 {
-
-}
-
-LLChiclet::~LLChiclet()
-{
-
 }
 
 boost::signals2::connection LLChiclet::setLeftButtonClickCallback(
@@ -469,7 +411,9 @@ LLSD LLChiclet::getValue() const
 void LLChiclet::setValue(const LLSD& value)
 {
 	if(value.isUUID())
+	{
 		setSessionId(value.asUUID());
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -481,11 +425,14 @@ LLIMChiclet::LLIMChiclet(const LLIMChiclet::Params& p)
 , mShowSpeaker(false)
 , mDefaultWidth(p.rect().getWidth())
 , mNewMessagesIcon(NULL)
+// <FS:Ansariel> [FS communication UI]
 , mSpeakerCtrl(NULL)
 , mCounterCtrl(NULL)
+// </FS:Ansariel> [FS communication UI]
 , mChicletButton(NULL)
 , mPopupMenu(NULL)
 {
+	// <FS:Ansariel> [FS communication UI]
 	enableCounterControl(p.enable_counter);
 }
 
@@ -497,6 +444,64 @@ BOOL LLIMChiclet::postBuild()
 	mChicletButton->setDoubleClickCallback(boost::bind(&LLIMChiclet::onMouseDown, this));
 	return TRUE;
 }
+
+void LLIMChiclet::enableCounterControl(bool enable) 
+{
+	mCounterEnabled = enable;
+	if(!enable)
+	{
+		LLChiclet::setShowCounter(false);
+	}
+}
+
+void LLIMChiclet::setRequiredWidth()
+{
+	S32 required_width = mDefaultWidth;
+
+	// <FS:Ansariel> [FS communication UI]
+	if (getShowCounter())
+	{
+		required_width += mCounterCtrl->getRect().getWidth();
+	}
+	if (getShowSpeaker())
+	{
+		required_width += mSpeakerCtrl->getRect().getWidth();
+	}
+	// </FS:Ansariel> [FS communication UI]
+
+	reshape(required_width, getRect().getHeight());
+	onChicletSizeChanged();
+}
+
+void LLIMChiclet::setShowNewMessagesIcon(bool show)
+{
+	if(mNewMessagesIcon)
+	{
+		mNewMessagesIcon->setVisible(show);
+	}
+	setRequiredWidth();
+}
+
+bool LLIMChiclet::getShowNewMessagesIcon()
+{
+	return mNewMessagesIcon->getVisible();
+}
+
+void LLIMChiclet::onMouseDown()
+{
+	// <FS:Ansariel> [FS communication UI]
+	//LLFloaterIMSession::toggle(getSessionId());
+	FSFloaterIM::toggle(getSessionId());
+	setCounter(0);
+	// </FS:Ansariel> [FS communication UI]
+}
+
+void LLIMChiclet::setToggleState(bool toggle)
+{
+	mChicletButton->setToggleState(toggle);
+}
+
+// <FS:Ansariel> [FS communication UI]
 void LLIMChiclet::setShowSpeaker(bool show)
 {
 	bool needs_resize = getShowSpeaker() != show;
@@ -506,15 +511,6 @@ void LLIMChiclet::setShowSpeaker(bool show)
 	}
 
 	toggleSpeakerControl();
-}
-
-void LLIMChiclet::enableCounterControl(bool enable) 
-{
-	mCounterEnabled = enable;
-	if(!enable)
-	{
-		LLChiclet::setShowCounter(false);
-	}
 }
 
 void LLIMChiclet::setShowCounter(bool show)
@@ -537,24 +533,9 @@ void LLIMChiclet::initSpeakerControl()
 	// virtual
 }
 
-void LLIMChiclet::setRequiredWidth()
+void LLIMChiclet::draw()
 {
-	bool show_speaker = getShowSpeaker();
-	bool show_counter = getShowCounter();
-	S32 required_width = mDefaultWidth;
-
-	if (show_counter)
-	{
-		required_width += mCounterCtrl->getRect().getWidth();
-	}
-	if (show_speaker)
-	{
-		required_width += mSpeakerCtrl->getRect().getWidth();
-	} 
-
-	reshape(required_width, getRect().getHeight());
-
-	onChicletSizeChanged();
+	LLUICtrl::draw();
 }
 
 void LLIMChiclet::toggleSpeakerControl()
@@ -598,39 +579,6 @@ void LLIMChiclet::toggleCounterControl()
 	mCounterCtrl->setVisible(getShowCounter());
 }
 
-void LLIMChiclet::setShowNewMessagesIcon(bool show)
-{
-	if(mNewMessagesIcon)
-	{
-		mNewMessagesIcon->setVisible(show);
-	}
-	setRequiredWidth();
-}
-
-bool LLIMChiclet::getShowNewMessagesIcon()
-{
-	return mNewMessagesIcon->getVisible();
-}
-
-void LLIMChiclet::onMouseDown()
-{
-	// <FS:Ansariel> [FS communication UI]
-	//LLIMFloater::toggle(getSessionId());
-	FSFloaterIM::toggle(getSessionId());
-	// </FS:Ansariel> [FS communication UI]
-	setCounter(0);
-}
-
-void LLIMChiclet::setToggleState(bool toggle)
-{
-	mChicletButton->setToggleState(toggle);
-}
-
-void LLIMChiclet::draw()
-{
-	LLUICtrl::draw();
-}
-
 // static
 LLIMChiclet::EType LLIMChiclet::getIMSessionType(const LLUUID& session_id)
 {
@@ -671,6 +619,7 @@ LLIMChiclet::EType LLIMChiclet::getIMSessionType(const LLUUID& session_id)
 
 	return type;
 }
+// </FS:Ansariel> [FS communication UI]
 
 BOOL LLIMChiclet::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
@@ -703,6 +652,7 @@ bool LLIMChiclet::canCreateMenu()
 	return true;
 }
 
+// <FS:Ansariel> [FS communication UI]
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -766,10 +716,7 @@ void LLIMP2PChiclet::updateMenuItems()
 	if(getSessionId().isNull())
 		return;
 
-	// <FS:Ansariel> [FS communication UI]
-	//LLIMFloater* open_im_floater = LLIMFloater::findInstance(getSessionId());
 	FSFloaterIM* open_im_floater = FSFloaterIM::findInstance(getSessionId());
-	// </FS:Ansariel> [FS communication UI]
 	bool open_window_exists = open_im_floater && open_im_floater->getVisible();
 	mPopupMenu->getChild<LLUICtrl>("Send IM")->setEnabled(!open_window_exists);
 	
@@ -786,7 +733,7 @@ void LLIMP2PChiclet::createPopupMenu()
 	registrar.add("IMChicletMenu.Action", boost::bind(&LLIMP2PChiclet::onMenuItemClicked, this, _2));
 
 	mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>
-		("menu_imchiclet_p2p.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
+		("menu_fs_imchiclet_p2p.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
 }
 
 void LLIMP2PChiclet::onMenuItemClicked(const LLSD& user_data)
@@ -906,7 +853,7 @@ void LLAdHocChiclet::createPopupMenu()
 	registrar.add("IMChicletMenu.Action", boost::bind(&LLAdHocChiclet::onMenuItemClicked, this, _2));
 
 	mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>
-		("menu_imchiclet_adhoc.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
+		("menu_fs_imchiclet_adhoc.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
 }
 
 void LLAdHocChiclet::onMenuItemClicked(const LLSD& user_data)
@@ -1045,10 +992,7 @@ void LLIMGroupChiclet::updateMenuItems()
 	if(getSessionId().isNull())
 		return;
 
-	// <FS:Ansariel> [FS communication UI]
-	//LLIMFloater* open_im_floater = LLIMFloater::findInstance(getSessionId());
 	FSFloaterIM* open_im_floater = FSFloaterIM::findInstance(getSessionId());
-	// </FS:Ansariel> [FS communication UI]
 	bool open_window_exists = open_im_floater && open_im_floater->getVisible();
 	mPopupMenu->getChild<LLUICtrl>("Chat")->setEnabled(!open_window_exists);
 }
@@ -1062,7 +1006,7 @@ void LLIMGroupChiclet::createPopupMenu()
 	registrar.add("IMChicletMenu.Action", boost::bind(&LLIMGroupChiclet::onMenuItemClicked, this, _2));
 
 	mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>
-		("menu_imchiclet_group.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
+		("menu_fs_imchiclet_group.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
 }
 
 void LLIMGroupChiclet::onMenuItemClicked(const LLSD& user_data)
@@ -1083,7 +1027,7 @@ void LLIMGroupChiclet::onMenuItemClicked(const LLSD& user_data)
 		LLGroupActions::endIM(group_id);
 	}
 }
-
+// <FS:Ansariel> [FS communication UI]
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -1131,13 +1075,21 @@ LLChicletPanel::~LLChicletPanel()
 
 void LLChicletPanel::onMessageCountChanged(const LLSD& data)
 {
+    // *TODO : we either suppress this method or return a value. Right now, it servers no purpose.
+    /*
+
+	//LLFloaterIMSession* im_floater = LLFloaterIMSession::findInstance(session_id);
+	//if (im_floater && im_floater->getVisible() && im_floater->hasFocus())
+	//{
+	//	unread = 0;
+	//}
+    */
+
+	// <FS:Ansariel> [FS communication UI]
 	LLUUID session_id = data["session_id"].asUUID();
 	S32 unread = data["participant_unread"].asInteger();
 
-	// <FS:Ansariel> [FS communication UI]
-	//LLIMFloater* im_floater = LLIMFloater::findInstance(session_id);
 	FSFloaterIM* im_floater = FSFloaterIM::findInstance(session_id);
-	// </FS:Ansariel> [FS communication UI]
 	if (im_floater && im_floater->getVisible() && im_floater->hasFocus())
 	{
 		unread = 0;
@@ -1145,17 +1097,19 @@ void LLChicletPanel::onMessageCountChanged(const LLSD& data)
 
 	std::list<LLChiclet*> chiclets = LLIMChiclet::sFindChicletsSignal(session_id);
 	std::list<LLChiclet *>::iterator iter;
-	for (iter = chiclets.begin(); iter != chiclets.end(); iter++) {
+	for (iter = chiclets.begin(); iter != chiclets.end(); iter++)
+	{
 		LLChiclet* chiclet = *iter;
 		if (chiclet != NULL)
 		{
 			chiclet->setCounter(unread);
 		}
-	    else
-	    {
-	    	llwarns << "Unable to set counter for chiclet " << session_id << llendl;
-	    }
+		else
+		{
+			llwarns << "Unable to set counter for chiclet " << session_id << llendl;
+		}
 	}
+	// </FS:Ansariel> [FS communication UI]
 }
 
 void LLChicletPanel::objectChicletCallback(const LLSD& data)
@@ -1170,10 +1124,12 @@ void LLChicletPanel::objectChicletCallback(const LLSD& data)
 		LLIMChiclet* chiclet = dynamic_cast<LLIMChiclet*>(*iter);
 		if (chiclet != NULL)
 		{
+			// <FS:Ansariel> [FS communication UI]
 			if(data.has("unread"))
 			{
 				chiclet->setCounter(data["unread"]);
 			}
+			// </FS:Ansariel> [FS communication UI]
 			chiclet->setShowNewMessagesIcon(new_message);
 		}
 	}
@@ -1215,17 +1171,20 @@ void LLChicletPanel::onCurrentVoiceChannelChanged(const LLUUID& session_id)
 		LLIMChiclet* chiclet = dynamic_cast<LLIMChiclet*>(*it);
 		if(chiclet)
 		{
+			// <FS:Ansariel> [FS communication UI]
 			chiclet->setShowSpeaker(true);
+			// </FS:Ansariel> [FS communication UI]
 			if (gSavedSettings.getBOOL("OpenIMOnVoice"))
 			{
 				// <FS:Ansariel> [FS communication UI]
-				//LLIMFloater::show(chiclet->getSessionId());
+				//LLFloaterIMContainer::getInstance()->showConversation(session_id);
 				FSFloaterIM::show(chiclet->getSessionId());
 				// </FS:Ansariel> [FS communication UI]
 			}
 		}
 	}
 
+	// <FS:Ansariel> [FS communication UI]
 	if(!s_previous_active_voice_session_id.isNull() && s_previous_active_voice_session_id != session_id)
 	{
 		chiclets = LLIMChiclet::sFindChicletsSignal(s_previous_active_voice_session_id);
@@ -1239,6 +1198,7 @@ void LLChicletPanel::onCurrentVoiceChannelChanged(const LLUUID& session_id)
 			}
 		}		
 	}
+	// </FS:Ansariel> [FS communication UI]
 
 	s_previous_active_voice_session_id = session_id;
 }
@@ -1713,7 +1673,7 @@ bool LLChicletPanel::isAnyIMFloaterDoked()
 			!= mChicletList.end(); it++)
 	{
 		// <FS:Ansariel> [FS communication UI]
-		//LLIMFloater* im_floater = LLFloaterReg::findTypedInstance<LLIMFloater>(
+		//LLFloaterIMSession* im_floater = LLFloaterReg::findTypedInstance<LLFloaterIMSession>(
 		//		"impanel", (*it)->getSessionId());
 		FSFloaterIM* im_floater = LLFloaterReg::findTypedInstance<FSFloaterIM>(
 				"fs_impanel", (*it)->getSessionId());
@@ -1729,6 +1689,7 @@ bool LLChicletPanel::isAnyIMFloaterDoked()
 	return res;
 }
 
+// <FS:Ansariel> [FS communication UI]
 S32 LLChicletPanel::getTotalUnreadIMCount()
 {
 	S32 count = 0;
@@ -1743,15 +1704,17 @@ S32 LLChicletPanel::getTotalUnreadIMCount()
 	}
 	return count;
 }
+// </FS:Ansariel> [FS communication UI]
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 LLChicletNotificationCounterCtrl::Params::Params()
-: max_displayed_count("max_displayed_count", 99)
+	: max_displayed_count("max_displayed_count", 99)
 {
 }
 
+// <FS:Ansariel> [FS communication UI]
 LLChicletNotificationCounterCtrl::LLChicletNotificationCounterCtrl(const Params& p)
  : LLTextBox(p)
  , mCounter(0)
@@ -1807,11 +1770,11 @@ LLSD LLChicletNotificationCounterCtrl::getValue() const
 {
 	return LLSD(getCounter());
 }
+// </FS:Ansariel> [FS communication UI]
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
-
 LLChicletAvatarIconCtrl::LLChicletAvatarIconCtrl(const Params& p)
  : LLAvatarIconCtrl(p)
 {
@@ -1821,6 +1784,7 @@ LLChicletAvatarIconCtrl::LLChicletAvatarIconCtrl(const Params& p)
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
+// <FS:Ansariel> [FS communication UI]
 LLChicletGroupIconCtrl::LLChicletGroupIconCtrl(const Params& p)
 : LLIconCtrl(p)
 , mDefaultIcon(p.default_icon)
@@ -1839,6 +1803,7 @@ void LLChicletGroupIconCtrl::setValue(const LLSD& value )
 		LLIconCtrl::setValue(value);
 	}
 }
+// </FS:Ansariel> [FS communication UI]
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -1866,6 +1831,7 @@ void LLChicletInvOfferIconCtrl::setValue(const LLSD& value )
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
+// <FS:Ansariel> [FS communication UI]
 LLChicletSpeakerCtrl::LLChicletSpeakerCtrl(const Params&p)
  : LLOutputMonitorCtrl(p)
 {
@@ -1874,6 +1840,7 @@ LLChicletSpeakerCtrl::LLChicletSpeakerCtrl(const Params&p)
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
+// </FS:Ansariel> [FS communication UI]
 
 LLScriptChiclet::Params::Params()
  : icon("icon")
@@ -1910,10 +1877,12 @@ void LLScriptChiclet::setSessionId(const LLUUID& session_id)
 	setToolTip(LLScriptFloaterManager::getObjectName(session_id));
 }
 
+// <FS:Ansariel> [FS communication UI]
 void LLScriptChiclet::setCounter(S32 counter)
 {
 	setShowNewMessagesIcon( counter > 0 );
 }
+// </FS:Ansariel> [FS communication UI]
 
 void LLScriptChiclet::onMouseDown()
 {
@@ -1993,10 +1962,12 @@ void LLInvOfferChiclet::setSessionId(const LLUUID& session_id)
 	}
 }
 
+// <FS:Ansariel> [FS communication UI]
 void LLInvOfferChiclet::setCounter(S32 counter)
 {
 	setShowNewMessagesIcon( counter > 0 );
 }
+// </FS:Ansariel> [FS communication UI]
 
 void LLInvOfferChiclet::onMouseDown()
 {

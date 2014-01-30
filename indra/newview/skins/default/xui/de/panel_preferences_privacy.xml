@@ -23,19 +23,24 @@
 			<check_box label="Automatisch akzeptierte Notizkarten, Landmarken und Texturen anzeigen" name="Show_New_Inventory"/>
 			<check_box label="Partikeleffekte erzeugen, wenn Objekte an andere Avatare gegeben werden" name="FSCreateGiveInventoryParticleEffect"/>
 			<check_box label="Meine Lieblingslandmarken bei Anmeldung anzeigen (im Dropdown-Menü &#10;„Hier anfangen“)" name="favorites_on_login_check" top_pad="15"/>
-			<text name="Logs:">
-				Chatprotokolle:
+
+			<text name="logging_label" width="100">
+				Speichern:
 			</text>
-			<check_box label="Protokolle von Gesprächen in der Nähe auf meinem Computer speichern" name="log_nearby_chat"/>
-			<check_box label="IM-Protokolle auf meinem Computer speichern" name="log_instant_messages"/>
-			<check_box label="Zeitstempel zu jeder Zeile im Chatprotokoll hinzufügen" name="show_timestamps_check_im"/>
-			<check_box label="Zeige Sekunden im Chat- und Log-Zeitstempel" name="seconds_in_timestamps"/>
-			<check_box label="Verstecke Zeitstempel im Chat in der Nähe" name="hide_timestamps_nearby_chat"/>
-			<check_box label="Datumsstempel zu Protokolldateinamen hinzufügen" name="logfile_name_datestamp"/>
-			<text name="log_path_desc">
-				Protokolle speichern in:
+			<check_box name="LogNearbyChat" label="Chat in der Nähe speichern" tool_tip="Verlauf von Gesprächen in der Nähe auf meinem Computer speichern"/>
+			<combo_box name="conversation_log_combo" tool_tip="Protokoll: Liste von Gesprächen, die von Ihnen oder einer anderen Person initiiert wurden. Verläufe: Der eigentliche Text, wie er auf dem Bildschirm dargestellt wurde.">
+				<item name="log_and_transcripts" label="Protokoll und Verläufe"/>
+				<item name="log_only" label="Nur Protokoll"/>
+				<item name="no_log_or_transcript" label="Kein Protokoll oder Verläufe"/>
+			</combo_box>
+			<button label="Protokoll löschen..." name="clear_log"/>
+			<button label="Verläufe löschen..." name="delete_transcripts"/>
+			<text name="log_location_label">
+				Speicherort:
 			</text>
-			<button label="Durchsuchen" label_selected="Durchsuchen" name="log_path_button"/>
+			<check_box name="UseLegacyIMLogNames" label="Klassisches Dateinamensformat für Verläufe verwenden" tool_tip="Falls aktiviert, wird das alte Namensformat für Verläufe (Benutzer Name) anstatt des aktuellen (benutzer_name) verwendet."/>
+			<check_box name="LogFileNamewithDate" label="Datum zum Verlaufsdateinamen hinzufügen" tool_tip="Fügt das aktuelle Datum zum Dateinamen des Verlaufs im Format „chat-JJJJ-MM-TT“ bzw. „Verlaufname-JJJJ-MM-TT“ hinzu."/>
+			<check_box name="FSUseBuiltInHistory" label="Integrierte Verlaufsansicht verwenden" tool_tip="Verwendet den integrierten Betrachter für Verläufe. Falls deaktiviert, wird der standardmäßige Texteditor des Betriebssystems verwendet."/>
 			<button label="Ignorierte Einwohner/Objekte" name="block_list" width="180"/>
 		</panel>
 
@@ -65,15 +70,19 @@
 		<!--Autoresponse-->
 		<panel label="Automatische Antwort" name="tab-autoresponse">
 			<text name="text_box3">
-				Automatische Antwort wenn im "Beschäftigt"-Modus:
+				Automatische Antwort wenn im „Beschäftigt“-Modus:
 			</text>
 			<text name="autorespond_response_label">
-				Automatische Antwort für Onlinestatus "Automatische Antwort":
+				Automatische Antwort für Onlinestatus „Automatische Antwort“:
 			</text>
 			<text name="autorespond_nf_response_label">
-				Automatische Antwort für Onlinestatus "Automatische Antwort an Nicht-Freunde":
+				Automatische Antwort für Onlinestatus „Automatische Antwort an Nicht-Freunde“:
 			</text>
-			<check_box label="Automatische Antwort an geblockte Avatare senden" name="send_muted_av_response" tool_tip="Sendet den unten stehenden Text an die geblockte Person, wenn sie eine Instant Message schickt."/>
+			<text name="autorespond_rto_response_label">
+				Automatische Antwort für Onlinestatus „Automatisch Teleport-Angebote abweisen“:
+			</text>
+			<check_box label="Automatische Antwort an geblockte Avatare senden:" name="send_muted_av_response" tool_tip="Sendet den unten stehenden Text an die geblockte Person, wenn sie eine Instant Message schickt."/>
+			<check_box label="Automatische Antwort während des „Abwesend“-Modus senden:" name="send_away_av_response" tool_tip="Sendet den unten stehenden Text an jemanden, wenn sie eine Instant Message während des „Abwesend“-Modus schickt."/>
 		</panel>
 	</tab_container>
 </panel>

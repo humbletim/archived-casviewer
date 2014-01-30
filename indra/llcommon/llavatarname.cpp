@@ -30,6 +30,7 @@
 #include "llavatarname.h"
 
 #include "lldate.h"
+#include "llframetimer.h"
 #include "llsd.h"
 
 // Store these in pre-built std::strings to avoid memory allocations in
@@ -41,6 +42,16 @@ static const std::string LEGACY_LAST_NAME("legacy_last_name");
 static const std::string IS_DISPLAY_NAME_DEFAULT("is_display_name_default");
 static const std::string DISPLAY_NAME_EXPIRES("display_name_expires");
 static const std::string DISPLAY_NAME_NEXT_UPDATE("display_name_next_update");
+
+bool LLAvatarName::sUseDisplayNames = true;
+bool LLAvatarName::sUseLegacyNameFormat = false;	// <FS:CR> Legacy name option
+bool LLAvatarName::sTrimResidentSurname = true;		// FIRE-6659 - Trim "Resident" from legacy name
+
+// Minimum time-to-live (in seconds) for a name entry.
+// Avatar name should always guarantee to expire reasonably soon by default
+// so if the failure to get a valid expiration time was due to something temporary 
+// we will eventually request and get the right data.
+const F64 MIN_ENTRY_LIFETIME = 60.0;
 
 LLAvatarName::LLAvatarName()
 :	mUsername(),
@@ -59,6 +70,17 @@ bool LLAvatarName::operator<(const LLAvatarName& rhs) const
 		return mDisplayName < rhs.mDisplayName;
 	else
 		return mUsername < rhs.mUsername;
+}
+
+//static 
+void LLAvatarName::setUseDisplayNames(bool use)
+{
+	sUseDisplayNames = use;
+}
+//static 
+bool LLAvatarName::useDisplayNames() 
+{ 
+	return sUseDisplayNames; 
 }
 
 LLSD LLAvatarName::asLLSD() const
@@ -85,21 +107,100 @@ void LLAvatarName::fromLLSD(const LLSD& sd)
 	mExpires = expires.secondsSinceEpoch();
 	LLDate next_update = sd[DISPLAY_NAME_NEXT_UPDATE];
 	mNextUpdate = next_update.secondsSinceEpoch();
+	
+	// Some avatars don't have explicit display names set. Force a legible display name here.
+	if (mDisplayName.empty())
+	{
+		mDisplayName = mUsername;
+	}
+}
+
+// Transform a string (typically provided by the legacy service) into a decent
+// avatar name instance.
+void LLAvatarName::fromString(const std::string& full_name)
+{
+	mDisplayName = full_name;
+	std::string::size_type index = full_name.find(' ');
+	if (index != std::string::npos)
+	{
+		// The name is in 2 parts (first last)
+		mLegacyFirstName = full_name.substr(0, index);
+		mLegacyLastName = full_name.substr(index+1);
+		// <FS:CR> FIRE-6659 - Trim "Resident" from legacy name
+		//if (mLegacyLastName != "Resident")
+		if ((mLegacyLastName != "Resident") && sTrimResidentSurname)
+		// </FS:CR>
+		{
+			mUsername = mLegacyFirstName + "." + mLegacyLastName;
+			mDisplayName = full_name;
+			LLStringUtil::toLower(mUsername);
+		}
+		else
+		{
+			// Very old names do have a dummy "Resident" last name 
+			// that we choose to hide from users.
+			mUsername = mLegacyFirstName;
+			mDisplayName = mLegacyFirstName;
+		}
+	}
+	else
+	{
+		mLegacyFirstName = full_name;
+		mLegacyLastName = "";
+		mUsername = full_name;
+		mDisplayName = full_name;
+	}
+	mIsDisplayNameDefault = true;
+	mIsTemporaryName = true;
+	setExpires(MIN_ENTRY_LIFETIME);
+}
+
+void LLAvatarName::setExpires(F64 expires)
+{
+	mExpires = LLFrameTimer::getTotalSeconds() + expires;
 }
 
 std::string LLAvatarName::getCompleteName() const
 {
 	std::string name;
-	if (mUsername.empty() || mIsDisplayNameDefault)
-	// If the display name feature is off
-	// OR this particular display name is defaulted (i.e. based on user name),
-	// then display only the easier to read instance of the person's name.
+	if (sUseDisplayNames)
 	{
-		name = mDisplayName;
+		if (mUsername.empty() || mIsDisplayNameDefault)
+		{
+			// If this particular display name is defaulted (i.e. based on user name),
+			// then display only the easier to read instance of the person's name.
+			// <FS:CR> FIRE-6659 - Trim "Resident" from legacy name
+			if (sTrimResidentSurname || mLegacyFirstName.empty())
+				name = mDisplayName;
+			else if (mLegacyLastName.empty())
+				name = mLegacyFirstName + " Resident";
+			else
+				name = mLegacyFirstName + " " + mLegacyLastName;
+			// </FS:CR>
+		}
+		// <FS:CR> Option to show legacy name format instead of username
+		else if (sUseLegacyNameFormat)
+		{
+			// FIRE-6659
+			if (sTrimResidentSurname && (mLegacyLastName == "Resident" || mLegacyLastName.empty()))
+				name = mDisplayName + " (" + mLegacyFirstName + ")";
+			else if (mLegacyLastName.empty() && !sTrimResidentSurname)
+				name = mDisplayName + " (" + mLegacyLastName + " Resident)";
+			else
+				name = mDisplayName + " (" + mLegacyFirstName + " " + mLegacyLastName + ")";
+		}
+		// </FS:CR>
+		else
+		{
+			name = mDisplayName + " (" + mUsername + ")";
+		}
 	}
 	else
 	{
-		name = mDisplayName + " (" + mUsername + ")";
+		// <FS:CR> FIRE-6659 - Trim "Resident" from legacy name
+		//return getUserName();
+		return  getUserNameForDisplay();
+		// </FS:CR>
 	}
 	return name;
 }
@@ -118,3 +219,77 @@ std::string LLAvatarName::getLegacyName() const
 	name += mLegacyLastName;
 	return name;
 }
+
+std::string LLAvatarName::getDisplayName() const
+{
+	if (sUseDisplayNames)
+	{
+		return mDisplayName;
+	}
+	else
+	{
+		// <FS:CR> FIRE-6659 - Trim "Resident" from legacy name
+		//return getUserName();
+		return  getUserNameForDisplay();
+		// </FS:CR>
+	}
+}
+
+std::string LLAvatarName::getUserName() const
+{
+	std::string name;
+	if (mLegacyLastName.empty() || (mLegacyLastName == "Resident"))
+	{
+		if (mLegacyFirstName.empty())
+		{
+			// If we cannot create a user name from the legacy strings, use the display name
+			name = mDisplayName;
+		}
+		else
+		{
+			// The last name might be empty if it defaulted to "Resident"
+			name = mLegacyFirstName;
+		}
+	}
+	else
+	{
+		name = mLegacyFirstName + " " + mLegacyLastName;
+	}
+	return name;
+}
+
+// <FS:CR> Returns the same as getUserName() but honors sTrimResidentSurname
+std::string LLAvatarName::getUserNameForDisplay() const
+{
+	std::string name;
+	if (mLegacyFirstName.empty() && mLegacyLastName.empty())
+	{
+		// If we cannot create a user name from the legacy strings, use the display name
+		name = mDisplayName;
+	}
+	else if ((mLegacyLastName.empty() || (mLegacyLastName == "Resident")) && sTrimResidentSurname)
+	{
+		// The last name might be empty if it defaulted to "Resident"
+		name = mLegacyFirstName;
+	}
+	else if (mLegacyLastName.empty() && !sTrimResidentSurname)
+	{
+		name = mLegacyFirstName + " Resident";
+	}
+	else
+	{
+		name = mLegacyFirstName + " " + mLegacyLastName;
+	}
+	return name;
+}
+// </FS:CR>
+
+void LLAvatarName::dump() const
+{
+	LL_DEBUGS("AvNameCache") << "LLAvatarName: "
+	                         << "user '" << mUsername << "' "
+							 << "display '" << mDisplayName << "' "
+	                         << "expires in " << mExpires - LLFrameTimer::getTotalSeconds() << " seconds"
+							 << LL_ENDL;
+}
+

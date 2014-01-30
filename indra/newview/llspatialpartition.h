@@ -72,12 +72,12 @@ public:
 
 	// void* operator new(size_t size)
 	// {
-	// 	return ll_aligned_malloc_16(size);
+	// 	return ll_aligned_malloc(size,64);
 	// }
 
 	// void operator delete(void* ptr)
 	// {
-	// 	ll_aligned_free_16(ptr);
+	// 	ll_aligned_free(ptr);
 	// }
 
 	void* operator new(size_t size);
@@ -118,6 +118,7 @@ public:
 	U32 mOffset;
 	BOOL mFullbright;
 	U8 mBump;
+	U8 mShiny;
 	BOOL mParticle;
 	F32 mPartSize;
 	F32 mVSize;
@@ -125,6 +126,21 @@ public:
 	LL_ALIGN_16(LLFace* mFace); //associated face
 	F32 mDistance;
 	U32 mDrawMode;
+	LLMaterialPtr mMaterial; // If this is null, the following parameters are unused.
+	LLMaterialID mMaterialID;
+	U32 mShaderMask;
+	U32 mBlendFuncSrc;
+	U32 mBlendFuncDst;
+	BOOL mHasGlow;
+	LLPointer<LLViewerTexture> mSpecularMap;
+	const LLMatrix4* mSpecularMapMatrix;
+	LLPointer<LLViewerTexture> mNormalMap;
+	const LLMatrix4* mNormalMapMatrix;
+	LLVector4 mSpecColor; // XYZ = Specular RGB, W = Specular Exponent
+	F32  mEnvIntensity;
+	F32  mAlphaMaskCutoff;
+	U8   mDiffuseAlphaMode;
+
 
 	struct CompareTexture
 	{
@@ -175,7 +191,7 @@ public:
 		}
 
 	};
-
+	
 	struct CompareBump
 	{
 		bool operator()(const LLPointer<LLDrawInfo>& lhs, const LLPointer<LLDrawInfo>& rhs) 
@@ -197,7 +213,7 @@ public:
 	};
 };
 
-LL_ALIGN_PREFIX(16)
+LL_ALIGN_PREFIX(64)
 class LLSpatialGroup : public LLOctreeListener<LLDrawable>
 {
 	friend class LLSpatialPartition;
@@ -483,16 +499,16 @@ public:
 	LLSpatialGroup *put(LLDrawable *drawablep, BOOL was_visible = FALSE);
 	BOOL remove(LLDrawable *drawablep, LLSpatialGroup *curp);
 	
-	LLDrawable* lineSegmentIntersect(const LLVector3& start, const LLVector3& end,
+	LLDrawable* lineSegmentIntersect(const LLVector4a& start, const LLVector4a& end,
 									 BOOL pick_transparent, 
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
 									 BOOL pick_rigged,
 // [/SL:KB]
 									 S32* face_hit,                          // return the face hit
-									 LLVector3* intersection = NULL,         // return the intersection point
+									 LLVector4a* intersection = NULL,         // return the intersection point
 									 LLVector2* tex_coord = NULL,            // return the texture coordinates of the intersection point
-									 LLVector3* normal = NULL,               // return the surface normal at the intersection point
-									 LLVector3* bi_normal = NULL             // return the surface bi-normal at the intersection point
+									 LLVector4a* normal = NULL,               // return the surface normal at the intersection point
+									 LLVector4a* tangent = NULL             // return the surface tangent at the intersection point
 		);
 	
 	
@@ -748,7 +764,7 @@ class LLVolumeGeometryManager: public LLGeometryManager
 	virtual void rebuildGeom(LLSpatialGroup* group);
 	virtual void rebuildMesh(LLSpatialGroup* group);
 	virtual void getGeometry(LLSpatialGroup* group);
-	void genDrawInfo(LLSpatialGroup* group, U32 mask, std::vector<LLFace*>& faces, BOOL distance_sort = FALSE, BOOL batch_textures = FALSE);
+	void genDrawInfo(LLSpatialGroup* group, U32 mask, LLFace** faces, U32 face_count, BOOL distance_sort = FALSE, BOOL batch_textures = FALSE, BOOL no_materials = FALSE);
 	void registerFace(LLSpatialGroup* group, LLFace* facep, U32 type);
 };
 

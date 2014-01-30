@@ -78,6 +78,7 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 #include "llmutelist.h"
+#include "lfsimfeaturehandler.h"
 
 // Ansariel: For accessing the radar data
 #include "fsradar.h"
@@ -557,8 +558,13 @@ void LLNetMap::draw()
 		// Draw avatars
 		for (U32 i = 0; i < avatar_ids.size(); i++)
 		{
-			pos_map = globalPosToView(positions[i]);
+			// <FS:CR> FIRE-11118 - skip our dot, we'll draw one later.
+			//pos_map = globalPosToView(positions[i]);
 			LLUUID uuid = avatar_ids[i];
+			if (uuid == gAgent.getID())
+				continue;
+			pos_map = globalPosToView(positions[i]);
+			// </FS:CR>
 
 			// <FS:Ansariel> Check for unknown Z-offset => AVATAR_UNKNOWN_Z_OFFSET
 			//unknown_relative_z = positions[i].mdV[VZ] == COARSEUPDATE_MAX_Z &&
@@ -716,12 +722,12 @@ void LLNetMap::draw()
 			static LLUICachedControl<bool> chat_ring("MiniMapChatRing", true);
 			if(chat_ring)
 			{
-// <FS:CR> Aurora Sim
+// <FS:CR> Opensim
 				//drawRing(20.0, pos_map, map_chat_ring_color);
 				//drawRing(100.0, pos_map, map_shout_ring_color);
-				drawRing(LLWorld::getInstance()->getSayDistance(), pos_map, map_chat_ring_color);
-				drawRing(LLWorld::getInstance()->getShoutDistance(), pos_map, map_shout_ring_color);
-// </FS:CR> Aurora Sim
+				drawRing(LFSimFeatureHandler::getInstance()->sayRange(), pos_map, map_chat_ring_color);
+				drawRing(LFSimFeatureHandler::getInstance()->shoutRange(), pos_map, map_shout_ring_color);
+// </FS:CR> Opensim
 			}
 		}
 
@@ -824,7 +830,7 @@ void LLNetMap::drawRing(const F32 radius, const LLVector3 pos_map, const LLUICol
 // </FS:CR> Aurora Sim
 	F32 radius_pixels = radius * meters_to_pixels;
 
-	glMatrixMode(GL_MODELVIEW);
+	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.pushMatrix();
 	gGL.translatef((F32)pos_map.mV[VX], (F32)pos_map.mV[VY], 0.f);
 	gl_ring(radius_pixels, WIDTH_PIXELS, color, color, CIRCLE_STEPS, FALSE);

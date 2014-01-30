@@ -55,7 +55,7 @@
 
 const S32 LLToastGroupNotifyPanel::DEFAULT_MESSAGE_MAX_LINE_COUNT	= 7;
 
-LLToastGroupNotifyPanel::LLToastGroupNotifyPanel(LLNotificationPtr& notification)
+LLToastGroupNotifyPanel::LLToastGroupNotifyPanel(const LLNotificationPtr& notification)
 :	LLToastPanel(notification),
 	mInventoryOffer(NULL)
 {
@@ -75,10 +75,11 @@ LLToastGroupNotifyPanel::LLToastGroupNotifyPanel(LLNotificationPtr& notification
 
 	//header title
 	std::string from_name = payload["sender_name"].asString();
-	if (LLAvatarNameCache::useDisplayNames())
-	{
-		from_name = LLCacheName::buildUsername(from_name);
-	}
+	// <FS:CR> Let the user decide how they want to see names
+	//from_name = LLCacheName::buildUsername(from_name);
+	from_name = gSavedSettings.getBOOL("FSNameTagShowLegacyUsernames") ? LLCacheName::buildLegacyName(from_name) : LLCacheName::buildUsername(from_name);
+	// </FS:CR>
+
 	std::string from;
 	LLStringUtil::format_map_t args;
 	args["[SENDER]"] = from_name;
@@ -123,7 +124,7 @@ LLToastGroupNotifyPanel::LLToastGroupNotifyPanel(LLNotificationPtr& notification
 		style.font = date_font;
 	pMessageText->appendText(timeStr + "\n", TRUE, style);
 	
-	style.font = pMessageText->getDefaultFont();
+	style.font = pMessageText->getFont();
 	pMessageText->appendText(message, TRUE, style);
 
 	//attachment

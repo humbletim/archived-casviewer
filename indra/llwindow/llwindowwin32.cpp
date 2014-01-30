@@ -160,9 +160,8 @@ LLWinImm LLWinImm::sTheInstance;
 LLWinImm::LLWinImm() : mHImmDll(NULL)
 {
 	// Check system metrics 
-	if ( !GetSystemMetrics( SM_DBCSENABLED ) )
+	if ( !GetSystemMetrics( SM_IMMENABLED ) )
 		return;
-	
 
 	mHImmDll = LoadLibraryA("Imm32");
 	if (mHImmDll != NULL)
@@ -358,11 +357,12 @@ LLWinImm::~LLWinImm()
 }
 
 
+// <CV:David> Added output_type parameter.
 LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 							 const std::string& title, const std::string& name, S32 x, S32 y, S32 width,
 							 S32 height, U32 flags, 
 							 BOOL fullscreen, BOOL clearBg,
-							 BOOL disable_vsync,
+							 BOOL disable_vsync, BOOL use_gl,
 							 BOOL ignore_pixel_depth,
 							 U32 fsaa_samples,
 							 U32 output_type)
@@ -748,7 +748,8 @@ void LLWindowWin32::close()
 	LL_DEBUGS("Window") << "Destroying Window" << LL_ENDL;
 	
 	// Don't process events in our mainWindowProc any longer.
-	SetWindowLong(mWindowHandle, GWL_USERDATA, NULL);
+	// SetWindowLong(mWindowHandle, GWL_USERDATA, NULL);
+	SetWindowLongPtr(mWindowHandle, GWLP_USERDATA, NULL);
 
 	// Make sure we don't leave a blank toolbar button.
 	ShowWindow(mWindowHandle, SW_HIDE);
@@ -1565,7 +1566,8 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		LL_DEBUGS("Window") << "Keeping vertical sync" << LL_ENDL;
 	}
 
-	SetWindowLong(mWindowHandle, GWL_USERDATA, (U32)this);
+	// SetWindowLong(mWindowHandle, GWL_USERDATA, (U32)this);
+	SetWindowLongPtr(mWindowHandle, GWLP_USERDATA, (LONG_PTR)this);
 
 	// register this window as handling drag/drop events from the OS
 	DragAcceptFiles( mWindowHandle, TRUE );
@@ -1884,8 +1886,8 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 	// This helps prevent avatar walking after maximizing the window by double-clicking the title bar.
 	static bool sHandleLeftMouseUp = true;
 
-	LLWindowWin32 *window_imp = (LLWindowWin32 *)GetWindowLong(h_wnd, GWL_USERDATA);
-
+	// LLWindowWin32 *window_imp = (LLWindowWin32 *)GetWindowLong(h_wnd, GWL_USERDATA);
+	LLWindowWin32 *window_imp = (LLWindowWin32 *)GetWindowLongPtr(h_wnd, GWLP_USERDATA);
 
 	if (NULL != window_imp)
 	{
@@ -2878,14 +2880,17 @@ BOOL LLWindowWin32::getClientRectInScreenSpace( RECT* rectp )
 
 void LLWindowWin32::flashIcon(F32 seconds)
 {
-	FLASHWINFO flash_info;
+	if (getMinimized()) // <FS:CR> Moved this here from llviewermessage.cpp
+	{
+		FLASHWINFO flash_info;
 
-	flash_info.cbSize = sizeof(FLASHWINFO);
-	flash_info.hwnd = mWindowHandle;
-	flash_info.dwFlags = FLASHW_TRAY;
-	flash_info.uCount = UINT(seconds / ICON_FLASH_TIME);
-	flash_info.dwTimeout = DWORD(1000.f * ICON_FLASH_TIME); // milliseconds
-	FlashWindowEx(&flash_info);
+		flash_info.cbSize = sizeof(FLASHWINFO);
+		flash_info.hwnd = mWindowHandle;
+		flash_info.dwFlags = FLASHW_TRAY;
+		flash_info.uCount = UINT(seconds / ICON_FLASH_TIME);
+		flash_info.dwTimeout = DWORD(1000.f * ICON_FLASH_TIME); // milliseconds
+		FlashWindowEx(&flash_info);
+	}
 }
 
 F32 LLWindowWin32::getGamma()
@@ -3579,19 +3584,11 @@ void LLWindowWin32::updateLanguageTextInputArea()
 
 void LLWindowWin32::interruptLanguageTextInput()
 {
-	if (mPreeditor)
+	if (mPreeditor && LLWinImm::isAvailable())
 	{
-		if (LLWinImm::isAvailable())
-		{
-			HIMC himc = LLWinImm::getContext(mWindowHandle);
-			LLWinImm::notifyIME(himc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
-			LLWinImm::releaseContext(mWindowHandle, himc);
-		}
-
-		// Win32 document says there will be no composition string
-		// after NI_COMPOSITIONSTR returns.  The following call to
-		// resetPreedit should be a NOP unless IME goes mad...
-		mPreeditor->resetPreedit();
+		HIMC himc = LLWinImm::getContext(mWindowHandle);
+		LLWinImm::notifyIME(himc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
+		LLWinImm::releaseContext(mWindowHandle, himc);
 	}
 }
 

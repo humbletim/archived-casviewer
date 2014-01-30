@@ -80,6 +80,7 @@ struct FSObjectProperties
 	uuid_vec_t texture_ids;
 	bool name_requested;
 	U32 local_id;
+	U64 region_handle;
 	
 	typedef enum e_object_properties_request
 	{
@@ -141,8 +142,10 @@ public:
 	void setBeacons(bool b) { mBeacons = b; }
 	
 	void setExcludeAttachment(bool b) { mExcludeAttachment = b; }
-	void setExcludeTempary(bool b) { mExcludeTempary = b; }
+	void setExcludetemporary(bool b) { mExcludeTemporary = b; }
 	void setExcludePhysics(bool b) { mExcludePhysics = b; }
+	void setExcludeChildPrims(bool b) { mExcludeChildPrims = b; }
+	void setExcludeNeighborRegions(bool b) { mExcludeNeighborRegions = b; }
 	
 	void setFilterForSaleMin(S32 s) { mFilterForSaleMin = s; }
 	void setFilterForSaleMax(S32 s) { mFilterForSaleMax = s; }
@@ -161,9 +164,11 @@ public:
 	void setColumnGroup(bool b) { mColumnGroup = b; }
 	void setColumnCreator(bool b) { mColumnCreator = b; }
 	void setColumnLastOwner(bool b) { mColumnLastOwner = b; }
+	
+	bool isActive() { return mActive; }
 
 private:
-	void requestObjectProperties(const std::vector<U32>& request_list, bool select);
+	void requestObjectProperties(const std::vector< U32 >& request_list, bool select, LLViewerRegion* regionp);
 	void matchObject(FSObjectProperties& details, LLViewerObject* objectp);
 	void getNameFromUUID(LLUUID& id, std::string& name, BOOL group, bool& name_requested);
 
@@ -178,7 +183,7 @@ private:
 	bool mActive;
 	bool mRequestQueuePause;
 	bool mRequestNeedsSent;
-	S32 mOutstandingRequests;
+	std::map<U64,S32> mRegionRequests;
 
 	std::string mSearchName;
 	std::string mSearchDescription;
@@ -223,8 +228,10 @@ private:
 	S32 mBeaconLineWidth;
 	
 	bool mExcludeAttachment;
-	bool mExcludeTempary;
+	bool mExcludeTemporary;
 	bool mExcludePhysics;
+	bool mExcludeChildPrims;
+	bool mExcludeNeighborRegions;
 
 	bool mFilterLocked;
 	bool mFilterPhysicial;
@@ -376,7 +383,9 @@ private:
 	LLCheckBoxCtrl* mCheckboxAttachment;
 	LLCheckBoxCtrl* mCheckboxExcludeAttachment;
 	LLCheckBoxCtrl* mCheckboxExcludePhysics;
-	LLCheckBoxCtrl* mCheckboxExcludeTempary;
+	LLCheckBoxCtrl* mCheckboxExcludetemporary;
+	LLCheckBoxCtrl* mCheckboxExcludeChildPrim;
+	LLCheckBoxCtrl* mCheckboxExcludeNeighborRegions;
 };
 
 

@@ -237,8 +237,18 @@ void LLPanelTopInfoBar::buildLocationString(std::string& loc_str, bool show_coor
 void LLPanelTopInfoBar::setParcelInfoText(const std::string& new_text)
 {
 	LLRect old_rect = getRect();
-	const LLFontGL* font = mParcelInfoText->getDefaultFont();
+	const LLFontGL* font = mParcelInfoText->getFont();
 	S32 new_text_width = font->getWidth(new_text);
+
+	//<FS:TS> Avoid processing the parcel string every frame if it
+	// hasn't changed.
+	static std::string old_text = "";
+	if (new_text == old_text)
+	{
+		return;
+	}
+	old_text = new_text;
+	//</FS:TS>
 
 	mParcelInfoText->setText(new_text);
 

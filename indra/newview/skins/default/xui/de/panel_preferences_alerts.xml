@@ -9,6 +9,7 @@
 	</text>
 	<check_box label="Wenn ich L$ ausgebe oder erhalte" name="notify_money_change_checkbox"/>
 	<check_box left_pad="5" name="FSPaymentInfoInChat" label="Bei L$-Transaktionen im lokalen Chat benachrichtigen"/>
+	<check_box label="Wenn ich beim Hochladen Geld bezahlen muss" name="FSShowUploadPaymentToast"/>
 	<check_box label="Wenn eine Landmarke erstellt wurde" name="landmark_created_checkbox"/>
 	<check_box label="Wenn jemand seinen Displaynamen ändert" name="FSShowDisplayNameUpdateNotification"/>
 	<check_box label="Skriptfehler anzeigen in:" name="show_script_errors"/>
@@ -32,6 +33,9 @@
 	<check_box label="Kollisionsmeldungen im Chat in der Nähe anzeigen" name="FSCollisionMessagesInChat"/>
 	<check_box label="Kollisionsmeldungen an Skripte senden. Kanal:" name="FSReportCollisionMessages"/>
 	<spinner name="FSReportCollisionMessagesChannel" tool_tip="Der Kanal, der verwendet wird, um Kollisionsmeldungen an Skripte zu senden [Standard: -25000]"/>
+	<check_box label="Anwendungsicon blinkt bei neuen Nachrichten, wenn [APP_NAME] keinen Fokus besitzt" name="FSFlashOnMessage"/>
+	<check_box label="Anwendungsicon blinkt bei neuen Skriptdialogen, wenn [APP_NAME] keinen Fokus besitzt" name="FSFlashOnScriptDialog"/>
+	<check_box label="Objekt-Rückgabe-Benachrichtung deaktivieren" name="FSDisableReturnObjectNotification"/>
 	<check_box label="Growl-Benachrichtigungen aktivieren" name="notify_growl_checkbox"/>
 	<check_box label="Growl nutzen auch wenn CtrlAltStudio Viewer aktiv ist" name="notify_growl_always_checkbox"/>
     </panel>

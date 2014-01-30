@@ -81,6 +81,7 @@
 #include "llregionhandle.h"
 
 #include "llworld.h" // <FS:Ansariel> For FIRE-1292
+#include "llsdutil.h"
 #ifdef OPENSIM
 #include "llviewernetwork.h"
 #endif // OPENSIM
@@ -1095,6 +1096,8 @@ void LLPanelLandGeneral::onCommitAny(LLUICtrl *ctrl, void *userdata)
 void LLPanelLandGeneral::onClickSellLand(void* data)
 {
 	LLViewerParcelMgr::getInstance()->startSellLand();
+	LLPanelLandGeneral *panelp = (LLPanelLandGeneral *)data;
+	panelp->refresh();
 }
 
 // static
@@ -2155,6 +2158,10 @@ void LLPanelLandOptions::refresh()
 		mSnapshotCtrl->setImageAssetID(parcel->getSnapshotID());
 		mSnapshotCtrl->setEnabled( can_change_identity );
 
+		// find out where we're looking and convert that to an angle in degrees on a regular compass (not the internal representation)
+		LLVector3 user_look_at = parcel->getUserLookAt();
+		U32 user_look_at_angle = ( (U32)( ( atan2(user_look_at[1], -user_look_at[0]) + F_PI * 2 ) * RAD_TO_DEG + 0.5) - 90) % 360;
+
 		LLVector3 pos = parcel->getUserLocation();
 		if (pos.isExactlyZero())
 		{
@@ -2162,10 +2169,11 @@ void LLPanelLandOptions::refresh()
 		}
 		else
 		{
-			mLocationText->setTextArg("[LANDING]",llformat("%d, %d, %d",
+			mLocationText->setTextArg("[LANDING]",llformat("%d, %d, %d (%d\xC2\xB0)",
 														   llround(pos.mV[VX]),
 														   llround(pos.mV[VY]),
-														   llround(pos.mV[VZ])));
+		   												   llround(pos.mV[VZ]),
+														   user_look_at_angle));
 		}
 
 		mSetBtn->setEnabled( can_change_landing_point );
@@ -2234,6 +2242,10 @@ S32 LLPanelLandOptions::getDirectoryFee()
 #ifdef OPENSIM
 	if (LLGridManager::getInstance()->isInOpenSim())
 	{
+		fee = LLGridManager::getInstance()->getDirectoryFee();
+	}
+	if (LLGridManager::getInstance()->isInAuroraSim())
+	{
 		LLSD grid_info;
 		LLGridManager::getInstance()->getGridData(grid_info);
 		fee = grid_info[GRID_DIRECTORY_FEE].asInteger();
@@ -2275,7 +2287,7 @@ void LLPanelLandOptions::refreshSearch()
 
 	bool can_change =
 			LLViewerParcelMgr::isParcelModifiableByAgent(
-				parcel, GP_LAND_CHANGE_IDENTITY)
+				parcel, GP_LAND_FIND_PLACES)
 			&& region
 			&& !(region->getRegionFlag(REGION_FLAGS_BLOCK_PARCEL_SEARCH));
 
@@ -2901,11 +2913,13 @@ void LLPanelLandAccess::onCommitAny(LLUICtrl *ctrl, void *userdata)
 
 void LLPanelLandAccess::onClickAddAccess()
 {
+    LLView * button = findChild<LLButton>("add_allowed");
+    LLFloater * root_floater = gFloaterView->getParentFloater(this);
 	LLFloaterAvatarPicker* picker = LLFloaterAvatarPicker::show(
-		boost::bind(&LLPanelLandAccess::callbackAvatarCBAccess, this, _1));
+		boost::bind(&LLPanelLandAccess::callbackAvatarCBAccess, this, _1), FALSE, FALSE, FALSE, root_floater->getName(), button);
 	if (picker)
 	{
-		gFloaterView->getParentFloater(this)->addDependentFloater(picker);
+		root_floater->addDependentFloater(picker);
 	}
 }
 
@@ -2950,11 +2964,13 @@ void LLPanelLandAccess::onClickRemoveAccess(void* data)
 // static
 void LLPanelLandAccess::onClickAddBanned()
 {
+    LLView * button = findChild<LLButton>("add_banned");
+    LLFloater * root_floater = gFloaterView->getParentFloater(this);
 	LLFloaterAvatarPicker* picker = LLFloaterAvatarPicker::show(
-		boost::bind(&LLPanelLandAccess::callbackAvatarCBBanned, this, _1));
+		boost::bind(&LLPanelLandAccess::callbackAvatarCBBanned, this, _1), FALSE, FALSE, FALSE, root_floater->getName(), button);
 	if (picker)
 	{
-		gFloaterView->getParentFloater(this)->addDependentFloater(picker);
+		root_floater->addDependentFloater(picker);
 	}
 }
 
@@ -3002,6 +3018,11 @@ void LLPanelLandAccess::onClickRemoveBanned(void* data)
 //---------------------------------------------------------------------------
 LLPanelLandCovenant::LLPanelLandCovenant(LLParcelSelectionHandle& parcel)
 	: LLPanel(),
+	  // <FS:Zi> Fix covenant loading slowdowns
+	  mCovenantChanged(true),
+	  mCovenantRequested(false),
+	  mPreviousRegion(NULL),
+	  // <FS:Zi>
 	  mParcel(parcel)
 {	
 }
@@ -3016,6 +3037,20 @@ void LLPanelLandCovenant::refresh()
 	LLViewerRegion* region = LLViewerParcelMgr::getInstance()->getSelectionRegion();
 	if(!region) return;
 		
+	// <FS:Zi> Fix covenant loading slowdowns
+	// Only refresh the covenant panel when we are looking at a different region now
+	if(region==mPreviousRegion)
+	{
+		return;
+	}
+
+	// We save the region pointer only here so a NULL region does not update mPreviousRegion.
+	// This means we don't update the covenant even when the user right clicked somewhere that
+	// invalidated the About Land floater. The covenant page does not clean up its elements,
+	// so the last region's data is still showing. -Zi
+	mPreviousRegion=region;
+	// </FS:Zi>
+
 	LLTextBox* region_name = getChild<LLTextBox>("region_name_text");
 	if (region_name)
 	{
@@ -3057,6 +3092,15 @@ void LLPanelLandCovenant::refresh()
 		}
 	}
 	
+	// <FS:Zi> Fix covenant loading slowdowns
+	// only request a covenant when we are not already waiting for one
+	if(mCovenantRequested)
+	{
+		return;
+	}
+	mCovenantRequested=true;
+	// </FS:Zi>
+
 	// send EstateCovenantInfo message
 	LLMessageSystem *msg = gMessageSystem;
 	msg->newMessage("EstateCovenantRequest");
@@ -3070,7 +3114,16 @@ void LLPanelLandCovenant::refresh()
 void LLPanelLandCovenant::updateCovenantText(const std::string &string)
 {
 	LLPanelLandCovenant* self = LLFloaterLand::getCurrentPanelLandCovenant();
-	if (self)
+	// <FS:Zi> Fix covenant loading slowdowns
+	// if (self)
+	// covenant received, allow requesting another one next time
+	self->mCovenantRequested=false;
+
+	// Only update covenant when Last Modified was found to be different and
+	// we still have a parcel selected. "Last Modified" will always be set before
+	// the covenant (see llviewermessage.cpp, process_covenant_reply()) -Zi
+	if(self && self->mCovenantChanged && self->mParcel->getParcel())
+	// </FS:Zi>
 	{
 		LLViewerTextEditor* editor = self->getChild<LLViewerTextEditor>("covenant_editor");
 		editor->setText(string);
@@ -3092,10 +3145,32 @@ void LLPanelLandCovenant::updateEstateName(const std::string& name)
 void LLPanelLandCovenant::updateLastModified(const std::string& text)
 {
 	LLPanelLandCovenant* self = LLFloaterLand::getCurrentPanelLandCovenant();
-	if (self)
+	// <FS:Zi> Fix covenant loading slowdowns
+	// if (self)
+
+	// only update the last modified field when we still have no parcel selected
+	if(self && self->mParcel->getParcel())
 	{
+	// </FS:Zi>
 		LLTextBox* editor = self->getChild<LLTextBox>("covenant_timestamp_text");
-		if (editor) editor->setText(text);
+		// <FS:Zi> Fix covenant loading slowdowns
+		// if (editor) editor->setText(text);
+		if(editor)
+		{
+			// check if Last Modified is different from before
+			if(editor->getText()!=text)
+			{
+				// Update Last Modified field and remember to allow covenant to change
+				editor->setText(text);
+				self->mCovenantChanged=true;
+			}
+			else
+			{
+				// Last Modified was the same, so don't allow the covenant to change
+				self->mCovenantChanged=false;
+			}
+		}
+		// </FS:Zi>
 	}
 }
 

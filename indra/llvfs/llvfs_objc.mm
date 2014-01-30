@@ -48,7 +48,7 @@ std::string* findSystemDirectory(NSSearchPathDirectory searchPathDirectory,
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     
-    std::string *result;
+    std::string *result = NULL;
     NSString *path = nil;
     
     // Search for the path
@@ -58,7 +58,7 @@ std::string* findSystemDirectory(NSSearchPathDirectory searchPathDirectory,
     if ([paths count])
     {
         path = [paths objectAtIndex:0];
-        //SPATTERS HACK:  Always attempt to create directory, ignore errors.
+        //HACK:  Always attempt to create directory, ignore errors.
         NSError *error = nil;
 
         [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error];

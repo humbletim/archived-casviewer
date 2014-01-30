@@ -546,6 +546,7 @@ void LLVoiceClient::setMuteMic(bool muted)
 {
 	mMuteMic = muted;
 	updateMicMuteLogic();
+	mMicroChangedSignal();
 }
 
 
@@ -556,6 +557,7 @@ void LLVoiceClient::setUserPTTState(bool ptt)
 {
 	mUserPTTState = ptt;
 	updateMicMuteLogic();
+	mMicroChangedSignal();
 }
 
 bool LLVoiceClient::getUserPTTState()
@@ -717,14 +719,7 @@ BOOL LLVoiceClient::isParticipantAvatar(const LLUUID& id)
 
 BOOL LLVoiceClient::isOnlineSIP(const LLUUID& id)
 {
-	if (mVoiceModule) 
-	{
-		return mVoiceModule->isOnlineSIP(id);
-	}
-	else
-	{
 		return FALSE;
-	}
 }
 
 BOOL LLVoiceClient::getIsSpeaking(const LLUUID& id)

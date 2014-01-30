@@ -135,6 +135,13 @@ public:
 	void removeFromMap(LLViewerObject *objectp);
 
 	void clearDebugText();
+	
+	// <FS:CR> Import
+	typedef boost::function<bool (LLViewerObject* object)> new_object_callback_t;
+	typedef boost::signals2::signal<bool (LLViewerObject* object)> new_object_signal_t;
+	boost::signals2::connection setNewObjectCallback(new_object_callback_t cb);
+	new_object_signal_t mNewObjectSignal;
+	// </FS:CR>
 
 	////////////////////////////////////////////
 	//
@@ -188,7 +195,6 @@ public:
 
 	S32 mNumUnknownUpdates;
 	S32 mNumDeadObjectUpdates;
-	S32 mNumUnknownKills;
 	S32 mNumDeadObjects;
 protected:
 	std::vector<U64>	mOrphanParents;	// LocalID/ip,port of orphaned objects

@@ -30,6 +30,7 @@
 #include <fstream>
 
 #include <boost/regex.hpp>
+#include <boost/assign/list_of.hpp>
 
 #include "llfeaturemanager.h"
 #include "lldir.h"
@@ -52,30 +53,36 @@
 #include "llboost.h"
 #include "llweb.h"
 #include "llviewershadermgr.h"
+#include "llstring.h"
+#include "stringize.h"
 
 #if LL_WINDOWS
 #include "lldxhardware.h"
 #endif
 
+// <FS:Techwolf Lupindo> downloadable gpu table support
+#include "fscommon.h"
+#include <boost/filesystem.hpp>
+// </FS:Techwolf Lupindo>
+
 #define LL_EXPORT_GPU_TABLE 0
-// FS:TM - FIX-FIRE-2209 Don't download feature_tables from LL 
+
 #if LL_DARWIN
 const char FEATURE_TABLE_FILENAME[] = "featuretable_mac.txt";
-//const char FEATURE_TABLE_VER_FILENAME[] = "featuretable_mac.%s.txt";
+const char FEATURE_TABLE_VER_FILENAME[] = "featuretable_mac.%s.txt";
 #elif LL_LINUX
 const char FEATURE_TABLE_FILENAME[] = "featuretable_linux.txt";
-//const char FEATURE_TABLE_VER_FILENAME[] = "featuretable_linux.%s.txt";
+const char FEATURE_TABLE_VER_FILENAME[] = "featuretable_linux.%s.txt";
 #elif LL_SOLARIS
 const char FEATURE_TABLE_FILENAME[] = "featuretable_solaris.txt";
-//const char FEATURE_TABLE_VER_FILENAME[] = "featuretable_solaris.%s.txt";
+const char FEATURE_TABLE_VER_FILENAME[] = "featuretable_solaris.%s.txt";
 #else
 const char FEATURE_TABLE_FILENAME[] = "featuretable%s.txt";
-//const char FEATURE_TABLE_VER_FILENAME[] = "featuretable%s.%s.txt";
+const char FEATURE_TABLE_VER_FILENAME[] = "featuretable%s.%s.txt";
 #endif
 
-//  FS:TM - FIX-FIRE-2209 Don't download gpu_tables from LL 
 const char GPU_TABLE_FILENAME[] = "gpu_table.txt";
-//const char GPU_TABLE_VER_FILENAME[] = "gpu_table.%s.txt";
+const char GPU_TABLE_VER_FILENAME[] = "gpu_table.%s.txt";
 
 LLFeatureInfo::LLFeatureInfo(const std::string& name, const BOOL available, const F32 level)
 	: mValid(TRUE), mName(name), mAvailable(available), mRecommendedLevel(level)
@@ -188,6 +195,55 @@ void LLFeatureList::dump()
 	LL_DEBUGS("RenderInit") << LL_ENDL;
 }
 
+static const std::vector<std::string> sGraphicsLevelNames = boost::assign::list_of
+	("Low")
+	("LowMid")
+	("Mid")
+	("MidHigh")
+	("High")
+	("HighUltra")
+	("Ultra")
+;
+
+U32 LLFeatureManager::getMaxGraphicsLevel() const
+{
+	return sGraphicsLevelNames.size() - 1;
+}
+
+bool LLFeatureManager::isValidGraphicsLevel(U32 level) const
+{
+	return (level <= getMaxGraphicsLevel());
+}
+
+std::string LLFeatureManager::getNameForGraphicsLevel(U32 level) const
+{
+	if (isValidGraphicsLevel(level))
+	{
+		return sGraphicsLevelNames[level];
+	}
+	return STRINGIZE("Invalid graphics level " << level << ", valid are 0 .. "
+					 << getMaxGraphicsLevel());
+}
+
+S32 LLFeatureManager::getGraphicsLevelForName(const std::string& name) const
+{
+	const std::string FixedFunction("FixedFunction");
+	std::string rname(name);
+	if (LLStringUtil::endsWith(rname, FixedFunction))
+	{
+		// chop off any "FixedFunction" suffix
+		rname = rname.substr(0, rname.length() - FixedFunction.length());
+	}
+	for (S32 i(0), iend(getMaxGraphicsLevel()); i <= iend; ++i)
+	{
+		if (sGraphicsLevelNames[i] == rname)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
 LLFeatureList *LLFeatureManager::findMask(const std::string& name)
 {
 	if (mMaskList.count(name))
@@ -210,7 +266,7 @@ BOOL LLFeatureManager::maskFeatures(const std::string& name)
 	return maskList(*maskp);
 }
 
-BOOL LLFeatureManager::loadFeatureTables()
+bool LLFeatureManager::loadFeatureTables()
 {
 	// *TODO - if I or anyone else adds something else to the skipped list
 	// make this data driven.  Put it in the feature table and parse it
@@ -224,56 +280,63 @@ BOOL LLFeatureManager::loadFeatureTables()
 	std::string app_path = gDirUtilp->getAppRODataDir();
 	app_path += gDirUtilp->getDirDelimiter();
 
-	// [FIX-FIRE-2209 Don't download feature_Tables from HTTP 
 	std::string filename;
-	// std::string http_filename; 
+	std::string http_filename; 
 #if LL_WINDOWS
 	std::string os_string = LLAppViewer::instance()->getOSInfo().getOSStringSimple();
 	if (os_string.find("Microsoft Windows XP") == 0)
 	{
 		filename = llformat(FEATURE_TABLE_FILENAME, "_xp");
-		// http_filename = llformat(FEATURE_TABLE_VER_FILENAME, "_xp", LLVersionInfo::getVersion().c_str());
+		http_filename = llformat(FEATURE_TABLE_VER_FILENAME, "_xp", LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 	}
 	else
 	{
 		filename = llformat(FEATURE_TABLE_FILENAME, "");
-		// http_filename = llformat(FEATURE_TABLE_VER_FILENAME, "", LLVersionInfo::getVersion().c_str());
+		http_filename = llformat(FEATURE_TABLE_VER_FILENAME, "", LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 	}
 #else
 	filename = FEATURE_TABLE_FILENAME;
-	//http_filename = llformat(FEATURE_TABLE_VER_FILENAME, LLVersionInfo::getVersion().c_str());
+	http_filename = llformat(FEATURE_TABLE_VER_FILENAME, LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 #endif
 
 	app_path += filename;
 
 	
 	// second table is downloaded with HTTP
-	//std::string http_path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, http_filename);
+	std::string http_path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, http_filename);
 
 	// use HTTP table if it exists
-	// std::string path;
-	// if (gDirUtilp->fileExists(http_path))
-	//{
-	//	path = http_path;
-	//}
-	//else
-	//{
-	//	path = app_path;
-	//}
+	std::string path;
+	bool parse_ok = false;
+	if (gDirUtilp->fileExists(http_path))
+	{
+		parse_ok = parseFeatureTable(http_path);
+		if (!parse_ok)
+		{
+			// the HTTP table failed to parse, so delete it
+			LLFile::remove(http_path);
+			LL_WARNS("RenderInit") << "Removed invalid feature table '" << http_path << "'" << LL_ENDL;
+		}
+	}
 
-	
-	return parseFeatureTable(app_path);
+	if (!parse_ok)
+	{
+		parse_ok = parseFeatureTable(app_path);
+	}
+
+	return parse_ok;
 }
 
 
-BOOL LLFeatureManager::parseFeatureTable(std::string filename)
+bool LLFeatureManager::parseFeatureTable(std::string filename)
 {
-	llinfos << "Looking for feature table in " << filename << llendl;
+	LL_INFOS("RenderInit") << "Attempting to parse feature table from " << filename << LL_ENDL;
 
 	llifstream file;
 	std::string name;
 	U32		version;
 	
+	cleanupFeatureTables(); // in case an earlier attempt left partial results
 	file.open(filename); 	 /*Flawfinder: ignore*/
 
 	if (!file)
@@ -288,13 +351,14 @@ BOOL LLFeatureManager::parseFeatureTable(std::string filename)
 	if (name != "version")
 	{
 		LL_WARNS("RenderInit") << filename << " does not appear to be a valid feature table!" << LL_ENDL;
-		return FALSE;
+		return false;
 	}
 
 	mTableVersion = version;
-
+	
 	LLFeatureList *flp = NULL;
-	while (file >> name)
+	bool parse_ok = true;
+	while (file >> name && parse_ok)
 	{
 		char buffer[MAX_STRING];		 /*Flawfinder: ignore*/
 		
@@ -307,39 +371,58 @@ BOOL LLFeatureManager::parseFeatureTable(std::string filename)
 
 		if (name == "list")
 		{
+			LL_DEBUGS("RenderInit") << "Before new list" << std::endl;
 			if (flp)
 			{
-				//flp->dump();
+				flp->dump();
 			}
+			else
+			{
+				LL_CONT << "No current list";
+			}
+			LL_CONT << LL_ENDL;
+			
 			// It's a new mask, create it.
 			file >> name;
-			if (mMaskList.count(name))
+			if (!mMaskList.count(name))
 			{
-				LL_ERRS("RenderInit") << "Overriding mask " << name << ", this is invalid!" << LL_ENDL;
+				flp = new LLFeatureList(name);
+				mMaskList[name] = flp;
 			}
-
-			flp = new LLFeatureList(name);
-			mMaskList[name] = flp;
+			else
+			{
+				LL_WARNS("RenderInit") << "Overriding mask " << name << ", this is invalid!" << LL_ENDL;
+				parse_ok = false;
+			}
 		}
 		else
 		{
-			if (!flp)
+			if (flp)
 			{
-				LL_ERRS("RenderInit") << "Specified parameter before <list> keyword!" << LL_ENDL;
-				return FALSE;
+				S32 available;
+				F32 recommended;
+				file >> available >> recommended;
+				flp->addFeature(name, available, recommended);
 			}
-			S32 available;
-			F32 recommended;
-			file >> available >> recommended;
-			flp->addFeature(name, available, recommended);
+			else
+			{
+				LL_WARNS("RenderInit") << "Specified parameter before <list> keyword!" << LL_ENDL;
+				parse_ok = false;
+			}
 		}
 	}
 	file.close();
 
-	return TRUE;
+	if (!parse_ok)
+	{
+		LL_WARNS("RenderInit") << "Discarding feature table data from " << filename << LL_ENDL;
+		cleanupFeatureTables();
+	}
+	
+	return parse_ok;
 }
 
-void LLFeatureManager::loadGPUClass()
+bool LLFeatureManager::loadGPUClass()
 {
 	// defaults
 	mGPUClass = GPU_CLASS_UNKNOWN;
@@ -351,37 +434,55 @@ void LLFeatureManager::loadGPUClass()
 	app_path += gDirUtilp->getDirDelimiter();
 	app_path += GPU_TABLE_FILENAME;
 	
-	// [FIX-FIRE-2209 Don't download GPU_Tables from HTTP 
 	// second table is downloaded with HTTP
-	//std::string http_filename = llformat(GPU_TABLE_VER_FILENAME, LLVersionInfo::getVersion().c_str());
-	//std::string http_path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, http_filename);
+	std::string http_filename = llformat(GPU_TABLE_VER_FILENAME, LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
+	std::string http_path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, http_filename);
 
 	// use HTTP table if it exists
-	//std::string path;
-	//if (gDirUtilp->fileExists(http_path))
-	//{
-	//	path = http_path;
-	//}
-	//else
-	//{
-	//	path = app_path;
-	//}
-    //
-	// parseGPUTable(path);
-	parseGPUTable(app_path);
+	std::string path;
+	bool parse_ok = false;
+	if (gDirUtilp->fileExists(http_path))
+	{
+		parse_ok = parseGPUTable(http_path);
+		if (!parse_ok)
+		{
+			// the HTTP table failed to parse, so delete it
+			LLFile::remove(http_path);
+			LL_WARNS("RenderInit") << "Removed invalid gpu table '" << http_path << "'" << LL_ENDL;
+		}
+	}
+
+	if (!parse_ok)
+	{
+		parse_ok = parseGPUTable(app_path);
+	}
+    
+	return parse_ok; // indicates that the file parsed correctly, not that the gpu was recognized
 }
 
 	
-void LLFeatureManager::parseGPUTable(std::string filename)
+bool LLFeatureManager::parseGPUTable(std::string filename)
 {
 	llifstream file;
-		
+	
+	LL_INFOS("RenderInit") << "Attempting to parse GPU table from " << filename << LL_ENDL;
 	file.open(filename);
 
-	if (!file)
+	if (file)
+	{
+		const char recognizer[] = "//GPU_TABLE";
+		char first_line[MAX_STRING];
+		file.getline(first_line, MAX_STRING);
+		if (0 != strncmp(first_line, recognizer, strlen(recognizer)))
+		{
+			LL_WARNS("RenderInit") << "Invalid GPU table: " << filename << "!" << LL_ENDL;
+			return false;
+		}
+	}
+	else
 	{
 		LL_WARNS("RenderInit") << "Unable to open GPU table: " << filename << "!" << LL_ENDL;
-		return;
+		return false;
 	}
 
 	std::string rawRenderer = gGLManager.getRawGLString();
@@ -508,6 +609,7 @@ void LLFeatureManager::parseGPUTable(std::string filename)
 //#if LL_DARWIN // never go over "Mid" settings by default on OS X (FS:TM was GPU_CLASS_2)
 	mGPUClass = llmin(mGPUClass, GPU_CLASS_4);
 //#endif
+	return true;
 }
 
 // responder saves table into file
@@ -542,13 +644,34 @@ public:
 				LLAPRFile out(mFilename, LL_APR_WB);
 				out.write(copy_buffer, file_size);
 				out.close();
+				// <FS:Techwolf Lupindo> downloadable gpu table support
+				const std::time_t new_time = mLastModified.secondsSinceEpoch();
+#ifdef LL_WINDOWS
+				boost::filesystem::last_write_time(boost::filesystem::path( utf8str_to_utf16str(mFilename) ), new_time);
+#else
+				boost::filesystem::last_write_time(boost::filesystem::path(mFilename), new_time);
+#endif
+				// </FS:Techwolf Lupindo>
 			}
 		}
 		
 	}
-	
+
+	// <FS:Techwolf Lupindo> downloadable gpu table support
+	void completedHeader(U32 status, const std::string& reason, const LLSD& content)
+	{
+		if (content.has("last-modified"))
+		{
+			mLastModified.secondsSinceEpoch(FSCommon::secondsSinceEpochFromString("%a, %d %b %Y %H:%M:%S %ZP", content["last-modified"].asString()));
+		}
+	}
+	// </FS:Techwolf Lupindo>
+
 private:
 	std::string mFilename;
+	// <FS:Techwolf Lupindo> downloadable gpu table support
+	LLDate mLastModified;
+	// </FS:Techwolf Lupindo>
 };
 
 void fetch_feature_table(std::string table)
@@ -560,14 +683,14 @@ void fetch_feature_table(std::string table)
 	std::string filename;
 	if (os_string.find("Microsoft Windows XP") == 0)
 	{
-		filename = llformat(table.c_str(), "_xp", LLVersionInfo::getVersion().c_str());
+		filename = llformat(table.c_str(), "_xp", LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 	}
 	else
 	{
-		filename = llformat(table.c_str(), "", LLVersionInfo::getVersion().c_str());
+		filename = llformat(table.c_str(), "", LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 	}
 #else
-	const std::string filename   = llformat(table.c_str(), LLVersionInfo::getVersion().c_str());
+	const std::string filename   = llformat(table.c_str(), LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 #endif
 
 	const std::string url        = base + "/" + filename;
@@ -576,14 +699,25 @@ void fetch_feature_table(std::string table)
 
 	llinfos << "LLFeatureManager fetching " << url << " into " << path << llendl;
 	
-	LLHTTPClient::get(url, new LLHTTPFeatureTableResponder(path));
+	// <FS:Techwolf Lupindo> downloadable gpu table support
+	LLSD headers;
+	headers.insert("User-Agent",  LLVersionInfo::getBuildPlatform() + " " + LLVersionInfo::getVersion());
+	time_t last_modified = 0;
+	llstat stat_data;
+	if(!LLFile::stat(path, &stat_data))
+	{
+		last_modified = stat_data.st_mtime;
+	}
+	//LLHTTPClient::get(url, new LLHTTPFeatureTableResponder(path));
+	LLHTTPClient::getIfModified(url, new LLHTTPFeatureTableResponder(path), last_modified, headers);
+	// </FS:Techwolf Lupindo>
 }
 
 void fetch_gpu_table(std::string table)
 {
 	const std::string base       = gSavedSettings.getString("FeatureManagerHTTPTable");
 
-	const std::string filename   = llformat(table.c_str(), LLVersionInfo::getVersion().c_str());
+	const std::string filename   = llformat(table.c_str(), LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
 
 	const std::string url        = base + "/" + filename;
 
@@ -591,14 +725,25 @@ void fetch_gpu_table(std::string table)
 
 	llinfos << "LLFeatureManager fetching " << url << " into " << path << llendl;
 	
-	LLHTTPClient::get(url, new LLHTTPFeatureTableResponder(path));
+	// <FS:Techwolf Lupindo> downloadable gpu table support
+	LLSD headers;
+	headers.insert("User-Agent",  LLVersionInfo::getBuildPlatform() + " " + LLVersionInfo::getVersion());
+	time_t last_modified = 0;
+	llstat stat_data;
+	if(!LLFile::stat(path, &stat_data))
+	{
+		last_modified = stat_data.st_mtime;
+	}
+	//LLHTTPClient::get(url, new LLHTTPFeatureTableResponder(path));
+	LLHTTPClient::getIfModified(url, new LLHTTPFeatureTableResponder(path), last_modified, headers);
+	// </FS:Techwolf Lupindo>
 }
 
 // fetch table(s) from a website (S3)
 void LLFeatureManager::fetchHTTPTables()
 {
-	//fetch_feature_table(FEATURE_TABLE_VER_FILENAME);
-	//fetch_gpu_table(GPU_TABLE_VER_FILENAME);
+	fetch_feature_table(FEATURE_TABLE_VER_FILENAME);
+	fetch_gpu_table(GPU_TABLE_VER_FILENAME);
 }
 
 
@@ -624,7 +769,7 @@ void LLFeatureManager::applyRecommendedSettings()
 {
 	// apply saved settings
 	// cap the level at 2 (high)
-	S32 level = llmax(GPU_CLASS_0, llmin(mGPUClass, GPU_CLASS_5));
+	U32 level = llmax(GPU_CLASS_0, llmin(mGPUClass, GPU_CLASS_5));
 
 	llinfos << "Applying Recommended Features" << llendl;
 
@@ -700,46 +845,32 @@ void LLFeatureManager::applyFeatures(bool skipFeatures)
 	}
 }
 
-void LLFeatureManager::setGraphicsLevel(S32 level, bool skipFeatures)
+void LLFeatureManager::setGraphicsLevel(U32 level, bool skipFeatures)
 {
 	LLViewerShaderMgr::sSkipReload = true;
 
 	applyBaseMasks();
-	
-	switch (level)
+
+	// if we're passed an invalid level, default to "Low"
+	std::string features(isValidGraphicsLevel(level)? getNameForGraphicsLevel(level) : "Low");
+	if (features == "Low")
 	{
-		case 0:
-			if (gGLManager.mGLVersion < 3.f || gGLManager.mIsIntel)
-			{ //only use fixed function by default if GL version < 3.0 or this is an intel graphics chip
-				maskFeatures("LowFixedFunction");			
-			}
-			else
-			{ //same as low, but with "Basic Shaders" enabled
-				maskFeatures("Low");
-			}
-			break;
-		case 1:
-			maskFeatures("LowMid");
-			break;
-		case 2:
-			maskFeatures("Mid");
-			break;
-		case 3:
-			maskFeatures("MidHigh");
-			break;
-		case 4:
-			maskFeatures("High");
-			break;
-		case 5:
-			maskFeatures("HighUltra");
-			break;
-		case 6:
-			maskFeatures("Ultra");
-			break;
-		default:
-			maskFeatures("Low");
-			break;
+#if LL_DARWIN
+		// This Mac-specific change is to insure that we force 'Basic Shaders' for all Mac
+		// systems which support them instead of falling back to fixed-function unnecessarily
+		// MAINT-2157
+		if (gGLManager.mGLVersion < 2.1f)
+#else
+		// only use fixed function by default if GL version < 3.0 or this is an intel graphics chip
+		if (gGLManager.mGLVersion < 3.f || gGLManager.mIsIntel)
+#endif
+		{
+            // same as Low, but with "Basic Shaders" disabled
+			features = "LowFixedFunction";
+		}
 	}
+
+	maskFeatures(features);
 
 	applyFeatures(skipFeatures);
 

@@ -38,6 +38,7 @@
 #include "fscommon.h"
 #include "fslslbridge.h"
 #include "lggcontactsets.h"
+#include "lfsimfeaturehandler.h"
 #include "llagent.h"
 #include "llavataractions.h"
 #include "llavatarconstants.h"		// for range constants
@@ -111,7 +112,7 @@ FSRadar::~FSRadar()
 void FSRadar::radarAlertMsg(const LLUUID& agent_id, const LLAvatarName& av_name, const std::string& postMsg)
 {
 // <FS:CR> Milkshake-style radar alerts
-	LLCachedControl<bool> milkshake_radar(gSavedSettings, "FSMilkshakeRadarToasts", false);
+	static LLCachedControl<bool> milkshake_radar(gSavedSettings, "FSMilkshakeRadarToasts", false);
 	
 	if (milkshake_radar)
 	{
@@ -136,7 +137,6 @@ void FSRadar::radarAlertMsg(const LLUUID& agent_id, const LLAvatarName& av_name,
 		chat.mChatType = CHAT_TYPE_RADAR;
 		// FS:LO FIRE-1439 - Clickable avatar names on local chat radar crossing reports
 		LLSD args;
-		args["type"] = LLNotificationsUI::NT_NEARBYCHAT;
 		LLNotificationsUI::LLNotificationManager::instance().onChat(chat, args);
 	} // <FS:CR />
 }
@@ -147,8 +147,8 @@ void FSRadar::updateRadarList()
 	LLWorld* world = LLWorld::getInstance();
 	LLMuteList* mutelist = LLMuteList::getInstance();
 
-	static const F32 chat_range_say = world->getSayDistance();
-	static const F32 chat_range_shout = world->getShoutDistance();
+	static const F32 chat_range_say = LFSimFeatureHandler::getInstance()->sayRange();
+	static const F32 chat_range_shout = LFSimFeatureHandler::getInstance()->shoutRange();
 
 	static const std::string str_chat_entering =			LLTrans::getString("entering_chat_range");
 	static const std::string str_chat_leaving =				LLTrans::getString("leaving_chat_range");
@@ -170,6 +170,8 @@ void FSRadar::updateRadarList()
 	static LLCachedControl<bool> limitRange(gSavedSettings, "LimitRadarByRange");
 	static LLCachedControl<bool> sUseLSLBridge(gSavedSettings, "UseLSLBridge");
 	static LLCachedControl<F32> RenderFarClip(gSavedSettings, "RenderFarClip");
+	static LLCachedControl<bool> sFSLegacyRadarFriendColoring(gSavedSettings, "FSLegacyRadarFriendColoring");
+	static LLCachedControl<bool> sRadarColorNamesByDistance(gSavedSettings, "FSRadarColorNamesByDistance", false);
 
 	F32 drawRadius(RenderFarClip);
 	const LLVector3d& posSelf = gAgent.getPositionGlobal();
@@ -253,6 +255,11 @@ void FSRadar::updateRadarList()
 		
 		LLUUID avId          = static_cast<LLUUID>(*item_it);
 		LLVector3d avPos     = static_cast<LLVector3d>(*pos_it);
+
+		if (avId == gAgentID)
+		{
+			continue;
+		}
 		
 		// Skip modelling this avatar if its basic data is either inaccessible, or it's a dummy placeholder
 		FSRadarEntry* ent = getEntry(avId);
@@ -414,7 +421,7 @@ void FSRadar::updateRadarList()
 			}
 			if (RadarReportSimRangeEnter || RadarReportSimRangeLeave)
 			{
-				if (RadarReportSimRangeEnter && (avRegion == regionSelf) && (avRegion != rf.lastRegion))
+				if (RadarReportSimRangeEnter && avRegion == regionSelf && avRegion != rf.lastRegion && rf.lastRegion.notNull())
 				{
 					make_ui_sound("UISndRadarSimEnter"); // <FS:PP> FIRE-6069: Radar alerts sounds
 					if (avRange != AVATAR_UNKNOWN_RANGE) // Don't report an inaccurate range in localchat, if the true range is not known.
@@ -429,7 +436,7 @@ void FSRadar::updateRadarList()
 						LLAvatarNameCache::get(avId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, str_region_entering));
 					}
 				}
-				else if (RadarReportSimRangeLeave && (rf.lastRegion == regionSelf) && (avRegion != regionSelf))
+				else if (RadarReportSimRangeLeave && rf.lastRegion == regionSelf && avRegion != regionSelf && avRegion.notNull())
 				{
 					make_ui_sound("UISndRadarSimLeave"); // <FS:PP> FIRE-6069: Radar alerts sounds
 					LLAvatarNameCache::get(avId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, str_region_leaving));
@@ -498,7 +505,7 @@ void FSRadar::updateRadarList()
 		// Set friends colors / styles
 		LLFontGL::StyleFlags nameCellStyle = LLFontGL::NORMAL;
 		const LLRelationship* relation = LLAvatarTracker::instance().getBuddyInfo(avId);
-		if (relation)
+		if (relation && !sFSLegacyRadarFriendColoring)
 		{
 			nameCellStyle = (LLFontGL::StyleFlags)(nameCellStyle | LLFontGL::BOLD);
 		}
@@ -508,15 +515,14 @@ void FSRadar::updateRadarList()
 		}
 		entry_options["name_style"] = nameCellStyle;
 
-		// <FS:CR> TODO: Decide whether we want special colored names in the radar or let the current UI suffice
-		//LLColor4 name_color = LGGContactSets::getInstance()->colorize(avId, range_color, LGG_CS_RADAR);
-		//entry_options["name_color"] = name_color.getValue();
-		
+		LLUIColor name_color = LLUIColorTable::instance().getColor("AvatarListItemIconDefaultColor", LLColor4::white);
+		name_color = LGGContactSets::getInstance()->colorize(avId, (sRadarColorNamesByDistance ? range_color : name_color), LGG_CS_RADAR);
+
 		if (LGGContactSets::getInstance()->hasFriendColorThatShouldShow(avId, LGG_CS_RADAR))
 		{
-			LLColor4 name_color = LGGContactSets::getInstance()->getFriendColor(avId);
-			entry_options["name_color"] = name_color.getValue();
+			name_color = LGGContactSets::getInstance()->getFriendColor(avId);
 		}
+		entry_options["name_color"] = name_color.get().getValue();
 
 		// Voice power level indicator
 		LLVoiceClient* voice_client = LLVoiceClient::getInstance();
@@ -619,7 +625,7 @@ void FSRadar::updateRadarList()
 				make_ui_sound("UISndRadarDrawLeave"); // <FS:PP> FIRE-6069: Radar alerts sounds
 				LLAvatarNameCache::get(prevId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, str_draw_distance_leaving));
 			}
-			if (RadarReportSimRangeLeave && (rf.lastRegion == regionSelf))
+			if (RadarReportSimRangeLeave && (rf.lastRegion == regionSelf || rf.lastRegion.isNull()))
 			{
 				make_ui_sound("UISndRadarSimLeave"); // <FS:PP> FIRE-6069: Radar alerts sounds
 				LLAvatarNameCache::get(prevId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, str_region_leaving));
@@ -728,7 +734,7 @@ void FSRadar::updateRadarList()
 	//STEP 5: Final data updates and notification of subscribers
 	//
 
-	mAvatarStats["total"] = llformat("%d", mLastRadarSweep.size());
+	mAvatarStats["total"] = llformat("%d", mLastRadarSweep.size() - 1);
 	mAvatarStats["region"] = llformat("%d", inSameRegion);
 	mAvatarStats["chatrange"] = llformat("%d", inChatRange);
 

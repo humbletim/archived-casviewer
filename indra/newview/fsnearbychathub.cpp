@@ -43,7 +43,7 @@
 #include "llmenugl.h"
 #include "llviewermenu.h"//for gMenuHolder
 
-#include "llnearbychathandler.h"
+#include "llfloaterimnearbychathandler.h"
 #include "llchannelmanager.h"
 
 #include "llagent.h" 			// gAgent
@@ -63,6 +63,11 @@
 #include "llviewerstats.h"
 // </FS:Zi>
 #include "fscommon.h"
+
+// <FS:KC> Fix for bad edge snapping
+// *HACK* chat bar cannot return its correct height for some reason
+static const S32 MAGIC_CHAT_BAR_PAD = 5;
+// </FS:KC> Fix for bad edge snapping
 
 //<FS:TS> FIRE-787: break up too long chat lines into multiple messages
 void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channel);
@@ -374,14 +379,23 @@ LLWString FSNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel)
 	}
 	else if (mesg[0] == '/'
 			 && mesg[1]
-			 && ( LLStringOps::isDigit(mesg[1])
+	//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
+	//        (this code was here; documenting for the future)
+			 //&& LLStringOps::isDigit(mesg[1]))
+			 && (LLStringOps::isDigit(mesg[1])
 				 || (mesg[1] == '-'
+				 	&& mesg[2]
 				 	&& LLStringOps::isDigit(mesg[2]))))
+	//</FS:TS> FIRE-11412
 	{
 		// This a special "/20" speak on a channel
 		S32 pos = 0;
+		//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
+		//        (this code was here; documenting for the future)
 		if(mesg[1] == '-')
 			pos++;
+		//</FS:TS> FIRE-11412
+		
 		// Copy the channel number into a string
 		LLWString channel_string;
 		llwchar c;
@@ -403,8 +417,11 @@ LLWString FSNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel)
 		}
 		
 		sLastSpecialChatChannel = strtol(wstring_to_utf8str(channel_string).c_str(), NULL, 10);
+		//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
+		//        (this code was here; documenting for the future)
 		if(mesg[1] == '-')
 			sLastSpecialChatChannel = -sLastSpecialChatChannel;
+		//</FS:TS> FIRE-11412
 		*channel = sLastSpecialChatChannel;
 		return mesg.substr(pos, mesg.length() - pos);
 	}
@@ -474,7 +491,7 @@ void FSNearbyChat::sendChat(LLWString text,EChatType type)
 		if (!utf8_revised_text.empty() && cmd_line_chat(utf8_revised_text, type))
 		{
 			// Chat with animation
-			sendChatFromViewer(utf8_revised_text, type, gSavedSettings.getBOOL("FSPlayChatAnimation"));
+			sendChatFromViewer(utf8_revised_text, type, gSavedSettings.getBOOL("PlayChatAnim"));
 		}
 	}
 
@@ -504,6 +521,16 @@ void FSNearbyChat::showDefaultChatBar(BOOL visible,const char* text) const
 	mDefaultChatBar->setVisible(visible);
 	mDefaultChatBar->setFocus(visible);
 
+	// <FS:KC> Fix for bad edge snapping
+	if(visible)
+	{
+		gFloaterView->setSnapOffsetChatBar(mDefaultChatBar->getRect().getHeight() + MAGIC_CHAT_BAR_PAD);
+	}
+	else
+	{
+		gFloaterView->setSnapOffsetChatBar(0);
+	}
+
 	if(!text)
 		return;
 
@@ -512,6 +539,7 @@ void FSNearbyChat::showDefaultChatBar(BOOL visible,const char* text) const
 		mDefaultChatBar->setText(LLStringExplicit(text));
 		mDefaultChatBar->setCursorToEnd();
 	}
+	// </FS:KC> Fix for bad edge snapping
 }
 
 // We want to know which nearby chat editor (if any) currently has focus
@@ -565,14 +593,14 @@ public:
 		}
 		else
 		{
-		S32 channel = tokens[0].asInteger();
+			S32 channel = tokens[0].asInteger();
 			// VWR-19499 Restrict function to chat channels greater than 0.
 			if ((channel > 0) && (channel < CHAT_CHANNEL_DEBUG))
 			{
 				retval = true;
-		// Send unescaped message, see EXT-6353.
-		std::string unescaped_mesg (LLURI::unescape(tokens[1].asString()));
-		send_chat_from_viewer(unescaped_mesg, CHAT_TYPE_NORMAL, channel);
+				// Send unescaped message, see EXT-6353.
+				std::string unescaped_mesg (LLURI::unescape(tokens[1].asString()));
+				send_chat_from_viewer(unescaped_mesg, CHAT_TYPE_NORMAL, channel);
 			}
 			else
 			{

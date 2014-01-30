@@ -150,7 +150,7 @@
 		<usetemplate canceltext="取り消し" name="yesnocancelbuttons" notext="保存しない" yestext="すべて保存"/>
 	</notification>
 	<notification name="FriendsAndGroupsOnly">
-		フレンド以外からのコールやインスタントメッセージを無視する設定にしたことを、相手に知られることはありません。
+		フレンド以外の人からのコールや、インスタントメッセージを無視する設定にしたことを、相手に知られることはありません。
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="FavoritesOnLogin">
@@ -220,6 +220,14 @@
 
 この能力を [ROLE_NAME] に割り当てますか？
 		<usetemplate name="okcancelbuttons" notext="いいえ" yestext="はい"/>
+	</notification>
+	<notification name="EjectGroupMemberWarning">
+		[AVATAR_NAME] をグループから追放しようとしています。
+		<usetemplate ignoretext="グループからの参加者の追放を確認します" name="okcancelignore" notext="取り消し" yestext="追放"/>
+	</notification>
+	<notification name="EjectGroupMembersWarning">
+		[COUNT] 名のメンバーをグループから追放しようとしています。
+		<usetemplate ignoretext="グループからの複数のメンバーの追放を確認します" name="okcancelignore" notext="取り消し" yestext="追放"/>
 	</notification>
 	<notification name="AttachmentDrop">
 		アタッチメントを下に置こうとしています。
@@ -1121,7 +1129,7 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries を参照してく
 金額を増やしてください。
 	</notification>
 	<notification name="ConfirmItemDeleteHasLinks">
-		ここにリンクされたアイテムが少なくとも1つあります。  このアイテムを削除するとここにリンクされたものが機能しなくなります。  リンクを先に削除することを強くお勧めします。
+		1 つ以上のアイテムにポイントするリンクがあります。このアイテムを削除する場合、そのリンクは永久に機能しなくなります。まず最初にリンクを削除することを強くお勧めします。
 
 これらのアイテムを削除しますか？
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
@@ -1139,9 +1147,9 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries を参照してく
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmObjectDeleteNoOwn">
-		選択したアイテムのうち、少なくとも 1 つがあなたの所有物ではありません。
+		選択したアイテムの 1 つ以上を所有していません。
 
-本当に削除しますか？
+これらのアイテムを削除しますか？
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmObjectDeleteLockNoCopy">
@@ -1152,26 +1160,26 @@ https://wiki.secondlife.com/wiki/Adding_Spelling_Dictionaries を参照してく
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmObjectDeleteLockNoOwn">
-		少なくとも 1 つのオブジェクトがロックされています。
-少なくとも 1 つのオブジェクトが、あなたの所有物ではありません。
+		1 つ以上のオブジェクトがロックされました。
+1 つ以上のオブジェクトを所有していません。
 
-本当に削除しますか？
+これらのアイテムを削除しますか？
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmObjectDeleteNoCopyNoOwn">
-		少なくとも 1 つのオブジェクトがコピーできません。
-少なくとも 1 つのオブジェクトが、あなたの所有物ではありません。
+		1 つ以上のオブジェクトがコピーできません。
+1 つ以上のオブジェクトを所有していません。
 
-本当に削除しますか？
+これらのアイテムを削除しますか？
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmObjectDeleteLockNoCopyNoOwn">
-		少なくとも 1 つのオブジェクトがロックされています。
-少なくとも 1 つのオブジェクトがコピーできません。
-少なくとも 1 つのオブジェクトが、あなたの所有物ではありません。
+		1 つ以上のオブジェクトがロックされています。
+1 つ以上のオブジェクトがコピーできません。
+1 つ以上のオブジェクトを所有していません。
 
-本当に削除しますか？
-		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="OK"/>
+これらのアイテムを削除しますか？
+		<usetemplate name="okcancelbuttons" notext="取り消し" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmObjectTakeLock">
 		少なくとも 1 つのオブジェクトがロックされています。
@@ -1495,13 +1503,43 @@ http://secondlife.com/download から最新バージョンをダウンロード�
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
 		必要なソフトウェアのアップデートをダウンロードしました。
-バージョン [VERSION]
+バージョン [VERSION] [[INFO_URL] このアップデートに関する情報]
 
 アップデートをインストールするには [APP_NAME] を再起動する必要があります。
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedDialog">
 		アップデートをインストールするには [APP_NAME] を再起動する必要があります。
+[[INFO_URL] このアップデートに関する情報]
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="OtherChannelDownloadBackgroundTip">
+		お使いの [APP_NAME] に必要なアップデートをダウンロードしました。
+バージョン [VERSION] 
+この試験的なビューアが [NEW_CHANNEL] ビューアに置き換えられています;
+このアップデートの詳細については、[[INFO_URL] を参照してください]
+		<usetemplate name="okcancelbuttons" notext="後で実行" yestext="今すぐインストールして [APP_NAME] を再起動"/>
+	</notification>
+	<notification name="OtherChannelDownloadBackgroundDialog">
+		お使いの [APP_NAME] に必要なアップデートをダウンロードしました。
+バージョン [VERSION]
+この試験的なビューアが [NEW_CHANNEL] ビューアに置き換えられています;
+[[INFO_URL] このアップデートに関する情報] を参照
+		<usetemplate name="okcancelbuttons" notext="後で実行" yestext="今すぐインストールして [APP_NAME] を再起動"/>
+	</notification>
+	<notification name="OtherChannelRequiredUpdateDownloadedVerboseDialog">
+		必要なソフトウェアのアップデートをダウンロードしました。
+バージョン [VERSION]
+この試験的なビューアが [NEW_CHANNEL] ビューアに置き換えられています;
+[[INFO_URL] このアップデートに関する情報] を参照
+
+アップデートをインストールするには [APP_NAME] を再起動する必要があります。
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="OtherChannelRequiredUpdateDownloadedDialog">
+		アップデートをインストールするには [APP_NAME] を再起動する必要があります。
+この試験的なビューアが [NEW_CHANNEL] ビューアに置き換えられています;
+[[INFO_URL] このアップデートに関する情報] を参照
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="DeedObjectToGroup">
@@ -1554,6 +1592,10 @@ http://secondlife.com/download から最新バージョンをダウンロード�
 グループから脱退しますか？
 		<usetemplate name="okcancelbuttons" notext="取り消し" yestext="OK"/>
 	</notification>
+	<notification name="OwnerCannotLeaveGroup">
+		グループを抜けることができません。グループの最後のオーナーであるため、グループを抜けることができません。最初に、別のメンバーをオーナーの役割に割り当ててください。
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
 	<notification name="ConfirmKick">
 		本当に住人全員をグリッドから追い出しますか？
 		<usetemplate name="okcancelbuttons" notext="キャンセル" yestext="住人全員を追い出す"/>
@@ -1582,11 +1624,24 @@ http://secondlife.com/download から最新バージョンをダウンロード�
 		現在フレンドシップを送れません。数分後にもう一度お試しください。
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
-	<notification name="BusyModeSet">
-		取り込み中モードになりました。
-チャットとインスタントメッセージは表示されません。 受信するインスタントメッセージには取り込み中返答メッセージが表示されます。 テレポートのオファーは受け取り拒否となります。 アイテムのオファーはすべてごみ箱に入ります。
+	<notification name="DoNotDisturbModeSet">
+		取り込み中モードになりました。チャットやインスタントメッセージを受け取っても通知されません。
+		− 他の住民には取り込み中の自動応答が返信されます。（「環境設定」＞「プライバシー」で設定したもの）
+		− テレポートのオファーは受け取り拒否となります。
+		− ボイスコールは拒否します。
 		<usetemplate ignoretext="ログイン状態を取り込み中モードに変更するとき" name="okignore" yestext="OK"/>
 	</notification>
+	<notification name="AutorespondModeSet">
+自動応答モードになりました。
+インスタントメッセージを受信した場合、あなたの設定内容に従って自動応答が返信されます。
+		<usetemplate ignoretext="自動応答モードにログイン状態を変更しました。" name="okignore" yestext="OK"/>
+	</notification>
+
+    <notification name="AutorespondNonFriendsModeSet">
+フレンドでない人に対する自動応答モードになりました。
+フレンドでない人からのインスタントメッセージを受信した場合、あなたの設定内容に従って自動応答が返信されます。
+    <usetemplate ignoretext="フレンドでない人に対する自動応答モードにログイン状態を変更しました。" name="okignore" yestext="OK"/>
+  </notification>
 	<notification name="JoinedTooManyGroupsMember">
 		加入できるグループの最大限に達しました。 このグループに加入するために他のグループを脱退するか、この申し入れを断ってください。
 [NAME] があなたをグループのメンバーとして勧誘しています。
@@ -2076,6 +2131,11 @@ L$ [AMOUNT] で、このクラシファイド広告を今すぐ公開します�
 		[http://jp.secondlife.com/account/ マイアカウント] ページに移動してアカウント履歴を確認しますか？
 		<usetemplate ignoretext="ブラウザを起動してアカウント履歴を見るとき" name="okcancelignore" notext="取り消し" yestext="ページに移動"/>
 	</notification>
+	<notification name="ConfirmAddingChatParticipants">
+		<unique/>
+現在進行中の会話に新しい人を追加すると、新しい会話が作成されます。会話の参加者全員に新しい会話の開始通知が送信されます。
+		<usetemplate ignoretext="会話への新しい人の追加を確認" name="okcancelignore" notext="取り消し" yestext="Ok"/>
+  </notification>
 	<notification name="ConfirmQuit">
 		終了しようとしています。続けますか？
 		<usetemplate ignoretext="終了時の確認" name="okcancelignore" notext="終了しない" yestext="終了"/>
@@ -2153,10 +2213,11 @@ Linden Lab
 			<button ignore="交換しない" name="No" text="キャンセル"/>
 		</form>
 	</notification>
-	<notification label="取り込み中の警告" name="BusyModePay">
+	<notification label="取り込み中の警告" name="DoNotDisturbModePay">
 		現在、「取り込み中」モードのため、支払いと引き換えにアイテムを受け取ることができません。
 
 この取引を行うために「取り込み中」の設定を解除しますか？
+
 		<form name="form">
 			<ignore name="ignore" save_option="true" text="取り込み中モード時に支払をするとき"/>
 			<button ignore="常に「取り込み中」の設定を解除" name="Yes" text="OK"/>
@@ -2275,6 +2336,31 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	<notification name="MissingString">
 		文字列 [STRING_NAME] が strings.xml に含まれていません。
 	</notification>
+	<notification name="MediaAlertSingle"> 
+この土地には次のメディアが設定されています。
+
+ドメイン: [MEDIADOMAIN]
+URL: [MEDIAURL]
+		<form name="form">
+			<button index="0" name="Allow" text="許可"/>
+			<button index="1" name="Deny" text="拒否"/>
+			<button index="2" name="BlacklistDomain" text="ブラックリスト"/>
+			<button index="3" name="WhitelistDomain" text="ホワイトリスト"/>
+		</form>
+	</notification>
+	<notification name="AudioAlertSingle"> 
+あなたが選択したものを記憶させて、この音源からの音楽を[LCONDITION]で許可するようにしたいですか？
+
+ドメイン: [AUDIODOMAIN]
+URL: [AUDIOURL]
+		<form name="form">
+			<button index="0" name="Allow" text="許可"/>
+			<button index="1" name="Deny" text="拒否"/>
+			<button index="2" name="BlacklistDomain" text="ブラックリスト"/>
+			<button index="3" name="WhitelistDomain" text="ホワイトリスト"/>
+		</form>
+	</notification>
+  
 	<notification name="SystemMessageTip">
 		[MESSAGE]
 	</notification>
@@ -2296,11 +2382,12 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	<notification name="GroupNotice">
 		件名： [SUBJECT]、メッセージ： [MESSAGE]
 	</notification>
-	<notification name="FriendOnline">
-		[NAME] はオンラインです。
-	</notification>
-	<notification name="FriendOffline">
-		[NAME] はオフラインです。
+	<notification name="FriendOnlineOffline">
+		<tag>friendship</tag>
+		[NAME]は[STATUS]です。
+		<unique combine="cancel_old">
+			<context>NAME</context>
+		</unique>
 	</notification>
 	<notification name="AddSelfFriend">
 		残念ながら自分自身をフレンド登録することはできません。
@@ -2421,9 +2508,7 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 「テレポート」を選択して実行することもできます。）
 	</notification>
 	<notification name="TeleportToPerson">
-		[NAME] のような住人に連絡をとるには、「人」ボタンをクリックし、表示されるウィンドウで「住人」を選択してから、
-ウィンドウ下部にある「IM」をクリックします。
-（リストの名前をダブルクリック、または右クリックして「IM」を選んでも同じです。）
+		誰かとのプライベートな会話を開くには、相手のアバターをクリックして、メニューから「IM」を選択します。
 	</notification>
 	<notification name="CantSelectLandFromMultipleRegions">
 		サーバーの境界を越えて土地を選択することできません。
@@ -2803,6 +2888,24 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 		<form name="form">
 			<button name="Grant" text="トータルアクセスを許可"/>
 			<button name="Deny" text="拒否"/>
+		</form>
+	</notification>
+	<notification name="UnknownScriptQuestion">
+		&apos;[NAME]&apos; が所有する &apos;&lt;nolink&gt;[OBJECTNAME]&lt;/nolink&gt;&apos; によってリクエストされたランタイムスクリプト権限がビューアによって認識されないため、許可できません。
+
+この権限を許可するには、ビューアを [DOWNLOADURL] からの最新バージョンにアップデートしてください。
+		<form name="form">
+			<button name="Deny" text="Ok"/>
+			<button name="Mute" text="ブロック"/>
+		</form>
+	</notification>
+	<notification name="UnknownScriptQuestion">
+&apos;[NAME]&apos;の所有する&apos;&lt;nolink&gt;[OBJECTNAME]&lt;/nolink&gt;&apos;から要求を受けているランタイムスクリプトのパーミッションは、このビューワが認識できないものであり、従って許可することはできません。
+
+このパーミッションを許可するには、次の場所から最新版をダウンロードしてビューワをアップデートして下さい。[DOWNLOADURL].
+		<form name="form">
+			<button index="1" name="Deny" text="OK"/>
+			<button index="2" name="Mute" text="ブロック"/>
 		</form>
 	</notification>
 	<notification name="ScriptDialog">
@@ -3378,4 +3481,36 @@ M キーを押して変更します。
 		[NUM_ITEMS] 個のアイテムを削除中です。続けますか？
 		<usetemplate ignoretext="複数のアイテムを削除しますか？" name="okcancelignore" notext="いいえ" yestext="はい"/>
 	</notification>
+	
+	<notification name="ServerVersionChanged">
+到着した地域はこれまでいた場所とは異なるサーバのバージョンで稼働しています。
+現在のSIM: [NEWVERSION]
+前にいたSIM: [OLDVERSION]
+  </notification>
+	
+	<notification name="PreferenceChatClearLog">
+    この操作によって以前の会話ログは削除され、このファイルのバックアップも削除されます。
+		<usetemplate ignoretext="以前の会話ログを削除する前に確認。" name="okcancelignore" notext="キャンセル" yestext="OK"/>
+	</notification>
+    
+	<notification name="PreferenceChatDeleteTranscripts">
+    この操作によって過去の会話の記録は全て削除されます。過去の会話リストは影響を受けません。[FOLDER]フォルダにある「.txt」と「txt.backup」の拡張子の全てのファイルが削除されます。
+		<usetemplate ignoretext="会話記録を削除する前に確認。" name="okcancelignore" notext="キャンセル" yestext="OK"/>
+	</notification>
+
+	<notification name="PreferenceChatPathChanged">
+   ファイルを移動できません。以前のパスを復元。
+		<usetemplate ignoretext="ファイルを移動できません。以前のパスを復元。" name="okignore" yestext="OK"/>
+	</notification>
+	
+	<notification name="EjectGroupMemberWarning">
+[AVATAR_NAME] をこのグループから除名しようとしています。
+		<usetemplate ignoretext="参加者をこのグループから除名するか確認" name="okcancelignore" notext="取り消し" yestext="除名"/>
+    </notification>
+    
+    <notification name="EjectGroupMembersWarning">
+[COUNT] 人のメンバーをこのグループから除名しようとしています。members from the group.
+		<usetemplate ignoretext="このグループから複数のメンバーを除名するか確認。" name="okcancelignore" notext="取り消し" yestext="除名"/>
+    </notification>
+	
 </notifications>

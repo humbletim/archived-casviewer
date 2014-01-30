@@ -420,14 +420,13 @@ public:
 	void			sitDown();
 
 	//--------------------------------------------------------------------
-	// Busy
+	// Do Not Disturb
 	//--------------------------------------------------------------------
 public:
-	void			setBusy();
-	void			clearBusy();
-	BOOL			getBusy() const;
+	void			setDoNotDisturb(bool pIsDoNotDisturb);
+	bool			isDoNotDisturb() const;
 private:
-	BOOL			mIsBusy;
+	bool			mIsDoNotDisturb;
 	//--------------------------------------------------------------------
 	// Autorespond
 	//--------------------------------------------------------------------
@@ -446,6 +445,16 @@ public:
 	BOOL			getAutorespondNonFriends() const;
 private:
 	BOOL			mIsAutorespondNonFriends;
+
+// <FS:PP> FIRE-1245: Option to block/reject teleport offers
+public:
+	void			setRejectTeleportOffers();
+	void			clearRejectTeleportOffers();
+	void			selectRejectTeleportOffers(BOOL);
+	BOOL			getRejectTeleportOffers() const;
+private:
+	BOOL			mIsRejectTeleportOffers;
+// </FS:PP> FIRE-1245: Option to block/reject teleport offers
 
 	//--------------------------------------------------------------------
 	// Grab
@@ -481,10 +490,13 @@ private:
 	U32				mControlFlags;					// Replacement for the mFooKey's
 	BOOL 			mbFlagsDirty;
 	BOOL 			mbFlagsNeedReset;				// ! HACK ! For preventing incorrect flags sent when crossing region boundaries
+
+	// <FS> Ignore prejump and always fly
 	static BOOL ignorePrejump;
-	static BOOL PhoenixForceFly;
+	static BOOL fsAlwaysFly;
 	void updateIgnorePrejump(const LLSD &data);
-	void updatePhoenixForceFly(const LLSD &data);
+	void updateFSAlwaysFly(const LLSD &data);
+	// </FS> Ignore prejump and always fly
 
 	//--------------------------------------------------------------------
 	// Animations
@@ -495,6 +507,9 @@ public:
 	void			onAnimStop(const LLUUID& id);
 	void			sendAnimationRequests(LLDynamicArray<LLUUID> &anim_ids, EAnimRequest request);
 	void			sendAnimationRequest(const LLUUID &anim_id, EAnimRequest request);
+	void			sendAnimationStateReset();
+	void			sendRevokePermissions(const LLUUID & target, U32 permissions);
+
 	void			endAnimationUpdateUI();
 	void			unpauseAnimation() { mPauseRequest = NULL; }
 	BOOL			getCustomAnim() const { return mCustomAnim; }
@@ -638,13 +653,12 @@ public:
 	void			teleportViaLocationLookAt(const LLVector3d& pos_global);// To a global location, preserving camera rotation
 	void 			teleportCancel();										// May or may not be allowed by server
 	bool			getTeleportKeepsLookAt() { return mbTeleportKeepsLookAt; } // Whether look-at reset after teleport
-//-TT Client LSL Bridge
+// <FS:TT> Client LSL Bridge
 	bool			teleportBridgeLocal(LLVector3& pos_local);					// Teleport using LSL Bridge
-	bool			teleportBridgeGlobal(const LLVector3d& pos_global);				// Teleport using LSL Bridge
-//-TT
+	bool			teleportBridgeGlobal(const LLVector3d& pos_global);			// Teleport using LSL Bridge
+// </FS:TT>
 protected:
 	bool 			teleportCore(bool is_local = false); 					// Stuff for all teleports; returns true if the teleport can proceed
-
 
 	//--------------------------------------------------------------------
 	// Teleport State

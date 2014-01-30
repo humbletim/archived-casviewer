@@ -188,7 +188,7 @@ LLWindowSDL::LLWindowSDL(LLWindowCallbacks* callbacks,
 			 const std::string& title, S32 x, S32 y, S32 width,
 			 S32 height, U32 flags,
 			 BOOL fullscreen, BOOL clearBg,
-			 BOOL disable_vsync,
+			 BOOL disable_vsync, BOOL use_gl,
 			 BOOL ignore_pixel_depth, U32 fsaa_samples)
 	: LLWindow(callbacks, fullscreen, flags),
 	  Lock_Display(NULL),
@@ -199,6 +199,7 @@ LLWindowSDL::LLWindowSDL(LLWindowCallbacks* callbacks,
 	gKeyboard->setCallbacks(callbacks);
 	// Note that we can't set up key-repeat until after SDL has init'd video
 
+	// Ignore use_gl for now, only used for drones on PC
 	mWindow = NULL;
 	mNeedsResize = FALSE;
 	mOverrideAspectRatio = 0.f;
@@ -1275,20 +1276,23 @@ void LLWindowSDL::x11_set_urgent(BOOL urgent)
 
 void LLWindowSDL::flashIcon(F32 seconds)
 {
+	if (getMinimized())	// <FS:CR> Moved this here from llviewermessage.cpp
+	{
 #if !LL_X11
-	llinfos << "Stub LLWindowSDL::flashIcon(" << seconds << ")" << llendl;
+		llinfos << "Stub LLWindowSDL::flashIcon(" << seconds << ")" << llendl;
 #else	
-	llinfos << "X11 LLWindowSDL::flashIcon(" << seconds << ")" << llendl;
+		llinfos << "X11 LLWindowSDL::flashIcon(" << seconds << ")" << llendl;
 	
-	F32 remaining_time = mFlashTimer.getRemainingTimeF32();
-	if (remaining_time < seconds)
-		remaining_time = seconds;
-	mFlashTimer.reset();
-	mFlashTimer.setTimerExpirySec(remaining_time);
+		F32 remaining_time = mFlashTimer.getRemainingTimeF32();
+		if (remaining_time < seconds)
+			remaining_time = seconds;
+		mFlashTimer.reset();
+		mFlashTimer.setTimerExpirySec(remaining_time);
 
-	x11_set_urgent(TRUE);
-	mFlashing = TRUE;
+		x11_set_urgent(TRUE);
+		mFlashing = TRUE;
 #endif // LL_X11
+	}
 }
 
 
@@ -1651,35 +1655,53 @@ void check_vm_bloat()
 {
 #if LL_LINUX
 	// watch our own VM and RSS sizes, warn if we bloated rapidly
-	FILE *fp = fopen("/proc/self/stat", "r");
+	static const std::string STATS_FILE = "/proc/self/stat";
+	FILE *fp = fopen(STATS_FILE.c_str(), "r");
 	if (fp)
 	{
 		static long long last_vm_size = 0;
 		static long long last_rss_size = 0;
 		const long long significant_vm_difference = 250 * 1024*1024;
 		const long long significant_rss_difference = 50 * 1024*1024;
+		long long this_vm_size = 0;
+		long long this_rss_size = 0;
 
+		ssize_t res;
 		size_t dummy;
-		char *ptr;
-		size_t delim_result = 0;
-		for (int i=0; i<22 && delim_result > -1; ++i) // parse past the values we don't want
+		char *ptr = NULL;
+		for (int i=0; i<22; ++i) // parse past the values we don't want
 		{
-			ptr = NULL;
-			delim_result = getdelim(&ptr, &dummy, ' ', fp);
+			res = getdelim(&ptr, &dummy, ' ', fp);
+			if (-1 == res)
+			{
+				llwarns << "Unable to parse " << STATS_FILE << llendl;
+				goto finally;
+			}
 			free(ptr);
+			ptr = NULL;
 		}
 		// 23rd space-delimited entry is vsize
-		ptr = NULL;
-		delim_result = getdelim(&ptr, &dummy, ' ', fp);
+		res = getdelim(&ptr, &dummy, ' ', fp);
 		llassert(ptr);
-		long long this_vm_size = atoll(ptr);
+		if (-1 == res)
+		{
+			llwarns << "Unable to parse " << STATS_FILE << llendl;
+			goto finally;
+		}
+		this_vm_size = atoll(ptr);
 		free(ptr);
+		ptr = NULL;
 		// 24th space-delimited entry is RSS
-		ptr = NULL;
-		delim_result = getdelim(&ptr, &dummy, ' ', fp);
+		res = getdelim(&ptr, &dummy, ' ', fp);
 		llassert(ptr);
-		long long this_rss_size = getpagesize() * atoll(ptr);
+		if (-1 == res)
+		{
+			llwarns << "Unable to parse " << STATS_FILE << llendl;
+			goto finally;
+		}
+		this_rss_size = getpagesize() * atoll(ptr);
 		free(ptr);
+		ptr = NULL;
 
 		llinfos << "VM SIZE IS NOW " << (this_vm_size/(1024*1024)) << " MB, RSS SIZE IS NOW " << (this_rss_size/(1024*1024)) << " MB" << llendl;
 
@@ -1712,6 +1734,12 @@ void check_vm_bloat()
 		last_rss_size = this_rss_size;
 		last_vm_size = this_vm_size;
 
+finally:
+		if (NULL != ptr)
+		{
+			free(ptr);
+			ptr = NULL;
+		}
 		fclose(fp);
 	}
 #endif // LL_LINUX
@@ -2609,7 +2637,7 @@ void LLWindowSDL::spawnWebBrowser(const std::string& escaped_url, bool async)
 
 void LLWindowSDL::openFile(const std::string& file_name)
 {
-	spawnWebBrowser(file_name,TRUE);
+	spawnWebBrowser("file://"+file_name,TRUE);
 }
 
 void *LLWindowSDL::getPlatformWindow()

@@ -122,7 +122,7 @@
 	</string>
 	<string name="LoginFailedViewerNotPermitted">
 		Przeglądarka używana przez Ciebie nie ma już dostępu do Second Life. Proszę przejść na poniższą stronę i pobrać nową:
-http://secondlife.com/download
+http://firestormviewer.org/downloads
 
 Więcej informacji w naszym FAQ:
 http://secondlife.com/viewer-access-faq
@@ -465,6 +465,9 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="SLappAgentRequestFriend">
 		Oferta znajomości
 	</string>
+	<string name="SLappAgentRemoveFriend">
+		Usunięcie znajomego
+	</string>
 	<string name="BUTTON_CLOSE_DARWIN">
 		Zamknij (&#8984;W)
 	</string>
@@ -639,7 +642,7 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="AvatarAway">
 		Śpi
 	</string>
-	<string name="AvatarBusy">
+	<string name="AvatarDoNotDisturb">
 		Zajęty
 	</string>
 	<string name="AvatarMuted">
@@ -855,6 +858,9 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="multiple_textures">
 		Wiele
 	</string>
+	<string name="use_texture">
+		Użyj tekstury
+	</string>
 	<string name="texture_loading">
 		Ładowanie...
 	</string>
@@ -873,6 +879,9 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="minimap_distance">
 		(Odległość: [DISTANCE] m)
 	</string>
+	<string name="minimap_no_focus">
+		Kamera nie może skupić się na użytkowniku, ponieważ jest poza polem widzenia.
+	</string>
 	<string name="Ok">
 		OK
 	</string>
@@ -884,6 +893,12 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="no_name_object">
 		(bez nazwy)
+	</string>
+	<string name="NearbyChatTitle">
+		Czat lokalny
+	</string>
+	<string name="NearbyChatLabel">
+		(Czat lokalny)
 	</string>
 	<string name="whisper">
 		szepcze:
@@ -951,6 +966,12 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="TeleportYourAgent">
 		Teleportować Cię
 	</string>
+	<string name="ManageEstateSilently">
+		Zarządzać Twoimi majątkami bez powiadomień
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		Zmieniać Twoje domyślne animacje
+	</string>
 	<string name="JoinAnExperience">
 		Rozpocznij przygodę
 	</string>
@@ -965,6 +986,12 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="NotConnected">
 		Brak połączenia
+	</string>
+	<string name="AgentNameSubst">
+		(Ty)
+	</string>
+	<string name="UnknownScriptPermission">
+		(nieznane)!
 	</string>
 	<string name="SIM_ACCESS_PG">
 		General
@@ -1050,29 +1077,8 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="backup_files">
 		Kopie zapasowe obiektów
 	</string>
-	<string name="AvatarSetNotAway">
-		Nie Śpij
-	</string>
-	<string name="AvatarSetAway">
-		Śpij
-	</string>
-	<string name="AvatarSetNotBusy">
-		Nie Zajęty
-	</string>
-	<string name="AvatarSetBusy">
-		Zajęty
-	</string>
-	<string name="AvatarSetNotAutorespond">
-		Bez autoodpowiedzi
-	</string>
-	<string name="AvatarSetAutorespond">
-		Włącz autoodpowiedź
-	</string>
-	<string name="AvatarSetNotAutorespondNonFriends">
-		Bez autoodpowiedzi dla nieznajomych
-	</string>
-	<string name="AvatarSetAutorespondNonFriends">
-		Włącz autoodpowiedź dla nieznajomych
+	<string name="collada_files">
+		Modele COLLADA
 	</string>
 	<string name="shape">
 		Kształt
@@ -2060,8 +2066,8 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="PanelContentsNewScript">
 		Nowy skrypt
 	</string>
-	<string name="BusyModeResponseDefault">
-		Rezydent, do którego wysłałeś/aś wiadomość prywatną znajduje się w trybie zajętości i nie chce, aby mu przeszkadzano. Oznacza to, iż Twoja wiadomość zostanie zapisana do przejrzenia później.
+	<string name="DoNotDisturbModeResponseDefault">
+		Rezydent, do którego wysłałeś/aś wiadomość prywatną znajduje się w trybie zajętości i nie chce, aby mu przeszkadzano. Oznacza to, iż Twoja wiadomość zostanie zapisana do przejrzenia na później.
 	</string>
 	<string name="MuteByName">
 		(Nazwa)
@@ -2150,6 +2156,9 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="InvOfferGaveYou">
 		dał Ci
 	</string>
+	<string name="InvOfferYouDecline">
+		Odrzucono
+	</string>
 	<string name="InvOfferDecline">
 		Odrzucono [DESC] od [NAME].
 	</string>
@@ -2188,9 +2197,6 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="GroupMoneyDate">
 		[weekday,datetime,utc], [day,datetime,utc] [mth,datetime,utc] [year,datetime,utc]
-	</string>
-	<string name="ViewerObjectContents">
-		Zawartość
 	</string>
 	<string name="AcquiredItems">
 		Nabyte obiekty
@@ -2402,7 +2408,7 @@ Jeżeli problem nadal występuje, proponujemy całkowite odinstalowanie aplikacj
 	<string name="MBFatalError">
 		Błąd krytyczny
 	</string>
-	<string name="MBFatalError">
+	<string name="MBApplicationError">
 		Błąd aplikacji - nie panikuj
 	</string>
 	<string name="MBApplicationErrorDetails">
@@ -4029,6 +4035,12 @@ Jeżeli nadal otrzymujesz ten komunikat, skontaktuj się z [SUPPORT_SITE].
 	<string name="IM_unblock_only_groups_friends">
 		Aby zobaczyć tą wiadomość musisz odznaczyć &apos;Tylko znajomi i grupy mogą wysyłać mi wiad. prywatne (IM) oraz rozmowy głosowe&apos; w Ustawieniach/Prywatności.
 	</string>
+	<string name="OnlineStatus">
+		dostępny/a
+	</string>
+	<string name="OfflineStatus">
+		niedostępny/a
+	</string>
 	<string name="IM_announce_incoming">
 		Nadchodzi wiadomość od [NAME]
 	</string>
@@ -4043,6 +4055,9 @@ Jeżeli nadal otrzymujesz ten komunikat, skontaktuj się z [SUPPORT_SITE].
 	</string>
 	<string name="you_joined_call">
 		Dołączyłeś/aś do rozmowy głosowej
+	</string>
+	<string name="you_auto_rejected_call-im">
+		Rozmowa głosowa została automatycznie odrzucona, ponieważ Tryb Zajętości był włączony.
 	</string>
 	<string name="name_started_call">
 		[NAME] zaczyna rozmowę głosową
@@ -4060,7 +4075,7 @@ Jeżeli nadal otrzymujesz ten komunikat, skontaktuj się z [SUPPORT_SITE].
 		Łączenie...
 	</string>
 	<string name="conference-title">
-		Konferencja ad-hoc
+		Konferencja wieloosobowa
 	</string>
 	<string name="conference-title-incoming">
 		Konferencja z [AGENT_NAME]
@@ -4567,6 +4582,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="Command_Chat_Label">
 		Rozmowy
 	</string>
+	<string name="Command_Conversations_Label">
+		Rozmowy
+	</string>
 	<string name="Command_Compass_Label">
 		Kompas
 	</string>
@@ -4690,6 +4708,12 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="Command_Radar_Label">
 		Radar
 	</string>
+	<string name="Command_Conversation_Log_Label">
+		Dziennik rozmów
+	</string>
+	<string name="Command_Move_Lock_Label">
+		Unieruchom
+	</string>
 	<string name="Command_AboutLand_Tooltip">
 		Informacje o miejscu, które odwiedzasz
 	</string>
@@ -4704,6 +4728,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="Command_Chat_Tooltip">
 		Rozmawiaj z ludźmi w pobliżu używając tekstu (CTRL+T)
+	</string>
+	<string name="Command_Conversations_Tooltip">
+		Rozmawiaj ze wszystkimi
 	</string>
 	<string name="Command_Compass_Tooltip">
 		Kompas
@@ -4825,6 +4852,12 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="Command_Radar_Tooltip">
 		Otwiera radar z najbliższymi awatarami
 	</string>
+	<string name="Command_Conversation_Log_Tooltip">
+		Otwiera dziennik rozmów, aby zobaczyć przeszłe logi
+	</string>
+	<string name="Command_Move_Lock_Tooltip">
+		Blokuje Twojego awatara na obecnej pozycji
+	</string>
 	<string name="Toolbar_Bottom_Tooltip">
 		obecnie na Twoim dolnym pasku
 	</string>
@@ -4888,16 +4921,13 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="snapshot_quality_very_high">
 		Bardzo wysoka
 	</string>
-	<string name="IMPrefix">
-		IM:
-	</string>
 	<string name="SanityCheckEquals">
 		Ustawienie &quot;[CONTROL_NAME]&quot; powinno mieć wartość [VALUE_1]
 	</string>
 	<string name="SanityCheckNotEquals">
 		Ustawienie &quot;[CONTROL_NAME]&quot; nie powinno mieć wartości [VALUE_1]
 	</string>
-	<string name="SanityCheckLowerThan">
+	<string name="SanityCheckLessThan">
 		Ustawienie &quot;[CONTROL_NAME]&quot; powinno być mniejsze niż [VALUE_1]
 	</string>
 	<string name="SanityCheckGreaterThan">
@@ -5011,11 +5041,29 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="Collision_UnknownType">
 		[NAME] spowodował/a nieznany typ kolizji.
 	</string>
+	<string name="MovelockEnabled">
+		Blokada pozycji została włączona
+	</string>
+	<string name="MovelockDisabled">
+		Blokada pozycji została wyłączona
+	</string>
 	<string name="BusyResponse">
 		Wiadomość zajętości
 	</string>
 	<string name="TeleportMaturityExceeded">
 		Rezydent nie może odwiedzić tego regionu.
+	</string>
+	<string name="logging_calls_disabled_log_empty">
+		Rozmowy nie są zapisywane do dziennika. Jeśli chcesz zacząć je logować wybierz "Zapisywanie: tylko dziennik" lub "Zapisywanie: dziennik i logi rozmów" w Preferencje > Prywatność.
+	</string>
+	<string name="logging_calls_disabled_log_not_empty">
+		Rozmowy nie będą więcej zapisywane. Jeśli chcesz kontynuować ich logowanie wybierz "Zapisywanie: tylko dziennik" lub "Zapisywanie: dziennik i logi rozmów" w Preferencje > Prywatność.
+	</string>
+	<string name="logging_calls_enabled_log_empty">
+		Nie ma zapisanych rozmów. Jeśli skontaktujesz się z kimś, lub ktoś z Tobą, to wpis dziennika pojawi się tutaj.
+	</string>
+	<string name="loading_chat_logs">
+		Wczytywanie...
 	</string>
 	<string name="LoadCameraPositionNoneSaved">
 		Żadne ustawienie kamery nie zostało jeszcze zapisane.
@@ -5028,6 +5076,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="FSCmdLineDrawDistanceSet">
 		Pole widzenia zostało ustawione na [DISTANCE]m.
+	</string>
+	<string name="FSCameraPositionCopied">
+		Pozycja kamery [POS] została skopiowana do schowka.
 	</string>
 	<string name="FSWithHavok">
 		ze wsparciem dla Havoka
@@ -5085,6 +5136,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="qtool_done">
 		Narzędzie wyrównywania zakończyło pracę.
+	</string>
+	<string name="fsbridge_cant_create_disabled">
+		Firestorm nie może utworzyć Mostu LSL, jeśli "Włącz Most w LScript Language" jest wyłączone w Ustawieniach.
 	</string>
 	<string name="fsbridge_no_library">
 		CtrlAltStudio Viewer nie mógł utworzyć Mostu LSL. Włącz swoją Bibliotekę i zaloguj się ponownie.
@@ -5221,9 +5275,6 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="leaving_region">
 		opuścił/a region.
 	</string>
-	<string name="export_fail_no_mesh">
-		Eksportowanie meszy jest obecnie nieobsługiwane. Anulowano.
-	</string>
 	<string name="TotalScriptCountChangeIncrease">
 		Całkowita il. skryptów w regionie wzrosła z [OLD_VALUE] do [NEW_VALUE] ([DIFFERENCE]).
 	</string>
@@ -5232,5 +5283,11 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="preproc_toggle_warning">
 		Przełączenie trybu preprocesora odniesie pełny skutek dopiero po zamknięciu i ponownym otwarciu tego edytora.
+	</string>
+	<string name="skin_defaults_starlight_location">
+		Pokazywanie Twojej obecnej lokalizacji w pasku menu zostało wyłączone, to domyślne zachowanie dla skórek linii StarLight.
+	</string>
+	<string name="skin_defaults_starlight_navbar">
+		Pokazywanie paska nawigacyjnego zostało włączone, to domyślne zachowanie dla skórek linii StarLight.
 	</string>
 </strings>

@@ -183,9 +183,8 @@ void LLInventoryModelBackgroundFetch::backgroundFetchCB(void *)
 
 void LLInventoryModelBackgroundFetch::backgroundFetch()
 {
-// <FS:TM> new:	if (mBackgroundFetchActive && gAgent.getRegion() && gAgent.getRegion()->capabilitiesReceived()) 
 // <FS:AW>
-// <FS:TM> old:	if (mBackgroundFetchActive && gAgent.getRegion())
+	//if (mBackgroundFetchActive && gAgent.getRegion() && gAgent.getRegion()->capabilitiesReceived())
 	LLViewerRegion* region = gAgent.getRegion();
 	if (!region || !region->capabilitiesReceived())
 	{
@@ -199,7 +198,8 @@ void LLInventoryModelBackgroundFetch::backgroundFetch()
 // <FS:AW>
 //		if (gSavedSettings.getBOOL("UseHTTPInventory")) 
 		std::string url = region->getCapability("FetchInventory2");
-		if (gSavedSettings.getBOOL("UseHTTPInventory") && !url.empty()) 
+		static LLCachedControl<bool> sUseHTTPInventory(gSavedSettings, "UseHTTPInventory");
+		if (sUseHTTPInventory && !url.empty()) 
 // </FS:AW>
 		{
 			bulkFetch();

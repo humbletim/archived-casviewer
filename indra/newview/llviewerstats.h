@@ -246,7 +246,9 @@ public:
 		inline F32 getStdDev() const
 		{
 			const F32 mean = getMean();
-			return (mCount < 2) ? 0.f : sqrt(llmax(0.f,mSumOfSquares/mCount - (mean * mean)));
+			// <FS:CR> Fix implicit conversion double to float
+			//return (mCount < 2) ? 0.f : sqrt(llmax(0.f,mSumOfSquares/mCount - (mean * mean)));
+			return (mCount < 2) ? 0.f : sqrtf(llmax(0.f,mSumOfSquares/mCount - (mean * mean)));
 		}
 		
 		inline U32 getCount() const
@@ -279,23 +281,28 @@ public:
 
 	// Phase tracking (originally put in for avatar rezzing), tracking
 	// progress of active/completed phases for activities like outfit changing.
-	typedef std::map<std::string,LLTimer>	phase_map_t;
+	typedef std::map<std::string,LLFrameTimer>	phase_map_t;
 	typedef std::map<std::string,StatsAccumulator>	phase_stats_t;
 	class PhaseMap
 	{
 	private:
 		phase_map_t mPhaseMap;
+		static phase_stats_t sStats;
 	public:
 		PhaseMap();
-		LLTimer&	 	getPhaseTimer(const std::string& phase_name);
+		LLFrameTimer& 	getPhaseTimer(const std::string& phase_name);
 		bool 			getPhaseValues(const std::string& phase_name, F32& elapsed, bool& completed);
 		void			startPhase(const std::string& phase_name);
 		void			stopPhase(const std::string& phase_name);
+		void			stopAllPhases();
 		void			clearPhases();
 		LLSD			dumpPhases();
+		static StatsAccumulator& getPhaseStats(const std::string& phase_name);
+		static void recordPhaseStat(const std::string& phase_name, F32 value);
 		phase_map_t::iterator begin() { return mPhaseMap.begin(); }
 		phase_map_t::iterator end() { return mPhaseMap.end(); }
 	};
+
 
 private:
 	F64	mStats[ST_COUNT];

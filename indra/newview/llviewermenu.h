@@ -41,6 +41,7 @@ class PieMenu;			// ## Zi: Pie Menu
 
 void initialize_edit_menu();
 void initialize_spellcheck_menu();
+void initialize_volume_controls_callbacks(); //<FS:KC> Centralize a some of these volume panel callbacks
 void init_menus();
 void cleanup_menus();
 
@@ -203,6 +204,7 @@ extern LLContextMenu		*gMenuObject;
 extern LLContextMenu		*gMenuAttachmentSelf;
 extern LLContextMenu		*gMenuAttachmentOther;
 extern LLContextMenu		*gMenuLand;
+extern LLContextMenu		*gMenuMuteParticle;
 
 // Needed to build menus when attachment site list available
 extern LLMenuGL* gAttachSubMenu;
@@ -233,8 +235,6 @@ extern PieMenu* gPieAttachBodyPartMenus[10];
 extern PieMenu* gPieDetachBodyPartMenus[10];
 // ## Zi: Pie Menu
 
-extern LLMenuItemCallGL* gAFKMenu;
-extern LLMenuItemCallGL* gBusyMenu;
 extern LLMenuItemCallGL* gAutorespondMenu;
 extern LLMenuItemCallGL* gAutorespondNonFriendsMenu;
 

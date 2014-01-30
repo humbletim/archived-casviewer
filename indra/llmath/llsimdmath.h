@@ -31,41 +31,13 @@
 #error "Please include llmath.h before this file."
 #endif
 
-#if ( ( LL_DARWIN || LL_LINUX ) && !(__SSE2__) ) || ( LL_WINDOWS && ( _M_IX86_FP < 2 ) )
+#if ( ( LL_DARWIN || LL_LINUX ) && !(__SSE2__) ) || ( LL_WINDOWS && ( _M_IX86_FP < 2 && !ND_BUILD64BIT_ARCH ) )
 #error SSE2 not enabled. LLVector4a and related class will not compile.
 #endif
 
 #if !LL_WINDOWS
 #include <stdint.h>
 #endif
-
-template <typename T> T* LL_NEXT_ALIGNED_ADDRESS(T* address) 
-{ 
-	return reinterpret_cast<T*>(
-		(reinterpret_cast<uintptr_t>(address) + 0xF) & ~0xF);
-}
-
-template <typename T> T* LL_NEXT_ALIGNED_ADDRESS_64(T* address) 
-{ 
-	return reinterpret_cast<T*>(
-		(reinterpret_cast<uintptr_t>(address) + 0x3F) & ~0x3F);
-}
-
-#if LL_LINUX || LL_DARWIN
-
-#define			LL_ALIGN_PREFIX(x)
-#define			LL_ALIGN_POSTFIX(x)		__attribute__((aligned(x)))
-
-#elif LL_WINDOWS
-
-#define			LL_ALIGN_PREFIX(x)		__declspec(align(x))
-#define			LL_ALIGN_POSTFIX(x)
-
-#else
-#error "LL_ALIGN_PREFIX and LL_ALIGN_POSTFIX undefined"
-#endif
-
-#define LL_ALIGN_16(var) LL_ALIGN_PREFIX(16) var LL_ALIGN_POSTFIX(16)
 
 #include <xmmintrin.h>
 #include <emmintrin.h>

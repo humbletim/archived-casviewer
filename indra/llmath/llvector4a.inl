@@ -27,6 +27,11 @@
 ////////////////////////////////////
 // LOAD/STORE
 ////////////////////////////////////
+#if defined( LL_WINDOWS ) && defined( ND_BUILD64BIT_ARCH )
+#pragma optimize( "", off )
+#pragma warning(push)
+#pragma warning(disable:4748)
+#endif
 
 // Load from 16-byte aligned src array (preferred method of loading)
 inline void LLVector4a::load4a(const F32* src)
@@ -409,6 +414,26 @@ inline void LLVector4a::normalize3fast()
 	mQ = _mm_mul_ps( mQ, approxRsqrt );
 }
 
+inline void LLVector4a::normalize3fast_checked(LLVector4a* d)
+{
+	if (!isFinite3())
+	{
+		*this = d ? *d : LLVector4a(0,1,0,1);
+		return;
+	}
+
+	LLVector4a lenSqrd; lenSqrd.setAllDot3( *this, *this );
+
+	if (lenSqrd.getF32ptr()[0] <= FLT_EPSILON)
+	{
+		*this = d ? *d : LLVector4a(0,1,0,1);
+		return;
+	}
+
+	const LLQuad approxRsqrt = _mm_rsqrt_ps(lenSqrd.mQ);
+	mQ = _mm_mul_ps( mQ, approxRsqrt );
+}
+
 // Return true if this vector is normalized with respect to x,y,z up to tolerance
 inline LLBool32 LLVector4a::isNormalized3( F32 tolerance ) const
 {
@@ -460,16 +485,13 @@ inline void LLVector4a::setMax(const LLVector4a& lhs, const LLVector4a& rhs)
 	mQ = _mm_max_ps(lhs.mQ, rhs.mQ);
 }
 
-// Set this to  (c * lhs) + rhs * ( 1 - c)
+// Set this to  lhs + (rhs-lhs)*c
 inline void LLVector4a::setLerp(const LLVector4a& lhs, const LLVector4a& rhs, F32 c)
 {
-	LLVector4a a = lhs;
-	a.mul(c);
-	
-	LLVector4a b = rhs;
-	b.mul(1.f-c);
-	
-	setAdd(a, b);
+	LLVector4a t;
+	t.setSub(rhs,lhs);
+	t.mul(c);
+	setAdd(lhs, t);
 }
 
 inline LLBool32 LLVector4a::isFinite3() const
@@ -592,3 +614,8 @@ inline LLVector4a::operator LLQuad() const
 {
 	return mQ;
 }
+
+#if defined( LL_WINDOWS ) && defined( ND_BUILD64BIT_ARCH )
+#pragma warning(pop)
+#pragma optimize( "", on )
+#endif

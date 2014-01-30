@@ -23,29 +23,29 @@
  * $/LicenseInfo$
  */
 
-
 #include "llviewerprecompiledheaders.h" // must be first include
-
 #include "llsyswellwindow.h"
 
+#include "llchiclet.h"
+#include "llchicletbar.h"
+#include "llflatlistview.h"
+#include "llfloaterreg.h"
+#include "llnotificationmanager.h"
+#include "llnotificationsutil.h"
+#include "llscriptfloater.h"
+#include "llspeakers.h"
+#include "lltoastpanel.h"
+
+// Firestorm includes
 #include "llagent.h"
 #include "llavatarnamecache.h"
-
 #include "llflatlistview.h"
 #include "llfloaterreg.h"
 #include "llnotifications.h"
-
 #include "llscriptfloater.h"
 #include "llviewercontrol.h"
 #include "llviewerwindow.h"
 
-#include "llchiclet.h"
-#include "llchicletbar.h"
-#include "lltoastpanel.h"
-#include "llnotificationmanager.h"
-#include "llnotificationsutil.h"
-#include "llspeakers.h"
-#include "lltoolbarview.h"
 
 //---------------------------------------------------------------------------------
 LLSysWellWindow::LLSysWellWindow(const LLSD& key) : LLTransientDockableFloater(NULL, true,  key),
@@ -67,10 +67,6 @@ BOOL LLSysWellWindow::postBuild()
 
 	// get a corresponding channel
 	initChannel();
-
-	// click on SysWell Window should clear "new message" state (and 'Lit' status). EXT-3147.
-	// mouse up callback is not called in this case.
-	setMouseDownCallback(boost::bind(&LLSysWellWindow::releaseNewMessagesState, this));
 
 	return LLTransientDockableFloater::postBuild();
 }
@@ -98,9 +94,12 @@ void LLSysWellWindow::onStartUpToastClick(S32 x, S32 y, MASK mask)
 void LLSysWellWindow::setSysWellChiclet(LLSysWellChiclet* chiclet) 
 { 
 	mSysWellChiclet = chiclet;
-	if(mSysWellChiclet)
-		mSysWellChiclet->updateWidget(isWindowEmpty()); 
+	if(NULL != mSysWellChiclet)
+	{
+		mSysWellChiclet->updateWidget(isWindowEmpty());
+	}
 }
+
 //---------------------------------------------------------------------------------
 LLSysWellWindow::~LLSysWellWindow()
 {
@@ -111,7 +110,10 @@ void LLSysWellWindow::removeItemByID(const LLUUID& id)
 {
 	if(mMessageList->removeItemByValue(id))
 	{
-		mSysWellChiclet->updateWidget(isWindowEmpty());
+		if (NULL != mSysWellChiclet)
+		{
+			mSysWellChiclet->updateWidget(isWindowEmpty());
+		}
 		reshapeWindow();
 	}
 	else
@@ -125,6 +127,11 @@ void LLSysWellWindow::removeItemByID(const LLUUID& id)
 	{
 		setVisible(FALSE);
 	}
+}
+
+ LLPanel * LLSysWellWindow::findItemByID(const LLUUID& id)
+{
+       return mMessageList->getItemByValue(id);
 }
 
 //---------------------------------------------------------------------------------
@@ -179,11 +186,6 @@ void LLSysWellWindow::setVisible(BOOL visible)
 		mChannel->updateShowToastsState();
 		mChannel->redrawToasts();
 	}
-
-	if (visible)
-	{
-		releaseNewMessagesState();
-	}
 }
 
 //---------------------------------------------------------------------------------
@@ -233,20 +235,13 @@ void LLSysWellWindow::reshapeWindow()
 	}
 }
 
-void LLSysWellWindow::releaseNewMessagesState()
-{
-	if (NULL != mSysWellChiclet)
-	{
-		mSysWellChiclet->setNewMessagesState(false);
-	}
-}
-
 //---------------------------------------------------------------------------------
 bool LLSysWellWindow::isWindowEmpty()
 {
 	return mMessageList->size() == 0;
 }
 
+// <FS:Ansariel> [FS communication UI]
 /************************************************************************/
 /*         RowPanel implementation                                      */
 /************************************************************************/
@@ -256,7 +251,7 @@ LLIMWellWindow::RowPanel::RowPanel(const LLSysWellWindow* parent, const LLUUID& 
 		S32 chicletCounter, const std::string& name, const LLUUID& otherParticipantId) :
 		LLPanel(LLPanel::Params()), mChiclet(NULL), mParent(parent)
 {
-	buildFromFile( "panel_activeim_row.xml");
+	buildFromFile( "panel_fs_activeim_row.xml");
 
 	// Choose which of the pre-created chiclets (IM/group) to use.
 	// The other one gets hidden.
@@ -362,6 +357,8 @@ BOOL LLIMWellWindow::RowPanel::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
 	return mChiclet->handleRightMouseDown(x, y, mask);
 }
+// </FS:Ansariel> [FS communication UI]
+
 /************************************************************************/
 /*         ObjectRowPanel implementation                                */
 /************************************************************************/
@@ -447,13 +444,19 @@ BOOL LLIMWellWindow::ObjectRowPanel::handleRightMouseDown(S32 x, S32 y, MASK mas
 
 //////////////////////////////////////////////////////////////////////////
 // PUBLIC METHODS
-LLNotificationWellWindow::LLNotificationWellWindow(const LLSD& key)
-: LLSysWellWindow(key)
+LLNotificationWellWindow::WellNotificationChannel::WellNotificationChannel(LLNotificationWellWindow* well_window)
+:	LLNotificationChannel(LLNotificationChannel::Params().name(well_window->getPathname())),
+	mWellWindow(well_window)
 {
-	// init connections to the list's update events
-	connectListUpdaterToSignal("notify");
-	connectListUpdaterToSignal("groupnotify");
-	connectListUpdaterToSignal("offer");
+	connectToChannel("Notifications");
+	connectToChannel("Group Notifications");
+	connectToChannel("Offer");
+}
+
+LLNotificationWellWindow::LLNotificationWellWindow(const LLSD& key)
+:	LLSysWellWindow(key)
+{
+	mNotificationUpdates.reset(new WellNotificationChannel(this));
 	mUpdateLocked = false;
 }
 
@@ -499,7 +502,6 @@ void LLNotificationWellWindow::addItem(LLSysWellItem::Params p)
 			mSysWellChiclet->updateWidget(isWindowEmpty());
 			reshapeWindow();
 		}
-
 		new_item->setOnItemCloseCallback(boost::bind(&LLNotificationWellWindow::onItemClose, this, _1));
 		new_item->setOnItemClickCallback(boost::bind(&LLNotificationWellWindow::onItemClick, this, _1));
 	}
@@ -551,7 +553,7 @@ void LLNotificationWellWindow::initChannel()
 	LLSysWellWindow::initChannel();
 	if(mChannel)
 	{
-		mChannel->setOnStoreToastCallback(boost::bind(&LLNotificationWellWindow::onStoreToast, this, _1, _2));
+		mChannel->addOnStoreToastCallback(boost::bind(&LLNotificationWellWindow::onStoreToast, this, _1, _2));
 	}
 }
 
@@ -578,20 +580,6 @@ void LLNotificationWellWindow::onStoreToast(LLPanel* info_panel, LLUUID id)
 	addItem(p);
 }
 
-void LLNotificationWellWindow::connectListUpdaterToSignal(std::string notification_type)
-{
-	LLNotificationsUI::LLNotificationManager* manager = LLNotificationsUI::LLNotificationManager::getInstance();
-	LLNotificationsUI::LLEventHandler* n_handler = manager->getHandlerForNotification(notification_type);
-	if(n_handler)
-	{
-		n_handler->setNotificationIDCallback(boost::bind(&LLNotificationWellWindow::removeItemByID, this, _1));
-	}
-	else
-	{
-		llwarns << "LLSysWellWindow::connectListUpdaterToSignal() - could not get a handler for '" << notification_type <<"' type of notifications" << llendl;
-	}
-}
-
 void LLNotificationWellWindow::onItemClick(LLSysWellItem* item)
 {
 	LLUUID id = item->getID();
@@ -601,12 +589,24 @@ void LLNotificationWellWindow::onItemClick(LLSysWellItem* item)
 void LLNotificationWellWindow::onItemClose(LLSysWellItem* item)
 {
 	LLUUID id = item->getID();
-	removeItemByID(id);
+	
 	if(mChannel)
+	{
+		// removeItemByID() is invoked from killToastByNotificationID() and item will removed;
 		mChannel->killToastByNotificationID(id);
+	}
+	else
+	{
+		// removeItemByID() should be called one time for each item to remove it from notification well
+		removeItemByID(id);
+	}
+
 }
 
-
+void LLNotificationWellWindow::onAdd( LLNotificationPtr notify )
+{
+	removeItemByID(notify->getID());
+}
 
 /************************************************************************/
 /*         LLIMWellWindow  implementation                               */
@@ -617,11 +617,13 @@ void LLNotificationWellWindow::onItemClose(LLSysWellItem* item)
 LLIMWellWindow::LLIMWellWindow(const LLSD& key)
 : LLSysWellWindow(key)
 {
+	// <FS:Ansariel> [FS communication UI]
 	LLIMMgr::getInstance()->addSessionObserver(this);
 }
 
 LLIMWellWindow::~LLIMWellWindow()
 {
+	// <FS:Ansariel> [FS communication UI]
 	LLIMMgr::getInstance()->removeSessionObserver(this);
 }
 
@@ -643,15 +645,18 @@ BOOL LLIMWellWindow::postBuild()
 	BOOL rv = LLSysWellWindow::postBuild();
 	setTitle(getString("title_im_well_window"));
 
-	LLIMChiclet::sFindChicletsSignal.connect(boost::bind(&LLIMWellWindow::findIMChiclet, this, _1));
 	LLIMChiclet::sFindChicletsSignal.connect(boost::bind(&LLIMWellWindow::findObjectChiclet, this, _1));
+
+	// <FS:Ansariel> [FS communication UI]
+	LLIMChiclet::sFindChicletsSignal.connect(boost::bind(&LLIMWellWindow::findIMChiclet, this, _1));
 
 	return rv;
 }
 
+// <FS:Ansariel> [FS communication UI]
 //virtual
 void LLIMWellWindow::sessionAdded(const LLUUID& session_id,
-								   const std::string& name, const LLUUID& other_participant_id)
+								   const std::string& name, const LLUUID& other_participant_id, BOOL has_offline_msg)
 {
 	LLIMModel::LLIMSession* session = LLIMModel::getInstance()->findIMSession(session_id);
 	if (!session) return;
@@ -683,6 +688,7 @@ void LLIMWellWindow::sessionIDUpdated(const LLUUID& old_session_id, const LLUUID
 		mMessageList->updateValue(old_session_id, new_session_id);
 	}
 }
+// </FS:Ansariel> [FS communication UI]
 
 LLChiclet* LLIMWellWindow::findObjectChiclet(const LLUUID& notification_id)
 {
@@ -700,6 +706,8 @@ LLChiclet* LLIMWellWindow::findObjectChiclet(const LLUUID& notification_id)
 
 //////////////////////////////////////////////////////////////////////////
 // PRIVATE METHODS
+
+// <FS:Ansariel> [FS communication UI]
 LLChiclet* LLIMWellWindow::findIMChiclet(const LLUUID& sessionId)
 {
 	if (!mMessageList) return NULL;
@@ -768,17 +776,21 @@ void LLIMWellWindow::delIMRow(const LLUUID& sessionId)
 		setFocus(true);
 	}
 }
+// </FS:Ansariel> [FS communication UI]
 
 void LLIMWellWindow::addObjectRow(const LLUUID& notification_id, bool new_message/* = false*/)
 {
 	if (mMessageList->getItemByValue(notification_id) == NULL)
 	{
 		ObjectRowPanel* item = new ObjectRowPanel(notification_id, new_message);
+		// <FS:Ansariel> [FS communication UI]
+		//if (!mMessageList->addItem(item, notification_id))
 		if (mMessageList->addItem(item, notification_id))
 		{
 			mSysWellChiclet->updateWidget(isWindowEmpty());
 		}
 		else
+		// </FS:Ansariel> [FS communication UI]
 		{
 			llwarns << "Unable to add Object Row into the list, notificationID: " << notification_id << llendl;
 			item->die();
@@ -789,6 +801,8 @@ void LLIMWellWindow::addObjectRow(const LLUUID& notification_id, bool new_messag
 
 void LLIMWellWindow::removeObjectRow(const LLUUID& notification_id)
 {
+	// <FS:Ansariel> [FS communication UI]
+	//if (!mMessageList->removeItemByValue(notification_id))
 	if (mMessageList->removeItemByValue(notification_id))
 	{
 		if (mSysWellChiclet)
@@ -797,6 +811,7 @@ void LLIMWellWindow::removeObjectRow(const LLUUID& notification_id)
 		}
 	}
 	else
+	// </FS:Ansariel> [FS communication UI]
 	{
 		llwarns << "Unable to remove Object Row from the list, notificationID: " << notification_id << llendl;
 	}
@@ -810,6 +825,7 @@ void LLIMWellWindow::removeObjectRow(const LLUUID& notification_id)
 }
 
 
+// <FS:Ansariel> [FS communication UI]
 void LLIMWellWindow::addIMRow(const LLUUID& session_id)
 {
 	if (hasIMRow(session_id)) return;
@@ -823,6 +839,7 @@ bool LLIMWellWindow::hasIMRow(const LLUUID& session_id)
 {
 	return mMessageList->getItemByValue(session_id);
 }
+// </FS:Ansariel> [FS communication UI]
 
 void LLIMWellWindow::closeAll()
 {
@@ -868,12 +885,14 @@ void LLIMWellWindow::closeAllImpl()
 	{
 		LLPanel* panel = mMessageList->getItemByValue(*iter);
 
+		// <FS:Ansariel> [FS communication UI]
 		RowPanel* im_panel = dynamic_cast <RowPanel*> (panel);
 		if (im_panel)
 		{
 			gIMMgr->leaveSession(*iter);
 			continue;
 		}
+		// </FS:Ansariel> [FS communication UI]
 
 		ObjectRowPanel* obj_panel = dynamic_cast <ObjectRowPanel*> (panel);
 		if (obj_panel)
@@ -899,4 +918,4 @@ bool LLIMWellWindow::confirmCloseAll(const LLSD& notification, const LLSD& respo
 	return false;
 }
 
-// EOF
+

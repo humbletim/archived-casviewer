@@ -166,8 +166,10 @@ private:
 };
 // </AW opensim>
 
-
+// <CV:David>
+//const char* DEFAULT_LOGIN_PAGE = "http://phoenixviewer.com/app/loginV3/";
 const char* DEFAULT_LOGIN_PAGE = "http://viewer-login.agni.lindenlab.com/";
+// </CV:David>
 
 const char* SYSTEM_GRID_SLURL_BASE = "secondlife://%s/secondlife/";
 const char* MAIN_GRID_SLURL_BASE = "http://maps.secondlife.com/secondlife/";
@@ -562,35 +564,6 @@ void LLGridManager::gridInfoResponderCB(GridEntry* grid_entry)
 		{
 			grid_entry->grid[GRID_DIRECTORY_FEE] = node->getTextContents();
 			LL_DEBUGS("GridManager") << "[\""<<check<<"\"]: " << grid_entry->grid[GRID_DIRECTORY_FEE] << LL_ENDL;
-			continue;
-		}
-		/// <FS:CR> NOTE: As far as I can tell, this setting doesn't exist on any platform at present,
-		/// adding it for the future while fixing FIRE-9814
-		check = "ClassifiedFee";
-		if (node->hasName(check))
-		{
-			grid_entry->grid[GRID_CLASSIFIED_FEE] = node->getTextContents();
-			LL_DEBUGS("GridManager") << "[\""<<check<<"\"]: " << grid_entry->grid[GRID_CLASSIFIED_FEE] << LL_ENDL;
-		}
-		check = "CurrencySymbol";
-		if (node->hasName(check))
-		{
-			grid_entry->grid[GRID_CURRENCY_SYMBOL] = node->getTextContents();
-			LL_DEBUGS("GridManager") << "[\""<<check<<"\"]: " << grid_entry->grid[GRID_CURRENCY_SYMBOL] << LL_ENDL;
-			continue;
-		}
-		check = "RealCurrencySymbol";
-		if (node->hasName(check))
-		{
-			grid_entry->grid[GRID_REAL_CURRENCY_SYMBOL] = node->getTextContents();
-			LL_DEBUGS("GridManager") << "[\""<<check<<"\"]: " << grid_entry->grid[GRID_REAL_CURRENCY_SYMBOL] << LL_ENDL;
-			continue;
-		}
-		check = "MaxGroups";
-		if (node->hasName(check))
-		{
-			grid_entry->grid[GRID_MAXGROUPS] = node->getTextContents();
-			LL_DEBUGS("GridManager") << "[\""<<check<<"\"]: " << grid_entry->grid[GRID_MAXGROUPS] << LL_ENDL;
 			continue;
 		}
 		check = "platform";

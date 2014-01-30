@@ -67,7 +67,6 @@ const BOOL	NOT_MOUSE_OPAQUE = FALSE;
 
 const U32 GL_NAME_UI_RESERVED = 2;
 
-
 // maintains render state during traversal of UI tree
 class LLViewDrawContext
 {
@@ -686,6 +685,12 @@ public:
 	static S32 sLastLeftXML;
 	static S32 sLastBottomXML;
 	static BOOL sForceReshape;
+
+// <FS:ND> virtual to override deleting a child by it's parent.
+private:
+	virtual bool deletableByParent()
+	{ return true; }
+// </FS:ND>
 };
 
 class LLCompareByTabOrder

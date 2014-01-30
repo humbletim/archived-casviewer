@@ -189,10 +189,6 @@ void LLWorld::refreshLimits()
 		mEnforceMaxBuild = FALSE;
 		mLockedDrawDistance = FALSE;
 
-		mWhisperDistance = CHAT_WHISPER_RADIUS;
-		mSayDistance = CHAT_NORMAL_RADIUS;
-		mShoutDistance = CHAT_SHOUT_RADIUS;
-
 		mDrawDistance = -1.f;
 		mTerrainDetailScale = -1.f;
 
@@ -232,10 +228,6 @@ void LLWorld::refreshLimits()
 		mEnableTeenMode = FALSE; //get saved settings?
 		mEnforceMaxBuild = FALSE;
 		mLockedDrawDistance = FALSE;
-
-		mWhisperDistance = CHAT_WHISPER_RADIUS;
-		mSayDistance = CHAT_NORMAL_RADIUS;
-		mShoutDistance = CHAT_SHOUT_RADIUS;
 
 		mDrawDistance = -1.f;
 		mTerrainDetailScale = -1.f;
@@ -386,30 +378,6 @@ void LLWorld::setMinPrimZPos(F32 val)
 		mMinPrimZPos = 0.0f;
 	else
 		mMinPrimZPos = val;
-}
-
-void LLWorld::setWhisperDistance(F32 val)
-{
-	if(val <= 0.0f)
-		mWhisperDistance = CHAT_WHISPER_RADIUS;
-	else
-		mWhisperDistance = val;
-}
-
-void LLWorld::setSayDistance(F32 val)
-{
-	if(val <= 0.0f)
-		mSayDistance = CHAT_NORMAL_RADIUS;
-	else
-		mSayDistance = val;
-}
-
-void LLWorld::setShoutDistance(F32 val)
-{
-	if(val < 0.0f)
-		mShoutDistance = CHAT_SHOUT_RADIUS;
-	else
-		mShoutDistance = val;
 }
 
 void LLWorld::setDrawDistance(F32 val)
@@ -722,7 +690,9 @@ void LLWorld::removeRegion(const LLHost &host)
 	mActiveRegionList.remove(regionp);
 	mCulledRegionList.remove(regionp);
 	mVisibleRegionList.remove(regionp);
-	
+
+	mRegionRemovedSignal(regionp);
+
 	delete regionp;
 
 	updateWaterObjects();
@@ -863,6 +833,19 @@ LLViewerRegion* LLWorld::getRegionFromHandle(const U64 &handle)
 	return NULL;
 }
 
+LLViewerRegion* LLWorld::getRegionFromID(const LLUUID& region_id)
+{
+	for (region_list_t::iterator iter = mRegionList.begin();
+		 iter != mRegionList.end(); ++iter)
+	{
+		LLViewerRegion* regionp = *iter;
+		if (regionp->getRegionID() == region_id)
+		{
+			return regionp;
+		}
+	}
+	return NULL;
+}
 
 void LLWorld::updateAgentOffset(const LLVector3d &offset_global)
 {
@@ -1702,7 +1685,7 @@ void LLWorld::getAvatars(uuid_vec_t* avatar_ids, std::vector<LLVector3d>* positi
 	{
 		LLVOAvatar* pVOAvatar = (LLVOAvatar*) *iter;
 
-		if (!pVOAvatar->isDead() && !pVOAvatar->isSelf() && !pVOAvatar->mIsDummy)
+		if (!pVOAvatar->isDead() && !pVOAvatar->mIsDummy)
 		{
 			LLVector3d pos_global = pVOAvatar->getPositionGlobal();
 			LLUUID uuid = pVOAvatar->getID();
@@ -1769,6 +1752,11 @@ bool LLWorld::isRegionListed(const LLViewerRegion* region) const
 {
 	region_list_t::const_iterator it = find(mRegionList.begin(), mRegionList.end(), region);
 	return it != mRegionList.end();
+}
+
+boost::signals2::connection LLWorld::setRegionRemovedCallback(const region_remove_signal_t::slot_type& cb)
+{
+	return mRegionRemovedSignal.connect(cb);
 }
 
 LLHTTPRegistration<LLEstablishAgentCommunication>

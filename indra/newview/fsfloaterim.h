@@ -34,14 +34,18 @@
 #include "lltooldraganddrop.h"
 #include "lltransientdockablefloater.h"
 #include "llvoicechannel.h"
+#include "lllayoutstack.h"
 
 class LLAvatarName;
 class LLButton;		// support sysinfo button -Zi
-class LLLineEditor;
+class LLChatEntry;
+class LLTextEditor;
 class FSPanelChatControlPanel;
 class FSChatHistory;
 class LLInventoryItem;
 class LLInventoryCategory;
+
+typedef boost::signals2::signal<void(const LLUUID& session_id)> floater_showed_signal_t;
 
 /**
  * Individual IM window that appears at the bottom of the screen,
@@ -81,9 +85,10 @@ public:
 
 	// get new messages from LLIMModel
 	void updateMessages();
-	void reloadMessages();
+	void reloadMessages(bool clean_messages = false);
 	static void onSendMsg( LLUICtrl*, void*);
-	void sendMsg();
+	void sendMsgFromInputEditor();
+	void sendMsg(const std::string& msg);
 
 	// callback for LLIMModel on new messages
 	// route to specific floater if it is visible
@@ -102,7 +107,7 @@ public:
 	BOOL focusFirstItem(BOOL prefer_text_fields = FALSE, BOOL focus_flash = TRUE );
 
 	// called when docked floater's position has been set by chiclet
-	void setPositioned(bool b) { mPositioned = b; };
+	// void setPositioned(bool b) { mPositioned = b; };		// dead code -Zi
 
 	void onVisibilityChange(const LLSD& new_visibility);
 	void processIMTyping(const LLIMInfo* im_info, BOOL typing);
@@ -111,6 +116,8 @@ public:
 
 	void updateChatHistoryStyle();
 	static void processChatHistoryStyleUpdate(const LLSD& newvalue);
+	
+	static void clearAllOpenHistories();	// <FS:CR> FIRE-11734
 
 	BOOL handleDragAndDrop(S32 x, S32 y, MASK mask,
 							   BOOL drop, EDragAndDropType cargo_type,
@@ -123,17 +130,23 @@ public:
 	 */
 	static bool isChatMultiTab();
 
+	void initIMSession(const LLUUID& session_id);
 	static void initIMFloater();
 
 	//used as a callback on receiving new IM message
 	static void sRemoveTypingIndicator(const LLSD& data);
 
-	static void onIMChicletCreated(const LLUUID& session_id);
+	static void onNewIMReceived(const LLUUID& session_id);
 
 	virtual LLTransientFloaterMgr::ETransientGroup getGroup() { return LLTransientFloaterMgr::IM; }
 
 	// <FS:Ansariel> FIRE-3248: Disable add friend button on IM floater if friendship request accepted
 	void setEnableAddFriendButton(BOOL enabled);
+	
+	static boost::signals2::connection setIMFloaterShowedCallback(const floater_showed_signal_t::slot_type& cb);
+	static floater_showed_signal_t sIMFloaterShowedSignal;
+
+	S32 getLastChatMessageIndex() {return mLastMessageIndex;}
 
 protected:
 	/* virtual */
@@ -145,6 +158,8 @@ protected:
 	// support sysinfo button -Zi
 
 	BOOL enableViewerVersionCallback(const LLSD& notification,const LLSD& response);		// <FS:Zi> Viewer version popup
+	void reshapeFloater(bool collapse);
+	void reshapeChatLayoutPanel();
 private:
 	// process focus events to set a currently active session
 	/* virtual */ void onFocusLost();
@@ -155,6 +170,7 @@ private:
 	
 	// For display name lookups for IM window titles
 	void onAvatarNameCache(const LLUUID& agent_id, const LLAvatarName& av_name);
+	void fetchAvatarName(LLUUID& agent_id);
 	
 	BOOL dropCallingCard(LLInventoryItem* item, BOOL drop);
 	BOOL dropCategory(LLInventoryCategory* category, BOOL drop);
@@ -164,7 +180,7 @@ private:
 	
 	static void		onInputEditorFocusReceived( LLFocusableElement* caller, void* userdata );
 	static void		onInputEditorFocusLost(LLFocusableElement* caller, void* userdata);
-	static void		onInputEditorKeystroke(LLLineEditor* caller, void* userdata);
+	static void		onInputEditorKeystroke(LLTextEditor* caller, void* userdata);
 	
 	// AO, originally from llpaneChatControlPanel trees
 	void onViewProfileButtonClicked();
@@ -198,6 +214,8 @@ private:
 	static void closeHiddenIMToasts();
 
 	static void confirmLeaveCallCallback(const LLSD& notification, const LLSD& response);
+	
+	void sendParticipantsAddedNotification(const uuid_vec_t& uuids);
 
 	FSPanelChatControlPanel* mControlPanel;
 	LLUUID mSessionID;
@@ -206,8 +224,10 @@ private:
 	EInstantMessage mDialog;
 	LLUUID mOtherParticipantUUID;
 	FSChatHistory* mChatHistory;
-	LLLineEditor* mInputEditor;
-	bool mPositioned;
+	LLChatEntry* mInputEditor;
+	LLLayoutPanel* mChatLayoutPanel;
+	LLLayoutStack* mInputPanels;
+	// bool mPositioned;		// dead code -Zi
 
 	std::string mSavedTitle;
 	LLUIString mTypingStart;
@@ -219,6 +239,12 @@ private:
 
 	bool mSessionInitialized;
 	LLSD mQueuedMsgsForInit;
+	
+	S32 mInputEditorPad;
+	S32 mChatLayoutPanelHeight;
+	S32 mFloaterHeight;
+	
+	boost::signals2::connection mAvatarNameCacheConnection;
 };
 
 

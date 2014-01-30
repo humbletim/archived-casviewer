@@ -222,13 +222,6 @@ LLPCode toolData[]={
 	LL_PCODE_LEGACY_TREE,
 	LL_PCODE_LEGACY_GRASS};
 
-// <FS:CR> Aurora Sim
-void LLFloaterTools::updateToolsSizeLimits()
-{
-	mPanelObject->updateLimits(FALSE);
-}
-// </FS:CR> Aurora Sim
-
 BOOL	LLFloaterTools::postBuild()
 {	
 	// Hide until tool selected
@@ -350,6 +343,23 @@ BOOL	LLFloaterTools::postBuild()
 	return TRUE;
 }
 
+// <FS:CR> Aurora Sim
+void LLFloaterTools::updateToolsSizeLimits()
+{
+	mPanelObject->updateLimits(FALSE);
+}
+// </FS:CR> Aurora Sim
+
+void LLFloaterTools::changePrecision(S32 decimal_precision)
+{
+	// Precision gets funky at 8 digits.
+	if (decimal_precision < 0) decimal_precision = 0;
+	else if (decimal_precision > 7) decimal_precision = 7;
+	
+	mPanelObject->changePrecision(decimal_precision);
+	mPanelFace->changePrecision(decimal_precision);
+}
+
 // Create the popupview with a dummy center.  It will be moved into place
 // during LLViewerWindow's per-frame hover processing.
 LLFloaterTools::LLFloaterTools(const LLSD& key)
@@ -447,6 +457,7 @@ LLFloaterTools::LLFloaterTools(const LLSD& key)
 	// <FS>
 	mCommitCallbackRegistrar.add("BuildTool.CopyKeys",			boost::bind(&LLFloaterTools::onClickBtnCopyKeys,this));
 	mCommitCallbackRegistrar.add("BuildTool.Expand",			boost::bind(&LLFloaterTools::onClickExpand,this));
+	mCommitCallbackRegistrar.add("BuildTool.Flip",				boost::bind(&LLPanelFace::onCommitFlip, _1, _2));
 	// </FS>
 
 	mLandImpactsObserver = new LLLandImpactsObserver();
@@ -464,6 +475,11 @@ LLFloaterTools::~LLFloaterTools()
 
 void LLFloaterTools::setStatusText(const std::string& text)
 {
+	// <FS:ND> Can be 0 during login
+	if( !mTextStatus )
+		return;
+	// </FS:ND>
+
 	std::map<std::string, std::string>::iterator iter = mStatusText.find(text);
 	if (iter != mStatusText.end())
 	{
@@ -635,7 +651,7 @@ void LLFloaterTools::refresh()
 // <FS:CR> FIRE-9287 - LI/Prim count not reflected on OpenSim
 #ifdef OPENSIM
 		if (LLGridManager::getInstance()->isInOpenSim())
-			selection_args["LAND_IMPACT"] = llformat("%.1d", (S32)prim_count);
+			selection_args["LAND_IMPACT"] = llformat("%.1d", (link_cost ? (S32)link_cost : (S32)prim_count));
 		else
 #endif // OPENSIM
 // </FS:CR>
@@ -801,7 +817,6 @@ void LLFloaterTools::updatePopup(LLCoordGL center, MASK mask)
 	mRadioGroupEdit->setVisible( edit_visible );
 	//bool linked_parts = gSavedSettings.getBOOL("EditLinkedParts");
 	static LLCachedControl<bool> linked_parts(gSavedSettings,  "EditLinkedParts");
-	// <FS:Ansariel> Was removed from floater_tools.xml as part of SH-1917 SH-1935
 	//getChildView("RenderingCost")->setVisible( !linked_parts && (edit_visible || focus_visible || move_visible) && sShowObjectCost);
 
 	mBtnLink->setVisible(edit_visible);
@@ -1521,7 +1536,7 @@ void LLFloaterTools::getMediaState()
 		getChildView("media_tex")->setEnabled(bool_has_media && editable);
 		getChildView("edit_media")->setEnabled(bool_has_media && LLFloaterMediaSettings::getInstance()->mIdenticalHasMediaInfo && editable );
 		getChildView("delete_media")->setEnabled(bool_has_media && editable );
-		getChildView("add_media")->setEnabled(( ! bool_has_media ) && editable );
+		getChildView("add_media")->setEnabled(editable);
 			// TODO: display a list of all media on the face - use 'identical' flag
 	}
 	else // not all face has media but at least one does.
@@ -1551,7 +1566,7 @@ void LLFloaterTools::getMediaState()
 		getChildView("media_tex")->setEnabled(TRUE);
 		getChildView("edit_media")->setEnabled(LLFloaterMediaSettings::getInstance()->mIdenticalHasMediaInfo);
 		getChildView("delete_media")->setEnabled(TRUE);
-		getChildView("add_media")->setEnabled(FALSE );
+		getChildView("add_media")->setEnabled(editable);
 	}
 	media_info->setText(media_title);
 	

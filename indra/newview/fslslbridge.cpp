@@ -64,10 +64,10 @@
 #define FS_BRIDGE_FOLDER "#LSL Bridge"
 #define FS_BRIDGE_CONTAINER_FOLDER "Landscaping"
 #define FS_BRIDGE_MAJOR_VERSION 2
-#define FS_BRIDGE_MINOR_VERSION 4
+#define FS_BRIDGE_MINOR_VERSION 5
 #define FS_MAX_MINOR_VERSION 99
 
-//current script version is 2.4
+//current script version is 2.5
 const std::string UPLOAD_SCRIPT_CURRENT = "EBEDD1D2-A320-43f5-88CF-DD47BBCA5DFB.lsltxt";
 
 //
@@ -227,9 +227,28 @@ bool FSLSLBridge::lslToViewer(std::string message, LLUUID fromID, LLUUID ownerID
 			//on first call from bridge, confirm that we are here
 			//then check options use
 			updateBoolSettingValue("UseLSLFlightAssist");
+			updateBoolSettingValue("UseMoveLock");
 			updateBoolSettingValue("FSPublishRadarTag");
 			mIsFirstCallDone = true;
 		}
+		// <FS:PP> FIRE-11924: Refresh movelock position after region change (crossing/teleporting), if lock was enabled
+		// Not called right after logging in, and only if movelock was enabled during transition
+		else if (gSavedSettings.getBOOL("UseMoveLock"))
+		{
+			if (!gSavedSettings.getBOOL("RelockMoveLockAfterRegionChange"))
+			{
+				// Don't call for update here and only change setting to 'false', getCommitSignal()->connect->boost in llviewercontrol.cpp will send a message to Bridge anyway
+				gSavedSettings.setBOOL("UseMoveLock", false);
+				reportToNearbyChat(LLTrans::getString("MovelockDisabled"));
+			}
+			else
+			{
+				// RelockMoveLockAfterRegionChange is 'true'? Then re-lock the movelock by sending a request to Bridge for coordinates update with current 'true' from UseMoveLock
+				updateBoolSettingValue("UseMoveLock");
+			}
+		}
+		// </FS:PP>
+
 		return true;
 	}
 	
@@ -305,6 +324,11 @@ void FSLSLBridge::recreateBridge()
 {
 	if (!gSavedSettings.getBOOL("UseLSLBridge"))
 	{
+		//<FS:TS> FIRE-11746: Recreate should throw error if disabled
+		llwarns << "Asked to create bridge, but bridge is disabled. Aborting." << llendl;
+		reportToNearbyChat(LLTrans::getString("fsbridge_cant_create_disabled"));
+		mBridgeCreating = false;
+		//</FS:TS> FIRE-11746
 		return;
 	}
 

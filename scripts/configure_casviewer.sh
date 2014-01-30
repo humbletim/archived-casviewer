@@ -16,7 +16,9 @@ FALSE=1
 #                  <string>-DROOT_PROJECT_NAME:STRING=SecondLife</string>
 #                  <string>-DINSTALL_PROPRIETARY=FALSE</string>
 #                  <string>-DUSE_KDU=TRUE</string>
-#                  <string>-DFMOD=TRUE</string>
+#                  <string>-DFMODEX:BOOL=ON</string>
+#                  <string>-DOPENSIM:BOOL=ON</string>
+#                  <string>-DUSE_AVX_OPTIMIZATION:BOOL=OFF</string>
 #                  <string>-DLL_TESTS:BOOL=OFF</string>
 #                  <string>-DPACKAGE:BOOL=OFF></string>
 
@@ -30,7 +32,9 @@ WANTS_CONFIG=$FALSE
 WANTS_PACKAGE=$FALSE
 WANTS_VERSION=$FALSE
 WANTS_KDU=$FALSE
-WANTS_FMOD=$FALSE
+WANTS_FMODEX=$FALSE
+WANTS_OPENSIM=$TRUE
+WANTS_AVX=$FALSE
 WANTS_BUILD=$FALSE
 PLATFORM="darwin" # darwin, win32, win64, linux32, linux64
 BTYPE="Release"
@@ -48,17 +52,21 @@ showUsage()
     echo "Usage: "
     echo "========================"
     echo
-    echo "  --clean     : Remove past builds & configuration"
-    echo "  --config    : General a new architecture-specific config"
-    echo "  --build    : build casviewer"
-    echo "  --version   : Update version number"
+    echo "  --clean      : Remove past builds & configuration"
+    echo "  --config     : General a new architecture-specific config"
+    echo "  --build      : Build CtrlAltStudio Viewer"
+    echo "  --version    : Update version number"
     echo "  --chan  [Release|Beta|Private]   : Private is the default, sets channel"
     echo "  --btype [Release|RelWithDebInfo] : Release is default, whether to use symbols"
-    echo "  --kdu       : Build with KDU"
-    echo "  --package   : Build installer"
-    echo "  --fmod      : Build fmod"
-    echo "  --platform  : darwin | win32 | win64 | linux32 | linux64"
-    echo "  --jobs <num>: Build with <num> jobs in parallel (Linux and Darwin only)"
+    echo "  --kdu        : Build with KDU"
+    echo "  --package    : Build installer"
+    echo "  --no-package : Build without installer (Overrides --package)"
+    echo "  --fmodex     : Build with FMOD Ex"
+    echo "  --opensim    : Build with OpenSim support (Disables Havok features)"
+    echo "  --no-opensim : Build without OpenSim support (Overrides --opensim)"
+    echo "  --avx        : Build with Advanced Vector Extensions (Windows only)"
+    echo "  --platform   : darwin | win32 | win64 | linux32 | linux64"
+    echo "  --jobs <num> : Build with <num> jobs in parallel (Linux and Darwin only)"
     echo
     echo "All arguments not in the above list will be passed through to LL's configure/build"
     echo
@@ -68,7 +76,7 @@ getArgs()
 # $* = the options passed in from main
 {
     if [ $# -gt 0 ]; then
-      while getoptex "clean build config version package fmod jobs: platform: kdu help chan: btype:" "$@" ; do
+      while getoptex "clean build config version package no-package fmodex jobs: platform: kdu opensim no-opensim avx help chan: btype:" "$@" ; do
 
           #insure options are valid
           if [  -z "$OPTOPT"  ] ; then
@@ -77,25 +85,29 @@ getArgs()
           fi
 
           case "$OPTOPT" in
-          clean)    WANTS_CLEAN=$TRUE;;
-          config)   WANTS_CONFIG=$TRUE;;
-          version)  WANTS_VERSION=$TRUE;;
-          chan)     CHANNEL="$OPTARG";;
-          btype)    if [ \( "$OPTARG" == "Release" \) -o \( "$OPTARG" == "RelWithDebInfo" \) -o \( "$OPTARG" == "Debug" \) ] ; then
-                      BTYPE="$OPTARG"
-                    fi
-                    ;;
-          kdu)      WANTS_KDU=$TRUE;;
-          fmod)    WANTS_FMOD=$TRUE;;
+          clean)      WANTS_CLEAN=$TRUE;;
+          config)     WANTS_CONFIG=$TRUE;;
+          version)    WANTS_VERSION=$TRUE;;
+          chan)       CHANNEL="$OPTARG";;
+          btype)      if [ \( "$OPTARG" == "Release" \) -o \( "$OPTARG" == "RelWithDebInfo" \) -o \( "$OPTARG" == "Debug" \) ] ; then
+                        BTYPE="$OPTARG"
+                      fi
+                      ;;
+          kdu)        WANTS_KDU=$TRUE;;
+          fmodex)     WANTS_FMODEX=$TRUE;;
+          opensim)    WANTS_OPENSIM=$TRUE;;
+          no-opensim) WANTS_OPENSIM=$FALSE;;
+          avx)        WANTS_AVX=$TRUE;;
           package)    WANTS_PACKAGE=$TRUE;;
-          build)    WANTS_BUILD=$TRUE;;
-          platform)    PLATFORM="$OPTARG";;
-          jobs)    JOBS="$OPTARG";;
+          no-package) WANTS_PACKAGE=$FALSE;;
+          build)      WANTS_BUILD=$TRUE;;
+          platform)   PLATFORM="$OPTARG";;
+          jobs)       JOBS="$OPTARG";;
 
-          help)     showUsage && exit 0;;
+          help)       showUsage && exit 0;;
 
-          -*)       showUsage && exit 1;;
-          *)        showUsage && exit 1;;
+          -*)         showUsage && exit 1;;
+          *)          showUsage && exit 1;;
           esac
 
       done
@@ -104,7 +116,6 @@ getArgs()
           showUsage && exit 1
       fi
     fi
-
         if [ $WANTS_CLEAN -ne $TRUE ] && [ $WANTS_CONFIG -ne $TRUE ] && \
            [ $WANTS_VERSION -ne $TRUE ] && [ $WANTS_BUILD -ne $TRUE ] && \
            [ $WANTS_PACKAGE -ne $TRUE ] ; then
@@ -257,9 +268,11 @@ if [ ! -d `dirname "$LOG"` ] ; then
 fi
 
 echo -e "configure_casviewer.py" > $LOG
-echo -e "       PLATFORM: '$PLATFORM'"       | tee -a $LOG
+echo -e "    PLATFORM: '$PLATFORM'"          | tee -a $LOG
 echo -e "         KDU: `b2a $WANTS_KDU`"     | tee -a $LOG
-echo -e "        FMOD: `b2a $WANTS_FMOD`"    | tee -a $LOG
+echo -e "      FMODEX: `b2a $WANTS_FMODEX`"  | tee -a $LOG
+echo -e "     OPENSIM: `b2a $WANTS_OPENSIM`" | tee -a $LOG
+echo -e "         AVX: `b2a $WANTS_AVX` "    | tee -a $LOG
 echo -e "     PACKAGE: `b2a $WANTS_PACKAGE`" | tee -a $LOG
 echo -e "       CLEAN: `b2a $WANTS_CLEAN`"   | tee -a $LOG
 echo -e "       BUILD: `b2a $WANTS_BUILD`"   | tee -a $LOG
@@ -281,13 +294,14 @@ fi
 
 if [ -z $CHANNEL ] ; then
     if [ $PLATFORM == "darwin" ] ; then
-        CHANNEL="Private-`hostname -s` "
+        CHANNEL="private-`hostname -s` "
     else
-        CHANNEL="Private-`hostname`"
+        CHANNEL="private-`hostname`"
     fi
 else
     CHANNEL=`echo $CHANNEL | sed -e "s/[^a-zA-Z0-9\-]*//g"` # strip out difficult characters from channel
 fi
+CHANNEL="CtrlAltStudio-Viewer-$CHANNEL"
 
 if [ \( $WANTS_CLEAN -eq $TRUE \) -a \( $WANTS_BUILD -eq $FALSE \) ] ; then
     echo "Cleaning $PLATFORM...."
@@ -299,8 +313,14 @@ if [ \( $WANTS_CLEAN -eq $TRUE \) -a \( $WANTS_BUILD -eq $FALSE \) ] ; then
         mkdir -p build-darwin-i386/logs
 
     elif [ $PLATFORM == "win32" ] ; then
-        rm -rf build-vc100/*
-        mkdir -p build-vc100/logs
+        if [ "${AUTOBUILD_ARCH}" == "x64" ]
+        then
+           rm -rf build-vc100_x64/*
+         else
+           rm -rf build-vc100/* 
+        fi
+ 
+       mkdir -p build-vc100/logs
 
     elif [ $PLATFORM == "linux32" ] ; then
         rm -rf build-linux-i686/*
@@ -317,9 +337,8 @@ if [ \( $WANTS_VERSION -eq $TRUE \) -o \( $WANTS_CONFIG -eq $TRUE \) ] ; then
     majorVer=`cat indra/Version | cut -d "=" -f 2 | cut -d "." -f 1`
     minorVer=`cat indra/Version | cut -d "=" -f 2 | cut -d "." -f 2`
     patchVer=`cat indra/Version | cut -d "=" -f 2 | cut -d "." -f 3`
-    echo "Channel : CtrlAltStudio-Viewer-${CHANNEL}"
+    echo "Channel : ${CHANNEL}"
     echo "Version : ${majorVer}.${minorVer}.${patchVer}.${buildVer}"
-    python ./scripts/update_version_files.py --channel="CtrlAltStudio-Viewer-$CHANNEL" --version=${majorVer}.${minorVer}.${patchVer}.${buildVer}
     popd
 fi
 
@@ -332,10 +351,20 @@ if [ $WANTS_CONFIG -eq $TRUE ] ; then
     else
         KDU="-DUSE_KDU:BOOL=OFF"
     fi
-    if [ $WANTS_FMOD -eq $TRUE ] ; then
-        FMOD="-DFMOD:BOOL=ON"
+    if [ $WANTS_FMODEX -eq $TRUE ] ; then
+        FMODEX="-DFMODEX:BOOL=ON"
     else
-        FMOD="-DFMOD:BOOL=OFF"
+        FMODEX="-DFMODEX:BOOL=OFF"
+    fi
+    if [ $WANTS_OPENSIM -eq $TRUE ] ; then
+        OPENSIM="-DOPENSIM:BOOL=ON"
+    else
+        OPENSIM="-DOPENSIM:BOOL=OFF"
+    fi
+    if [ $WANTS_AVX -eq $TRUE ] ; then
+        AVX_OPTIMIZATION="-DUSE_AVX_OPTIMIZATION:BOOL=ON"
+    else
+        AVX_OPTIMIZATION="-DUSE_AVX_OPTIMIZATION:BOOL=OFF"
     fi
     if [ $WANTS_PACKAGE -eq $TRUE ] ; then
         PACKAGE="-DPACKAGE:BOOL=ON"
@@ -351,6 +380,7 @@ if [ $WANTS_CONFIG -eq $TRUE ] ; then
     else
         PACKAGE="-DPACKAGE:BOOL=OFF"
     fi
+    CHANNEL="-DVIEWER_CHANNEL:STRING=$CHANNEL"
 
     #make sure log directory exists.
     if [ ! -d "logs" ] ; then
@@ -358,16 +388,27 @@ if [ $WANTS_CONFIG -eq $TRUE ] ; then
         mkdir -p "logs"
     fi
 
+    TARGET_ARCH="x86"
+    WORD_SIZE=32
+
     if [ $PLATFORM == "darwin" ] ; then
         TARGET="Xcode"
     elif [ \( $PLATFORM == "linux32" \) -o \( $PLATFORM == "linux64" \) ] ; then
         TARGET="Unix Makefiles"
     elif [ \( $PLATFORM == "win32" \) ] ; then
-        TARGET="Visual Studio 10"
+        if [ "${AUTOBUILD_ARCH}" == "x64" ]
+        then
+          TARGET="Visual Studio 10 Win64"
+          TARGET_ARCH="x64"
+          WORD_SIZE=64
+        else
+          TARGET="Visual Studio 10"
+        fi
         UNATTENDED="-DUNATTENDED=ON"
     fi
 
-    cmake -G "$TARGET" ../indra $FMOD $KDU $PACKAGE $UNATTENDED -DLL_TESTS:BOOL=OFF -DWORD_SIZE:STRING=32 -DCMAKE_BUILD_TYPE:STRING=$BTYPE -DROOT_PROJECT_NAME:STRING=CASviewer $LL_ARGS_PASSTHRU | tee $LOG
+    cmake -G "$TARGET" ../indra $CHANNEL $FMODEX $KDU $OPENSIM $AVX_OPTIMIZATION $PACKAGE $UNATTENDED -DLL_TESTS:BOOL=OFF -DWORD_SIZE:STRING=32 -DCMAKE_BUILD_TYPE:STRING=$BTYPE \
+          -DNDTARGET_ARCH="${TARGET_ARCH}" -DROOT_PROJECT_NAME:STRING=CASviewer $LL_ARGS_PASSTHRU | tee $LOG
 
     if [ $PLATFORM == "win32" ] ; then
     ../indra/tools/vstool/VSTool.exe --solution CASviewer.sln --startup casviewer-bin --workingdir casviewer-bin "..\\..\\indra\\newview" --config $BTYPE
@@ -383,18 +424,22 @@ if [ $WANTS_BUILD -eq $TRUE ] ; then
         else
             JOBS="-jobs $JOBS"
         fi
-        if [ $OSTYPE == "darwin11" -o $OSTYPE == "darwin12" ] ; then
-            xcodebuild -configuration $BTYPE -project CASviewer.xcodeproj $JOBS GCC_OPTIMIZATION_LEVEL=3 GCC_ENABLE_SSE3_EXTENSIONS=YES 2>&1 | tee -a $LOG
-        else
-            xcodebuild -configuration $BTYPE -project CASviewer.xcodeproj GCC_VERSION=4.2 GCC_OPTIMIZATION_LEVEL=3 GCC_ENABLE_SSE3_EXTENSIONS=YES 2>&1 | tee -a $LOG
-        fi
+		xcodebuild -configuration $BTYPE -project CASviewer.xcodeproj $JOBS 2>&1 | tee -a $LOG
     elif [ $PLATFORM == "linux32" -o $PLATFORM == "linux64" ] ; then
         if [ $JOBS == "0" ] ; then
             JOBS=`cat /proc/cpuinfo | grep processor | wc -l`
         fi
         make -j $JOBS | tee -a $LOG
     elif [ $PLATFORM == "win32" ] ; then
-        msbuild.exe CASviewer.sln /flp:LogFile=logs\\CASviewerBuild_win32.log /flp1:errorsonly;LogFile=logs\\CASviewerBuild_win32.err /flp:LogFile=logs\\CASviewerBuild_win32.log /p:Configuration=$BTYPE /p:Platform=Win32 /t:Build /p:useenv=true /verbosity:normal /toolsversion:4.0 /p:"VCBuildAdditionalOptions= /incremental"
+        SLN_PLATFORM="Win32"
+        if [ "${AUTOBUILD_ARCH}" == "x64" ]
+        then
+          SLN_PLATFORM="x64"
+        fi
+
+        msbuild.exe CASviewer.sln /flp:LogFile=logs\\CASviewerBuild_win32.log /flp1:errorsonly;LogFile=logs\\CASviewerBuild_win32.err \
+                    /flp:LogFile=logs\\CASviewerBuild_win32.log /p:Configuration=$BTYPE /p:Platform=${SLN_PLATFORM} /t:Build /p:useenv=true \
+                    /verbosity:normal /toolsversion:4.0 /p:"VCBuildAdditionalOptions= /incremental"
     fi
 fi
 

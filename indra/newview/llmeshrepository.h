@@ -35,7 +35,6 @@
 
 #include <boost/unordered_map.hpp>
 
-
 #define LLCONVEXDECOMPINTER_STATIC 1
 
 #include "llconvexdecomposition.h"
@@ -488,7 +487,7 @@ public:
 
 	void startRequest() { ++mPendingUploads; }
 	void stopRequest() { --mPendingUploads; }
-		
+
 	bool finished() { return mFinished; }
 	virtual void run();
 	void preStart();

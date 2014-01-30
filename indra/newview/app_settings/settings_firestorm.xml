@@ -243,7 +243,7 @@
     <integer>0</integer>
   </map>
 
-  <key>ChatWindow</key>
+  <key>FSChatWindow</key>
   <map>
     <key>Comment</key>
     <string>Show chat in multiple windows(by default) or in one multi-tabbed window(requires restart)</string>
@@ -313,6 +313,18 @@
     <string>U32</string>
     <key>Value</key>
     <integer>0</integer>
+  </map>
+	
+  <key>FSShowChatType</key>
+  <map>
+	<key>Comment</key>
+	<string>Shows/Hides the chat type selector (Whisper, Say, Shout)</string>
+	<key>Persist</key>
+	<integer>1</integer>
+	<key>Type</key>
+	<string>Boolean</string>
+	<key>Value</key>
+	<integer>0</integer>
   </map>
 
 </map>

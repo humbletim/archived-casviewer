@@ -77,6 +77,29 @@
           <key>folder</key>
           <string>highcontrast</string>
         </map>
+        <!-- David Rowe's purple theme from CtrlAltStudio Viewer -->
+        <map>
+          <key>name</key>
+          <string>CtrlAltStudio</string>
+          <key>folder</key>
+          <string>ctrlaltstudio</string>
+        </map>
+      </array>
+    </map>
+
+    <map>
+      <key>name</key>
+      <string>Latency</string>
+      <key>folder</key>
+      <string>latency</string>
+      <key>themes</key>
+      <array>
+        <map>
+          <key>name</key>
+          <string>Extra Plain</string>
+          <key>folder</key>
+          <string/>
+        </map>
       </array>
     </map>
 
@@ -193,5 +216,6 @@
         </map>
       </array>
     </map>
+
   </array>
 </llsd>

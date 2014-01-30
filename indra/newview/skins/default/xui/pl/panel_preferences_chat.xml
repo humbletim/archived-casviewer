@@ -27,9 +27,13 @@
 			<check_box label="Powiadomienia o pisaniu do innych awatarów podczas sesji IM" name="FSSendTypingState"/>
 			<check_box label="Włącz autouzupełnianie gestów w pasku czatu lokalnego" name="FSChatbarGestureAutoCompleteEnable"/>
 			<check_box label="Włącz automatyczne odgadywanie imion w pasku czatu lokalnego" name="FSChatbarNamePrediction"/>
+			<check_box name="FSIMSystemMessageBrackets" label="Pokazuj systemowe wiadomości czatu w nawiasach"/>
+			<check_box name="FSChatHistoryShowYou" label="Pokazuj &quot;Ty&quot; w logu czatu zamiast swojego imienia" />
+			<check_box name="IMShowNamesForP2PConv" label="Pokazuj imiona w bezpośrednich wiadomościach IM" />
 			<check_box label="Ślij IM-y na mój e-mail, gdy jestem offline ([EMAIL])" name="send_im_to_email"/>
 			<check_box label="Używaj nagłówków czatów stylu V1" name="plain_text_chat_history"/>
 			<check_box label="Podczas używania nagłówków w stylu V2/3 pokazuj małe ikony" name="ShowChatMiniIcons"/>
+			<check_box label="Pokazuj zakończenia ostatnich rozmów" name="LogShowHistory"/>
 			<check_box label="Pokaż czat w chmurkach ponad awatarami" name="bubble_text_chat"/>
 			<check_box label="Pokaż wskaźnik pisania w chmurkach ponad awatarami" name="bubble_text_typing"/>	 
 			<text name="inworld_typing_rg_label">
@@ -79,16 +83,14 @@
 			<check_box name="FSLogImToChatConsole" label="Pokazuj wiadomości IM w konsoli Czatu"/>
 			<check_box name="FSLogGroupImToChatConsole" label="Pokazuj czaty grupowe w konsoli Czatu"/>
 			<text name="FSShowGroupNameLength_label">
-				Długość nazwy grupy wyświetlanej w historii czatu
+				Długość nazwy grupy wyświetlanej w logu czatu
 			</text>
 			<spinner tool_tip="-1 dla pełnej nazwy grupy, 0 aby wyłączyć" name="FSShowGroupNameLength"/>
+			<check_box name="FSOpenIMContainerOnOfflineMessage" label="Otwórz okno Rozmów, gdy pojawia się wiadomość offline"/>
 			<check_box name="FSShowIMInChatHistory" label="Pokazuj IM w oknie czatu lokalnego"/>
 			<check_box name="FSLogIMInChatHistory" label="Zapisuj IM w oknie czatu"/>
-			<text name="requires_save_chat_logs">
-				(wymaga zapisywania logów czatu)
-			</text>
 			<text name="FSIMChatHistoryFade_label">
-				Wygaszaj tekst IM w tło okna historii czatu
+				Wygaszaj tekst IM w tło okna logu czatu
 			</text>
 			<spinner tool_tip="0.25-1.0, 0.25 dla silnego wygaszania, 1 dla braku wygaszania" name="FSIMChatHistoryFade"/>
 			<check_box name="FSAnnounceIncomingIM" label="Powiadamiaj o nowej IM, gdy tylko nadawca zacznie pisać"/>
@@ -119,9 +121,11 @@
 			</text>
 			<check_box name="AllowMUpose" label="&quot;:&quot; synonimem dla &quot;/me&quot;"/>
 			<check_box name="EmotesUseItalic" label="Emocje pisane pochyloną czcionką"/>
-			<check_box name="AutoCloseOOC" label="Automatycznie domykaj ((nawiasy)) dla pisania OOC"/>
+			<check_box name="AutoCloseOOC" label="Domykaj ((nawiasy)) dla czatu OOC"/>
+			<check_box name="FSEmphasizeShoutWhisper" label="Pogrubiaj krzyk, pochylaj szept"/>
 			<check_box name="FSNearbyChatbar" label="Dodaj pasek czatu do okna Czatu Lokalnego"/>
 			<check_box name="FSShowChatChannel" label="Oferuj ręczny wybór kanału w pasku czatu"/>
+			<check_box name="FSShowChatType" label="Pokaż typ czatu i przycisk wysyłania" left_delta="250"/>
 			<check_box label="Autoukrywanie głównego paska czatu" name="AutohideChatBar" tool_tip="Ukryj pasek czatu na dolnej listwie przycisków i pokazuj go jako nakładkę tylko wtedy, gdy to potrzebne."/>
 			<check_box label="Odznaczaj czat po wysłaniu wiadomości" name="CloseChatOnReturn"/>
 			<check_box name="FSMarkObjects" label="Oznaczaj obiekty frazą (bez nazwy) gdy wysyłają coś na czat, by zapobiec oszustwom"/>
@@ -160,8 +164,13 @@
 			<text name="logging_enhancements">
 				Znaczniki czasu:
 			</text>
-			<check_box label="Wyłącz znaczniki czasu w Czacie Lokalnym" name="hide_timestamps_nearby_chat"/>
-			<check_box label="Wyłącz znaczniki czasu w IM" name="hide_timestamps_im"/>
+			<text name="show_timestamps_label">
+				Pokazuj znaczniki czasu w:
+			</text>
+			<check_box label="Czat Lokalny" name="show_timestamps_nearby_chat" width="95"/>
+			<check_box label="Wiadomości IM" name="show_timestamps_im" width="105"/>
+			<check_box label="Logi czatów i IM" name="show_timestamps_transcripts"/>
+			<check_box label="Pokazuj sekundy w logach [HH:MM:SS]" name="FSSecondsinChatTimestamps"/>
 			<text name="console_enhancements">
 				Konsola:
 			</text>

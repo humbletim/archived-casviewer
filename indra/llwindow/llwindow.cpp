@@ -50,8 +50,17 @@ LLSplashScreen *gSplashScreenp = NULL;
 BOOL gDebugClicks = FALSE;
 BOOL gDebugWindowProc = FALSE;
 
+// <FS:Zi> Allow file: links to open folders, chat history etc. on Linux systems
+#if LL_LINUX
+const S32 gURLProtocolWhitelistCount = 5;
+const std::string gURLProtocolWhitelist[] = { "secondlife:", "http:", "https:", "data:", "file:" };
+#else
+// </FS:Zi>
 const S32 gURLProtocolWhitelistCount = 4;
 const std::string gURLProtocolWhitelist[] = { "secondlife:", "http:", "https:", "data:" };
+// <FS:Zi> Allow file: links to open folders, chat history etc. on Linux systems
+#endif
+// </FS:Zi>
 
 // CP: added a handler list - this is what's used to open the protocol and is based on registry entry
 //	   only meaningful difference currently is that file: protocols are opened using http:
@@ -98,6 +107,7 @@ S32 OSMessageBox(const std::string& text, const std::string& caption, U32 type)
 // LLWindow
 //
 
+// <CV:David> Added output_type parameter.
 LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags, U32 output_type)
 	: mCallbacks(callbacks),
 	  mPostQuit(TRUE),
@@ -258,8 +268,6 @@ std::vector<std::string> LLWindow::getDynamicFallbackFontList()
 	return LLWindowWin32::getDynamicFallbackFontList();
 #elif LL_DARWIN
 	return LLWindowMacOSX::getDynamicFallbackFontList();
-#elif LL_MESA_HEADLESS
-	return std::vector<std::string>();
 #elif LL_SDL
 	return LLWindowSDL::getDynamicFallbackFontList();
 #else
@@ -384,35 +392,46 @@ void LLSplashScreen::hide()
 // TODO: replace with std::set
 static std::set<LLWindow*> sWindowList;
 
+// <CV:David> Added output_type parameter.
 LLWindow* LLWindowManager::createWindow(
 	LLWindowCallbacks* callbacks,
 	const std::string& title, const std::string& name, S32 x, S32 y, S32 width, S32 height, U32 flags,
 	BOOL fullscreen, 
 	BOOL clearBg,
 	BOOL disable_vsync,
+	BOOL use_gl,
 	BOOL ignore_pixel_depth,
 	U32 fsaa_samples,
 	U32 output_type)
 {
 	LLWindow* new_window;
 
+	if (use_gl)
+	{
 #if LL_MESA_HEADLESS
-	new_window = new LLWindowMesaHeadless(callbacks,
-		title, name, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, output_type);
+		new_window = new LLWindowMesaHeadless(callbacks,
+			title, name, x, y, width, height, flags, 
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, output_type);
 #elif LL_SDL
-	new_window = new LLWindowSDL(callbacks,
-		title, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples, output_type);
+		new_window = new LLWindowSDL(callbacks,
+			title, x, y, width, height, flags, 
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, output_type);
 #elif LL_WINDOWS
-	new_window = new LLWindowWin32(callbacks,
-		title, name, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples, output_type);
+		new_window = new LLWindowWin32(callbacks,
+			title, name, x, y, width, height, flags, 
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, output_type);
 #elif LL_DARWIN
-	new_window = new LLWindowMacOSX(callbacks,
-		title, name, x, y, width, height, flags, 
-		fullscreen, clearBg, disable_vsync, ignore_pixel_depth, fsaa_samples, output_type);
+		new_window = new LLWindowMacOSX(callbacks,
+			title, name, x, y, width, height, flags, 
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, output_type);
 #endif
+	}
+	else
+	{
+		new_window = new LLWindowHeadless(callbacks,
+			title, name, x, y, width, height, flags, 
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth);
+	}
 
 	if (FALSE == new_window->isValid())
 	{

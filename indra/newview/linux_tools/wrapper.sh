@@ -7,17 +7,18 @@
 ## AO: TCMALLOC Tuning as suggested by Henri Beauchamp for more aggressive garbage collection
 export TCMALLOC_RELEASE_RATE=10000
 
+## - Avoids using any FMOD Ex audio driver.
+#export LL_BAD_FMODEX_DRIVER=x
+
 ## - Avoids using any OpenAL audio driver.
 #export LL_BAD_OPENAL_DRIVER=x
-## - Avoids using any FMOD audio driver.
-#export LL_BAD_FMOD_DRIVER=x
 
-## - Avoids using the FMOD ESD audio driver.
-#export LL_BAD_FMOD_ESD=x
-## - Avoids using the FMOD OSS audio driver.
-#export LL_BAD_FMOD_OSS=x
-## - Avoids using the FMOD ALSA audio driver.
+## - Avoids using the FMOD Ex PulseAudio audio driver.
+#export LL_BAD_FMOD_PULSEAUDIO=x
+## - Avoids using the FMOD or FMOD Ex ALSA audio driver.
 #export LL_BAD_FMOD_ALSA=x
+## - Avoids using the FMOD or FMOD Ex OSS audio driver.
+#export LL_BAD_FMOD_OSS=x
 
 ## - Avoids the optional OpenGL extensions which have proven most problematic
 ##   on some hardware.  Disabling this option may cause BETTER PERFORMANCE but
@@ -142,37 +143,21 @@ fi
 # <FS:ND> End of hack; God will kill a kitten for this :(
 
 
-# Have to deal specially with gridargs.dat; typical contents look like:
-# --channel "Second Life Developer"  --settings settings_developer.xml
-# Simply embedding $(<etc/gridargs.dat) into a command line treats each of
-# Second, Life and Developer as separate args -- no good. We need bash to
-# process quotes using eval.
-# First, check if we have been instructed to skip reading in gridargs.dat:
-skip_gridargs=false
-argnum=0
+# Copy "$@" to ARGS array specifically to delete the --skip-gridargs switch.
+# The gridargs.dat file is no more, but we still want to avoid breaking
+# scripts that invoke this one with --skip-gridargs.
+ARGS=()
 for ARG in "$@"; do
-    if [ "--skip-gridargs" == "$ARG" ]; then
-        skip_gridargs=true
-    else
-        ARGS[$argnum]="$ARG"
-        argnum=$(($argnum+1))
+    if [ "--skip-gridargs" != "$ARG" ]; then
+        ARGS[${#ARGS[*]}]="$ARG"
     fi
 done
 
-# Second, read it without scanning, then scan that string. Break quoted words
-# into a bash array. Note that if gridargs.dat is empty, or contains only
-# whitespace, the resulting gridargs array will be empty -- zero entries --
-# therefore "${gridargs[@]}" entirely vanishes from the command line below,
-# just as we want.
-if ! $skip_gridargs ; then
-    eval gridargs=("$(<etc/gridargs.dat)")
-fi
-
 # Run the program.
 # Don't quote $LL_WRAPPER because, if empty, it should simply vanish from the
-# command line. But DO quote "$@": preserve separate args as individually
-# quoted. Similar remarks about the contents of gridargs.
-$LL_WRAPPER bin/do-not-directly-run-firestorm-bin "${gridargs[@]}" "${ARGS[@]}"
+# command line. But DO quote "${ARGS[@]}": preserve separate args as
+# individually quoted.
+$LL_WRAPPER bin/do-not-directly-run-firestorm-bin "${ARGS[@]}"
 LL_RUN_ERR=$?
 
 # Handle any resulting errors

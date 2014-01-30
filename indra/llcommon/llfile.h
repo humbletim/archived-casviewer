@@ -35,7 +35,7 @@
  * Attempts to mostly mirror the POSIX style IO functions.
  */
 
-typedef FILE LLFILE;
+typedef FILE	LLFILE;
 
 #include <fstream>
 #include <sys/stat.h>
@@ -185,6 +185,11 @@ protected:
 	*/
 	/*virtual*/ int sync();
 
+// <FS:CR> Clang support
+#if LL_CLANG
+	using llstdio_filebuf::xsputn;
+#endif
+// </FS:CR>
 	std::streamsize xsgetn(char_type*, std::streamsize);
 	std::streamsize xsputn(char_type*, std::streamsize);
 #endif
@@ -237,7 +242,7 @@ public:
 			ios_base::openmode _Mode = ios_base::in,
 			//size_t _Size = static_cast<size_t>(BUFSIZ));
 			size_t _Size = static_cast<size_t>(1));
-
+	
 	/**
 	 *  @brief  Create a stream using an open file descriptor.
 	 *  @param  fd    An open file descriptor.

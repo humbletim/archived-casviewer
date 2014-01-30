@@ -29,14 +29,17 @@
 
 #include "llavatariconctrl.h"
 #include "llbutton.h"
-#include "llpanel.h"
+#include "llnotifications.h"
 #include "lltextbox.h"
-#include "lloutputmonitorctrl.h"
+
+// Firestorm includes
 #include "llgroupmgr.h"
 #include "llimview.h"
+#include "lloutputmonitorctrl.h"
+#include "llpanel.h"
 
 class LLMenuGL;
-class LLIMFloater;
+class LLFloaterIMSession;
 
 /**
  * Class for displaying amount of messages/notifications(unread).
@@ -48,11 +51,11 @@ public:
 	struct Params :	public LLInitParam::Block<Params, LLTextBox::Params>
 	{
 		/**
-		* Contains maximum displayed count of unread messages. Default value is 9.
-		*
-		* If count is less than "max_unread_count" will be displayed as is.
-		* Otherwise 9+ will be shown (for default value).
-		*/
+		 * Contains maximum displayed count of unread messages. Default value is 9.
+		 *
+		 * If count is less than "max_unread_count" will be displayed as is.
+		 * Otherwise 9+ will be shown (for default value).
+		 */
 		Optional<S32> max_displayed_count;
 
 		Params();
@@ -119,6 +122,7 @@ protected:
 	friend class LLUICtrlFactory;
 };
 
+// <FS:Ansariel> [FS communication UI]
 /**
  * Class for displaying group's icon in Group chiclet.
  */
@@ -147,6 +151,7 @@ protected:
 
 	std::string mDefaultIcon;
 };
+// </FS:Ansariel> [FS communication UI]
 
 /**
  * Class for displaying icon in inventory offer chiclet.
@@ -181,6 +186,7 @@ private:
 	std::string mDefaultIcon;
 };
 
+// <FS:Ansariel> [FS communication UI]
 /**
  * Class for displaying of speaker's voice indicator 
  */
@@ -197,6 +203,7 @@ protected:
 	LLChicletSpeakerCtrl(const Params&p);
 	friend class LLUICtrlFactory;
 };
+// </FS:Ansariel> [FS communication UI]
 
 /**
  * Base class for all chiclets.
@@ -213,7 +220,7 @@ public:
 		Params();
 	};
 
-	/*virtual*/ ~LLChiclet();
+	virtual ~LLChiclet() {}
 
 	/**
 	 * Associates chat session id with chiclet.
@@ -226,24 +233,9 @@ public:
 	virtual const LLUUID& getSessionId() const { return mSessionId; }
 
 	/**
-	 * Sets number of unread notifications.
-	 */
-	virtual void setCounter(S32 counter) = 0;
-
-	/**
-	 * Returns number of unread notifications.
-	 */
-	virtual S32 getCounter() = 0;
-
-	/**
 	 * Sets show counter state.
 	 */
 	virtual void setShowCounter(bool show) { mShowCounter = show; }
-
-	/**
-	 * Returns show counter state.
-	 */
-	virtual bool getShowCounter() {return mShowCounter;};
 
 	/**
 	 * Connects chiclet clicked event with callback.
@@ -269,6 +261,23 @@ public:
 	 * Returns IM Session id using LLSD
 	 */
 	/*virtual*/ void setValue(const LLSD& value);
+
+	// <FS:Ansariel> [FS communication UI]
+	/**
+	 * Sets number of unread notifications.
+	 */
+	virtual void setCounter(S32 counter) = 0;
+
+	/**
+	 * Returns number of unread notifications.
+	 */
+	virtual S32 getCounter() = 0;
+
+	/**
+	 * Returns show counter state.
+	 */
+	virtual bool getShowCounter() {return mShowCounter;};
+	// </FS:Ansariel> [FS communication UI]
 
 protected:
 
@@ -322,6 +331,7 @@ public:
 	 * It is used for default setting up of chicklet:click handler, etc.  
 	 */
 	BOOL postBuild();
+
 	/**
 	 * Sets IM session name. This name will be displayed in chiclet tooltip.
 	 */
@@ -333,6 +343,42 @@ public:
 	 */
 	virtual void setOtherParticipantId(const LLUUID& other_participant_id) { mOtherParticipantId = other_participant_id; }
 
+	/**
+	 * Enables/disables the counter control for a chiclet.
+	 */
+	virtual void enableCounterControl(bool enable);
+
+	/**
+	* Sets required width for a chiclet according to visible controls.
+	*/
+	virtual void setRequiredWidth();
+
+	/**
+	 * Shows/hides overlay icon concerning new unread messages.
+	 */
+	virtual void setShowNewMessagesIcon(bool show);
+
+	/**
+	 * Returns visibility of overlay icon concerning new unread messages.
+	 */
+	virtual bool getShowNewMessagesIcon();
+
+	/**
+	 * The action taken on mouse down event.
+	 * 
+	 * Made public so that it can be triggered from outside
+	 * (more specifically, from the Active IM window).
+	 */
+	virtual void onMouseDown();
+
+	virtual void setToggleState(bool toggle);
+
+	/**
+	 * Displays popup menu.
+	 */
+	virtual BOOL handleRightMouseDown(S32 x, S32 y, MASK mask);
+
+	// <FS:Ansariel> [FS communication UI]
 	/**
 	 * Gets id of person/group user is chatting with.
 	 */
@@ -365,11 +411,6 @@ public:
 	virtual void setCounter(S32);
 
 	/**
-	* Enables/disables the counter control for a chiclet.
-	*/
-	virtual void enableCounterControl(bool enable);
-
-	/**
 	* Sets show counter state.
 	*/
 	virtual void setShowCounter(bool show);
@@ -378,21 +419,6 @@ public:
 	* Shows/Hides for counter control for a chiclet.
 	*/
 	virtual void toggleCounterControl();
-
-	/**
-	* Sets required width for a chiclet according to visible controls.
-	*/
-	virtual void setRequiredWidth();
-
-	/**
-	 * Shows/hides overlay icon concerning new unread messages.
-	 */
-	virtual void setShowNewMessagesIcon(bool show);
-
-	/**
-	 * Returns visibility of overlay icon concerning new unread messages.
-	 */
-	virtual bool getShowNewMessagesIcon();
 
 	virtual void draw();
 
@@ -408,21 +434,7 @@ public:
 	 *         TYPE_UNKNOWN otherwise.
 	 */
 	static EType getIMSessionType(const LLUUID& session_id);
-
-	/**
-	 * The action taken on mouse down event.
-	 * 
-	 * Made public so that it can be triggered from outside
-	 * (more specifically, from the Active IM window).
-	 */
-	virtual void onMouseDown();
-
-	virtual void setToggleState(bool toggle);
-
-	/**
-	 * Displays popup menu.
-	 */
-	virtual BOOL handleRightMouseDown(S32 x, S32 y, MASK mask);
+	// </FS:Ansariel> [FS communication UI]
 
 protected:
 
@@ -450,9 +462,12 @@ protected:
 	S32 mDefaultWidth;
 
 	LLIconCtrl* mNewMessagesIcon;
+	LLButton* mChicletButton;
+
+	// <FS:Ansariel> [FS communication UI]
 	LLChicletNotificationCounterCtrl* mCounterCtrl;
 	LLChicletSpeakerCtrl* mSpeakerCtrl;
-	LLButton* mChicletButton;
+	// </FS:Ansariel> [FS communication UI]
 
 	/** the id of another participant, either an avatar id or a group id*/
 	LLUUID mOtherParticipantId;
@@ -479,6 +494,108 @@ public:
 			sFindChicletsSignal;
 };
 
+
+/**
+ * Chiclet for script floaters.
+ */
+class LLScriptChiclet : public LLIMChiclet
+{
+public:
+
+	struct Params : public LLInitParam::Block<Params, LLIMChiclet::Params>
+	{
+		Optional<LLButton::Params> chiclet_button;
+
+		Optional<LLIconCtrl::Params> icon;
+
+		Optional<LLIconCtrl::Params> new_message_icon;
+
+		Params();
+	};
+
+	/*virtual*/ void setSessionId(const LLUUID& session_id);
+
+	/**
+	 * Toggle script floater
+	 */
+	/*virtual*/ void onMouseDown();
+
+	// <FS:Ansariel> [FS communication UI]
+	/*virtual*/ void setCounter(S32 counter);
+
+	/*virtual*/ S32 getCounter() { return 0; }
+	// </FS:Ansariel> [FS communication UI]
+
+protected:
+
+	LLScriptChiclet(const Params&);
+	friend class LLUICtrlFactory;
+
+	/**
+	 * Creates chiclet popup menu.
+	 */
+	virtual void createPopupMenu();
+
+	/**
+	 * Processes clicks on chiclet popup menu.
+	 */
+	virtual void onMenuItemClicked(const LLSD& user_data);
+
+private:
+
+	LLIconCtrl* mChicletIconCtrl;
+};
+
+/**
+ * Chiclet for inventory offer script floaters.
+ */
+class LLInvOfferChiclet: public LLIMChiclet
+{
+public:
+
+	struct Params : public LLInitParam::Block<Params, LLIMChiclet::Params>
+	{
+		Optional<LLButton::Params> chiclet_button;
+
+		Optional<LLChicletInvOfferIconCtrl::Params> icon;
+
+		Optional<LLIconCtrl::Params> new_message_icon;
+
+		Params();
+	};
+
+	/*virtual*/ void setSessionId(const LLUUID& session_id);
+
+	/**
+	 * Toggle script floater
+	 */
+	/*virtual*/ void onMouseDown();
+
+	// <FS:Ansariel> [FS communication UI]
+	/*virtual*/ void setCounter(S32 counter);
+
+	/*virtual*/ S32 getCounter() { return 0; }
+	// </FS:Ansariel> [FS communication UI]
+
+protected:
+	LLInvOfferChiclet(const Params&);
+	friend class LLUICtrlFactory;
+
+	/**
+	 * Creates chiclet popup menu.
+	 */
+	virtual void createPopupMenu();
+
+	/**
+	 * Processes clicks on chiclet popup menu.
+	 */
+	virtual void onMenuItemClicked(const LLSD& user_data);
+
+private:
+	LLChicletInvOfferIconCtrl* mChicletIconCtrl;
+};
+
+// <FS:Ansariel> [FS communication UI]
 /**
  * Implements P2P chiclet.
  */
@@ -612,102 +729,6 @@ private:
 };
 
 /**
- * Chiclet for script floaters.
- */
-class LLScriptChiclet : public LLIMChiclet
-{
-public:
-
-	struct Params : public LLInitParam::Block<Params, LLIMChiclet::Params>
-	{
-		Optional<LLButton::Params> chiclet_button;
-
-		Optional<LLIconCtrl::Params> icon;
-
-		Optional<LLIconCtrl::Params> new_message_icon;
-
-		Params();
-	};
-
-	/*virtual*/ void setSessionId(const LLUUID& session_id);
-
-	/*virtual*/ void setCounter(S32 counter);
-
-	/*virtual*/ S32 getCounter() { return 0; }
-
-	/**
-	 * Toggle script floater
-	 */
-	/*virtual*/ void onMouseDown();
-
-protected:
-
-	LLScriptChiclet(const Params&);
-	friend class LLUICtrlFactory;
-
-	/**
-	 * Creates chiclet popup menu.
-	 */
-	virtual void createPopupMenu();
-
-	/**
-	 * Processes clicks on chiclet popup menu.
-	 */
-	virtual void onMenuItemClicked(const LLSD& user_data);
-
-private:
-
-	LLIconCtrl* mChicletIconCtrl;
-};
-
-/**
- * Chiclet for inventory offer script floaters.
- */
-class LLInvOfferChiclet: public LLIMChiclet
-{
-public:
-
-	struct Params : public LLInitParam::Block<Params, LLIMChiclet::Params>
-	{
-		Optional<LLButton::Params> chiclet_button;
-
-		Optional<LLChicletInvOfferIconCtrl::Params> icon;
-
-		Optional<LLIconCtrl::Params> new_message_icon;
-
-		Params();
-	};
-
-	/*virtual*/ void setSessionId(const LLUUID& session_id);
-
-	/*virtual*/ void setCounter(S32 counter);
-
-	/*virtual*/ S32 getCounter() { return 0; }
-
-	/**
-	 * Toggle script floater
-	 */
-	/*virtual*/ void onMouseDown();
-
-protected:
-	LLInvOfferChiclet(const Params&);
-	friend class LLUICtrlFactory;
-
-	/**
-	 * Creates chiclet popup menu.
-	 */
-	virtual void createPopupMenu();
-
-	/**
-	 * Processes clicks on chiclet popup menu.
-	 */
-	virtual void onMenuItemClicked(const LLSD& user_data);
-
-private:
-	LLChicletInvOfferIconCtrl* mChicletIconCtrl;
-};
-
-/**
  * Implements Group chat chiclet.
  */
 class LLIMGroupChiclet : public LLIMChiclet, public LLGroupMgrObserver
@@ -789,6 +810,7 @@ private:
 
 	LLChicletGroupIconCtrl* mChicletIconCtrl;
 };
+// </FS:Ansariel> [FS communication UI]
 
 /**
  * Implements notification chiclet. Used to display total amount of unread messages 
@@ -797,7 +819,7 @@ private:
 class LLSysWellChiclet : public LLChiclet
 {
 public:
-
+		
 	struct Params : public LLInitParam::Block<Params, LLChiclet::Params>
 	{
 		Optional<LLButton::Params> button;
@@ -843,7 +865,7 @@ protected:
 	 * There is an assumption that it will be called 2*N times to do not change its start state.
 	 * @see FlashToLitTimer
 	 */
-	void changeLitState();
+	void changeLitState(bool blink);
 
 	/**
 	 * Displays menu.
@@ -859,10 +881,63 @@ protected:
 	S32 mMaxDisplayedCount;
 	bool mIsNewMessagesState;
 
-	FlashToLitTimer* mFlashToLitTimer;
+	LLFlashTimer* mFlashToLitTimer;
 	LLContextMenu* mContextMenu;
 };
 
+class LLNotificationChiclet : public LLSysWellChiclet
+{
+	LOG_CLASS(LLNotificationChiclet);
+			
+	friend class LLUICtrlFactory;
+public:
+	struct Params : public LLInitParam::Block<Params, LLSysWellChiclet::Params>{};
+		
+protected:
+	struct ChicletNotificationChannel : public LLNotificationChannel
+	{
+		ChicletNotificationChannel(LLNotificationChiclet* chiclet) 
+			: LLNotificationChannel(LLNotificationChannel::Params().filter(filterNotification).name(chiclet->getSessionId().asString()))
+			, mChiclet(chiclet)
+		{
+			// connect counter handlers to the signals
+			connectToChannel("Group Notifications");
+			connectToChannel("Offer");
+			connectToChannel("Notifications");
+		}
+				
+		static bool filterNotification(LLNotificationPtr notify);
+		// connect counter updaters to the corresponding signals
+		/*virtual*/ void onAdd(LLNotificationPtr p) { mChiclet->setCounter(++mChiclet->mUreadSystemNotifications); }
+		/*virtual*/ void onDelete(LLNotificationPtr p) { mChiclet->setCounter(--mChiclet->mUreadSystemNotifications); }
+				
+		LLNotificationChiclet* const mChiclet;
+	};
+				
+	boost::scoped_ptr<ChicletNotificationChannel> mNotificationChannel;
+				
+	LLNotificationChiclet(const Params& p);
+				
+	/**
+	 * Processes clicks on chiclet menu.
+	 */
+	void onMenuItemClicked(const LLSD& user_data);
+				
+	/**
+	 * Enables chiclet menu items.
+	 */
+	bool enableMenuItem(const LLSD& user_data);
+				
+	/**
+	 * Creates menu.
+	 */
+	/*virtual*/ void createMenu();
+
+	/*virtual*/ void setCounter(S32 counter);
+	S32 mUreadSystemNotifications;
+};
+
+// <FS:Ansariel> [FS communication UI]
 /**
  * Class represented a chiclet for IM Well Icon.
  *
@@ -872,9 +947,11 @@ class LLIMWellChiclet : public LLSysWellChiclet, LLIMSessionObserver
 {
 	friend class LLUICtrlFactory;
 public:
-	virtual void sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id) {}
-	virtual void sessionRemoved(const LLUUID& session_id) { messageCountChanged(LLSD()); }
-	virtual void sessionIDUpdated(const LLUUID& old_session_id, const LLUUID& new_session_id) {}
+	/*virtual*/ void sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id, BOOL has_offline_msg) {}
+	/*virtual*/ void sessionActivated(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id) {}
+	/*virtual*/ void sessionVoiceOrIMStarted(const LLUUID& session_id) {};
+	/*virtual*/ void sessionRemoved(const LLUUID& session_id) { messageCountChanged(LLSD()); }
+	/*virtual*/ void sessionIDUpdated(const LLUUID& old_session_id, const LLUUID& new_session_id) {}
 
 	~LLIMWellChiclet();
 protected:
@@ -908,40 +985,7 @@ protected:
 	 */
 	void messageCountChanged(const LLSD& session_data);
 };
-
-class LLNotificationChiclet : public LLSysWellChiclet
-{
-	friend class LLUICtrlFactory;
-public:
-	struct Params : public LLInitParam::Block<Params, LLSysWellChiclet::Params>{};
-
-protected:
-	LLNotificationChiclet(const Params& p);
-
-	/**
-	 * Processes clicks on chiclet menu.
-	 */
-	void onMenuItemClicked(const LLSD& user_data);
-
-	/**
-	 * Enables chiclet menu items.
-	 */
-	bool enableMenuItem(const LLSD& user_data);
-
-	/**
-	 * Creates menu.
-	 */
-	/*virtual*/ void createMenu();
-
-	// connect counter updaters to the corresponding signals
-	void connectCounterUpdatersToSignal(const std::string& notification_type);
-
-	// methods for updating a number of unread System notifications
-	void incUreadSystemNotifications() { setCounter(++mUreadSystemNotifications); }
-	void decUreadSystemNotifications() { setCounter(--mUreadSystemNotifications); }
-	/*virtual*/ void setCounter(S32 counter);
-	S32 mUreadSystemNotifications;
-};
+// </FS:Ansariel> [FS communication UI]
 
 /**
  * Storage class for all IM chiclets. Provides mechanism to display, 
@@ -1044,14 +1088,15 @@ public:
 
 	S32 getMinWidth() const { return mMinWidth; }
 
-	S32 getTotalUnreadIMCount();
-
-	S32	notifyParent(const LLSD& info);
+	/*virtual*/ S32	notifyParent(const LLSD& info);
 
 	/**
 	 * Toggle chiclet by session id ON and toggle OFF all other chiclets.
 	 */
 	void setChicletToggleState(const LLUUID& session_id, bool toggle);
+
+	// <FS:Ansariel> [FS communication UI]
+	S32 getTotalUnreadIMCount();
 
 protected:
 	LLChicletPanel(const Params&p);

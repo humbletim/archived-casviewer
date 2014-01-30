@@ -27,15 +27,16 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llappviewer.h"
+#include "llfloaterreg.h"
 #include "llviewerkeyboard.h"
 #include "llmath.h"
 #include "llagent.h"
 #include "llagentcamera.h"
-// <FS:Zi> Remove floating chat bar
-// #include "llnearbychatbar.h"
+// <FS:Ansariel> [FS Communication UI]
+// #include "llfloaterimnearbychat.h"
 #include "fsnearbychathub.h"
 #include "lllineeditor.h"
-// </FS:Zi>
+// </FS:Ansariel> [FS Communication UI]
 #include "llviewercontrol.h"
 #include "llfocusmgr.h"
 #include "llmorphview.h"
@@ -580,11 +581,16 @@ void stop_moving( EKeystate s )
 
 void start_chat( EKeystate s )
 {
+    if (LLAppViewer::instance()->quitRequested())
+    {
+        return; // can't talk, gotta go, kthxbye!
+    }
+    
 	// start chat
-	// <FS:Zi> Remove floating chat bar
-	// LLNearbyChatBar::startChat(NULL);
+	// <FS:Ansariel> [FS Communication UI]
+	//LLFloaterIMNearbyChat::startChat(NULL);
 	FSNearbyChat::instance().showDefaultChatBar(TRUE);
-	// </FS:Zi>
+	// </FS:Ansariel> [FS Communication UI]
 }
 
 void start_gesture( EKeystate s )
@@ -610,18 +616,18 @@ void start_gesture( EKeystate s )
 		! (focus_ctrlp && focus_ctrlp->acceptsTextInput()))
 	{
 		// <FS:Ansariel> Changed for new chatbar
- 		//if (LLNearbyChat::getInstance()->getCurrentChat().empty())
+ 		// ((LLFloaterReg::getTypedInstance<LLFloaterIMNearbyChat>("nearby_chat"))->getCurrentChat().empty()) <FS:TM> CHUI Merge new
  		//{
  		//	// No existing chat in chat editor, insert '/'
- 		//	LLNearbyChat::startChat("/");
+ 		//	LLFloaterIMNearbyChat::startChat("/"); <FS:TM> CHUI Merge new
  		//}
  		//else
  		//{
  		//	// Don't overwrite existing text in chat editor
- 		//	LLNearbyChat::startChat(NULL);
+ 		//	LLFloaterIMNearbyChat::startChat(NULL); <FS:TM> CHUI Merge new
  		//}
 
-		FSNearbyChat::instance().showDefaultChatBar(TRUE,"/");
+		FSNearbyChat::instance().showDefaultChatBar(TRUE,"/"); // <FS:TM> CHUI Merge Check this
  		// </FS:Ansariel>
 	}
 }
@@ -752,6 +758,7 @@ BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL
 	if(mKeysSkippedByUI.find(translated_key) != mKeysSkippedByUI.end()) 
 	{
 		mKeyHandledByUI[translated_key] = FALSE;
+		LL_INFOS("Keyboard Handling") << "Key wasn't handled by UI!" << LL_ENDL;
 	}
 	else
 	{

@@ -1,34 +1,59 @@
 # -*- cmake -*-
+# Construct the viewer version number based on the indra/VIEWER_VERSION file
 
-include(Python)
+if (NOT DEFINED VIEWER_SHORT_VERSION) # will be true in indra/, false in indra/newview/
+    set(VIEWER_VERSION_BASE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/newview/VIEWER_VERSION.txt")
 
-macro (build_version _target)
-  execute_process(
-      COMMAND ${PYTHON_EXECUTABLE} ${SCRIPTS_DIR}/build_version.py
-        llversion${_target}.h ${LLCOMMON_INCLUDE_DIRS}
-      OUTPUT_VARIABLE ${_target}_VERSION
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
+    if ( EXISTS ${VIEWER_VERSION_BASE_FILE} )
+        file(STRINGS ${VIEWER_VERSION_BASE_FILE} VIEWER_SHORT_VERSION REGEX "^[0-9]+\\.[0-9]+\\.[0-9]+")
+        string(REGEX REPLACE "^([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" VIEWER_VERSION_MAJOR ${VIEWER_SHORT_VERSION})
+        string(REGEX REPLACE "^[0-9]+\\.([0-9]+)\\.[0-9]+" "\\1" VIEWER_VERSION_MINOR ${VIEWER_SHORT_VERSION})
+        string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" VIEWER_VERSION_PATCH ${VIEWER_SHORT_VERSION})
 
-  if (${_target}_VERSION)
-    message(STATUS "Version of ${_target} is ${${_target}_VERSION}")
-  else (${_target}_VERSION)
-    message(SEND_ERROR "Could not determine ${_target} version")
-  endif (${_target}_VERSION)
-endmacro (build_version)
+        if (DEFINED ENV{revision})
+           set(VIEWER_VERSION_REVISION $ENV{revision})
+           message("Revision (from environment): ${VIEWER_VERSION_REVISION}")
 
+        else (DEFINED ENV{revision})
+           find_program(MERCURIAL hg)
+           if (DEFINED MERCURIAL)
+              execute_process(
+                 # <FS:TS> FIRE-11737: Reverting to old revisions shows tip in build string
+                 #         This command gets the revision number of the current
+                 #         repository tip. This leads to confusion when
+                 #         building an earlier revision. Instead, we use
+                 #         "hg identify -n" to get the local revision number
+                 #         of the actual state of the repository.
+                 #COMMAND ${MERCURIAL} log -r tip --template "{rev}"
+                 COMMAND ${MERCURIAL} identify -n
+                 OUTPUT_VARIABLE VIEWER_VERSION_REVISION
+                 OUTPUT_STRIP_TRAILING_WHITESPACE
+                 )
+              # <FS:TS> Now strip off a trailing + if it's there, showing that
+              #         there are uncommitted changes.
+              string (REGEX REPLACE "\\+$" "" VIEWER_VERSION_REVISION ${VIEWER_VERSION_REVISION})
+              # </FS:TS> FIRE-11737
+              if ("${VIEWER_VERSION_REVISION}" MATCHES "^[0-9]+$")
+                 message("Revision (from hg) ${VIEWER_VERSION_REVISION}")
+              else ("${VIEWER_VERSION_REVISION}" MATCHES "^[0-9]+$")
+                 set(VIEWER_VERSION_REVISION 0 )
+                 message("Revision not set, repository not found, using ${VIEWER_VERSION_REVISION}")
+              endif ("${VIEWER_VERSION_REVISION}" MATCHES "^[0-9]+$")
+           else (DEFINED MERCURIAL)
+              set(VIEWER_VERSION_REVISION 0)
+              message("Revision not set, 'hg' not found (${MERCURIAL}), using ${VIEWER_VERSION_REVISION}")
+           endif (DEFINED MERCURIAL)
+        endif (DEFINED ENV{revision})
+        message("Building '${VIEWER_CHANNEL}' Version ${VIEWER_SHORT_VERSION}.${VIEWER_VERSION_REVISION}")
+    else ( EXISTS ${VIEWER_VERSION_BASE_FILE} )
+        message(SEND_ERROR "Cannot get viewer version from '${VIEWER_VERSION_BASE_FILE}'") 
+    endif ( EXISTS ${VIEWER_VERSION_BASE_FILE} )
 
-macro (build_channel _target)
-  execute_process(
-      COMMAND ${PYTHON_EXECUTABLE} ${SCRIPTS_DIR}/build_channel.py
-        llversion${_target}.h ${LLCOMMON_INCLUDE_DIRS}
-      OUTPUT_VARIABLE VIEWER_CHANNEL
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-      
-  if (VIEWER_CHANNEL)
-    message(STATUS "Channel is ${VIEWER_CHANNEL}")
-  else (VIEWER_CHANNEL)
-    message(SEND_ERROR "Could not determine channel")
-  endif (VIEWER_CHANNEL)
-endmacro (build_channel)
+    set(VIEWER_CHANNEL_VERSION_DEFINES
+        "LL_VIEWER_CHANNEL=\"${VIEWER_CHANNEL}\""
+        "LL_VIEWER_VERSION_MAJOR=${VIEWER_VERSION_MAJOR}"
+        "LL_VIEWER_VERSION_MINOR=${VIEWER_VERSION_MINOR}"
+        "LL_VIEWER_VERSION_PATCH=${VIEWER_VERSION_PATCH}"
+        "LL_VIEWER_VERSION_BUILD=${VIEWER_VERSION_REVISION}"
+        )
+endif (NOT DEFINED VIEWER_SHORT_VERSION)

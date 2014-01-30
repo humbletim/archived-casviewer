@@ -17,6 +17,7 @@ include_directories(
     ${EXPAT_INCLUDE_DIRS}
     ${LLCOMMON_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
+    ${BREAKPAD_INCLUDE_DIRECTORIES}
     )
 
 # add_executable(lltreeiterators lltreeiterators.cpp)
@@ -121,6 +122,7 @@ set(llcommon_HEADER_FILES
     linden_common.h
     linked_lists.h
     llaccountingcost.h
+    llalignedarray.h
     llallocator.h
     llallocator_heap_profile.h
     llagentconstants.h
@@ -236,6 +238,7 @@ set(llcommon_HEADER_FILES
     llstrider.h
     llstring.h
     llstringtable.h
+    llstaticstringtable.h
     llsys.h
     llthread.h
     llthreadsafequeue.h
@@ -246,7 +249,6 @@ set(llcommon_HEADER_FILES
     lluuid.h
     lluuidhashmap.h
     llversionserver.h
-    llversionviewer.h
     llworkerthread.h
     ll_template_cast.h
     metaclass.h
@@ -267,8 +269,30 @@ set(llcommon_HEADER_FILES
 
 # <FS:ND> Add all nd* files. memory pool, intrinsics, ...
 
-FILE( GLOB llcommon_ND_SOURCE_FILES nd/nd*.cpp )
-FILE( GLOB llcommon_ND_HEADER_FILES nd/nd*.h )
+SET( llcommon_ND_SOURCE_FILES
+	 nd/ndallocstats.cpp
+	 nd/ndexceptions.cpp
+	 nd/ndfile.cpp
+	 nd/ndintrin.cpp
+	 nd/ndlogthrottle.cpp
+	 nd/ndmallocstats.cpp
+	 )
+SET(  llcommon_ND_HEADER_FILES 
+	  nd/ndallocstats.h
+	  nd/ndboolswitch.h
+	  nd/ndcallstack.h
+	  nd/ndexception_handler_stub.h
+	  nd/ndexceptions.h
+	  nd/ndfile.h
+	  nd/ndintrin.h
+	  nd/ndlocks.h
+	  nd/ndlogthrottle.h
+	  nd/ndmallocstats.h
+	  nd/ndobjectpool.h
+	  nd/ndpooldefines.h
+	  nd/ndstackwalk.h
+	  nd/ndstlallocator.h
+	  )
 
 SOURCE_GROUP( nd FILES ${llcommon_ND_SOURCE_FILES} ${llcommon_ND_HEADER_FILES} )
 
@@ -276,14 +300,6 @@ list(APPEND llcommon_SOURCE_FILES  ${llcommon_ND_SOURCE_FILES} )
 list(APPEND llcommon_HEADER_FILES ${llcommon_ND_HEADER_FILES} )
 
 # </FS:ND>
-
-# <FS:CR> Add OSSL constants for OpenSim builds
-if (OPENSIM)
-    LIST(APPEND llcommon_HEADER_FILES
-    osslconstants.h
-    )
-endif (OPENSIM)
-# </FS:CR>
 
 set_source_files_properties(${llcommon_HEADER_FILES}
                             PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -301,9 +317,11 @@ else(LLCOMMON_LINK_SHARED)
     add_library (llcommon ${llcommon_SOURCE_FILES})
 endif(LLCOMMON_LINK_SHARED)
 
+# <FS:TS> This must be broken out because llcommon is always built as
+#         shared but LLCOMMON_LINK_SHARED is turned off explicitly
 if(NOT WORD_SIZE EQUAL 32)
   if(WINDOWS)
-    add_definitions(/FIXED:NO)
+#    add_definitions(/FIXED:NO)
   else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
     add_definitions(-fPIC)
   endif(WINDOWS)
@@ -358,6 +376,7 @@ if (LL_TESTS)
   LL_ADD_INTEGRATION_TEST(reflection "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(stringize "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(lleventdispatcher "" "${test_libs}")
+  LL_ADD_INTEGRATION_TEST(lleventcoro "" "${test_libs};${BOOST_CONTEXT_LIBRARY}")
   LL_ADD_INTEGRATION_TEST(llprocess "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llleap "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llstreamqueue "" "${test_libs}")

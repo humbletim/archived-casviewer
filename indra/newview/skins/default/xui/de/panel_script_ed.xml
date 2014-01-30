@@ -35,6 +35,7 @@
 			<menu_item_call label="Alle auswählen" name="Select All"/>
 			<menu_item_call label="Auswahl aufheben" name="Deselect"/>
 			<menu_item_call label="Suchen / Ersetzen..." name="Search / Replace..."/>
+			<menu_item_call label="Gehe zu Zeile..." name="Go to line..."/>
 		</menu>
 		<menu label="Hilfe" name="Help">
 			<menu_item_call label="Hilfe..." name="Help..."/>
@@ -61,4 +62,6 @@
 		Wird geladen...
 	</text_editor>
 	<combo_box label="Einfügen..." name="Insert..."/>
+	<button label="Bearbeiten..." name="edit_btn_2"/>
+	<button label="Speichern" name="save_btn_2"/>
 </panel>

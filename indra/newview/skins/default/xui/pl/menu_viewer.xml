@@ -16,9 +16,10 @@
 		<menu label="Ruch" name="Movement">
 			<menu_item_call label="Usiądź" name="Sit Down Here"/>
 			<menu_item_check label="Zacznij latać" name="Fly"/>
+			<menu_item_call label="Przestań latać" name="Stop flying"/>
 			<menu_item_check label="Zawsze biegnij" name="Always Run"/>
 			<menu_item_check label="Wymuś siadanie na ziemi" name="Force Toggle Sitting" shortcut="control|alt|K"/>
-			<menu_item_check label="Tryb widmowy" name="Avatar Phantom"/>
+			<menu_item_check label="Unieruchom" name="Move Lock"/>
 			<menu_item_check label="Szybki skok" name="Avatar Ignore Prejump"/>
 		</menu>
 		<menu_item_check label="Ustawienia kamery" name="Camera Controls"/>
@@ -41,7 +42,7 @@
 			<menu_item_call label="Model meszowy..." name="Upload Model"/>
 			<menu_item_call label="Zbiór wielu plików..." name="Bulk Upload"/>
 			<menu_item_call label="Ustaw domyślne uprawnienia dla ładowania" name="perm prefs"/>
-			<menu_item_call label="Importuj zbiór części" name="import linkset"/>
+			<menu_item_call label="Importuj zbiór części..." name="import linkset"/>
 		</menu>
 		<menu_item_call label="Uzyskaj status administratora" name="Request Admin Options"/>
 		<menu_item_call label="Porzuć status administratora" name="Leave Admin Options"/>
@@ -50,10 +51,11 @@
 	</menu>
 	<menu label="Komunikacja" name="Communicate">
 		<menu label="Status online" name="Status">
-			<menu_item_check label="Z dala od klawiatury (śpij)" name="Set Away"/>
+			<menu_item_check label="Z dala od klawiatury (śpij)" name="Away"/>
+			<menu_item_check label="Zajęty lub Niedostępny" name="Do Not Disturb" />
 			<menu_item_check label="Autoodpowiedź" name="Set Autorespond"/>
 			<menu_item_check label="Autoodpowiedź dla nieznajomych" name="Set Autorespond to non-friends"/>
-			<menu_item_check label="Zajęty lub Niedostępny" name="Set Busy"/>
+			<menu_item_check label="Automatycznie odrzucaj propozycje teleportów" name="Automatically reject teleport offers"/>
 		</menu>
 		<menu_item_call label="Znajomi" name="My Friends"/>
 		<menu_item_check label="Kontakty" name="Contacts"/>
@@ -63,7 +65,12 @@
 		<menu_item_check label="Ludzie" name="People"/>
 		<menu_item_check label="Rozmowy" name="Conversations"/>
 		<menu_item_check label="Gesty" name="Gestures"/>
-		<menu_item_check label="Przekształcanie głosu" name="ShowVoice"/>
+		<menu label="Przekształcanie głosu" name="VoiceMorphing">
+			<menu_item_check label="Bez przekształcania" name="NoVoiceMorphing"/>
+			<menu_item_check label="Podgląd..." name="Preview"/>
+			<menu_item_call label="Subskrybuj..." name="Subscribe"/>
+		</menu>
+		<menu_item_check name="Conversation Log..." label="Dziennik rozmów..."/>
 		<menu_item_check label="Głos w pobliżu" name="Nearby Voice"/>
 		<menu_item_call label="Lista zablokowanych" name="Block List"/>
 	</menu>
@@ -155,6 +162,10 @@
 			<menu_item_call label="Zapisz obiekt do Szafy" name="Save Object Back to My Inventory"/>
 			<menu_item_call label="Zapisz do zawartości obiektu" name="Save Object Back to Object Contents"/>
 			<menu_item_call label="Zwróć obiekt" name="Return Object back to Owner"/>
+			<menu label="Zapisz jako" name="Export Menu">
+				<menu_item_call label="Kopia zapasowa" name="Backup"/>
+				<menu_item_call label="Collada" name="Collada"/>
+			</menu>
 		</menu>
 		<menu label="Skrypty" name="Scripts">
 			<menu_item_call label="Ostrzeżenia/błędy skryptów" name="Script Debug"/>
@@ -194,7 +205,7 @@
 			<menu_item_call label="Model meszowy..." name="Upload Model"/>
 			<menu_item_call label="Zbiór wielu plików ([COST] za plik)..." name="Bulk Upload"/>
 			<menu_item_call label="Ustaw domyślne uprawnienia dla ładowania" name="perm prefs"/>
-			<menu_item_call label="Importuj zbiór części" name="import linkset"/>
+			<menu_item_call label="Importuj zbiór części..." name="import linkset"/>
 		</menu>
 		<menu_item_call label="Cofnij" name="Undo"/>
 		<menu_item_call label="Ponów" name="Redo"/>
@@ -204,13 +215,28 @@
 		<menu_item_call label="Marketplace Second Life" name="SL Marketplace"/>
 		<menu_item_call label="Dane z rynku L$" name="LindenXchange"/>
 		<menu_item_call label="Biblioteka skryptów" name="Script Library"/>
+		<menu_item_call label="Blog Firestorma" name="Firestorm Blog"/>
+		<menu_item_call label="Flickr Firestorma" name="Firestorm Flickr"/>
+		<menu_item_call label="Kanał YouTube Firestorma" name="Firestorm YouTube"/>
+		<menu_item_call label="Twitter Firestorma" name="Firestorm Twitter"/>
+		<menu_item_call label="Plurk Firestorma" name="Firestorm Plurk"/>
 	</menu>
 	<menu label="Pomoc" name="Help">
 		<menu_item_check label="Włącz podpowiedzi" name="Enable Hints"/>
 		<menu_item_call label="Wiki Firestorma" name="Firestorm Wiki"/>
 		<menu_item_call label="Rozwiązywanie problemów" name="Troubleshooting"/>
 		<menu_item_call label="Dołącz do Grupy Wsparcia Firestorma" name="firestorm_support_group"/>
+		<!-- <menu_item_call label="Pomoc Second Life" name="Second Life Help"/> -->
+		<menu_item_call label="Pomoc: [CURRENT_GRID]" name="current_grid_help"/>
 		<menu_item_call label="Na temat [CURRENT_GRID]" name="current_grid_about"/>
+		<!-- <menu_item_call label="Samouczek" name="Tutorial"/>
+		<menu_item_call label="Podręcznik użytkownika" name="User’s guide"/>
+		<menu_item_call label="Baza wiedzy" name="Knowledge Base"/>
+		<menu_item_call label="Wiki informacyjna" name="Wiki"/>
+		<menu_item_call label="Forum społecznościowe" name="Community Forums"/>
+		<menu_item_call label="Portal wsparcia" name="Support portal"/>
+		<menu_item_call label="Newsy: [SECOND_LIFE]" name="Second Life News"/>
+		<menu_item_call label="Blogi: [SECOND_LIFE]" name="Second Life Blogs"/> -->
 		<menu_item_call label="Sprawdź stan świata (Siatki)" name="Grid Status"/>
 		<menu_item_call label="Zgłoś nadużycie" name="Report Abuse"/>
 		<menu_item_call label="Zgłoś błędy klienta" name="Report Bug"/>
@@ -234,7 +260,7 @@
 		<menu_item_check label="Zezwól na czat OOC (Out Of Character)" name="Allow OOC Chat"/>
 		<menu_item_check label="Odmów innym osobom/obiektom dodawania rzeczy do mojego #RLV" name="Forbid Give to #RLV"/>
 		<menu_item_check label="Pokaż filtrowany czat" name="Show Filtered Chat"/>
-		<menu_item_check label="Pokaż tag imion" name="Show Name Tags"/>
+		<menu_item_check label="Pokaż tagi imion" name="Show Name Tags"/>
 		<menu_item_check label="Zastępowanie odblokowane" name="Wear Replaces Unlocked"/>
 		<menu_item_check label="Ograniczenia..." name="Restrictions"/>
 	</menu>
@@ -340,9 +366,10 @@
 		</menu>
 		<menu label="Pokaż informacje" name="Display Info">
 			<menu_item_check label="Pokaż czas" name="Show Time"/>
-			<menu_item_check label="Pokaż koszt załadowania" name="Show Upload Cost"/>
+			<menu_item_check label="Pokazuj koszt transakcji ładowania pliku" name="Show Upload Transaction"/>
 			<menu_item_check label="Pokaż informacje o teksturach" name="Show Texture Info"/>
-			<menu_item_check label="Pokaż informacje o renderowaniu" name="Show Render Info"/>
+			<menu_item_check label="Pokaż informacje o renderowaniu awatarów" name="Show Avatar Render Info"/>
+			<menu_item_check label="Pokaż informacje o renderowaniu ogólnym" name="Show Render Info"/>
 			<menu_item_check label="Pokaż macierze" name="Show Matrices"/>
 			<menu_item_check label="Pokaż kolor pod kursorem" name="Show Color Under Cursor"/>
 			<menu_item_check label="Pokaż pamięć" name="Show Memory"/>
@@ -364,9 +391,11 @@
 			<menu_item_check label="Losowa ilość klatek" name="Randomize Framerate"/>
 			<menu_item_check label="Okresowe spowolnienie" name="Periodic Slow Frame"/>
 			<menu_item_check label="Test klatek obrazu" name="Frame Test"/>
+			<menu_item_call label="Profil klatek obrazu" name="Frame Profile"/>
 		</menu>
 		<menu label="Renderowanie metadanych" name="Render Metadata">
 			<menu_item_check label="Bryły brzegowe (Bounding Boxes)" name="Bounding Boxes"/>
+			<menu_item_check label="Przestrzeń kolizji awatarów (Hitboxy)" name="Avatar Hitboxes"/>
 			<menu_item_check label="Wektory normalne" name="Normals"/>
 			<menu_item_check label="Drzewo okluzji" name="Octree"/>
 			<menu_item_check label="Wzmocniona okluzja (Shadow Frusta)" name="Shadow Frusta"/>
@@ -399,9 +428,10 @@
 			<menu_item_check label="Osie" name="Axes"/>
 			<menu_item_check label="Podstawy stycznych" name="Tangent Basis"/>
 			<menu_item_check label="Bazowe informacje wybranych tekstur" name="Selected Texture Info Basis"/>
+			<menu_item_call label="Informacje o zaznaczonym materiale" name="Selected Material Info"/>
 			<menu_item_check label="Tryb obrazu szkieletowego" name="Wireframe"/>
 			<menu_item_check label="Okluzja obiektu do obiektu" name="Object-Object Occlusion"/>
-			<menu_item_check label="Zaawansowane oświetlenie" name="Lighting and Shadows"/>
+			<menu_item_check label="Zaawansowane oświetlenie" name="Advanced Lighting Model"/>
 			<menu_item_check label="Cienie Słońca, Księżyca i innych źródeł" name="Shadows from Sun/Moon/Projectors"/>
 			<menu_item_check label="SSAO i wygładzanie cieni" name="SSAO and Shadow Smoothing"/>
 			<menu_item_check label="Debugowanie GL" name="Debug GL"/>
@@ -411,7 +441,6 @@
 			<menu_item_check label="Tekstury animacji" name="Animation Textures"/>
 			<menu_item_check label="Wyłącz tekstury" name="Disable Textures"/>
 			<menu_item_check label="Maksymalna rozdzielczość tekstur (niebezpieczne)" name="Full Res Textures"/>
-			<menu_item_check label="Atlas tekstur (eksperymentalne)" name="Texture Atlas"/>
 			<menu_item_check label="Renderowania przyłączonego światła" name="Render Attached Lights"/>
 			<menu_item_check label="Renderowanie przyłączonych cząsteczek" name="Render Attached Particles"/>
 			<menu_item_check label="Wyświetlaj obiekty odblaskowe" name="Hover Glow Objects"/>
@@ -436,6 +465,7 @@
 			<menu_item_check label="Domyślne ustawienia środowiska Regionu" name="Sim Sun Override"/>
 			<menu_item_check label="Ustalona pogoda" name="Fixed Weather"/>
 			<menu_item_call label="Zrzut buforu pamięci obiektów regionu" name="Dump Region Object Cache"/>
+			<menu_item_call label="Zrzut właściwości symulatora do czatu lokalnego" name="DumpSimFeaturesToChat"/>
 		</menu>
 		<menu label="Interfejs" name="UI">
 			<menu_item_call label="Test przeglądarki mediów" name="Web Browser Test"/>

@@ -109,11 +109,14 @@ if (DARWIN)
     llkeyboardmacosx.cpp
     llwindowmacosx.cpp
     llwindowmacosx-objc.mm
+    llopenglview-objc.mm
     )
   list(APPEND llwindow_HEADER_FILES
     llkeyboardmacosx.h
     llwindowmacosx.h
     llwindowmacosx-objc.h
+    llopenglview-objc.h
+    llappdelegate-objc.h
     )
 
   # We use a bunch of deprecated system APIs.
@@ -165,7 +168,7 @@ if (BUILD_HEADLESS)
   set(llwindowheadless_HEADER_FILES
        llwindowmesaheadless.h
        llmousehandler.h
-       )
+    )
   add_library (llwindowheadless
     ${llwindow_SOURCE_FILES}
     ${llwindowheadless_SOURCE_FILES}
@@ -180,12 +183,12 @@ if (llwindow_HEADER_FILES)
   list(APPEND llwindow_SOURCE_FILES ${llwindow_HEADER_FILES})
 endif (llwindow_HEADER_FILES)
 
-list(APPEND viewer_SOURCE_FILES ${viewer_HEADER_FILES})
+  list(APPEND viewer_SOURCE_FILES ${viewer_HEADER_FILES})
 
-add_library (llwindow
-  ${llwindow_SOURCE_FILES}
-  ${viewer_SOURCE_FILES}
-  )
+  add_library (llwindow
+    ${llwindow_SOURCE_FILES}
+    ${viewer_SOURCE_FILES}
+    )
 
 if (SDL_FOUND)
   set_property(TARGET llwindow
@@ -193,5 +196,5 @@ if (SDL_FOUND)
     )
 endif (SDL_FOUND)
 
-target_link_libraries (llwindow ${llwindow_LINK_LIBRARIES})
+  target_link_libraries (llwindow ${llwindow_LINK_LIBRARIES})
 

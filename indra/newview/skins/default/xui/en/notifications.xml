@@ -507,6 +507,33 @@ Add this ability to &apos;[ROLE_NAME]&apos;?
      notext="No"
      yestext="Yes"/>
   </notification>
+  
+  <notification
+    icon="alertmodal.tga"
+    name="EjectGroupMemberWarning"
+    type="alertmodal">
+     You are about to eject [AVATAR_NAME] from the group.
+     <tag>group</tag>
+     <tag>confirm</tag>
+     <usetemplate
+      ignoretext="Confirm ejecting a participant from group"
+      name="okcancelignore"
+      notext="Cancel"
+      yestext="Eject"/>
+  </notification>
+  <notification
+    icon="alertmodal.tga"
+    name="EjectGroupMembersWarning"
+    type="alertmodal">
+     You are about to eject [COUNT] members from the group.
+     <tag>group</tag>
+     <tag>confirm</tag>
+     <usetemplate
+      ignoretext="Confirm ejecting multiple members from group"
+      name="okcancelignore"
+      notext="Cancel"
+      yestext="Eject"/>
+  </notification>
 
   <notification
    icon="alertmodal.tga"
@@ -1100,10 +1127,10 @@ Port settings take effect after restarting [APP_NAME].
    name="ChangeSkin"
    type="alertmodal">
 The new skin will appear after restarting [APP_NAME].
-   <form name="form">
-      <ignore name="ignore"
-       text="A new skin was chosen in preferences."/>
-    </form>
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Ok"
+     yestext="Restart"/>
   </notification>
 
   <notification
@@ -2778,9 +2805,9 @@ Please enter a higher price.
    icon="alertmodal.tga"
    name="ConfirmItemDeleteHasLinks"
    type="alertmodal">
-    At least one of the items you have selected has link items that point to it.  If you delete this item, its links will permanently stop working.  It is strongly advised to delete the links first.
+At least one of the items you have selected has link items that point to it.  If you delete this item, its links will permanently stop working.  It is strongly advised to delete the links first.
 
-    Are you sure you want to delete these items?
+Are you sure you want to delete these items?
     <tag>confirm</tag>
     <usetemplate
      name="okcancelbuttons"
@@ -2820,7 +2847,7 @@ Are you sure you want to delete these items?
    icon="alertmodal.tga"
    name="ConfirmObjectDeleteNoOwn"
    type="alertmodal">
-You do not own least one of the items you have selected.
+You do not own at least one of the items you have selected.
 
 Are you sure you want to delete these items?
     <tag>confirm</tag>
@@ -2850,7 +2877,7 @@ Are you sure you want to delete these items?
    name="ConfirmObjectDeleteLockNoOwn"
    type="alertmodal">
 At least one object is locked.
-You do not own least one object.
+You do not own at least one object.
 
 Are you sure you want to delete these items?
     <tag>confirm</tag>
@@ -2865,7 +2892,7 @@ Are you sure you want to delete these items?
    name="ConfirmObjectDeleteNoCopyNoOwn"
    type="alertmodal">
 At least one object is not copyable.
-You do not own least one object.
+You do not own at least one object.
 
 Are you sure you want to delete these items?
     <tag>confirm</tag>
@@ -2881,13 +2908,13 @@ Are you sure you want to delete these items?
    type="alertmodal">
 At least one object is locked.
 At least one object is not copyable.
-You do not own least one object.
+You do not own at least one object.
 
 Are you sure you want to delete these items?
     <tag>confirm</tag>
     <usetemplate
      name="okcancelbuttons"
-     notext="cancel"
+     notext="Cancel"
      yestext="OK"/>
   </notification>
 
@@ -3181,6 +3208,7 @@ Would you like to trust this authority?
    icon="alertmodal.tga"
    name="GrantedModifyRights"
    persist="true"
+   log_to_im="true"   
    type="notify">
 [NAME] has given you permission to edit their objects.
   </notification>
@@ -3189,6 +3217,7 @@ Would you like to trust this authority?
    icon="alertmodal.tga"
    name="RevokedModifyRights"
    persist="true"
+   log_to_im="true"   
    type="notify">
 Your privilege to modify [NAME]&apos;s objects has been revoked.
   </notification>
@@ -3604,7 +3633,7 @@ Version [VERSION] [[RELEASE_NOTES_FULL_URL] Information about this update]
  name="RequiredUpdateDownloadedVerboseDialog"
  type="alertmodal">
 We have downloaded a required software update.
-Version [VERSION]
+Version [VERSION] [[INFO_URL] Information about this update]
 
 We must restart [APP_NAME] to install the update.
     <tag>confirm</tag>
@@ -3618,6 +3647,66 @@ We must restart [APP_NAME] to install the update.
  name="RequiredUpdateDownloadedDialog"
  type="alertmodal">
 We must restart [APP_NAME] to install the update.
+[[INFO_URL] Information about this update]
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="OtherChannelDownloadBackgroundTip"
+   type="notify">
+We have downloaded an update to your [APP_NAME] installation.
+Version [VERSION] 
+This experimental viewer has been replaced by a [NEW_CHANNEL] viewer;
+see [[INFO_URL] for details about this update]
+    <tag>confirm</tag>
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Later..."
+     yestext="Install now and restart [APP_NAME]"/>
+  </notification>
+
+  <notification
+ icon="alertmodal.tga"
+ name="OtherChannelDownloadBackgroundDialog"
+ type="alertmodal">
+We have downloaded an update to your [APP_NAME] installation.
+Version [VERSION]
+This experimental viewer has been replaced by a [NEW_CHANNEL] viewer;
+see [[INFO_URL] Information about this update]
+    <tag>confirm</tag>
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Later..."
+     yestext="Install now and restart [APP_NAME]"/>
+  </notification>
+  
+  <notification
+ icon="alertmodal.tga"
+ name="OtherChannelRequiredUpdateDownloadedVerboseDialog"
+ type="alertmodal">
+We have downloaded a required software update.
+Version [VERSION]
+This experimental viewer has been replaced by a [NEW_CHANNEL] viewer;
+see [[INFO_URL] Information about this update]
+
+We must restart [APP_NAME] to install the update.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+  
+  <notification
+ icon="alertmodal.tga"
+ name="OtherChannelRequiredUpdateDownloadedDialog"
+ type="alertmodal">
+We must restart [APP_NAME] to install the update.
+This experimental viewer has been replaced by a [NEW_CHANNEL] viewer;
+see [[INFO_URL] Information about this update]
     <tag>confirm</tag>
     <usetemplate
      name="okbutton"
@@ -3774,6 +3863,17 @@ Leave Group?
   </notification>
 
   <notification
+   icon="alertmodal.tga"
+   name="OwnerCannotLeaveGroup"
+   type="alertmodal">
+    Unable to leave group. You cannot leave the group because you are the last owner of the group. Please assign another member to the owner role first.
+    <tag>group</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
+  <notification
    icon="alert.tga"
    name="ConfirmKick"
    type="alert">
@@ -3853,12 +3953,15 @@ Cannot offer friendship at this time. Please try again in a moment.
 
   <notification
    icon="alert.tga"
-   name="BusyModeSet"
+   name="DoNotDisturbModeSet"
    type="alert">
-Unavailable mode is set.
-Chat and instant messages will be hidden. Instant messages will receive your configured autoresponse. All teleportation offers will be declined. All inventory offers will go to your Trash.
+Unavailable mode is on.  You will not be notified of incoming communications.
+
+- Other residents will receive your Unavailable mode response (set in Preferences &gt; Privacy &gt; Autoresponse).
+- Teleportation offers will be declined.
+- Voice calls will be rejected.
     <usetemplate
-     ignoretext="I change my status to unavailable mode"
+     ignoretext="I change my status to unavailable"
      name="okignore"
      yestext="OK"/>
   </notification>
@@ -3867,8 +3970,8 @@ Chat and instant messages will be hidden. Instant messages will receive your con
    icon="alert.tga"
    name="AutorespondModeSet"
    type="alert">
-Autorespond mode is set.
-Incoming instant messages will now receive your configured autoresponse.
+Autorespond mode is on.
+Incoming instant messages will now be answered with your configured autoresponse.
     <usetemplate
      ignoretext="I change my status to autorespond mode"
      name="okignore"
@@ -3879,10 +3982,22 @@ Incoming instant messages will now receive your configured autoresponse.
    icon="alert.tga"
    name="AutorespondNonFriendsModeSet"
    type="alert">
-Autorespond mode for non-friends is set.
-Incoming instant messages from anyone who is not your friend will now receive your configured autoresponse.
+Autorespond mode for non-friends is on.
+Incoming instant messages from anyone who is not your friend will now be answered with your configured autoresponse.
     <usetemplate
      ignoretext="I change my status to autorespond mode for non-friends"
+     name="okignore"
+     yestext="OK"/>
+  </notification>
+
+    <notification
+   icon="alert.tga"
+   name="RejectTeleportOffersModeSet"
+   type="alert">
+Reject all incoming teleport offers mode is on.
+Incoming teleport offers from anyone will now be rejected with your configured autoresponse. You will not be notified because of that fact.
+    <usetemplate
+     ignoretext="I change my status to reject all teleport offers mode"
      name="okignore"
      yestext="OK"/>
   </notification>
@@ -4516,6 +4631,8 @@ Are you sure you want to change the estate covenant?
   <notification
    icon="notifytip.tga"
    name="RegionEntryAccessBlocked_Notify"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
    <tag>fail</tag>
 The region you're trying to visit contains [REGIONMATURITY] content, but your current preferences are set to exclude [REGIONMATURITY] content.
@@ -4524,6 +4641,8 @@ The region you're trying to visit contains [REGIONMATURITY] content, but your cu
   <notification
    icon="notifytip.tga"
    name="RegionEntryAccessBlocked_NotifyAdultsOnly"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     <tag>fail</tag>
     The region you're trying to visit contains [REGIONMATURITY] content, which is accessible to adults only.
@@ -4595,6 +4714,8 @@ The region you're trying to visit contains [REGIONMATURITY] content, but your cu
   <notification
    icon="notifytip.tga"
    name="TeleportEntryAccessBlocked_Notify"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     <unique>
       <context>REGIONMATURITY</context>
@@ -4606,6 +4727,8 @@ The region you're trying to visit contains [REGIONMATURITY] content, but your cu
   <notification
    icon="notifytip.tga"
    name="TeleportEntryAccessBlocked_NotifyAdultsOnly"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     <unique>
       <context>REGIONMATURITY</context>
@@ -4726,6 +4849,8 @@ You won't receive any more notifications that you're about to visit a region wit
   <notification
    icon="notifytip.tga"
    name="LandClaimAccessBlocked_Notify"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     The land you're trying to claim contains [REGIONMATURITY] content, but your current preferences are set to exclude [REGIONMATURITY] content.
     <tag>fail</tag>
@@ -4734,6 +4859,8 @@ You won't receive any more notifications that you're about to visit a region wit
   <notification
    icon="notifytip.tga"
    name="LandClaimAccessBlocked_NotifyAdultsOnly"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     <tag>fail</tag>
     The land you're trying to claim contains [REGIONMATURITY] content, which is accessible to adults only.
@@ -4791,6 +4918,8 @@ You won't receive any more notifications that you're about to visit a region wit
   <notification
    icon="notifytip.tga"
    name="LandBuyAccessBlocked_Notify"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     The land you're trying to buy contains [REGIONMATURITY] content, but your current preferences are set to exclude [REGIONMATURITY] content.
     <tag>fail</tag>
@@ -4799,6 +4928,8 @@ You won't receive any more notifications that you're about to visit a region wit
   <notification
    icon="notifytip.tga"
    name="LandBuyAccessBlocked_NotifyAdultsOnly"
+   log_to_im="false"
+   log_to_chat="true"
    type="notifytip">
     <tag>fail</tag>
     The land you're trying to buy contains [REGIONMATURITY] content, which is accessible to adults only.
@@ -5245,6 +5376,20 @@ Go to your [http://secondlife.com/account/ Dashboard] to see your account histor
 
   <notification
    icon="alertmodal.tga"
+   name="ConfirmAddingChatParticipants"
+   type="alertmodal">
+    <unique/>
+When you add a person to an existing conversation, a new conversation will be created.  All participants will receive new conversation notifications.
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm adding chat paticipants"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Ok"/>
+  </notification>
+ 
+  <notification
+   icon="alertmodal.tga"
    name="ConfirmQuit"
    type="alertmodal">
     <unique/>
@@ -5412,25 +5557,25 @@ Do you want to replace it with the selected object?
 
   <notification
    icon="alert.tga"
-   label="Busy Mode Warning"
-   name="BusyModePay"
+   label="Unavailable Mode Warning"
+   name="DoNotDisturbModePay"
    type="alert">
-You are in Busy Mode, which means you will not receive any items offered in exchange for this payment.
+You have turned on Unavailable mode. You will not receive any items offered in exchange for this payment.
 
-Would you like to leave Busy Mode before completing this transaction?
+Would you like to turn off Unavailable mode before completing this transaction?
     <tag>confirm</tag>
     <form name="form">
       <ignore name="ignore"
        save_option="true"
-       text="I am about to pay a person or object while I am in Busy mode"/>
+       text="I am about to pay a person or object while I am in Unavailable mode"/>
       <button
        default="true"
-       ignore="Always leave Busy Mode"
+       ignore="Always leave Unavailable Mode"
        index="0"
        name="Yes"
        text="OK"/>
       <button
-       ignore="Never leave Busy Mode"
+       ignore="Never leave Unavailable Mode"
        index="1"
        name="No"
        text="Cancel"/>
@@ -5796,6 +5941,34 @@ URL: [MEDIAURL]
 
   <notification
    icon="alert.tga"  
+   name="MediaAlertSingle"
+   type="alert"> 
+This parcel provides media from:
+
+Domain: [MEDIADOMAIN]
+URL: [MEDIAURL]
+   <form name="form">
+		<button
+         index="0"
+         name="Allow"
+         text="Allow"/>
+        <button
+         index="1"
+         name="Deny"
+         text="Deny"/>
+        <button
+         index="2"   
+         name="BlacklistDomain"
+         text="Blacklist"/>
+        <button
+         index="3"   
+         name="WhitelistDomain"
+         text="Whitelist"/>
+   </form>
+  </notification>
+
+  <notification
+   icon="alert.tga"  
    name="AudioAlert"
    type="alert"> 
 This parcel provides music from:
@@ -5835,6 +6008,34 @@ URL: [AUDIOURL]
          index="2"
          name="RememberURL"
          text="[CONDITION] Allow This URL"/>
+   </form>
+  </notification>
+  
+  <notification
+   icon="alert.tga"  
+   name="AudioAlertSingle"
+   type="alert"> 
+Do you want to remember your choice and [LCONDITION] allow music from this source?
+
+Domain: [AUDIODOMAIN]
+URL: [AUDIOURL]
+   <form name="form">
+		<button
+         index="0"
+         name="Allow"
+         text="Allow"/>
+        <button
+         index="1"
+         name="Deny"
+         text="Deny"/>
+        <button
+         index="2"   
+         name="BlacklistDomain"
+         text="Blacklist"/>
+        <button
+         index="3"
+         name="WhitelistDomain"
+         text="Whitelist"/>
    </form>
   </notification>
 
@@ -5892,6 +6093,8 @@ URL: [MOAPURL]
   <notification
    icon="notifytip.tga"
    name="IMSystemMessageTip"
+   log_to_im="true"   
+   log_to_chat="false"   
    type="notifytip">
 [MESSAGE]
   </notification>
@@ -5900,21 +6103,21 @@ URL: [MOAPURL]
    icon="notifytip.tga"
    name="Cancelled"
    type="notifytip">
-Canceled.
+Cancelled.
   </notification>
 
   <notification
    icon="notifytip.tga"
    name="CancelledSit"
    type="notifytip">
-Canceled Sit.
+Cancelled Sit.
   </notification>
 
   <notification
    icon="notifytip.tga"
    name="CancelledAttach"
    type="notifytip">
-Canceled Attach.
+Cancelled Attach.
   </notification>
 
   <notification
@@ -5935,26 +6138,22 @@ Topic: [SUBJECT], Message: [MESSAGE]
 
   <notification
    icon="notifytip.tga"
-   name="FriendOnline"
+   name="FriendOnlineOffline"
+   log_to_chat="false"
    type="notifytip">
-[NAME] is online.
     <tag>friendship</tag>
-  </notification>
-
-  <notification
-   icon="notifytip.tga"
-   name="FriendOffline"
-   type="notifytip">
-[NAME] is offline.
-    <tag>friendship</tag>
+[NAME] is [STATUS].
+    <unique combine="cancel_old">
+      <context>NAME</context>
+    </unique>
   </notification>
 
   <notification
    icon="notifytip.tga"
    name="AddSelfFriend"
    type="notifytip">
-Although you&apos;re very nice, you can&apos;t add yourself as a friend.
     <tag>friendship</tag>
+Although you&apos;re very nice, you can&apos;t add yourself as a friend.
   </notification>
 
   <notification
@@ -6198,6 +6397,8 @@ You do not have permission to copy this.
   <notification
    icon="notifytip.tga"
    name="InventoryAccepted"
+   log_to_im="true"   
+   log_to_chat="false"
    type="notifytip">
 [NAME] received your inventory offer.
   </notification>
@@ -6205,6 +6406,8 @@ You do not have permission to copy this.
   <notification
    icon="notifytip.tga"
    name="InventoryDeclined"
+   log_to_im="true"   
+   log_to_chat="false"
    type="notifytip">
 [NAME] declined your inventory offer.
   </notification>
@@ -6245,9 +6448,7 @@ Your calling card was declined.
    icon="notifytip.tga"
    name="TeleportToPerson"
    type="notifytip">
-    To contact Residents like &apos;[NAME]&apos;, click on the &quot;People&quot; button , select a Resident from the window that opens, then click &apos;IM&apos; at the
-    bottom of the window.
-    (You can also double-click on their name in the list, or right-click and choose &apos;IM&apos;).
+    To open a private conversation with someone, right-click on their avatar and choose &apos;IM&apos; from the menu.
   </notification>
 
   <notification
@@ -6286,6 +6487,7 @@ Please select at least one type of content to search (General, Moderate, or Adul
   <notification
    icon="notify.tga"
    name="PaymentReceived"
+   log_to_im="true"   
    persist="true"
    type="notify">
     <tag>funds</tag>
@@ -6295,6 +6497,7 @@ Please select at least one type of content to search (General, Moderate, or Adul
   <notification
    icon="notify.tga"
    name="PaymentSent"
+   log_to_im="true"   
    persist="true"
    type="notify">
     <tag>funds</tag>
@@ -6439,6 +6642,7 @@ The objects on the selected parcel that are *NOT* owned by you have been returne
   <notification
    icon="notify.tga"
    name="ServerObjectMessage"
+   log_to_im="true"   
    persist="true"
    type="notify">
 Message from [NAME]:
@@ -6842,7 +7046,9 @@ Your object named &lt;nolink&gt;[OBJECTFROMNAME]&lt;/nolink&gt; has given you th
    icon="notify.tga"
    name="UserGiveItem"
    label="Inventory offer from [NAME_LABEL]"
-   type="offer">
+   log_to_im ="true"
+   type="offer"
+   sound="UISndInventoryOffer">
 [NAME_SLURL] has given you this [OBJECTTYPE]:
 [ITEM_SLURL]
 Do you want to keep it? "Mute" will block all future offers or messages from [NAME_SLURL].
@@ -6876,7 +7082,7 @@ Do you want to keep it? "Mute" will block all future offers or messages from [NA
    icon="notify.tga"
    name="JoinGroup"
    persist="true"
-   type="notify">
+   type="offer">
     <tag>group</tag>
 [MESSAGE]
     <form name="form">
@@ -6897,9 +7103,30 @@ Do you want to keep it? "Mute" will block all future offers or messages from [NA
 
   <notification
    icon="notify.tga"
+   name="JoinGroupProtectionNotice"
+   persist="true"
+   type="notify">
+    <tag>group</tag>
+    <tag>fail</tag>
+Joining this group costs a fee and the invitation cannot be accepted because of your settings. If you want to change this, go to Preferences &gt; Firestorm &gt; Protection.
+
+[MESSAGE]
+    <form name="form">
+      <button
+       index="2"
+       name="Info"
+       text="Info"/>
+    </form>
+  </notification>
+
+  <notification
+   icon="notify.tga"
    name="TeleportOffered"
    label="Teleport offer from [NAME_LABEL]"
-   type="offer">
+   log_to_im="true"
+   log_to_chat="false"
+   type="offer"
+   sound="UISndTeleportOffer">
 [NAME_SLURL] has offered to teleport you to their location:
 
 “[MESSAGE]”
@@ -6920,6 +7147,8 @@ Do you want to keep it? "Mute" will block all future offers or messages from [NA
   <notification
    icon="notify.tga"
    name="TeleportOffered_MaturityExceeded"
+   log_to_im="true"
+   log_to_chat="false"
    type="offer">
 [NAME_SLURL] has offered to teleport you to their location:
 
@@ -6943,6 +7172,8 @@ This region contains [REGION_CONTENT_MATURITY] content, but your current prefere
   <notification
    icon="notify.tga"
    name="TeleportOffered_MaturityBlocked"
+   log_to_im="true"
+   log_to_chat="false"
    type="notifytip">
 [NAME_SLURL] has offered to teleport you to their location:
 
@@ -6956,8 +7187,11 @@ However, this region contains content accessible to adults only.
   <notification
    icon="notify.tga"
    name="TeleportOfferSent"
-   type="offer">
-	Teleport offer sent to [TO_NAME].
+   log_to_im="true"
+   log_to_chat="false"
+   show_toast="false"
+   type="notify">
+	Teleport offer sent to [TO_NAME]
   </notification>
 
 
@@ -6984,6 +7218,7 @@ However, this region contains content accessible to adults only.
    icon="notify.tga"
    name="OfferFriendship"
    label="Friendship offer from [NAME_LABEL]"
+   log_to_im="true"
    type="offer">
     <tag>friendship</tag>
     <tag>confirm</tag>
@@ -7007,7 +7242,9 @@ However, this region contains content accessible to adults only.
   <notification
    icon="notify.tga"
    name="FriendshipOffered"
-   type="offer">
+   log_to_im="true"   
+   show_toast="false"   
+   type="notify">
     <tag>friendship</tag>
 	You have offered friendship to [TO_NAME]
   </notification>
@@ -7037,7 +7274,8 @@ However, this region contains content accessible to adults only.
   <notification
    icon="notify.tga"
    name="FriendshipAccepted"
-   type="offer">
+   log_to_im="true"   
+   type="notify">
     <tag>friendship</tag>
 &lt;nolink&gt;[NAME]&lt;/nolink&gt; accepted your friendship offer.
   </notification>
@@ -7045,6 +7283,7 @@ However, this region contains content accessible to adults only.
   <notification
    icon="notify.tga"
    name="FriendshipDeclined"
+   log_to_im="true"   
    persist="true"
    type="notify">
     <tag>friendship</tag>
@@ -7054,7 +7293,9 @@ However, this region contains content accessible to adults only.
     <notification
    icon="notify.tga"
    name="FriendshipAcceptedByMe"
-   type="offer">
+   log_to_im="true"   
+   show_toast="false"
+   type="notify">
     <tag>friendship</tag>
 Friendship offer accepted.
   </notification>
@@ -7062,7 +7303,9 @@ Friendship offer accepted.
   <notification
    icon="notify.tga"
    name="FriendshipDeclinedByMe"
-   type="offer">
+   log_to_im="true"   
+   show_toast="false"   
+   type="notify">
     <tag>friendship</tag>
 Friendship offer declined.
   </notification>
@@ -7090,7 +7333,6 @@ This will add a bookmark in your inventory so you can quickly IM this resident.
    icon="notify.tga"
    name="RegionRestartMinutes"
    priority="high"
-   persist="true"
    type="notify">
 This region will restart in [MINUTES] minutes.
 If you stay in this region when it shuts down, you will be logged out.
@@ -7100,7 +7342,6 @@ If you stay in this region when it shuts down, you will be logged out.
    icon="notify.tga"
    name="RegionRestartSeconds"
    priority="high"
-   persist="true"
    type="notify">
 This region will restart in [SECONDS] seconds.
 If you stay in this region when it shuts down, you will be logged out.
@@ -7109,6 +7350,7 @@ If you stay in this region when it shuts down, you will be logged out.
   <notification
    icon="notify.tga"
    name="LoadWebPage"
+   show_toast="false"
    type="notify">
 Load web page [URL] ?
 
@@ -7209,7 +7451,30 @@ Before allowing this access, make sure you know what the object is and why it is
 
   <notification
    icon="notify.tga"
+	 name="UnknownScriptQuestion"
+	 persist="false"
+	 type="notify">
+The runtime script permission requested by &apos;&lt;nolink&gt;[OBJECTNAME]&lt;/nolink&gt;&apos;, an object owned by &apos;[NAME]&apos;, isn&apos;t recognized by the viewer and can&apos;t be granted.
+
+To grant this permission please update your viewer to the latest version from [DOWNLOADURL].
+		<tag>confirm</tag>
+		<form name="form">
+			<button
+			 default="true"
+			 index="1"
+			 name="Deny"
+			 text="Ok"/>
+			<button
+			 index="2"
+			 name="Mute"
+			 text="Block"/>
+		</form>
+	</notification>
+
+	<notification
+   icon="notify.tga"
    name="ScriptDialog"
+   show_toast="false"
    type="notify">
 [NAME]&apos;s &apos;&lt;nolink&gt;[TITLE]&lt;/nolink&gt;&apos;
 [MESSAGE]
@@ -7228,6 +7493,7 @@ Before allowing this access, make sure you know what the object is and why it is
   <notification
    icon="notify.tga"
    name="ScriptDialogGroup"
+   show_toast="false"
    type="notify">
     <tag>group</tag>
 [GROUPNAME]&apos;s &apos;&lt;nolink&gt;[TITLE]&lt;/nolink&gt;&apos;
@@ -7959,8 +8225,9 @@ Please check your network and firewall setup.
     <tag>voice</tag>
   <tag>fail</tag>
     <usetemplate
-     name="okbutton"
-     yestext="OK"/>
+     ignoretext="Warn me when the viewer can't connect to the voice server"
+     name="okignore"
+     yestext="OK" />
   </notification>
 
   <notification
@@ -8710,17 +8977,10 @@ You can not remove [REMOVE_GRID] while being connected to it.
 <!-- </FS:AW  grid management-->
 
   <notification
-     icon="notifytip.tga"
-     name="PhoenixAutoReplace"
-     type="notifytip">
-    &apos;[BEFORE]&apos; has been auto replaced by &apos;[REPLACEMENT]&apos;
-    based on your [LISTNAME] list.
-  </notification>
-  <notification
    icon="notify.tga"
    name="FSWL"
    type="notify">
-&apos;[PARCEL_NAME]&apos;, owned by &apos;[OWNER_NAME]&apos;, would like to change your Windlight visual environment settings.
+&apos;[PARCEL_NAME]&apos;, owned by [OWNER_NAME], would like to change your Windlight visual environment settings.
     <form name="form">
       <button
        index="0"
@@ -9521,9 +9781,9 @@ Not enough script resources available to attach object!
   </notification>
 
   <notification
-   icon="alertmodal.tga"
+   icon="notifytip.tga"
    name="YouDiedAndGotTPHome"
-   type="notify">
+   type="notifytip">
    <tag>fail</tag>
 You died and have been teleported to your home location
   </notification>
@@ -10628,14 +10888,6 @@ No room to sit here, try another spot.
 
   <notification
    icon="alertmodal.tga"
-   name="AutopilotCanceled"
-   type="notify">
-   <tag>fail</tag>
-Autopilot canceled
-  </notification>
-
-  <notification
-   icon="alertmodal.tga"
    name="ClaimObjectFailedNoPermission"
    type="notify">
    <tag>fail</tag>
@@ -10921,7 +11173,44 @@ An internal error prevented us from properly updating your viewer.  The L$ balan
    <tag>fail</tag>
 Cannot create large prims that intersect other players.  Please re-try when other players have moved.
   </notification>
+  
+  <notification
+   icon="alertmodal.tga"
+   name="PreferenceChatClearLog"
+   type="alertmodal">
+    This will delete the logs of previous conversations, and any backups of that file.
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm before I delete the log of previous conversations."
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="OK"/>
+  </notification>
+    
+  <notification
+   icon="alertmodal.tga"
+   name="PreferenceChatDeleteTranscripts"
+   type="alertmodal">
+    This will delete the transcripts for all previous conversations. The list of past conversations will not be affected. All files with the suffixes .txt and txt.backup in the folder [FOLDER] will be deleted.
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm before I delete transcripts."
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="OK"/>
+  </notification>
 
+  <notification
+   icon="alert.tga"
+   name="PreferenceChatPathChanged"
+   type="alert">
+   Unable to move files. Restored previous path.
+    <usetemplate
+     ignoretext="Unable to move files. Restored previous path."
+     name="okignore"
+     yestext="OK"/>
+  </notification>
+  
 <!-- <FS:Zi> Add float LSL color entry widgets -->
   <notification
    icon="notify.tga"
@@ -11083,24 +11372,27 @@ Error in the regular expression:
     <notification
         icon="notifytip.tga"
         name="StreamMetadata"
+		log_to_chat="false"
         type="notifytip">
         <tag>StreamMetadata</tag>
-        ♫ Now Playing:
-        [TITLE]
-        [ARTIST]♫
+♫ Now Playing:
+  [TITLE]
+  [ARTIST] ♫
     </notification>
     <notification
         icon="notifytip.tga"
         name="StreamMetadataNoArtist"
+		log_to_chat="false"
         type="notifytip">
         <tag>StreamMetadata</tag>
-        ♫ Now Playing:
-        [TITLE]♫
+♫ Now Playing:
+  [TITLE] ♫
     </notification>
     
     <notification
         icon="notifytip.tga"
         name="RadarAlert"
+		log_to_chat="false"
         type="notifytip">
 		[NAME] [MESSAGE]
 	</notification>
@@ -11184,4 +11476,66 @@ Cannot initialize Microsoft Kinect.
      yestext="OK"/>
   </notification>
   <!-- <CV:David> -->
+    
+    <notification
+     icon="alertmodal.tga"
+     name="ExportFinished"
+     type="notify">
+      <tag>Export</tag>
+Export finished and saved to [FILENAME].
+    </notification>
+    
+    <notification
+     icon="alertmodal.tga"
+     name="ExportFailed"
+     type="notify">
+      <tag>Export</tag>
+Export failed unexpectedly. Please see the log for details.
+    </notification>
+    
+    <notification
+     icon="alertmodal.tga"
+     name="ExportColladaSuccess"
+     type="notify">
+      <tag>Export</tag>
+		Successfully saved [OBJECT] to [FILENAME].
+    </notification>
+	
+    <notification
+     icon="alertmodal.tga"
+     name="ImportSuccess"
+     type="notify">
+        <tag>Export</tag>
+        Successfully imported [COUNT] [OBJECT].
+    </notification>
+    
+    <notification
+      icon="notifytip.tga"
+      name="AntiSpamBlocked"
+      log_to_chat="false"
+      type="notifytip">
+AntiSpam: Blocked [SOURCE] for spamming a [QUEUE] ([COUNT]) times in [PERIOD] seconds.
+    </notification>
+
+    <notification
+     icon="alertmodal.tga"
+     name="MeshMaxConcurrentReqTooHigh"
+     type="alertmodal">
+The value you set for the number of concurrent requests to load mesh objects, [VALUE], is higher than the maximum of [MAX]. It has been reset to the default of [DEFAULT].
+    <tag>fail</tag>
+    </notification>
+
+  <!-- <FS:Zi> Notification template for changed settings when selecting certain skins -->
+  <!--         The actual texts for the messages are in strings.xml -->
+  <notification
+   icon="notify.tga"
+   name="SkinDefaultsChangeSettings"
+   type="alertmodal">
+[MESSAGE]
+   <form name="form">
+      <ignore name="ignore"
+       text="A preferences setting was changed to the skin's default value."/>
+    </form>
+  </notification>
+  <!-- <FS:Zi> Notification template for changed settings when selecting certain skins -->
 </notifications>

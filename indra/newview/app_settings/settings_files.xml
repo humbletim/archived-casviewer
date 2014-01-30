@@ -4,6 +4,9 @@
     <file name="Global"
           file_name="settings.xml"
           required="true"/>
+    <file name="Global"
+          file_name="settings_install.xml"
+          required="false"/>
     <file name="PerAccount"
           file_name="settings_per_account.xml"
           required="true"/>
@@ -60,6 +63,9 @@
          path_index="10">
     <file name="Skinning"
           file_name="colors.xml"/>
+    <file name="Global"
+          file_name="settings.xml" 
+          persistent="false"/>
   </group>
   <group name="UserSkin"
          path_index="14">

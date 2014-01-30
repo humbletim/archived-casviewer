@@ -74,13 +74,10 @@ void LLFirstUse::resetFirstUse()
 // static
 void LLFirstUse::otherAvatarChatFirst(bool enable)
 {
-	// <FS:Zi> Remove floating chat bar
-	// firstUseNotification("FirstOtherChatBeforeUser", enable, "HintChat", LLSD(), LLSD().with("target", "chat_bar").with("direction", "top_right").with("distance", 24));
 	// <FS:Ansariel> [FS communication UI]
 	//firstUseNotification("FirstOtherChatBeforeUser", enable, "HintChat", LLSD(), LLSD().with("target", "nearby_chat").with("direction", "top_right").with("distance", 24));
 	firstUseNotification("FirstOtherChatBeforeUser", enable, "HintChat", LLSD(), LLSD().with("target", "fs_nearby_chat").with("direction", "top_right").with("distance", 24));
 	// </FS:Ansariel> [FS communication UI]
-	// </FS:Zi>
 }
 
 // static
@@ -177,7 +174,11 @@ void LLFirstUse::firstUseNotification(const std::string& control_var, bool enabl
 
 	if (enable)
 	{
-		if (gSavedSettings.getBOOL("EnableUIHints"))
+		// <FS:Ansariel> Replace frequently called gSavedSettings
+		//if (gSavedSettings.getBOOL("EnableUIHints"))
+		static LLCachedControl<bool> sEnableUIHints(gSavedSettings, "EnableUIHints");
+		if (sEnableUIHints)
+		// </FS:Ansariel>
 		{
 			LL_DEBUGS("LLFirstUse") << "Trigger first use notification " << notification_name << LL_ENDL;
 

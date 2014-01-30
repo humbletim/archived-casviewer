@@ -29,6 +29,7 @@
 #define LL_LLLAYOUTSTACK_H
 
 #include "llpanel.h"
+#include "llresizebar.h"
 
 
 class LLLayoutPanel;
@@ -37,6 +38,7 @@ class LLLayoutPanel;
 class LLLayoutStack : public LLView, public LLInstanceTracker<LLLayoutStack>
 {
 public:
+
 	typedef enum e_layout_orientation
 	{
 		HORIZONTAL,
@@ -61,6 +63,11 @@ public:
 		Optional<F32>			open_time_constant,
 								close_time_constant;
 		Optional<S32>			resize_bar_overlap;
+		Optional<bool>			show_drag_handle;
+		Optional<S32>			drag_handle_first_indent;
+		Optional<S32>			drag_handle_second_indent;
+		Optional<S32>			drag_handle_thickness;
+		Optional<S32>			drag_handle_shift;
 
 		// <FS:Zi> Add size save control. Caveat: contained panels and widgets need to use
 		//         relative sizing, like right="-1" instead of width="XYZ" to get resized
@@ -130,6 +137,11 @@ private:
 	F32  mCloseTimeConstant;
 	bool mNeedsLayout;
 	S32  mResizeBarOverlap;
+	bool mShowDragHandle;
+	S32  mDragHandleFirstIndent;
+	S32  mDragHandleSecondIndent;
+	S32  mDragHandleThickness;
+	S32  mDragHandleShift;
 
 	// <FS:Zi> Save sizes of the layout stack panels
 	const bool	mSaveSizes;
@@ -189,6 +201,9 @@ public:
 	F32 getAutoResizeFactor() const;
 	F32 getVisibleAmount() const;
 	S32 getVisibleDim() const;
+	LLResizeBar* getResizeBar() { return mResizeBar; }
+
+	bool isCollapsed() const { return mCollapsed;}
 
 	void setOrientation(LLLayoutStack::ELayoutOrientation orientation);
 	void storeOriginalDim();

@@ -91,12 +91,13 @@ public:
 	/*virtual*/ void *getPlatformWindow() { return 0; };
 	/*virtual*/ void bringToFront() {};
 	
+	// <CV:David> Added output_type parameter.
 	LLWindowHeadless(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name,
 		S32 x, S32 y, 
 		S32 width, S32 height,
 		U32 flags,  BOOL fullscreen, BOOL clear_background,
-		BOOL disable_vsync, BOOL ignore_pixel_depth, U32 output_type);
+		BOOL disable_vsync, BOOL use_gl, BOOL ignore_pixel_depth, U32 output_typ);
 	virtual ~LLWindowHeadless();
 
 private:

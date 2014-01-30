@@ -28,6 +28,7 @@
 #include "lltoastimpanel.h"
 
 #include "llagent.h"
+#include "llavatarnamecache.h"
 #include "llfloaterreg.h"
 #include "llgroupactions.h"
 #include "llgroupiconctrl.h"
@@ -62,6 +63,15 @@ LLToastIMPanel::LLToastIMPanel(LLToastIMPanel::Params &p) :	LLToastPanel(p.notif
 	style_params.font.name(font_name);
 	style_params.font.size(font_size);
 	
+	LLIMModel::LLIMSession* im_session = LLIMModel::getInstance()->findIMSession(p.session_id);
+	mIsGroupMsg = (im_session && im_session->mSessionType == LLIMModel::LLIMSession::GROUP_SESSION);
+	if(mIsGroupMsg)
+	{
+		mAvatarName->setValue(im_session->mName);
+		LLAvatarName avatar_name;
+		LLAvatarNameCache::get(p.avatar_id, &avatar_name);
+		p.message = "[From " + avatar_name.getDisplayName() + "]\n" + p.message;
+	}
 	
 	//Handle IRC styled /me messages.
 	std::string prefix = p.message.substr(0, 4);
@@ -71,26 +81,29 @@ LLToastIMPanel::LLToastIMPanel(LLToastIMPanel::Params &p) :	LLToastPanel(p.notif
 		mMessage->clear();
 		
 		// italics for emotes -Zi
-		if(gSavedSettings.getBOOL("EmotesUseItalic"))
+		if (gSavedSettings.getBOOL("EmotesUseItalic"))
+		{
 			style_params.font.style ="ITALIC";
+		}
 		mMessage->appendText(p.from, FALSE, style_params);
-
-		// italics for emotes -Zi
-		if(gSavedSettings.getBOOL("EmotesUseItalic"))
-			style_params.font.style = "ITALIC";		//  why is this here twice? -Zi
 		mMessage->appendText(p.message.substr(3), FALSE, style_params);
 	}
 	else
 	{
-		style_params.font.style =  "NORMAL";
+		style_params.font.style = "NORMAL";
 		mMessage->setText(p.message, style_params);
 	}
 
-	mAvatarName->setValue(p.from);
+	if(!mIsGroupMsg)
+	{
+		mAvatarName->setValue(p.from);
+	}
 	mTime->setValue(p.time);
 	mSessionID = p.session_id;
 	mAvatarID = p.avatar_id;
 	mNotification = p.notification;
+
+
 
 	initIcon();
 
@@ -109,9 +122,9 @@ LLToastIMPanel::~LLToastIMPanel()
 }
 
 //virtual
-BOOL LLToastIMPanel::handleMouseDown(S32 x, S32 y, MASK mask)
+BOOL LLToastIMPanel::handleMouseUp(S32 x, S32 y, MASK mask)
 {
-	if (LLPanel::handleMouseDown(x,y,mask) == FALSE)
+	if (LLPanel::handleMouseUp(x,y,mask) == FALSE)
 	{
 		mNotification->respond(mNotification->getResponseTemplate());
 	}
@@ -152,7 +165,14 @@ void LLToastIMPanel::spawnNameToolTip()
 
 	LLToolTip::Params params;
 	params.background_visible(false);
-	params.click_callback(boost::bind(&LLFloaterReg::showInstance, "inspect_avatar", LLSD().with("avatar_id", mAvatarID), FALSE));
+	if(!mIsGroupMsg)
+	{
+		params.click_callback(boost::bind(&LLFloaterReg::showInstance, "inspect_avatar", LLSD().with("avatar_id", mAvatarID), FALSE));
+	}
+	else
+	{
+		params.click_callback(boost::bind(&LLFloaterReg::showInstance, "inspect_group", LLSD().with("group_id", mSessionID), FALSE));
+	}
 	params.delay_time(0.0f);		// spawn instantly on hover
 	params.image(LLUI::getUIImage("Info_Small"));
 	params.message("");

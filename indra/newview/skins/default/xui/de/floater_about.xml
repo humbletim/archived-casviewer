@@ -8,7 +8,9 @@
 		Kompiliert mit [COMPILER] version [COMPILER_VERSION]
 	</floater.string>
 	<floater.string name="AboutPosition">
-		Sie befinden sich in [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1] in [REGION] auf &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+		Sie befinden sich an [POSITION_LOCAL_0,number,1], [POSITION_LOCAL_1,number,1], [POSITION_LOCAL_2,number,1] in [REGION] auf &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+SLURL: &lt;nolink&gt;[SLURL]&lt;/nolink&gt;
+(globalen Koordinaten [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1])
 [SERVER_VERSION]
 [SERVER_RELEASE_NOTES_URL]
 	</floater.string>
@@ -41,6 +43,7 @@ Draw Distance: [DRAW_DISTANCE]
 Bandbreite: [BANDWIDTH]
 LOD-Faktor: [LOD]
 Darstellungsqualität: [RENDERQUALITY]
+Texturspeicher: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
 </floater.string>
 	<floater.string name="none">
 		(keiner)
@@ -79,25 +82,28 @@ Second Life wird präsentiert von den Lindens:
 			</text_editor>
 		</panel>
 <!-- Firestorm Credits -->
-      <panel label="Firestorm" name="fs_credits_panel">      
-<text name="firestorm_intro" height="100">
+		<panel label="Firestorm" name="fs_credits_panel" height="860">
+			<scroll_container name="fs_credits_scroll_container">
+				<panel name="fs_credits_scroll_container_content_panel">
+					<text name="firestorm_intro" height="120">
 Firestorm ist ein Community-Projekt, um das SecondLife(tm)-Viewer-Erlebnis zu verbessern. Wir verbinden Beiträge von Community-Entwicklern mit Code von Linden Lab sowie eigenen Erweiterungen, um ein qualitativ hochwertiges und funktionsreiches Viewer-Erlebnis zu bieten. Wir werden durch ein großes, freiwilliges Support-Team unterstützt. Firestorm wird Ihnen präsentiert von The Phoenix Firestorm Project, Inc., einer gemeinnützigen Organisation.
 
 Das Firestorm Entwickler-Team:
-      </text>
-      <text name="fs_contrib_intro" >
+					</text>
+					<text name="fs_contrib_intro" >
 Zusätzlicher Programmcode von:
-      </text>
-      <text name="fs_support_intro" >
+					</text>
+					<text name="fs_support_intro" >
 Besonderer Dank gilt unserem Firestorm-Support-Team sowie den Wiki-Autoren, Schulungsleitern und Übersetzern:
-      </text>
-      <text name="fs_art_intro" >
+					</text>
+					<text name="fs_art_intro" >
 Firestorm enthält Starlight, modifiziert für Firestorm. Es ist von Einwohnern für Einwohner und hat das Ziel, eine alternative, freundlichere und hoffentlich einfacher zu bedienende Oberfläche bereitzustellen. Für weitere Details, siehe &lt;nolink&gt;https://wiki.secondlife.com/wiki/Viewer_Skins/Starlight&lt;/nolink&gt;.
 
 UI-Künstler und Designer:
-      </text>
-
-        </panel>
+					</text>
+				</panel>
+			</scroll_container>
+		</panel>
 		<panel label="Lizenzen" name="licenses_panel">
 			<text_editor name="credits_editor">
 				3Dconnexion SDK Copyright (C) 1992-2009 3Dconnexion.
@@ -106,6 +112,7 @@ Collada DOM Copyright 2006 Sony Computer Entertainment Inc.
 cURL Copyright (C) 1996-2010, Daniel Stenberg (daniel@haxx.se).
 DBus/dbus-glib Copyright (C) 2002, 2003  CodeFactory AB / Copyright (C) 2003, 2004 Red Hat, Inc.
 expat Copyright (C) 1998, 1999, 2000 Thai Open Source Software Center Ltd.
+FMOD Sound System Copyright (C) Firelight Technologies Pty, Ltd., 1994-2013
 FreeType Copyright (C) 1996-2002, 2006 David Turner, Robert Wilhelm und Werner Lemberg.
 GL Copyright (C) 1999-2004 Brian Paul.
 GLOD Copyright (C) 2003-04 Jonathan Cohen, Nat Duca, Chris Niski, Johns Hopkins University sowie David Luebke, Brenden Schubert, University of Virginia.

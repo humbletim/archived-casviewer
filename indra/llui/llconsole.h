@@ -37,6 +37,7 @@ class LLSD;
 class LLConsole : public LLFixedBuffer, public LLUICtrl, public LLInstanceTracker<LLConsole>
 {
 public:
+
 	typedef enum e_font_size
 	{
 		MONOSPACE = -1,
@@ -169,7 +170,7 @@ private:
 	S32			mConsoleWidth;
 	S32			mConsoleHeight;
 	bool		mParseUrls; // Ansariel: If lines should be parsed for URLs
-	std::string	mBackgroundImage; // Ansariel: Configurable background for different console types
+	LLUIImagePtr	mBackgroundImage; // Ansariel: Configurable background for different console types
 };
 
 extern LLConsole* gConsole;

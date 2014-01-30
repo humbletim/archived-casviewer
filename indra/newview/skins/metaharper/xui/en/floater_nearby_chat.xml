@@ -8,7 +8,7 @@
  layout="topleft"
  left="0"
  name="nearby_chat"
- title="NEARBY CHAT"
+ title="Nearby Chat"
  top="0"
  can_dock="false"
  can_close="true"
@@ -81,13 +81,13 @@
           height="20"
           follows="left|top"
           left_pad="2"
-          image_overlay="List_View_On"
+          image_overlay="Chat_History"
           layout="topleft"
           width="25"
           image_pressed="PushButton_Press"
           image_pressed_selected="PushButton_Selected_Press"
           image_selected="PushButton_Selected_Press"
-          tool_tip="Open the nearby chat history."
+          tool_tip="Open the nearby chat transcript."
           name="chat_history_btn"/>
           <button
           height="20"
@@ -100,7 +100,7 @@
           image_pressed="PushButton_Press"
           image_pressed_selected="PushButton_Selected_Press"
           image_selected="PushButton_Selected_Press"
-          tool_tip="Shows the muted chat in nearby chat history."
+          tool_tip="Shows the muted chat in nearby chat transcript."
           name="chat_history_muted_btn">
 			<button.commit_callback
 			 function="ToggleControl"

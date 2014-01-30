@@ -15,7 +15,7 @@
  layout="topleft"
  follows="all"
  top="5"
- bottom="-10"
+ bottom="-1"
  left="1"
  right="-1"
  name="tabs"
@@ -101,6 +101,15 @@
          width="270"
          control_name="FSDisableLogoutScreens"
          tool_tip="Disables the black Logout progress screen."/>
+        <check_box
+         top_pad="5"
+         follows="left|top"
+         height="16"
+         label="Disable automatic opening of block list"
+         name="FSDisableBlockListAutoOpen"
+         width="270"
+         control_name="FSDisableBlockListAutoOpen"
+         tool_tip="Disables the automatic opening of the block list when blocking avatars or objects."/>
         <check_box
          top_pad="5"
          follows="left|top"
@@ -201,7 +210,7 @@
 		 follows="left|top"
 		 height="18"
 		 increment="1"
-		 initial_val="20"
+		 initial_value="20"
 		 max_val="30"
 		 min_val="5"
 		 width="150"
@@ -229,6 +238,7 @@
          label="Enable Bridge Flight Assist"
          width="270"
          tool_tip="Enables the script that assists flying and hovering at extended altitudes"/>
+
     </panel>
 
 
@@ -473,7 +483,7 @@
          commit_callback.function="NACL.AntiSpamUnblock"/>
 		 
         <check_box
-         top_pad="10"
+         top_pad="8"
          left="10"
          label="Remove &quot;Block&quot; button from script dialogs"
          control_name="FSRemoveScriptBlockButton"
@@ -482,7 +492,16 @@
          name="FSRemoveScriptBlockButton"
          width="200" />
         <check_box
-         top_pad="4"
+         top_pad="2"
+         left="10"
+         label="Remove &quot;Join&quot; button from group invitations when joining costs a fee"
+         control_name="FSAllowGroupInvitationOnlyWithoutFee"
+         follows="left|top"
+         height="16"
+         name="FSAllowGroupInvitationOnlyWithoutFee"
+         width="200" />
+        <check_box
+         top_pad="2"
          left="10"
          label="Notify about items from objects coming in too fast"
          control_name="FSNotifyIncomingObjectSpam"
@@ -491,7 +510,7 @@
          name="FSNotifyIncomingObjectSpam"
          width="200" />
         <check_box
-         top_pad="4"
+         top_pad="2"
          left="10"
          label="Notify about items from other residents coming in too fast"
          control_name="FSNotifyIncomingObjectSpamFrom"
@@ -501,7 +520,7 @@
          width="200" />
         <slider
          left="10"
-         top_pad="5"
+         top_pad="3"
          name="FSOfferThrottleMaxCount"
          control_name="FSOfferThrottleMaxCount"
          decimal_digits="0"
@@ -900,6 +919,24 @@
       tool_tip=""
       control_name="FSCmdLineBandWidth"
       width="200"/>
+    <!--cpcampos-->
+    <text
+      top_pad="5"
+      follows="left|top"
+      height="16"
+      name="FSCmdLineCopyCam_txt"
+      width="250">
+      Copy camera position to clipboard
+    </text>
+    <line_editor
+      top_pad="0"
+      follows="left|top"
+      height="20"
+      max_length_chars="256"
+      name="FSCmdLineCopyCam"
+      tool_tip=""
+      control_name="FSCmdLineCopyCam"
+      width="200"/>
     <!--rezplat-->
     <text
       top_pad="5"
@@ -988,14 +1025,14 @@
       height="16"
       name="FSCmdLineClearChat_txt"
       width="250">
-      Clear the chat history (usage: cmd)
+      Clear the chat transcript (usage: cmd)
     </text>
     <line_editor
       top_pad="0"
       follows="left|top"
       height="20"
       max_length_chars="256"
-      tool_tip="Clears the Chat History to prevent lag effects from chat spammers."
+      tool_tip="Clears the Chat Transcript to prevent lag effects from chat spammers."
       name="FSCmdLineClearChat"
       control_name="FSCmdLineClearChat"
       width="200"/>
@@ -1344,7 +1381,7 @@
          increment="0.1"
          initial_value="3.0"
          max_val="60"
-         min_val="0.1"
+         min_val="1.0"
          name="FSWindlightInterpolateTime"
          width="50"
          tool_tip="The duration for crossfading from one preset to another [Default: 3]"/>
@@ -1661,10 +1698,8 @@ For now, just make the UI elements invisiable but still have the debug settings 
 	visible="false"
 	enabled="false"
          bg_visible="false"
-         border_drop_shadow_visible="false"
          border_visible="false"
          top_delta="0"
-         drop_shadow_visible="true"
          follows="left|top"
          font="SansSerifSmall"
          h_pad="0"
@@ -1693,10 +1728,8 @@ For now, just make the UI elements invisiable but still have the debug settings 
 	visible="false"
 	enabled="false"
          bg_visible="false"
-         border_drop_shadow_visible="false"
          border_visible="false"
          top_delta="0"
-         drop_shadow_visible="true"
          follows="left|top"
          font="SansSerifSmall"
          h_pad="0"

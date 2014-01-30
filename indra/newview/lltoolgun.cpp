@@ -42,7 +42,7 @@
 #include "llhudmanager.h"
 #include "lltoolmgr.h"
 #include "lltoolgrab.h"
-
+#include "lluiimage.h"
 // <CV:David>
 #include "llviewerdisplay.h"
 // </CV:David>

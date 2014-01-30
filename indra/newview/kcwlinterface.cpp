@@ -41,7 +41,9 @@
 
 #include <boost/regex.hpp>
 
+#include "llslurl.h"
 #include "rlvhandler.h"
+#include "rlvactions.h"
 
 const F32 PARCEL_WL_CHECK_TIME  = 5;
 const S32 PARCEL_WL_MIN_ALT_CHANGE = 3;
@@ -222,7 +224,7 @@ void KCWindlightInterface::ApplySkySettings(const LLSD& settings)
 
 void KCWindlightInterface::ApplyWindLightPreset(const std::string& preset)
 {
-	if (rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV))
+	if (rlv_handler_t::isEnabled() && RlvActions::hasBehaviour(RLV_BHVR_SETENV))
 		return;
 
 	LLWLParamManager* wlprammgr = LLWLParamManager::getInstance();
@@ -244,7 +246,7 @@ void KCWindlightInterface::ApplyWindLightPreset(const std::string& preset)
 
 void KCWindlightInterface::ResetToRegion(bool force)
 {
-	if (rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV))
+	if (rlv_handler_t::isEnabled() && RlvActions::hasBehaviour(RLV_BHVR_SETENV))
 		return;
 
 	//TODO: clear per parcel
@@ -524,15 +526,14 @@ LLUUID KCWindlightInterface::getOwnerID(LLParcel *parcel)
 
 std::string KCWindlightInterface::getOwnerName(LLParcel *parcel)
 {
-	//TODO: say if its a group or avatar on notice
-	std::string owner;
+	std::string owner = "";
 	if (parcel->getIsGroupOwned())
 	{
-		gCacheName->getGroupName(parcel->getGroupID(), owner);
+		owner = LLSLURL("group", parcel->getGroupID(), "inspect").getSLURLString();
 	}
 	else
 	{
-		gCacheName->getFullName(parcel->getOwnerID(), owner);
+		owner = LLSLURL("agent", parcel->getOwnerID(), "inspect").getSLURLString();
 	}
 	return owner;
 }
@@ -588,7 +589,7 @@ bool KCWindlightInterface::checkSettings()
 	static LLCachedControl<bool> sFSWLParcelEnabled(gSavedSettings, "FSWLParcelEnabled");
 	static LLCachedControl<bool> sUseEnvironmentFromRegionAlways(gSavedSettings, "UseEnvironmentFromRegionAlways");
 	if (!sFSWLParcelEnabled || !sUseEnvironmentFromRegionAlways ||
-	(rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV)))
+	(rlv_handler_t::isEnabled() && RlvActions::hasBehaviour(RLV_BHVR_SETENV)))
 	{
 		// The setting changed, clear everything
 		if (!mDisabled)

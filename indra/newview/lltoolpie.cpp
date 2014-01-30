@@ -72,6 +72,8 @@
 #include "llui.h"
 #include "llweb.h"
 #include "pipeline.h"	// setHighlightObject
+
+#include "llviewernetwork.h"	// <FS:CR> For prim equivilance hiding
 // [RLVa:KB] - Checked: 2010-03-06 (RLVa-1.2.0c)
 #include "rlvhandler.h"
 // [/RLVa:KB]
@@ -134,9 +136,9 @@ BOOL LLToolPie::handleMouseDown(S32 x, S32 y, MASK mask)
 BOOL LLToolPie::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
 	// don't pick transparent so users can't "pay" transparent objects
-//	mPick = gViewerWindow->pickImmediate(x, y, FALSE);
+//	mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE);
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
-	mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE);
+	mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE, TRUE);
 // [/SL:KB]
 	mPick.mKeyMask = mask;
 
@@ -365,7 +367,9 @@ BOOL LLToolPie::handleLeftClickPick()
 	}
 	
 	LLHUDIcon* last_hit_hud_icon = mPick.mHUDIcon;
-	if (!object && last_hit_hud_icon && last_hit_hud_icon->getSourceObject())
+	// <FS:Ansariel> FIRE-11024: Only open script debug floater if it's a script error
+	//if (!object && last_hit_hud_icon && last_hit_hud_icon->getSourceObject())
+	if (!object && last_hit_hud_icon && last_hit_hud_icon->getScriptError() && last_hit_hud_icon->getSourceObject())
 	{
 		LLFloaterScriptDebug::show(last_hit_hud_icon->getSourceObject()->getID());
 	}
@@ -599,7 +603,7 @@ BOOL LLToolPie::handleHover(S32 x, S32 y, MASK mask)
 	//   - @fartouch=n restricted and the object is out of range
 	//   - @interact=n restricted and the object isn't a HUD attachment
 	if ( (object) && (rlv_handler_t::isEnabled()) && 
-		( ((gRlvHandler.hasBehaviour(RLV_BHVR_FARTOUCH))) && (!gRlvHandler.canTouch(object, mHoverPick.mObjectOffset)) || 
+		( (((gRlvHandler.hasBehaviour(RLV_BHVR_FARTOUCH))) && (!gRlvHandler.canTouch(object, mHoverPick.mObjectOffset))) || 
 		  ((gRlvHandler.hasBehaviour(RLV_BHVR_INTERACT)) && (!object->isHUDAttachment())) ) )
 	{
 		gViewerWindow->setCursor(UI_CURSOR_ARROW);
@@ -1061,9 +1065,8 @@ BOOL LLToolPie::handleTooltipObject( LLViewerObject* hover_object, std::string l
 			|| !existing_inspector->getVisible()
 			|| existing_inspector->getKey()["avatar_id"].asUUID() != hover_object->getID())
 		{
-			// IDEVO: try to get display name + username
+			// Try to get display name + username
 			std::string final_name;
-			std::string full_name;
 
 			// Build group prefix -Zi
 			std::string group_title;
@@ -1078,36 +1081,24 @@ BOOL LLToolPie::handleTooltipObject( LLViewerObject* hover_object, std::string l
 				}
 			}
 
-			if (!gCacheName->getFullName(hover_object->getID(), full_name))
-			{
-			LLNameValue* firstname = hover_object->getNVPair("FirstName");
-			LLNameValue* lastname =  hover_object->getNVPair("LastName");
-			if (firstname && lastname)
-			{
-					full_name = LLCacheName::buildFullName(
-						firstname->getString(), lastname->getString());
-				}
-				else
-				{
-					full_name = LLTrans::getString("TooltipPerson");
-				}
-			}
-
 			LLAvatarName av_name;
-			if (LLAvatarNameCache::useDisplayNames() && 
-				LLAvatarNameCache::get(hover_object->getID(), &av_name))
+			if (LLAvatarNameCache::get(hover_object->getID(), &av_name))
 			{
 //				final_name = av_name.getCompleteName();
 // [RLVa:KB] - Checked: 2010-10-31 (RLVa-1.2.2a) | Modified: RLVa-1.2.2a
-				final_name = (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? group_title + av_name.getCompleteName() : RlvStrings::getAnonym(av_name);
+				final_name = (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? av_name.getCompleteName() : RlvStrings::getAnonym(av_name);
 // [/RLVa:KB]
+				// <FS:Zi> Make sure group title gets added to the tool tip. This is done separately to
+				//         the RLVa code to prevent this change from getting lost in future RLVa merges
+				if(!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+				{
+					final_name=group_title+final_name;
+				}
+				// </FS:Zi>
 			}
 			else
 			{
-//				final_name = full_name;
-// [RLVa:KB] - Checked: 2010-10-31 (RLVa-1.2.2a) | Modified: RLVa-1.2.2a
-				final_name = (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? group_title + full_name : RlvStrings::getAnonym(full_name);
-// [/RLVa:KB]
+				final_name = LLTrans::getString("TooltipPerson");;
 			}
 
 			// *HACK: We may select this object, so pretend it was clicked
@@ -1289,6 +1280,15 @@ BOOL LLToolPie::handleTooltipObject( LLViewerObject* hover_object, std::string l
 							args["PEWEIGHT"] = llformat("%d", link_cost);
 							tooltip_msg.append(LLTrans::getString("TooltipPrimEquivalent", args));
 						}
+/// <FS:CR> Don't show loading on vanila OpenSim (some grids have it, not not vanilla) If they have it, it will
+/// show eventually
+#ifdef OPENSIM
+						else if (LLGridManager::getInstance()->isInOpenSim())
+						{
+							// Do nothing at all.
+						}
+#endif
+// </FS:CR>
 						else
 						{
 							tooltip_msg.append(LLTrans::getString("TooltipPrimEquivalentLoading"));
@@ -2091,6 +2091,13 @@ BOOL LLToolPie::handleRightClickPick()
 				make_ui_sound("UISndInvalidOp");
 			}
 // [/RLVa:KB]
+		}
+	}
+	else if (mPick.mParticleOwnerID.notNull())
+	{
+		if (gMenuMuteParticle && mPick.mParticleOwnerID != gAgent.getID())
+		{
+			gMenuMuteParticle->show(x,y);
 		}
 	}
 

@@ -47,7 +47,7 @@
 #include "llmenugl.h"
 #include "llviewermenu.h"//for gMenuHolder
 
-// #include "llnearbychathandler.h"
+#include "llfloaterimnearbychathandler.h"
 // #include "llnearbychatbar.h"	// <FS:Zi> Remove floating chat bar
 // #include "llchannelmanager.h"
 
@@ -91,7 +91,7 @@
 // <FS:CR> FIRE-3192 - Name Prediction
 #include "llworld.h"
 
-#define NAME_PREDICTION_MINIMUM_LENGTH 2
+static const U32 NAME_PREDICTION_MINIMUM_LENGTH = 3;
 // </FS:CR>
 
 static LLDefaultChildRegistry::Register<FSNearbyChatControl> r("fs_nearby_chat_control");
@@ -109,7 +109,8 @@ static LLChatTypeTrigger sChatTypeTriggers[] = {
 FSNearbyChatControl::FSNearbyChatControl(const FSNearbyChatControl::Params& p) :
 	LLLineEditor(p)
 {
-	setAutoreplaceCallback(boost::bind(&LLAutoReplace::autoreplaceCallback, LLAutoReplace::getInstance(), _1, _2));
+	//<FS:TS> FIRE-11373: Autoreplace doesn't work in nearby chat bar
+	setAutoreplaceCallback(boost::bind(&LLAutoReplace::autoreplaceCallback, LLAutoReplace::getInstance(), _1, _2, _3, _4, _5));
 	setKeystrokeCallback(onKeystroke,this);
 	FSNearbyChat::instance().registerChatBar(this);
 

@@ -81,6 +81,7 @@ public:
 	LLViewerRegion*			getRegionFromPosGlobal(const LLVector3d &pos);
 	LLViewerRegion*			getRegionFromPosAgent(const LLVector3 &pos);
 	LLViewerRegion*			getRegionFromHandle(const U64 &handle);
+	LLViewerRegion*			getRegionFromID(const LLUUID& region_id);
 	BOOL					positionRegionValidGlobal(const LLVector3d& pos);			// true if position is in valid region
 	LLVector3d				clipToVisibleRegions(const LLVector3d &start_pos, const LLVector3d &end_pos);
 
@@ -149,10 +150,6 @@ public:
 	BOOL getEnforceMaxBuild() const		{ return mEnforceMaxBuild; }
 	BOOL getLockedDrawDistance() const	{ return mLockedDrawDistance; }
 
-	F32 getWhisperDistance() const		{ return mWhisperDistance; }
-	F32 getSayDistance() const			{ return mSayDistance; }
-	F32 getShoutDistance() const		{ return mShoutDistance; }
-
 	F32 getDrawDistance() const			{ return mDrawDistance; }
 	F32 getTerrainDetailScale() const	{ return mTerrainDetailScale; }
 
@@ -185,10 +182,6 @@ public:
 	void setEnableTeenMode(BOOL val);
 	void setEnforceMaxBuild(BOOL val);
 	void setLockedDrawDistance(BOOL val);
-	
-	void setWhisperDistance(F32 val);
-	void setSayDistance(F32 val);
-	void setShoutDistance(F32 val);
 
 	void setDrawDistance(F32 val);
 	void setTerrainDetailScale(F32 val);
@@ -228,6 +221,9 @@ public:
 	typedef std::list<LLViewerRegion*> region_list_t;
 	const region_list_t& getRegionList() const { return mActiveRegionList; }
 
+	typedef boost::signals2::signal<void(LLViewerRegion*)> region_remove_signal_t;
+	boost::signals2::connection setRegionRemovedCallback(const region_remove_signal_t::slot_type& cb);
+
 	// Returns lists of avatar IDs and their world-space positions within a given distance of a point.
 	// All arguments are optional. Given containers will be emptied and then filled.
 	// Not supplying origin or radius input returns data on all avatars in the known regions.
@@ -246,6 +242,8 @@ private:
 	region_list_t	mRegionList;
 	region_list_t	mVisibleRegionList;
 	region_list_t	mCulledRegionList;
+
+	region_remove_signal_t mRegionRemovedSignal;
 
 	// Number of points on edge
 // <FS:CR> Aurora Sim
@@ -288,10 +286,6 @@ private:
 	BOOL    mEnableTeenMode;
 	BOOL    mEnforceMaxBuild;
 	BOOL	mLockedDrawDistance;
-
-	F32 mWhisperDistance;
-	F32 mSayDistance;
-	F32 mShoutDistance;
 
 	F32 mDrawDistance;
 	F32 mTerrainDetailScale;

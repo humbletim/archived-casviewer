@@ -39,6 +39,12 @@ class LLMutex;
 
 #define LL_FASTTIMER_USE_RDTSC 1
 
+#if defined(LL_WINDOWS) && defined(ND_BUILD64BIT_ARCH)
+#include "lltimer.h"
+#undef LL_FASTTIMER_USE_RDTSC
+#define LL_FASTTIMER_USE_RDTSC 0
+#endif
+
 
 LL_COMMON_API void assert_main_thread();
 
@@ -139,10 +145,11 @@ public:
 
 	// used to statically declare a new named timer
 	class LL_COMMON_API DeclareTimer
-	:	public LLInstanceTracker<DeclareTimer>
+	:	public LLInstanceTracker< DeclareTimer >
 	{
 		friend class LLFastTimer;
 	public:
+
 		DeclareTimer(const std::string& name, bool open);
 		DeclareTimer(const std::string& name);
 

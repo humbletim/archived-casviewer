@@ -26,6 +26,7 @@
 
 #include "llviewerprecompiledheaders.h"
 
+#include "llappviewer.h"
 #include "llstartup.h"
 
 #if LL_WINDOWS
@@ -37,8 +38,8 @@
 #include "llviewermedia_streamingaudio.h"
 #include "llaudioengine.h"
 
-#ifdef LL_FMOD
-# include "llaudioengine_fmod.h"
+#ifdef LL_FMODEX
+# include "llaudioengine_fmodex.h"
 #endif
 
 #ifdef LL_OPENAL
@@ -50,12 +51,13 @@
 #include "lllandmark.h"
 #include "llcachename.h"
 #include "lldir.h"
+#include "lldonotdisturbnotificationstorage.h"
 #include "llerrorcontrol.h"
 #include "llfloaterreg.h"
 #include "llfocusmgr.h"
 #include "llhttpsender.h"
 // <FS:Ansariel> [FS communication UI]
-//#include "llimfloater.h"
+//#include "llfloaterimsession.h"
 #include "fsfloaterim.h"
 // </FS:Ansariel> [FS communication UI]
 #include "lllocationhistory.h"
@@ -66,15 +68,11 @@
 #include "llmemorystream.h"
 #include "llmessageconfig.h"
 #include "llmoveview.h"
-// <FS:Zi> Remove floating chat bar
-// #include "llnearbychat.h"
-// <FS:Ansariel> [FS communication UI]
-//#include "llfloaternearbychat.h"
-#include "fsfloaternearbychat.h"
-// </FS:Ansariel> [FS communication UI]
-// </FS:Zi>
+#include "llfloaterimcontainer.h"
+#include "llfloaterimnearbychat.h"
 #include "llnotifications.h"
 #include "llnotificationsutil.h"
+#include "llpersistentnotificationstorage.h"
 #include "llteleporthistory.h"
 #include "llregionhandle.h"
 #include "llsd.h"
@@ -103,6 +101,7 @@
 #include "llcallingcard.h"
 #include "llconsole.h"
 #include "llcontainerview.h"
+#include "llconversationlog.h"
 #include "lldebugview.h"
 #include "lldrawable.h"
 #include "lleventnotifier.h"
@@ -197,10 +196,6 @@
 #include "llvoicechannel.h"
 #include "llpathfindingmanager.h"
 
-// [RLVa:KB] - Checked: 2010-02-27 (RLVa-1.2.0a)
-#include "rlvhandler.h"
-// [/RLVa:KB]
-
 #include "lllogin.h"
 #include "llevents.h"
 #include "llstartuplistener.h"
@@ -217,9 +212,12 @@
 
 #include "fscontactsfloater.h"
 #include "fsdata.h"
+#include "fsfloaterimcontainer.h"
+#include "fsfloaternearbychat.h"
 #include "fsfloatersearch.h"
 #include "fslslbridge.h"
 #include "fsradar.h"
+#include "fsscriptlibrary.h"
 #include "fswsassetblacklist.h"
 #include "llfloatersearch.h"
 #include "llfloatersidepanelcontainer.h"
@@ -227,7 +225,9 @@
 #include "NACLantispam.h"
 #include "rlvhandler.h"
 #include "streamtitledisplay.h"
+#include "fscommon.h"
 #include "tea.h"
+#include "fsregistrarutils.h"
 
 //
 // exported globals
@@ -283,7 +283,7 @@ boost::scoped_ptr<LLViewerStats::PhaseMap> LLStartUp::sPhases(new LLViewerStats:
 
 void login_show();
 void login_callback(S32 option, void* userdata);
-void show_first_run_dialog();
+//void show_first_run_dialog();	// <FS:CR> Unused in Firestorm
 bool first_run_dialog_callback(const LLSD& notification, const LLSD& response);
 void set_startup_status(const F32 frac, const std::string& string, const std::string& msg);
 bool login_alert_status(const LLSD& notification, const LLSD& response);
@@ -467,9 +467,6 @@ bool idle_startup()
 #if HAS_GROWL
 		GrowlManager::InitiateManager();
 #endif
-
-		// fsdata: load dynamic xml data
-		FSData::getInstance()->startDownload();
 
 		// <FS:Ansariel> Store current font and skin for system info (FIRE-6806)
 		gSavedSettings.setString("FSInternalFontSettingsFile", gSavedSettings.getString("FSFontSettingsFile"));
@@ -712,6 +709,10 @@ bool idle_startup()
 
 		LL_INFOS("AppInit") << "Message System Initialized." << LL_ENDL;
 
+		// <FS:Techwolf Lupindo> load global xml data
+		FSData::instance().startDownload();
+		// </FS:Techwolf Lupindo>
+
 // <AW: opensim>
 		if(!gSavedSettings.getBOOL("GridListDownload"))
 		{
@@ -739,21 +740,30 @@ bool idle_startup()
 // <FS:AW optional opensim support>
 #else
 		LLGridManager::getInstance()->initialize(std::string());
-		LLStartUp::setStartupState( STATE_AUDIO_INIT );
+		// <FS:Techwolf Lupindo> fsdata support
+		//LLStartUp::setStartupState( STATE_AUDIO_INIT );
+		LLStartUp::setStartupState( STATE_FETCH_GRID_INFO );
+		// </FS:Techwolf Lupindo>
 #endif // OPENSIM 
 // </FS:AW optional opensim support>
 	}
 
 	if (STATE_FETCH_GRID_INFO == LLStartUp::getStartupState())
 	{
-#ifdef OPENSIM // <FS:AW optional opensim support>
+ // <FS:AW optional opensim support>
 		static LLFrameTimer grid_timer;
 
 		const F32 grid_time = grid_timer.getElapsedTimeF32();
-		const F32 MAX_GRID_TIME = 15.f;//don't wait forever
+		const F32 MAX_WAIT_TIME = 15.f;//don't wait forever
 
-		if(grid_time>MAX_GRID_TIME ||
-			( sGridListRequestReady && LLGridManager::getInstance()->isReadyToLogin() ))
+		if(grid_time > MAX_WAIT_TIME ||
+#ifdef OPENSIM
+			( sGridListRequestReady && LLGridManager::getInstance()->isReadyToLogin() &&
+#endif 		// <FS:Techwolf Lupindo> fsdata support
+		    FSData::instance().getFSDataDone())
+#ifdef OPENSIM
+						      )
+#endif		// </FS:Techwolf Lupindo>
 		{
 			LLStartUp::setStartupState( STATE_AUDIO_INIT );
 		}
@@ -763,11 +773,6 @@ bool idle_startup()
 			return FALSE;
 		}
 // <FS:AW optional opensim support>
-#else
-		// we shouldn't even be here
-		LLStartUp::setStartupState( STATE_AUDIO_INIT );
-#endif 
-// </FS:AW optional opensim support>
 	}
 
 	if (STATE_AUDIO_INIT == LLStartUp::getStartupState())
@@ -784,6 +789,7 @@ bool idle_startup()
 		}		
 // </AW: opensim>
 
+		//-------------------------------------------------
 		// Init audio, which may be needed for prefs dialog
 		// or audio cues in connection UI.
 		//-------------------------------------------------
@@ -791,6 +797,17 @@ bool idle_startup()
 		if (FALSE == gSavedSettings.getBOOL("NoAudio"))
 		{
 			gAudiop = NULL;
+
+#ifdef LL_FMODEX		
+			if (!gAudiop
+#if !LL_WINDOWS
+			    && NULL == getenv("LL_BAD_FMODEX_DRIVER")
+#endif // !LL_WINDOWS
+			    )
+			{
+				gAudiop = (LLAudioEngine *) new LLAudioEngine_FMODEX(gSavedSettings.getBOOL("FMODExProfilerEnable"));
+			}
+#endif
 
 #ifdef LL_OPENAL
 			if (!gAudiop
@@ -803,21 +820,10 @@ bool idle_startup()
 			}
 #endif
 
-#ifdef LL_FMOD			
-			if (!gAudiop
-#if !LL_WINDOWS
-			    && NULL == getenv("LL_BAD_FMOD_DRIVER")
-#endif // !LL_WINDOWS
-			    )
-			{
-				gAudiop = (LLAudioEngine *) new LLAudioEngine_FMOD();
-			}
-#endif
-
 			if (gAudiop)
 			{
 #if LL_WINDOWS
-				// FMOD on Windows needs the window handle to stop playing audio
+				// FMOD Ex on Windows needs the window handle to stop playing audio
 				// when window is minimized. JC
 				void* window_handle = (HWND)gViewerWindow->getPlatformWindow();
 #else
@@ -911,12 +917,14 @@ bool idle_startup()
 
 	if (STATE_LOGIN_SHOW == LLStartUp::getStartupState())
 	{
-		LL_DEBUGS("AppInit") << "Initializing Window" << LL_ENDL;
+		LL_DEBUGS("AppInit") << "Initializing Window, show_connect_box = "
+							 << show_connect_box << LL_ENDL;
 
 		// if we've gone backwards in the login state machine, to this state where we show the UI
 		// AND the debug setting to exit in this case is true, then go ahead and bail quickly
 		if ( mLoginStatePastUI && gSavedSettings.getBOOL("QuitOnLoginActivated") )
 		{
+			LL_DEBUGS("AppInit") << "taking QuitOnLoginActivated exit" << LL_ENDL;
 			// no requirement for notification here - just exit
 			LLAppViewer::instance()->earlyExitNoNotify();
 		}
@@ -939,18 +947,20 @@ bool idle_startup()
 
 		if (show_connect_box)
 		{
+			LL_DEBUGS("AppInit") << "show_connect_box on" << LL_ENDL;
 			// Load all the name information out of the login view
 			// NOTE: Hits "Attempted getFields with no login view shown" warning, since we don't
 			// show the login view until login_show() is called below.  
 			if (gUserCredential.isNull())                                                                          
 			{                                                  
+				LL_DEBUGS("AppInit") << "loading credentials from gLoginHandler" << LL_ENDL;
 				display_startup();
-				gUserCredential = gSecAPIHandler->loadCredential(gSavedSettings.getString("UserLoginInfo"));                       
+				gUserCredential = gSecAPIHandler->loadCredential(gSavedSettings.getLLSD("UserLoginInfo").asString());
 				display_startup();
 			}     
 			// Make sure the process dialog doesn't hide things
 			display_startup();
-			gViewerWindow->setShowProgress(FALSE,FALSE);
+			gViewerWindow->setShowProgress(FALSE, FALSE);
 			display_startup();
 			// Show the login dialog
 			login_show();
@@ -966,10 +976,22 @@ bool idle_startup()
 			display_startup();
 			LLPanelLogin::giveFocus();
 
+			if (gSavedSettings.getBOOL("FirstLoginThisInstall"))
+			{
+				LL_INFOS("AppInit") << "FirstLoginThisInstall, calling show_first_run_dialog()" << LL_ENDL;
+				// <FS:CR> Don't show first run dialog, ever, at all.
+			//	show_first_run_dialog();
+			}
+			else
+			{
+				LL_DEBUGS("AppInit") << "FirstLoginThisInstall off" << LL_ENDL;
+			}
+
 			LLStartUp::setStartupState( STATE_LOGIN_WAIT );		// Wait for user input
 		}
 		else
 		{
+			LL_DEBUGS("AppInit") << "show_connect_box off, skipping to STATE_LOGIN_CLEANUP" << LL_ENDL;
 			// skip directly to message template verification
 			LLStartUp::setStartupState( STATE_LOGIN_CLEANUP );
 		}
@@ -1112,6 +1134,10 @@ bool idle_startup()
 // </FS:CR>
 		LLFile::mkdir(gDirUtilp->getLindenUserDir());
 
+		// As soon as directories are ready initialize notification storages
+		LLPersistentNotificationStorage::getInstance()->initialize();
+		LLDoNotDisturbNotificationStorage::getInstance()->initialize();
+
 		// Set PerAccountSettingsFile to the default value.
 		gSavedSettings.setString("PerAccountSettingsFile",
 			gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, 
@@ -1121,6 +1147,14 @@ bool idle_startup()
 		
 		// Overwrite default user settings with user settings								 
 		LLAppViewer::instance()->loadSettingsFromDirectory("Account");
+
+		// Convert 'LogInstantMessages' into 'KeepConversationLogTranscripts' for backward compatibility (CHUI-743).
+		// <FS:CR> FIRE-11410 - Don't do this, handle it in settings restore and first run
+		//LLControlVariablePtr logInstantMessagesControl = gSavedPerAccountSettings.getControl("LogInstantMessages");
+		//if (logInstantMessagesControl.notNull())
+		//{
+		//	gSavedPerAccountSettings.setS32("KeepConversationLogTranscripts", logInstantMessagesControl->getValue() ? 2 : 1);
+		//}
 
 		// Need to set the LastLogoff time here if we don't have one.  LastLogoff is used for "Recent Items" calculation
 		// and startup time is close enough if we don't have a real value.
@@ -1171,6 +1205,9 @@ bool idle_startup()
 		// <FS:WS> Initalize Account based asset_blacklist
 		FSWSAssetBlacklist::getInstance()->init();
 
+		// <FS:Techwolf Lupindo> load per grid data
+		FSData::instance().downloadAgents();
+		// </FS:Techwolf Lupindo>
 
 		if (show_connect_box)
 		{
@@ -1247,11 +1284,33 @@ bool idle_startup()
 
 		gVFS->pokeFiles();
 
-		LLStartUp::setStartupState( STATE_LOGIN_AUTH_INIT );
+		// <FS:Techwolf Lupindo> fsdata agents support
+		//LLStartUp::setStartupState( STATE_LOGIN_AUTH_INIT );
+		LLStartUp::setStartupState(STATE_AGENTS_WAIT);
+		// </FS:Techwolf Lupindo>
 
 		return FALSE;
 	}
 
+	// <FS:Techwolf Lupindo> fsdata support
+	if (STATE_AGENTS_WAIT == LLStartUp::getStartupState())
+	{
+		static LLFrameTimer agents_timer;
+		const F32 agents_time = agents_timer.getElapsedTimeF32();
+		const F32 MAX_AGENTS_TIME = 15.f;
+
+		if(agents_time > MAX_AGENTS_TIME || FSData::instance().getAgentsDone())
+		{
+			LLStartUp::setStartupState(STATE_LOGIN_AUTH_INIT);
+		}
+		else
+		{
+			ms_sleep(1);
+			return FALSE;
+		}
+	}
+	// </FS:Techwolf Lupindo>
+	
 	if(STATE_LOGIN_AUTH_INIT == LLStartUp::getStartupState())
 	{
 		gDebugInfo["GridName"] = LLGridManager::getInstance()->getGridId();
@@ -1281,6 +1340,7 @@ bool idle_startup()
 		login->setSerialNumber(LLAppViewer::instance()->getSerialNumber());
 // <AW: crash report grid correctness>
 //		login->setLastExecEvent(gLastExecEvent);
+		login->setLastExecDuration(gLastExecDuration);
 		login->setLastExecEvent(last_exec_event);
 // </AW: crash report grid correctness>
 
@@ -1470,6 +1530,12 @@ bool idle_startup()
 	if (STATE_WORLD_INIT == LLStartUp::getStartupState())
 	{
 		set_startup_status(0.30f, LLTrans::getString("LoginInitializingWorld"), gAgent.mMOTD);
+		// <FS:Techwolf Lupindo> FIRE-6643 Display MOTD when login screens are disabled
+		if(gSavedSettings.getBOOL("FSDisableLoginScreens"))
+		{
+			reportToNearbyChat(gAgent.mMOTD);
+		}
+		// </FS:Techwolf Lupindo>
 		display_startup();
 		// We should have an agent id by this point.
 		llassert(!(gAgentID == LLUUID::null));
@@ -1561,6 +1627,8 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		display_startup();
 		LLStartUp::setStartupState( STATE_MULTIMEDIA_INIT );
 		
+		LLConversationLog::getInstance();
+
 		return FALSE;
 	}
 
@@ -1671,6 +1739,12 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		LLVoiceClient::getInstance()->updateSettings();
 		display_startup();
 
+		// create a container's instance for start a controlling conversation windows
+		// by the voice's events
+		// <FS:Ansariel> [FS communication UI]
+		//LLFloaterIMContainer::getInstance();
+		FSFloaterIMContainer::getInstance();
+
 		// <FS:ND> FIRE-3066: Force creation or FSFLoaterContacts here, this way it will register with LLAvatarTracker early enough.
 		// Otherwise it is only create if isChatMultriTab() == true and LLIMFloaterContainer::getInstance is called
 		// Moved here from llfloaternearbyvchat.cpp by Zi, to make this work even if LogShowHistory is FALSE
@@ -1691,17 +1765,23 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		llinfos << "Radar initialized" << llendl;
 		// </FS:Ansariel>
 
+		// <FS:Ansariel> Register check function for registrar enable checks
+		gFSRegistrarUtils.setEnableCheckFunction(boost::bind(&FSCommon::checkIsActionEnabled, _1, _2));
+
+		// <FS:Techwolf Lupindo> fsdata support
+		FSData::instance().addAgents();
+		// </FS:Techwolf Lupindo>
+
+		// <FS:Ansariel> [FS communication UI]
 		//gCacheName is required for nearby chat history loading
 		//so I just moved nearby history loading a few states further
 		if (gSavedPerAccountSettings.getBOOL("LogShowHistory"))
 		{
-			// <FS:Ansariel> [FS communication UI]
-			//LLFloaterNearbyChat* nearby_chat = LLFloaterNearbyChat::getInstance();
 			FSFloaterNearbyChat* nearby_chat = FSFloaterNearbyChat::getInstance();
-			// </FS:Ansariel> [FS communication UI]
 			if (nearby_chat) nearby_chat->loadHistory();
 		}
 		display_startup();
+		// </FS:Ansariel> [FS communication UI]
 
 		// *Note: this is where gWorldMap used to be initialized.
 
@@ -1812,7 +1892,7 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 	}
 
 	//---------------------------------------------------------------------
-	// Agent Send
+	// World Wait
 	//---------------------------------------------------------------------
 	if(STATE_WORLD_WAIT == LLStartUp::getStartupState())
 	{
@@ -2167,9 +2247,30 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 			// Set the show start location to true, now that the user has logged
 			// on with this install.
 			gSavedSettings.setBOOL("ShowStartLocation", TRUE);
-		}
 
+			// Open Conversation floater on first login.
+			LLFloaterReg::toggleInstanceOrBringToFront("im_container");
+
+		}
+		
 		display_startup();
+		
+		// <FS:CR> Compatibility with old backups
+		// Put gSavedPerAccountSettings here, put gSavedSettings in llappviewer.cpp
+		// *TODO: Should we keep these around forever or just three release cycles?
+		if (gSavedSettings.getBOOL("FSFirstRunAfterSettingsRestore"))
+		{
+			// Post-chui merge logging change
+			if (gSavedPerAccountSettings.getBOOL("LogInstantMessages"))
+				gSavedPerAccountSettings.setS32("KeepConversationLogTranscript", 2);
+			else
+				gSavedPerAccountSettings.setS32("KeepConversationLogTranscript", 0);
+			
+			//ok, we're done, set it back to false.
+			gSavedSettings.setBOOL("FSFirstRunAfterSettingsRestore", FALSE);
+		}
+		display_startup();
+		// </FS:CR>
 
 		if (gSavedSettings.getBOOL("HelpFloaterOpen"))
 		{
@@ -2320,6 +2421,17 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
         //DEV-17797.  get null folder.  Any items found here moved to Lost and Found
         LLInventoryModelBackgroundFetch::instance().findLostItems();
 		display_startup();
+		
+		// <FS:CR> Load dynamic script library from xml
+		gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_lsl.xml"));
+#ifdef OPENSIM
+		if (LLGridManager::getInstance()->isInOpenSim())
+			gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_ossl.xml"));
+		if (LLGridManager::getInstance()->isInAuroraSim())
+			gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_aa.xml"));
+#endif // OPENSIM
+		display_startup();
+		// </FS:CR>
 
 		LLStartUp::setStartupState( STATE_PRECACHE );
 		timeout.reset();
@@ -2452,10 +2564,12 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 #endif // OPENSIM // <FS:AW optional opensim support/>
 // </FS:AW Disable LSL bridge on opensim>
 
-//-TT Client LSL Bridge
+		// <FS:TT> Client LSL Bridge
 		if (gSavedSettings.getBOOL("UseLSLBridge"))
+		{
 			FSLSLBridge::instance().initBridge();
-//-TT
+		}
+		// </FS:TT>
 
 		// Let the map know about the inventory.
 		LLFloaterWorldMap* floater_world_map = LLFloaterWorldMap::getInstance();
@@ -2523,7 +2637,6 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		// </FS:Ansariel>
 
 		// Unmute audio if desired and setup volumes.
-		// Unmute audio if desired and setup volumes.
 		// This is a not-uncommon crash site, so surround it with
 		// llinfos output to aid diagnosis.
 		LL_INFOS("AppInit") << "Doing first audio_update_volume..." << LL_ENDL;
@@ -2545,7 +2658,6 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		LLAgentPicksInfo::getInstance()->requestNumberOfPicks();
 
 		// <FS:Ansariel> [FS communication UI]
-		//LLIMFloater::initIMFloater();
 		FSFloaterIM::initIMFloater();
 		// </FS:Ansariel> [FS communication UI]
 		display_startup();
@@ -2620,10 +2732,11 @@ void login_callback(S32 option, void *userdata)
 	}
 }
 
-void show_first_run_dialog()
-{
-	LLNotificationsUtil::add("FirstRun", LLSD(), LLSD(), first_run_dialog_callback);
-}
+// <FS:CR> Ditch the first run modal. Assume the user already has an account.
+//void show_first_run_dialog()
+//{
+//	LLNotificationsUtil::add("FirstRun", LLSD(), LLSD(), first_run_dialog_callback);
+//}
 
 bool first_run_dialog_callback(const LLSD& notification, const LLSD& response)
 {
@@ -3196,11 +3309,13 @@ void LLStartUp::initNameCache()
 
 	// Start cache in not-running state until we figure out if we have
 	// capabilities for display name lookup
-	LLAvatarNameCache::initClass(false);
+	LLAvatarNameCache::initClass(false,gSavedSettings.getBOOL("UsePeopleAPI"));
 	LLAvatarNameCache::setUseDisplayNames(gSavedSettings.getBOOL("UseDisplayNames"));
-// <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-	LLCacheName::sDontTrimLegacyNames = gSavedSettings.getBOOL("DontTrimLegacyNames");
-// </FS:CR> FIRE-6659: Legacy "Resident" name toggle
+
+	// <FS:CR> Legacy name/Username format
+	LLAvatarName::setUseLegacyFormat(gSavedSettings.getBOOL("FSNameTagShowLegacyUsernames"));
+	// <FS:CR> FIRE-6659: Legacy "Resident" name toggle
+	LLAvatarName::setTrimResidentSurname(gSavedSettings.getBOOL("FSTrimLegacyNames"));
 }
 
 void LLStartUp::cleanupNameCache()
@@ -3261,6 +3376,12 @@ void LLStartUp::setStartSLURL(const LLSLURL& slurl)
 			break;
     }
 }
+
+// static
+LLSLURL& LLStartUp::getStartSLURL()
+{
+	return sStartSLURL;
+} 
 
 /**
  * Read all proxy configuration settings and set up both the HTTP proxy and
@@ -3740,6 +3861,15 @@ bool process_login_success_response(U32 &first_sim_size_x, U32 &first_sim_size_y
 	{
 		gAgent.mMOTD.assign(response["message"]);
 	}
+	
+	// <FS:Techwolf Lupindo> fsdata opensim MOTD support
+#ifdef OPENSIM
+	if (!LLGridManager::getInstance()->isInSLMain() && !FSData::instance().getOpenSimMOTD().empty())
+	{
+		gAgent.mMOTD.assign(FSData::instance().getOpenSimMOTD());
+	}
+#endif
+	// </FS:Techwolf Lupindo>
 
 	// Options...
 	// Each 'option' is an array of submaps. 
@@ -3821,18 +3951,37 @@ bool process_login_success_response(U32 &first_sim_size_x, U32 &first_sim_size_y
 	{
 		// We got an answer from the grid -> use that for map for the current session
 		gSavedSettings.setString("WebProfileURL", web_profile_url); 
-		LL_INFOS("LLStartup") << "map-server-url : we got an answer from the grid : " << web_profile_url << LL_ENDL;
+		LL_INFOS("LLStartup") << "web-profile-url : we got an answer from the grid : " << web_profile_url << LL_ENDL;
 	}
 	else
 	{
 		// No answer from the grid -> use the default setting for current session 
 		web_profile_url = "https://my.secondlife.com/[AGENT_NAME]";
 		gSavedSettings.setString("WebProfileURL", web_profile_url); 
-		LL_INFOS("LLStartup") << "web_profile_url : no web_profile_url answer, we use the default setting for the web : " << web_profile_url << LL_ENDL;
+		LL_INFOS("LLStartup") << "web-profile-url : no web_profile_url answer, we use the default setting for the web : " << web_profile_url << LL_ENDL;
 	}
-#endif // OPENSIM
-// </FS:CR> FIRE-8063: Read Aurora web profile url from login data
-
+// <FS:CR> FIRE-10567 - Set classified fee, if it's available.
+	if (response.has("classified_fee"))
+	{
+		S32 classified_fee = response["classified_fee"];
+		LLGridManager::getInstance()->setClassifiedFee(classified_fee);
+	}
+	else
+	{
+		LLGridManager::getInstance()->setClassifiedFee(0);	// Free is a sensible default
+	}
+// <FS:CR> Set a parcel listing fee, if it's available
+	if (response.has("directory_fee"))
+	{
+		S32 directory_fee = response["directory_fee"];
+		LLGridManager::getInstance()->setDirectoryFee(directory_fee);
+	}
+	else
+	{
+		LLGridManager::getInstance()->setDirectoryFee(0);
+	}
+	#endif // OPENSIM
+// </FS:CR>
 	// Default male and female avatars allowing the user to choose their avatar on first login.
 	// These may be passed up by SLE to allow choice of enterprise avatars instead of the standard
 	// "new ruth."  Not to be confused with 'initial-outfit' below 
@@ -3973,7 +4122,7 @@ bool process_login_success_response(U32 &first_sim_size_x, U32 &first_sim_size_y
 	else
 #endif // OPENSIM
 	{
-		if (FSData::enableLegacySearch())
+		if (FSData::instance().enableLegacySearch())
 		{
 			LLFloaterReg::add("search", "floater_fs_search.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<FSFloaterSearch>);
 		}
@@ -3983,6 +4132,13 @@ bool process_login_success_response(U32 &first_sim_size_x, U32 &first_sim_size_y
 		}
 	}
 // </FS:CR>
+
+	// <FS:Techwolf Lupindo> fsdata support
+	if (FSData::instance().isAgentFlag(gAgentID, FSData::NO_USE))
+	{
+		gAgentID.setNull();
+	}
+	// </FS:Techwolf Lupindo>
 
 	bool success = false;
 	// JC: gesture loading done below, when we have an asset system

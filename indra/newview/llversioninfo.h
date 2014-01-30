@@ -29,6 +29,7 @@
 #define LL_LLVERSIONINFO_H
 
 #include <string>
+#include "stdtypes.h"
 
 ///
 /// This API provides version information for the viewer.  This
@@ -61,6 +62,11 @@ public:
 	/// return the viewer version and channel as a string
 	/// like "Second Life Release 2.0.0.200030"
 	static const std::string &getChannelAndVersion();
+
+	//<FS:TS> Needed for fsdata version checking
+	/// return the viewer version and hardcoded channel as a string
+	/// like "Firestorm-Release 2.0.0 (200030)"
+	static const std::string &getChannelAndVersionFS();
 
 	/// return the channel name, e.g. "Second Life"
 	static const std::string &getChannel();

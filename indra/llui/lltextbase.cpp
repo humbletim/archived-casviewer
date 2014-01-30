@@ -44,8 +44,11 @@
 #include "llwindow.h"
 #include <boost/bind.hpp>
 
+#include "fsregistrarutils.h"
+
 const F32	CURSOR_FLASH_DELAY = 1.0f;  // in seconds
 const S32	CURSOR_THICKNESS = 2;
+const F32	TRIPLE_CLICK_INTERVAL = 0.3f;	// delay between double and triple click.
 
 LLTextBase::line_info::line_info(S32 index_start, S32 index_end, LLRect rect, S32 line_num) 
 :	mDocIndexStart(index_start), 
@@ -156,9 +159,7 @@ LLTextBase::Params::Params()
 :	cursor_color("cursor_color"),
 	text_color("text_color"),
 	text_readonly_color("text_readonly_color"),
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-09-05 (Catznip-3.2.0a) | Added: Catznip-2.8.0b
-	text_label_color("text_label_color"),
-// [/SL:KB]
+	text_tentative_color("text_tentative_color"),
 	bg_visible("bg_visible", false),
 	border_visible("border_visible", false),
 	bg_readonly_color("bg_readonly_color"),
@@ -195,8 +196,9 @@ LLTextBase::Params::Params()
 LLTextBase::LLTextBase(const LLTextBase::Params &p) 
 :	LLUICtrl(p, LLTextViewModelPtr(new LLTextViewModel)),
 	mURLClickSignal(NULL),
+	mIsFriendSignal(NULL),
 	mMaxTextByteLength( p.max_text_length ),
-	mDefaultFont(p.font),
+	mFont(p.font),
 	mFontShadow(p.font_shadow),
 	mPopupMenu(NULL),
 	mReadOnly(p.read_only),
@@ -207,6 +209,7 @@ LLTextBase::LLTextBase(const LLTextBase::Params &p)
 	mFgColor(p.text_color),
 	mBorderVisible( p.border_visible ),
 	mReadOnlyFgColor(p.text_readonly_color),
+	mTentativeFgColor(p.text_tentative_color()),
 	mWriteableBgColor(p.bg_writeable_color),
 	mReadOnlyBgColor(p.bg_readonly_color),
 	mFocusBgColor(p.bg_focus_color),
@@ -231,10 +234,6 @@ LLTextBase::LLTextBase(const LLTextBase::Params &p)
 	mIsSelecting( FALSE ),
 	mPlainText ( p.plain_text ),
 	mWordWrap(p.wrap),
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-09-05 (Catznip-3.2.0a) | Added: Catznip-2.8.0b
-	mLabel(p.label),
-	mLabelColor(p.text_label_color),
-// [/SL:KB]
 	mUseEllipses( p.use_ellipses ),
 	mParseHTML(p.parse_urls),
 	mParseHighlights(p.parse_highlights),
@@ -345,21 +344,26 @@ bool LLTextBase::truncate()
 	return did_truncate;
 }
 
-const LLStyle::Params& LLTextBase::getDefaultStyleParams()
+const LLStyle::Params& LLTextBase::getStyleParams()
 {
 	//FIXME: convert mDefaultStyle to a flyweight http://www.boost.org/doc/libs/1_40_0/libs/flyweight/doc/index.html
 	//and eliminate color member values
 	if (mStyleDirty)
 	{
-		  mDefaultStyle
+		  mStyle
 				  .color(LLUIColor(&mFgColor))						// pass linked color instead of copy of mFGColor
 				  .readonly_color(LLUIColor(&mReadOnlyFgColor))
 				  .selected_color(LLUIColor(&mTextSelectedColor))
-				  .font(mDefaultFont)
+				  .font(mFont)
 				  .drop_shadow(mFontShadow);
 		  mStyleDirty = false;
 	}
-	return mDefaultStyle;
+	return mStyle;
+}
+
+void LLTextBase::beforeValueChange()
+{
+
 }
 
 void LLTextBase::onValueChange(S32 start, S32 end)
@@ -461,6 +465,7 @@ void LLTextBase::drawSelectionBackground()
 			++rect_it)
 		{
 			LLRect selection_rect = *rect_it;
+			selection_rect = *rect_it;
 			selection_rect.translate(mVisibleTextRect.mLeft - content_display_rect.mLeft, mVisibleTextRect.mBottom - content_display_rect.mBottom);
 			gl_rect_2d(selection_rect, selection_color);
 		}
@@ -547,19 +552,17 @@ void LLTextBase::drawCursor()
 
 void LLTextBase::drawText()
 {
-	const S32 text_len = getLength();
-	if( text_len <= 0 )
+	S32 text_len = getLength();
+
+	if (text_len <= 0 && mLabel.empty())
 	{
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-09-05 (Catznip-3.2.0a) | Added: Catznip-2.8.0b
-		if ( (!hasFocus()) && (mLabel.length()) )
-		{
-			mDefaultFont->render(
-				mLabel.getWString(), 0, mLineInfoList.begin()->mRect.mLeft, mDocumentView->getRect().mBottom, mLabelColor, 
-				LLFontGL::LEFT, LLFontGL::BOTTOM, 0, LLFontGL::NO_SHADOW, S32_MAX, mDocumentView->getRect().getWidth());
-		}
-// [/SL:KB]
 		return;
 	}
+	else if (useLabel())
+	{
+		text_len = mLabel.getWString().length();
+	}
+
 	S32 selection_left = -1;
 	S32 selection_right = -1;
 	// Draw selection even if we don't have keyboard focus for search/replace
@@ -584,7 +587,7 @@ void LLTextBase::drawText()
 	{
 		return;
 	}
-	
+
 	// Perform spell check if needed
 	if ( (getSpellCheck()) && (getWText().length() > 2) )
 	{
@@ -625,20 +628,18 @@ void LLTextBase::drawText()
 
 				// Find the start of the first word
 				U32 word_start = seg_start, word_end = -1;
-				while ( (word_start < wstrText.length()) && (!LLStringOps::isAlpha(wstrText[word_start])) )
+				U32 text_length = wstrText.length();
+				while ( (word_start < text_length) && (!LLStringOps::isAlpha(wstrText[word_start])) )
 				{
 					word_start++;
 				}
 
 				// Iterate over all words in the text block and check them one by one
-				// while (word_start < seg_end)
-				while ( word_start < wstrText.length() &&  word_start < seg_end ) // <FS:ND/> Do not run past end of wstrTest
+				while (word_start < seg_end)
 				{
 					// Find the end of the current word (special case handling for "'" when it's used as a contraction)
 					word_end = word_start + 1;
-
-					// while ( (word_end < seg_end) && 
-					while ( (word_end < seg_end) && word_end < wstrText.length() && // <FS:ND/> Don't run past end of wstrText
+					while ( (word_end < seg_end) && 
 							((LLWStringUtil::isPartOfWord(wstrText[word_end])) ||
 								((L'\'' == wstrText[word_end]) && 
 								(LLStringOps::isAlnum(wstrText[word_end - 1])) && (LLStringOps::isAlnum(wstrText[word_end + 1])))) )
@@ -650,27 +651,20 @@ void LLTextBase::drawText()
 						break;
 					}
 
-					// <FS:ND> Exit if we ran past end of string
-					if( word_start >= wstrText.length() || word_end >= wstrText.length() )
-						break;
-					// </FS:ND>
-
-					// Don't process words shorter than 3 characters
-
-					std::string word = wstring_to_utf8str(wstrText.substr(word_start, word_end - word_start));
-					if ( (word.length() >= 3) && (!LLSpellChecker::instance().checkSpelling(word)) )
+					if (word_start < text_length && word_end <= text_length && word_end > word_start)
 					{
-						mMisspellRanges.push_back(std::pair<U32, U32>(word_start, word_end));
+						std::string word = wstring_to_utf8str(wstrText.substr(word_start, word_end - word_start));
+
+						// Don't process words shorter than 3 characters
+						if ( (word.length() >= 3) && (!LLSpellChecker::instance().checkSpelling(word)) )
+						{
+							mMisspellRanges.push_back(std::pair<U32, U32>(word_start, word_end));
+						}
 					}
-					
+
 					// Find the start of the next word
 					word_start = word_end + 1;
-
-					// <FS:ND> Do not run past end of string.
-
-					// while ( (word_start < seg_end) && (!LLWStringUtil::isPartOfWord(wstrText[word_start])) )
-					while ( word_start < wstrText.length() && (word_start < seg_end) && (!LLWStringUtil::isPartOfWord(wstrText[word_start])) )
-					// </FS:ND>
+					while ( (word_start < seg_end) && (!LLWStringUtil::isPartOfWord(wstrText[word_start])) )
 					{
 						word_start++;
 					}
@@ -680,6 +674,10 @@ void LLTextBase::drawText()
 			mSpellCheckStart = start;
 			mSpellCheckEnd = end;
 		}
+	}
+	else
+	{
+		mMisspellRanges.clear();
 	}
 
 	LLTextSegmentPtr cur_segment = *seg_iter;
@@ -786,6 +784,8 @@ void LLTextBase::drawText()
 
 S32 LLTextBase::insertStringNoUndo(S32 pos, const LLWString &wstr, LLTextBase::segment_vec_t* segments )
 {
+    beforeValueChange();
+
 	S32 old_len = getLength();		// length() returns character length
 	S32 insert_len = wstr.length();
 
@@ -817,7 +817,7 @@ S32 LLTextBase::insertStringNoUndo(S32 pos, const LLWString &wstr, LLTextBase::s
 	else
 	{
 		// create default editable segment to hold new text
-		LLStyleConstSP sp(new LLStyle(getDefaultStyleParams()));
+		LLStyleConstSP sp(new LLStyle(getStyleParams()));
 		default_segment = new LLNormalTextSegment( sp, pos, pos + insert_len, *this);
 	}
 
@@ -861,6 +861,8 @@ S32 LLTextBase::insertStringNoUndo(S32 pos, const LLWString &wstr, LLTextBase::s
 
 S32 LLTextBase::removeStringNoUndo(S32 pos, S32 length)
 {
+
+    beforeValueChange();
 	segment_set_t::iterator seg_iter = getSegIterContaining(pos);
 	while(seg_iter != mSegments.end())
 	{
@@ -919,6 +921,8 @@ S32 LLTextBase::removeStringNoUndo(S32 pos, S32 length)
 
 S32 LLTextBase::overwriteCharNoUndo(S32 pos, llwchar wc)
 {
+    beforeValueChange();
+
 	if (pos > (S32)getLength())
 	{
 		return 0;
@@ -937,7 +941,7 @@ void LLTextBase::createDefaultSegment()
 	// ensures that there is always at least one segment
 	if (mSegments.empty())
 	{
-		LLStyleConstSP sp(new LLStyle(getDefaultStyleParams()));
+		LLStyleConstSP sp(new LLStyle(getStyleParams()));
 		LLTextSegmentPtr default_segment = new LLNormalTextSegment( sp, 0, getLength() + 1, *this);
 		mSegments.insert(default_segment);
 		default_segment->linkToDocument(this);
@@ -1027,6 +1031,13 @@ void LLTextBase::insertSegment(LLTextSegmentPtr segment_to_insert)
 
 BOOL LLTextBase::handleMouseDown(S32 x, S32 y, MASK mask)
 {
+	// handle triple click
+	if (!mTripleClickTimer.hasExpired())
+	{
+		selectAll();
+		return TRUE;
+	}
+
 	LLTextSegmentPtr cur_segment = getSegmentAtLocalPos(x, y);
 	if (cur_segment && cur_segment->handleMouseDown(x, y, mask))
 	{
@@ -1101,6 +1112,14 @@ BOOL LLTextBase::handleRightMouseUp(S32 x, S32 y, MASK mask)
 
 BOOL LLTextBase::handleDoubleClick(S32 x, S32 y, MASK mask)
 {
+	//Don't start triple click timer if user have clicked on scrollbar
+	mVisibleTextRect = mScroller ? mScroller->getContentWindowRect() : getLocalRect();
+	if (x >= mVisibleTextRect.mLeft && x <= mVisibleTextRect.mRight
+	    && y >= mVisibleTextRect.mBottom && y <= mVisibleTextRect.mTop)
+	{
+		mTripleClickTimer.setTimerExpirySec(TRIPLE_CLICK_INTERVAL);
+	}
+
 	LLTextSegmentPtr cur_segment = getSegmentAtLocalPos(x, y);
 	if (cur_segment && cur_segment->handleDoubleClick(x, y, mask))
 	{
@@ -1223,8 +1242,22 @@ void LLTextBase::draw()
 	}
 
 	bool should_clip = mClip || mScroller != NULL;
-	{ LLLocalClipRect clip(text_rect, should_clip);
- 
+	// <FS:Zi> Fix text bleeding at top edge of scrolling text editors
+	// { LLLocalClipRect clip(text_rect, should_clip);
+	{
+		// unsure why the rectangle is not properly calculated, but this fixes it.
+		// probably needs investigating the accuracy of:
+		// - LLScrollContainer::getContentWindowRect()
+		// - LLScrollContainer::localRectToOtherView()
+		// - LLRect::intersectWith()
+		if(text_rect.mTop>2)
+		{
+			text_rect.mTop-=2;
+		}
+		// push the modified text_rect as a GL clipping scissor on the stack
+		LLLocalClipRect clip(text_rect, should_clip);
+	// </FS:Zi>
+
 		// draw document view
 		if (mScroller)
 		{
@@ -1384,6 +1417,26 @@ void LLTextBase::onSpellCheckSettingsChange()
 	mMisspellRanges.clear();
 	mSpellCheckStart = mSpellCheckEnd = -1;
 }
+
+void LLTextBase::onFocusReceived()
+{
+	LLUICtrl::onFocusReceived();
+	if (!getLength() && !mLabel.empty())
+	{
+		// delete label which is LLLabelTextSegment
+		clearSegments();
+	}
+}
+
+void LLTextBase::onFocusLost()
+{
+	LLUICtrl::onFocusLost();
+	if (!getLength() && !mLabel.empty())
+	{
+		resetLabel();
+	}
+}
+
 // Sets the scrollbar from the cursor position
 void LLTextBase::updateScrollFromCursor()
 {
@@ -1839,7 +1892,17 @@ LLTextBase::segment_set_t::iterator LLTextBase::getSegIterContaining(S32 index, 
 
 	static LLPointer<LLIndexSegment> index_segment = new LLIndexSegment();
 
-	if (index > getLength()) { return mSegments.end(); }
+	S32 text_len = 0;
+	if (!useLabel())
+	{
+		text_len = getLength();
+	}
+	else
+	{
+		text_len = mLabel.getWString().length();
+	}
+
+	if (index > text_len) { return mSegments.end(); }
 
 	// when there are no segments, we return the end iterator, which must be checked by caller
 	if (mSegments.size() <= 1) { return mSegments.begin(); }
@@ -1885,7 +1948,17 @@ LLTextBase::segment_set_t::const_iterator LLTextBase::getSegIterContaining(S32 i
 {
 	static LLPointer<LLIndexSegment> index_segment = new LLIndexSegment();
 
-	if (index > getLength()) { return mSegments.end(); }
+	S32 text_len = 0;
+	if (!useLabel())
+	{
+		text_len = getLength();
+	}
+	else
+	{
+		text_len = mLabel.getWString().length();
+	}
+
+	if (index > text_len) { return mSegments.end(); }
 
 	// when there are no segments, we return the end iterator, which must be checked by caller
 	if (mSegments.size() <= 1) { return mSegments.begin(); }
@@ -1969,24 +2042,54 @@ void LLTextBase::createUrlContextMenu(S32 x, S32 y, const std::string &in_url)
 	registrar.add("Url.OpenInternal", boost::bind(&LLUrlAction::openURLInternal, url));
 	registrar.add("Url.OpenExternal", boost::bind(&LLUrlAction::openURLExternal, url));
 	registrar.add("Url.Execute", boost::bind(&LLUrlAction::executeSLURL, url));
+	registrar.add("Url.Block", boost::bind(&LLUrlAction::blockObject, url));
 	registrar.add("Url.Teleport", boost::bind(&LLUrlAction::teleportToLocation, url));
 	registrar.add("Url.ShowProfile", boost::bind(&LLUrlAction::showProfile, url));
+	registrar.add("Url.AddFriend", boost::bind(&LLUrlAction::addFriend, url));
+	registrar.add("Url.RemoveFriend", boost::bind(&LLUrlAction::removeFriend, url));
+	registrar.add("Url.SendIM", boost::bind(&LLUrlAction::sendIM, url));
 	registrar.add("Url.ShowOnMap", boost::bind(&LLUrlAction::showLocationOnMap, url));
 	registrar.add("Url.CopyLabel", boost::bind(&LLUrlAction::copyLabelToClipboard, url));
 	registrar.add("Url.CopyUrl", boost::bind(&LLUrlAction::copyURLToClipboard, url));
 
 	// <FS:Ansariel> Additional convenience options
-	std::string target_id = LLUrlAction::extractUuidFromSlurl(url).asString();
-	registrar.add("FS.ZoomIn", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id + "/zoom"));
-	registrar.add("FS.TeleportToTarget", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id + "/teleportto"));
-	registrar.add("FS.OfferTeleport", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id + "/offerteleport"));
-	registrar.add("FS.TrackAvatar", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id + "/track"));
+	std::string target_id_str = LLUrlAction::extractUuidFromSlurl(url).asString();
+	registrar.add("FS.ZoomIn", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id_str + "/zoom"));
+	registrar.add("FS.TeleportToTarget", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id_str + "/teleportto"));
+	registrar.add("FS.OfferTeleport", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id_str + "/offerteleport"));
+	registrar.add("FS.TrackAvatar", boost::bind(&LLUrlAction::executeSLURL, "secondlife:///app/firestorm/" + target_id_str + "/track"));
+	// </FS:Ansariel>
+
+	// <FS:Ansariel> Add enable checks for menu items
+	LLUICtrl::EnableCallbackRegistry::ScopedRegistrar enable_registrar;
+	LLUUID target_id(target_id_str);
+	enable_registrar.add("Url.EnableShowProfile", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_SHOW_PROFILE));
+	enable_registrar.add("Url.EnableAddFriend", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_ADD_FRIEND));
+	enable_registrar.add("Url.EnableRemoveFriend", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_REMOVE_FRIEND));
+	enable_registrar.add("Url.EnableSendIM", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_SEND_IM));
+	enable_registrar.add("FS.EnableZoomIn", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_ZOOM_IN));
+	enable_registrar.add("FS.EnableOfferTeleport", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_OFFER_TELEPORT));
+	enable_registrar.add("FS.EnableTrackAvatar", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_TRACK_AVATAR));
+	enable_registrar.add("FS.EnableTeleportToTarget", boost::bind(&FSRegistrarUtils::checkIsEnabled, gFSRegistrarUtils, target_id, FS_RGSTR_ACT_TELEPORT_TO));
 	// </FS:Ansariel>
 
 	// create and return the context menu from the XUI file
 	delete mPopupMenu;
 	mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLContextMenu>(xui_file, LLMenuGL::sMenuContainer,
 																		 LLMenuHolderGL::child_registry_t::instance());	
+	if (mIsFriendSignal)
+	{
+		bool isFriend = *(*mIsFriendSignal)(LLUUID(LLUrlAction::getUserID(url)));
+		LLView* addFriendButton = mPopupMenu->getChild<LLView>("add_friend");
+		LLView* removeFriendButton = mPopupMenu->getChild<LLView>("remove_friend");
+
+		if (addFriendButton && removeFriendButton)
+		{
+			addFriendButton->setEnabled(!isFriend);
+			removeFriendButton->setEnabled(isFriend);
+		}
+	}
+	
 	if (mPopupMenu)
 	{
 		mPopupMenu->show(x, y);
@@ -2044,7 +2147,7 @@ static LLFastTimer::DeclareTimer FTM_PARSE_HTML("Parse HTML");
 void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Params& input_params)
 {
 	LLStyle::Params style_params(input_params);
-	style_params.fillFrom(getDefaultStyleParams());
+	style_params.fillFrom(getStyleParams());
 
 	S32 part = (S32)LLTextParser::WHOLE;
 	if (mParseHTML && !style_params.is_link) // Don't search for URLs inside a link segment (STORM-358).
@@ -2060,7 +2163,9 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 			end = match.getEnd()+1;
 
 			LLStyle::Params link_params(style_params);
-			link_params.overwriteFrom(match.getStyle());
+			// <FS:CR> FIRE-11330 - if it's a name, don't stylize it like a url
+			if (!input_params.is_name_slurl)
+				link_params.overwriteFrom(match.getStyle());
 
 			// output the text before the Url
 			if (start > 0)
@@ -2086,7 +2191,11 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 			// </FS:Ansariel> Optional icon position
 
 			// output the styled Url
-			appendAndHighlightTextImpl(match.getLabel(), part, link_params, match.underlineOnHoverOnly());
+			// <FS:CR> FIRE-11437 - Don't supress font style for chat history name links
+			//appendAndHighlightTextImpl(match.getLabel(), part, link_params, match.underlineOnHoverOnly());
+			appendAndHighlightTextImpl(match.getLabel(), part, link_params,
+									   input_params.is_name_slurl ? false : match.underlineOnHoverOnly());
+			// </FS:CR>
 			
 			// set the tooltip for the Url label
 			if (! match.getTooltip().empty())
@@ -2143,31 +2252,49 @@ void LLTextBase::appendText(const std::string &new_text, bool prepend_newline, c
 	appendTextImpl(new_text,input_params);
 }
 
+void LLTextBase::setLabel(const LLStringExplicit& label)
+{
+	mLabel = label;
+	resetLabel();
+}
+
+BOOL LLTextBase::setLabelArg(const std::string& key, const LLStringExplicit& text )
+{
+	mLabel.setArg(key, text);
+	return TRUE;
+}
+
+void LLTextBase::resetLabel()
+{
+	if (useLabel())
+	{
+		clearSegments();
+
+		LLStyle* style = new LLStyle(getStyleParams());
+		style->setColor(mTentativeFgColor);
+		LLStyleConstSP sp(style);
+
+		LLTextSegmentPtr label = new LLLabelTextSegment(sp, 0, mLabel.getWString().length() + 1, *this);
+		insertSegment(label);
+	}
+}
+
+bool LLTextBase::useLabel() const
+{
+    return !getLength() && !mLabel.empty() && !hasFocus();
+}
+
+void LLTextBase::setFont(const LLFontGL* font)
+{
+	mFont = font;
+	mStyleDirty = true;
+}
+
 void LLTextBase::needsReflow(S32 index)
 {
 	lldebugs << "reflow on object " << (void*)this << " index = " << mReflowIndex << ", new index = " << index << llendl;
 	mReflowIndex = llmin(mReflowIndex, index);
 }
-
-// [SL:KB] - Patch: Control-TextEditorFont | Checked: 2012-01-10 (Catznip-3.2.1) | Added: Catznip-3.2.1
-void LLTextBase::setFont(const LLFontGL* pFont)
-{
-	for(segment_set_t::iterator itSegment = mSegments.begin(); itSegment != mSegments.end(); ++itSegment)
-	{
-		LLTextSegmentPtr segment = *itSegment;
-
-		LLStyleConstSP curStyle = segment->getStyle();
-		if (curStyle->getFont() == mDefaultFont)
-		{
-			LLStyleSP newStyle(new LLStyle(*curStyle));
-			newStyle->setFont(pFont);
-			LLStyleConstSP newStyleConst(newStyle);
-			segment->setStyle(newStyleConst);
-		}
-	}
-	mDefaultFont = pFont;
-}
-// [/SL:KB]
 
 void LLTextBase::appendLineBreakSegment(const LLStyle::Params& style_params)
 {
@@ -2394,7 +2521,6 @@ S32 LLTextBase::getDocIndexFromLocalCoord( S32 local_x, S32 local_y, BOOL round,
 {
 	// Figure out which line we're nearest to.
 	LLRect doc_rect = mDocumentView->getRect();
-
 	S32 doc_y = local_y - doc_rect.mBottom;
 	
 	// binary search for line that starts before local_y
@@ -2554,7 +2680,7 @@ LLRect LLTextBase::getLocalRectFromDocIndex(S32 pos) const
 	{ 
 		// return default height rect in upper left
 		local_rect = content_window_rect;
-		local_rect.mBottom = local_rect.mTop - mDefaultFont->getLineHeight();
+		local_rect.mBottom = local_rect.mTop - mFont->getLineHeight();
 		return local_rect;
 	}
 
@@ -2660,21 +2786,18 @@ void LLTextBase::setCursorAtLocalPos( S32 local_x, S32 local_y, bool round, bool
 void LLTextBase::changeLine( S32 delta )
 {
 	S32 line = getLineNumFromDocIndex(mCursorPos);
+	S32 max_line_nb = getLineCount() - 1;
+	max_line_nb = (max_line_nb < 0 ? 0 : max_line_nb);
+    
+	S32 new_line = llclamp(line + delta, 0, max_line_nb);
 
-	S32 new_line = line;
-	if( (delta < 0) && (line > 0 ) )
-	{
-		new_line = line - 1;
-	}
-	else if( (delta > 0) && (line < (getLineCount() - 1)) )
-	{
-		new_line = line + 1;
-	}
-
-	LLRect visible_region = getVisibleDocumentRect();
-
-	S32 new_cursor_pos = getDocIndexFromLocalCoord(mDesiredXPixel, mLineInfoList[new_line].mRect.mBottom + mVisibleTextRect.mBottom - visible_region.mBottom, TRUE);
-	setCursorPos(new_cursor_pos, true);
+    if (new_line != line)
+    {
+        LLRect visible_region = getVisibleDocumentRect();
+        S32 new_cursor_pos = getDocIndexFromLocalCoord(mDesiredXPixel,
+                                                       mLineInfoList[new_line].mRect.mBottom + mVisibleTextRect.mBottom - visible_region.mBottom, TRUE);
+        setCursorPos(new_cursor_pos, true);
+    }
 }
 
 bool LLTextBase::scrolledToStart()
@@ -2915,19 +3038,6 @@ void LLTextBase::endSelection()
 	}
 }
 
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-08-20 (Catznip-3.2.0a) | Added: Catznip-2.8.0a
-void LLTextBase::setSelection(S32 start, S32 end)
-{
-	S32 len = getLength();
-
-	mIsSelecting = TRUE;
-	mSelectionStart = llclamp(start, 0, len);
-	mSelectionEnd = llclamp(end, 0, len);
-
-	setCursorPos(mSelectionEnd);
-}
-// [/SL:KB]
-
 // get portion of document that is visible in text editor
 LLRect LLTextBase::getVisibleDocumentRect() const
 {
@@ -2981,6 +3091,15 @@ boost::signals2::connection LLTextBase::setURLClickedCallback(const commit_signa
 		mURLClickSignal = new commit_signal_t();
 	}
 	return mURLClickSignal->connect(cb);
+}
+
+boost::signals2::connection LLTextBase::setIsFriendCallback(const is_friend_signal_t::slot_type& cb)
+{
+	if (!mIsFriendSignal)
+	{
+		mIsFriendSignal = new is_friend_signal_t();
+	}
+	return mIsFriendSignal->connect(cb);
 }
 
 //
@@ -3049,7 +3168,7 @@ LLNormalTextSegment::LLNormalTextSegment( const LLColor4& color, S32 start, S32 
 	mToken(NULL),
 	mEditor(editor)
 {
-	mStyle = new LLStyle(LLStyle::Params().visible(is_visible).color(color).font(editor.getDefaultFont()));
+	mStyle = new LLStyle(LLStyle::Params().visible(is_visible).color(color));
 
 	mFontHeight = mStyle->getFont()->getLineHeight();
 }
@@ -3074,7 +3193,7 @@ F32 LLNormalTextSegment::drawClippedSegment(S32 seg_start, S32 seg_end, S32 sele
 {
 	F32 alpha = LLViewDrawContext::getCurrentContext().mAlpha;
 
-	const LLWString &text = mEditor.getWText();
+	const LLWString &text = getWText();
 
 	F32 right_x = rect.mLeft;
 	if (!mStyle->isVisible())
@@ -3237,7 +3356,7 @@ bool LLNormalTextSegment::getDimensions(S32 first_char, S32 num_chars, S32& widt
 	if (num_chars > 0)
 	{
 		height = mFontHeight;
-		const LLWString &text = mEditor.getWText();
+		const LLWString &text = getWText();
 		// if last character is a newline, then return true, forcing line break
 		width = mStyle->getFont()->getWidth(text.c_str(), mStart + first_char, num_chars);
 	}
@@ -3246,7 +3365,7 @@ bool LLNormalTextSegment::getDimensions(S32 first_char, S32 num_chars, S32& widt
 
 S32	LLNormalTextSegment::getOffset(S32 segment_local_x_coord, S32 start_offset, S32 num_chars, bool round) const
 {
-	const LLWString &text = mEditor.getWText();
+	const LLWString &text = getWText();
 	return mStyle->getFont()->charFromPixelOffset(text.c_str(), mStart + start_offset,
 											   (F32)segment_local_x_coord,
 											   F32_MAX,
@@ -3256,7 +3375,7 @@ S32	LLNormalTextSegment::getOffset(S32 segment_local_x_coord, S32 start_offset, 
 
 S32	LLNormalTextSegment::getNumChars(S32 num_pixels, S32 segment_offset, S32 line_offset, S32 max_chars) const
 {
-	const LLWString &text = mEditor.getWText();
+	const LLWString &text = getWText();
 
 	LLUIImagePtr image = mStyle->getImage();
 	if( image.notNull())
@@ -3266,15 +3385,44 @@ S32	LLNormalTextSegment::getNumChars(S32 num_pixels, S32 segment_offset, S32 lin
 
 	S32 last_char = mEnd;
 
+	// <FS:Ansariel> Prevent unnecessary calculations
+	S32 start_offset = mStart + segment_offset;
+
 	// set max characters to length of segment, or to first newline
-	max_chars = llmin(max_chars, last_char - (mStart + segment_offset));
+	// <FS:Ansariel> Prevent unnecessary calculations
+	//max_chars = llmin(max_chars, last_char - (mStart + segment_offset));
+	max_chars = llmin(max_chars, last_char - start_offset);
 
 	// if no character yet displayed on this line, don't require word wrapping since
 	// we can just move to the next line, otherwise insist on it so we make forward progress
 	LLFontGL::EWordWrapStyle word_wrap_style = (line_offset == 0) 
 		? LLFontGL::WORD_BOUNDARY_IF_POSSIBLE 
 		: LLFontGL::ONLY_WORD_BOUNDARIES;
-	S32 num_chars = mStyle->getFont()->maxDrawableChars(text.c_str() + segment_offset + mStart, 
+	
+	
+	// <FS:Ansariel> Prevent unnecessary calculations
+
+	//S32 offsetLength = text.length() - (segment_offset + mStart);
+	S32 offsetLength = text.length() - start_offset;
+	
+	//if(getLength() < segment_offset + mStart)
+	if(getLength() < start_offset)
+	{ 
+		llinfos << "getLength() < segment_offset + mStart\t getLength()\t" << getLength() << "\tsegment_offset:\t" 
+						<< segment_offset << "\tmStart:\t" << mStart << "\tsegments\t" << mEditor.mSegments.size() << "\tmax_chars\t" << max_chars << llendl;
+	}
+
+	if( (offsetLength + 1) < max_chars)
+	{
+	// <FS:Ansariel> Prevent unnecessary calculations
+		//llinfos << "offsetString.length() + 1 < max_chars\t max_chars:\t" << max_chars << "\toffsetLength:\t" << offsetLength << " getLength() : "
+		llinfos << "offsetString.length() + 1 < max_chars\t max_chars:\t" << max_chars << "\toffsetString.length():\t" << offsetLength << " getLength() : "
+			<< getLength() << "\tsegment_offset:\t" << segment_offset << "\tmStart:\t" << mStart << "\tsegments\t" << mEditor.mSegments.size() << llendl;
+	}
+	
+	// <FS:Ansariel> Prevent unnecessary calculations
+	//S32 num_chars = mStyle->getFont()->maxDrawableChars( text.c_str() + (segment_offset + mStart),
+	S32 num_chars = mStyle->getFont()->maxDrawableChars(text.c_str() + start_offset, 
 												(F32)num_pixels,
 												max_chars, 
 												word_wrap_style);
@@ -3289,10 +3437,12 @@ S32	LLNormalTextSegment::getNumChars(S32 num_pixels, S32 segment_offset, S32 lin
 
 	// include *either* the EOF or newline character in this run of text
 	// but not both
-	S32 last_char_in_run = mStart + segment_offset + num_chars;
+	// <FS:Ansariel> Prevent unnecessary calculations
+	//S32 last_char_in_run = mStart + segment_offset + num_chars;
+	S32 last_char_in_run = start_offset + num_chars;
 	// check length first to avoid indexing off end of string
 	if (last_char_in_run < mEnd 
-		&& (last_char_in_run >= mEditor.getLength() ))
+		&& (last_char_in_run >= getLength()))
 	{
 		num_chars++;
 	}
@@ -3308,6 +3458,39 @@ void LLNormalTextSegment::dump() const
 		mStart << ", " <<
 		getEnd() << "]" <<
 		llendl;
+}
+
+/*virtual*/
+const LLWString& LLNormalTextSegment::getWText()	const
+{
+	return mEditor.getWText();
+}
+
+/*virtual*/
+const S32 LLNormalTextSegment::getLength() const
+{
+	return mEditor.getLength();
+}
+
+LLLabelTextSegment::LLLabelTextSegment( LLStyleConstSP style, S32 start, S32 end, LLTextBase& editor )
+:	LLNormalTextSegment(style, start, end, editor)
+{
+}
+
+LLLabelTextSegment::LLLabelTextSegment( const LLColor4& color, S32 start, S32 end, LLTextBase& editor, BOOL is_visible)
+:	LLNormalTextSegment(color, start, end, editor, is_visible)
+{
+}
+
+/*virtual*/
+const LLWString& LLLabelTextSegment::getWText()	const
+{
+	return mEditor.getWlabel();
+}
+/*virtual*/
+const S32 LLLabelTextSegment::getLength() const
+{
+	return mEditor.getWlabel().length();
 }
 
 //
@@ -3443,12 +3626,6 @@ F32	LLLineBreakTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 se
 {
 	return  draw_rect.mLeft;
 }
-// [SL:KB] - Patch: Control-TextEditorFont | Checked: 2012-01-10 (Catznip-3.2.1) | Added: Catznip-3.2.1
-void LLLineBreakTextSegment::setStyle(LLStyleConstSP style)
-{
-	mFontHeight = llceil(style->getFont()->getLineHeight());
-}
-// [/SL:KB]
 
 LLImageTextSegment::LLImageTextSegment(LLStyleConstSP style,S32 pos,class LLTextBase& editor)
 :	LLTextSegment(pos,pos+1),
@@ -3520,3 +3697,7 @@ F32	LLImageTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 select
 	return 0.0;
 }
 
+void LLTextBase::setWordWrap(bool wrap)
+{
+	mWordWrap = wrap;
+}

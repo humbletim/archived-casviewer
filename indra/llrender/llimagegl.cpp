@@ -718,9 +718,9 @@ void LLImageGL::setImage(const U8* data_in, BOOL data_hasmips)
 
 					mMipLevels = wpo2(llmax(w, h));
 
-					//use legacy mipmap generation mode
+					//use legacy mipmap generation mode (note: making this condional can cause rendering issues)
 					glTexParameteri(mTarget, GL_GENERATE_MIPMAP, GL_TRUE);
-					
+
 					LLImageGL::setManualImage(mTarget, 0, mFormatInternal,
 								 w, h, 
 								 mFormatPrimary, mFormatType,
@@ -735,6 +735,12 @@ void LLImageGL::setImage(const U8* data_in, BOOL data_hasmips)
 						glPixelStorei(GL_UNPACK_SWAP_BYTES, 0);
 						stop_glerror();
 					}
+
+					if (LLRender::sGLCoreProfile)
+					{
+						glGenerateMipmap(mTarget);
+					}	
+					stop_glerror();
 				}
 			}
 			else
@@ -745,12 +751,16 @@ void LLImageGL::setImage(const U8* data_in, BOOL data_hasmips)
 				S32 height = getHeight(mCurrentDiscardLevel);
 				S32 nummips = mMaxDiscardLevel - mCurrentDiscardLevel + 1;
 				S32 w = width, h = height;
+
+
+				const U8* new_data = 0;
+				(void)new_data;
+
 				const U8* prev_mip_data = 0;
 				const U8* cur_mip_data = 0;
 #ifdef SHOW_ASSERT
 				S32 cur_mip_size = 0;
 #endif
-				
 				mMipLevels = nummips;
 
 				for (int m=0; m<nummips; m++)
@@ -770,14 +780,22 @@ void LLImageGL::setImage(const U8* data_in, BOOL data_hasmips)
 						llassert(cur_mip_size == bytes*4);
 #endif
 						U8* new_data = new U8[bytes];
+
+#ifdef SHOW_ASSERT
+						llassert(prev_mip_data);
+						llassert(cur_mip_size == bytes*4);
 						llassert_always(new_data);
+#endif
+
 						LLImageBase::generateMip(prev_mip_data, new_data, w, h, mComponents);
 						cur_mip_data = new_data;
 #ifdef SHOW_ASSERT
 						cur_mip_size = bytes; 
 #endif
+
 					}
 					llassert(w > 0 && h > 0 && cur_mip_data);
+					(void)cur_mip_data;
 					{
 // 						LLFastTimer t1(FTM_TEMP4);
 						if(mFormatSwapBytes)
@@ -1074,6 +1092,16 @@ void LLImageGL::generateTextures(LLTexUnit::eTextureType type, U32 format, S32 n
 	LLFastTimer t(FTM_GENERATE_TEXTURES);
 	// <FS:ND> user-defined names was deprecated with OpenGL 3.1. Just generate/delete using OpenGL function.
 
+	if (LLRender::sGLCoreProfile)
+	{
+		switch (format)
+		{
+			case GL_LUMINANCE8: format = GL_RGB8; break;
+			case GL_LUMINANCE8_ALPHA8:
+			case GL_ALPHA8: format = GL_RGBA8; break;
+		}
+	}
+
 	// bool empty = true;
 	// 
 	// dead_texturelist_t::iterator iter = sDeadTextureList[type].find(format);
@@ -1109,7 +1137,21 @@ void LLImageGL::deleteTextures(LLTexUnit::eTextureType type, U32 format, S32 mip
 	{
 		// <FS:ND> user-defined names was deprecated with OpenGL 3.1. Just generate/delete using OpenGL function.
 
-		// if (format == 0 ||  type == LLTexUnit::TT_CUBE_MAP || mip_levels == -1)
+		// switch (format)
+		// {
+		// 	case 0:
+		// 
+		// 	// We get ARB errors in debug when attempting to use glTexImage2D with these deprecated pix formats
+		// 	//
+		// 	case GL_LUMINANCE8:
+		// 	case GL_INTENSITY8:
+		// 	case GL_ALPHA8:
+		// 		glDeleteTextures(numTextures, textures);
+		// 	break;
+		// 
+		// 	default:
+		// 	{
+		// 		if (type == LLTexUnit::TT_CUBE_MAP || mip_levels == -1)
 		// { //unknown internal format or unknown number of mip levels, not safe to reuse
 		// 	glDeleteTextures(numTextures, textures);
 		// }
@@ -1117,11 +1159,13 @@ void LLImageGL::deleteTextures(LLTexUnit::eTextureType type, U32 format, S32 mip
 		// {
 		// 	for (S32 i = 0; i < numTextures; ++i)
 		// 	{ //remove texture from VRAM by setting its size to zero
+		// 
 		// 		for (S32 j = 0; j <= mip_levels; j++)
 		// 		{
 		// 			gGL.getTexUnit(0)->bindManual(type, textures[i]);
-		// 
-		// 			glTexImage2D(LLTexUnit::getInternalType(type), j, format, 0, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		// 					U32 internal_type = LLTexUnit::getInternalType(type);
+		// 					glTexImage2D(internal_type, j, format, 0, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		// 					stop_glerror();
 		// 		}
 		// 
 		// 		llassert(std::find(sDeadTextureList[type][format].begin(),
@@ -1129,12 +1173,16 @@ void LLImageGL::deleteTextures(LLTexUnit::eTextureType type, U32 format, S32 mip
 		// 						   sDeadTextureList[type][format].end());
 		// 
 		// 		sDeadTextureList[type][format].push_back(textures[i]);
-		// 	}	
-		// }
+		// 	}  
+	// 	}
+	// }
+	// 		break;
+	// 	}
 
 		glDeleteTextures(numTextures, textures);
 
 		// </FS:ND>
+
 	}
 	
 	/*if (immediate)

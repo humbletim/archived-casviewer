@@ -3,7 +3,7 @@
 	<tab_container label="Preferencje kolorów" name="color_tabs">
 		<panel label="Kolory czatu" name="tab-chat">
 			<text name="font_colors">
-				Kolory napisów:
+				Wiadomości czatu:
 			</text>
 			<text name="user_label">
 				Mój tekst
@@ -38,12 +38,24 @@
 			<text name="htmllink_label">
 				URLe
 			</text>
-			<text name="chat_name_label">
-				Nagłówki czatów
-			</text>
 			<text name="direct_label">
 				Bezpośrednie
 			</text>
+			<text name="header_colors">
+				Nagłówki czatu:
+			</text>
+			<text name="chat_name_label">
+				Awatary
+			</text>
+			<text name="object_name_header_label">
+				Obiekty
+			</text>
+			<check_box name="FSColorIMsDistinctly" label="Koloruj czat IM/Grup oddzielnie w konsoli:" />
+			<panel name="im_color_panel">
+				<text name="console_im_label">
+					IM/Grupy
+				</text>
+			</panel>
 		</panel>
 		<panel label="Tagi imion" name="tab-nametag">
 			<text name="nametag_colors">
@@ -168,7 +180,11 @@
 			</text>
 			<slider label="Aktywne:" name="active"/>
 			<slider label="Nieaktywne:" name="inactive"/>
-			<slider label="Przezrocz. konsoli:" name="console_background_opacity" tool_tip="Wybierz przezroczystość tła konsoli"/>
+			<text name="console_opacity">
+				Przezroczystość konsoli:
+			</text>
+			<color_swatch name="console_background" tool_tip="Wybierz kolor konsoli"/>
+			<slider label="Przezroczystość:" name="console_background_opacity" tool_tip="Wybierz przezroczystość tła konsoli"/>
 			<check_box name="FSScriptDialogNoTransparency" label="Okna dialogowe skryptów zawsze na nieprzejrzystym tle"/>
 			<check_box name="FSGroupNotifyNoTransparency" label="Ogłoszenia grupowe zawsze na nieprzejrzystym tle"/>
 			<check_box name="override_pie_color_checkbox" label="Nadpisz przezroczystość i kolor tła menu kołowego:"/>

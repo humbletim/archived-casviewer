@@ -80,6 +80,7 @@
     <layout_panel auto_resize="false"
                       width="4"
                       min_width="4"/>
+<!-- FS:Ansariel [FS communication UI] -->  
     <layout_panel
          auto_resize="false"
          follows="right"
@@ -90,7 +91,7 @@
          name="im_well_panel"
          top="0"
          width="37">
-      <chiclet_im_well
+      <fs_chiclet_im_well
              follows="right"
              height="28"
              layout="topleft"
@@ -126,8 +127,9 @@ image_pressed_selected  "Lit" + "Selected" - there are new messages and the Well
                      function="Button.SetDockableFloaterToggle"
                      parameter="im_well_window" />
         </button>
-      </chiclet_im_well>
+      </fs_chiclet_im_well>
     </layout_panel>
+<!-- END FS:Ansariel [FS communication UI] -->  
     <layout_panel
          auto_resize="false"
          follows="right"

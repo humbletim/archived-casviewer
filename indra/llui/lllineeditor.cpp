@@ -193,16 +193,26 @@ LLLineEditor::LLLineEditor(const LLLineEditor::Params& p)
 	setPrevalidateInput(p.prevalidate_input_callback());
 	setPrevalidate(p.prevalidate_callback());
 
-	LLContextMenu* menu = LLUICtrlFactory::instance().createFromFile<LLContextMenu>
-		("menu_text_editor.xml",
-		 LLMenuGL::sMenuContainer,
-		 LLMenuHolderGL::child_registry_t::instance());
-	setContextMenu(menu);
+	// <FS:Zi> Only allocate a menu when it's called for the first time
+	// LLContextMenu* menu = LLUICtrlFactory::instance().createFromFile<LLContextMenu>
+	// 	("menu_text_editor.xml",
+	// 	 LLMenuGL::sMenuContainer,
+	// 	 LLMenuHolderGL::child_registry_t::instance());
+	// setContextMenu(menu);
+	// </FS:Zi>
 }
  
 LLLineEditor::~LLLineEditor()
 {
 	mCommitOnFocusLost = FALSE;
+    
+    // Make sure no context menu linger around once the widget is deleted
+	LLContextMenu* menu = static_cast<LLContextMenu*>(mContextMenuHandle.get());
+	if (menu)
+	{
+        menu->hide();
+    }
+	setContextMenu(NULL);
 
 	// calls onCommit() while LLLineEditor still valid
 	gFocusMgr.releaseFocusIfNeeded( this );
@@ -973,11 +983,24 @@ void LLLineEditor::addChar(const llwchar uni_char)
 		LLUI::reportBadKeystroke();
 	}
 
+	//<FS:TS> FIRE-11373: Autoreplace doesn't work in nearby chat bar
 	if (!mReadOnly && mAutoreplaceCallback != NULL)
 	{
-		// call callback
-		mAutoreplaceCallback(mText, mCursorPos);
+		// autoreplace the text, if necessary
+		S32 replacement_start;
+		S32 replacement_length;
+		LLWString replacement_string;
+		S32 new_cursor_pos = getCursor();
+		mAutoreplaceCallback(replacement_start, replacement_length, replacement_string, new_cursor_pos, getWText());
+
+		if (replacement_length > 0 || !replacement_string.empty())
+		{
+			mText.erase(replacement_start, replacement_length);
+			mText.insert(replacement_start, replacement_string);
+			setCursor(new_cursor_pos);
+		}
 	}
+	//</FS:TS> FIRE-11373
 
 	getWindow()->hideCursorUntilMouseMove();
 }
@@ -1450,6 +1473,7 @@ BOOL LLLineEditor::handleSpecialKey(KEY key, MASK mask)
 		{
 			if( mCurrentHistoryLine > mLineHistory.begin() )
 			{
+				// <FS> FIRE-324. Nearby and IM chat bars forget what was written after browsing history
 				(*mCurrentHistoryLine).assign(getText());
 				mText.assign( *(--mCurrentHistoryLine) );
 				setCursorToEnd();
@@ -2597,6 +2621,17 @@ LLWString LLLineEditor::getConvertedText() const
 void LLLineEditor::showContextMenu(S32 x, S32 y)
 {
 	LLContextMenu* menu = static_cast<LLContextMenu*>(mContextMenuHandle.get());
+
+	// <FS:Zi> Only allocate a menu when it's called for the first time
+	if(!menu)
+	{
+		menu = LLUICtrlFactory::instance().createFromFile<LLContextMenu>
+			("menu_text_editor.xml",
+			LLMenuGL::sMenuContainer,
+			LLMenuHolderGL::child_registry_t::instance());
+		setContextMenu(menu);
+	}
+	// </FS:Zi>
 
 	if (menu)
 	{

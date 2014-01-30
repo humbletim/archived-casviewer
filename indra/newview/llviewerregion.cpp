@@ -44,6 +44,7 @@
 
 #include "llagent.h"
 #include "llagentcamera.h"
+#include "llavatarrenderinfoaccountant.h"
 #include "llcallingcard.h"
 #include "llcaphttpsender.h"
 #include "llcapabilitylistener.h"
@@ -71,7 +72,12 @@
 #include "llviewercontrol.h"
 #include "llsdserialize.h"
 
-#include "llviewerparcelmgr.h"	// <FS:CR> Aurora Sim
+// <FS:CR> Opensim
+#include "llviewerparcelmgr.h"	//Aurora Sim
+#ifdef OPENSIM
+#include "llviewernetwork.h"
+#endif
+// </FS:CR>
 
 #ifdef LL_WINDOWS
 	#pragma warning(disable:4355)
@@ -145,7 +151,7 @@ public:
 
 	CapabilityMap mCapabilities;
 	CapabilityMap mSecondCapabilitiesTracker; 
-
+	
 	LLEventPoll* mEventPoll;
 
 	S32 mSeedCapMaxAttempts;
@@ -222,7 +228,7 @@ public:
 		}
     }
 
-   void result(const LLSD& content)
+    void result(const LLSD& content)
     {
 		LLViewerRegion *regionp = LLWorld::getInstance()->getRegionFromHandle(mRegionHandle);
 		if(!regionp) //region was removed
@@ -302,12 +308,17 @@ public:
 		
 		if ( regionp->getRegionImpl()->mCapabilities.size() != regionp->getRegionImpl()->mSecondCapabilitiesTracker.size() )
 		{
-			llinfos<<"BaseCapabilitiesCompleteTracker "<<"Sim sent duplicate seed caps that differs in size - most likely content."<<llendl;			
+			llinfos << "BaseCapabilitiesCompleteTracker " << "sim " << regionp->getName()
+				<< " sent duplicate seed caps that differs in size - most likely content. " 
+				<< (S32) regionp->getRegionImpl()->mCapabilities.size() << " vs " << regionp->getRegionImpl()->mSecondCapabilitiesTracker.size()
+				<< llendl;
+
 			//todo#add cap debug versus original check?
-			/*CapabilityMap::const_iterator iter = regionp->getRegionImpl()->mCapabilities.begin();
+			/*
+			CapabilityMap::const_iterator iter = regionp->getRegionImpl()->mCapabilities.begin();
 			while (iter!=regionp->getRegionImpl()->mCapabilities.end() )
 			{
-				llinfos<<"BaseCapabilitiesCompleteTracker Original "<<iter->first<<" "<< iter->second<<llendl;
+				llinfos << "BaseCapabilitiesCompleteTracker Original " << iter->first << " " << iter->second<<llendl;
 				++iter;
 			}
 			*/
@@ -413,6 +424,9 @@ void LLViewerRegion::initPartitions()
 	mImpl->mObjectPartition.push_back(new LLBridgePartition());	//PARTITION_BRIDGE
 	mImpl->mObjectPartition.push_back(new LLHUDParticlePartition());//PARTITION_HUD_PARTICLE
 	mImpl->mObjectPartition.push_back(NULL);						//PARTITION_NONE
+
+	mRenderInfoRequestTimer.resetWithExpiry(0.f);		// Set timer to be expired
+	setCapabilitiesReceivedCallback(boost::bind(&LLAvatarRenderInfoAccountant::expireRenderInfoReportTimer, _1));
 }
 
 // <CV:David> OpenSim "4096 bug" fix by Latif Khalifa.
@@ -1345,7 +1359,7 @@ void LLViewerRegion::getInfo(LLSD& info)
 	info["Region"]["Handle"]["y"] = (LLSD::Integer)y;
 }
 
-void LLViewerRegion::getSimulatorFeatures(LLSD& sim_features)
+void LLViewerRegion::getSimulatorFeatures(LLSD& sim_features) const
 {
 	sim_features = mSimulatorFeatures;
 }
@@ -1357,6 +1371,38 @@ void LLViewerRegion::setSimulatorFeatures(const LLSD& sim_features)
 	LLSDSerialize::toPrettyXML(sim_features, str);
 	llinfos << str.str() << llendl;
 	mSimulatorFeatures = sim_features;
+	
+// <FS:CR> Opensim god names
+#ifdef OPENSIM
+	if (LLGridManager::getInstance()->isInOpenSim())
+	{
+		mGodNames.clear();
+		if (mSimulatorFeatures.has("god_names"))
+		{
+			if (mSimulatorFeatures["god_names"].has("full_names"))
+			{
+				LLSD god_names = mSimulatorFeatures["god_names"]["full_names"];
+				for (LLSD::array_iterator itr = god_names.beginArray();
+					 itr != god_names.endArray();
+					 itr++)
+				{
+					mGodNames.insert((*itr).asString());
+				}
+			}
+			if (mSimulatorFeatures["god_names"].has("last_names"))
+			{
+				LLSD god_names = mSimulatorFeatures["god_names"]["last_names"];
+				for (LLSD::array_iterator itr = god_names.beginArray();
+					 itr != god_names.endArray();
+					 itr++)
+				{
+					mGodNames.insert((*itr).asString());
+				}
+			}
+		}
+	}
+#endif // OPENSIM
+// </FS:CR>
 }
 
 LLViewerRegion::eCacheUpdateResult LLViewerRegion::cacheFullUpdate(LLViewerObject* objectp, LLDataPackerBinaryBuffer &dp)
@@ -1706,6 +1752,7 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 	capabilityNames.append("AgentState");
 	capabilityNames.append("AttachmentResources");
 	capabilityNames.append("AvatarPickerSearch");
+	capabilityNames.append("AvatarRenderInfo");
 	capabilityNames.append("CharacterProperties");
 	capabilityNames.append("ChatSessionRequest");
 	capabilityNames.append("CopyInventoryFromNotecard");
@@ -1719,7 +1766,7 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 	capabilityNames.append("EventQueueGet");
 
 	if (gSavedSettings.getBOOL("UseHTTPInventory"))
-	{	
+	{
 		capabilityNames.append("FetchLib2");
 		capabilityNames.append("FetchLibDescendents2");
 		capabilityNames.append("FetchInventory2");
@@ -1739,7 +1786,7 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 	capabilityNames.append("LandResources");
 	capabilityNames.append("MapLayer");
 	capabilityNames.append("MapLayerGod");
-	capabilityNames.append("MeshUploadFlag");	
+	capabilityNames.append("MeshUploadFlag");
 	capabilityNames.append("NavMeshGenerationStatus");
 	capabilityNames.append("NewFileAgentInventory");
 	capabilityNames.append("ObjectMedia");
@@ -1750,6 +1797,7 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 	capabilityNames.append("ProductInfoRequest");
 	capabilityNames.append("ProvisionVoiceAccountRequest");
 	capabilityNames.append("RemoteParcelRequest");
+	capabilityNames.append("RenderMaterials");
 	capabilityNames.append("RequestTextureDownload");
 	capabilityNames.append("ResourceCostSelected");
 	capabilityNames.append("RetrieveNavMeshSrc");
@@ -1779,7 +1827,7 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 	capabilityNames.append("ViewerMetrics");
 	capabilityNames.append("ViewerStartAuction");
 	capabilityNames.append("ViewerStats");
-
+	
 	// Please add new capabilities alphabetically to reduce
 	// merge conflicts.
 }
@@ -1787,8 +1835,8 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 void LLViewerRegion::setSeedCapability(const std::string& url)
 {
 	if (getCapability("Seed") == url)
-    {	
-		//llwarns << "Ignoring duplicate seed capability" << llendl;
+    {
+		// llwarns << "Ignoring duplicate seed capability" << llendl;
 		//Instead of just returning we build up a second set of seed caps and compare them 
 		//to the "original" seed cap received and determine why there is problem!
 		LLSD capabilityNames = LLSD::emptyArray();
@@ -2076,3 +2124,45 @@ bool LLViewerRegion::dynamicPathfindingEnabled() const
 			 mSimulatorFeatures["DynamicPathfindingEnabled"].asBoolean());
 }
 
+void LLViewerRegion::resetMaterialsCapThrottle()
+{
+	F32 requests_per_sec = 	1.0f; // original default;
+	if (   mSimulatorFeatures.has("RenderMaterialsCapability")
+		&& mSimulatorFeatures["RenderMaterialsCapability"].isReal() )
+	{
+		requests_per_sec = mSimulatorFeatures["RenderMaterialsCapability"].asReal();
+		if ( requests_per_sec == 0.0f )
+		{
+			requests_per_sec = 1.0f;
+			LL_WARNS("Materials")
+				<< "region '" << getName()
+				<< "' returned zero for RenderMaterialsCapability; using default "
+				<< requests_per_sec << " per second"
+				<< LL_ENDL;
+		}
+		LL_DEBUGS("Materials") << "region '" << getName()
+							   << "' RenderMaterialsCapability " << requests_per_sec
+							   << LL_ENDL;
+	}
+	else
+	{
+		LL_DEBUGS("Materials")
+			<< "region '" << getName()
+			<< "' did not return RenderMaterialsCapability, using default "
+			<< requests_per_sec << " per second"
+			<< LL_ENDL;
+	}
+	
+	mMaterialsCapThrottleTimer.resetWithExpiry( 1.0f / requests_per_sec );
+}
+
+U32 LLViewerRegion::getMaxMaterialsPerTransaction() const
+{
+	U32 max_entries = 50; // original hard coded default
+	if (   mSimulatorFeatures.has( "MaxMaterialsPerTransaction" )
+		&& mSimulatorFeatures[ "MaxMaterialsPerTransaction" ].isInteger())
+	{
+		max_entries = mSimulatorFeatures[ "MaxMaterialsPerTransaction" ].asInteger();
+	}
+	return max_entries;
+}

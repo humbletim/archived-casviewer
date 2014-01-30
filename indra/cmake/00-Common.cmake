@@ -92,7 +92,7 @@ if (WINDOWS)
         /Oy-
         /Zc:wchar_t-
         /arch:AVX
-        /fp:fast
+#        /fp:fast
         )
   else (USE_AVX_OPTIMIZATION)
     add_definitions(
@@ -109,7 +109,7 @@ if (WINDOWS)
         /Oy-
         /Zc:wchar_t-
         /arch:SSE2
-        /fp:fast
+#        /fp:fast
         )
   endif (USE_AVX_OPTIMIZATION)
 # </FS:Ansariel> [AVX Optimization]	
@@ -122,6 +122,13 @@ if (WINDOWS)
   # configure win32 API for windows XP+ compatibility
   set(WINVER "0x0501" CACHE STRING "Win32 API Target version (see http://msdn.microsoft.com/en-us/library/aa383745%28v=VS.85%29.aspx)")
   add_definitions("/DWINVER=${WINVER}" "/D_WIN32_WINNT=${WINVER}")
+
+  if( ND_BUILD64BIT_ARCH )
+   add_definitions("/wd4267 /DND_BUILD64BIT_ARCH" )
+  else( ND_BUILD64BIT_ARCH )
+   add_definitions("/fp:fast" )
+  endif( ND_BUILD64BIT_ARCH )
+ 
 endif (WINDOWS)
 
 
@@ -176,6 +183,17 @@ if (LINUX)
 
   # Let's actually get a numerical version of gxx's version
   STRING(REGEX REPLACE ".* ([0-9])\\.([0-9])\\.([0-9]).*" "\\1\\2\\3" CXX_VERSION_NUMBER ${CXX_VERSION})
+
+  # Hacks to work around gcc 4.1 TC build pool machines which can't process pragma warning disables
+  # This is pure rubbish; I wish there was another way.
+  #
+  if(${CXX_VERSION_NUMBER} LESS 420)
+    set(CMAKE_CXX_FLAGS "-Wno-deprecated -Wno-uninitialized -Wno-unused-variable -Wno-unused-function ${CMAKE_CXX_FLAGS}")
+  endif (${CXX_VERSION_NUMBER} LESS 420)
+
+  if(${CXX_VERSION_NUMBER} GREATER 459)
+    set(CMAKE_CXX_FLAGS "-Wno-deprecated -Wno-unused-but-set-variable -Wno-unused-variable ${CMAKE_CXX_FLAGS}")
+  endif (${CXX_VERSION_NUMBER} GREATER 459)
 
   # gcc 4.3 and above don't like the LL boost and also
   # cause warnings due to our use of deprecated headers
@@ -233,21 +251,31 @@ endif (LINUX)
 
 
 if (DARWIN)
-  # NOTE (per http://lists.apple.com/archives/darwin-dev/2008/Jan/msg00232.html):
-  # > Why the bus error? What am I doing wrong? 
-  # This is a known issue where getcontext(3) is writing past the end of the
-  # ucontext_t struct when _XOPEN_SOURCE is not defined (rdar://problem/5578699 ).
-  # As a workaround, define _XOPEN_SOURCE before including ucontext.h.
-  add_definitions(-DLL_DARWIN=1 -D_XOPEN_SOURCE)
+  add_definitions(-DLL_DARWIN=1)
   set(CMAKE_CXX_LINK_FLAGS "-Wl,-no_compact_unwind -Wl,-headerpad_max_install_names,-search_paths_first")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_CXX_LINK_FLAGS}")
-  set(DARWIN_extra_cstar_flags "-mlong-branch -g")
+  set(DARWIN_extra_cstar_flags "-g")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DARWIN_extra_cstar_flags}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  ${DARWIN_extra_cstar_flags}")
   # NOTE: it's critical that the optimization flag is put in front.
   # NOTE: it's critical to have both CXX_FLAGS and C_FLAGS covered.
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O0 ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O0 ${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+  if (USE_AVX_OPTIMIZATION)
+    if (XCODE_VERSION GREATER 4.9)
+      set(CMAKE_XCODE_ATTRIBUTE_CLANG_X86_VECTOR_INSTRUCTIONS AVX)
+      set(CMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL -Ofast)
+      set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -mavx ${CMAKE_CXX_FLAGS_RELEASE}")
+      set(CMAKE_C_FLAGS_RELEASE "-Ofast -mavx ${CMAKE_C_FLAGS_RELEASE}")
+	else (XCODE_VERSION GREATER 4.9)
+	  error("Darwin AVX Optimizations only available on Xcode5 with Clang, silly person!")
+	endif (XCODE_VERSION GREATER 4.9)
+  else (USE_AVX_OPTIMIZATION)
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_X86_VECTOR_INSTRUCTIONS SSE3)
+	set(CMAKE_XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL -O3)
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -msse3 ${CMAKE_CXX_FLAGS_RELEASE}")
+	set(CMAKE_C_FLAGS_RELEASE "-O3 -msse3 ${CMAKE_C_FLAGS_RELEASE}")
+  endif (USE_AVX_OPTIMIZATION)
   if (XCODE_VERSION GREATER 4.2)
     set(ENABLE_SIGNING TRUE)
     set(SIGNING_IDENTITY "Developer ID Application: Linden Research, Inc.")
@@ -262,7 +290,11 @@ if (LINUX OR DARWIN)
     set(GCC_WARNINGS "${GCC_WARNINGS} -Werror")
   endif (NOT GCC_DISABLE_FATAL_WARNINGS)
 
-  set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder -Wno-non-virtual-dtor")
+  if (XCODE_VERSION GREATER 4.9)
+    set(GCC_CXX_WARNINGS "$[GCC_WARNINGS] -Wno-reorder -Wno-non-virtual-dtor -Wno-format-extra-args -Wunused-function -Wunused-variable")
+  else (XCODE_VERSION GREATER 4.9)
+    set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder -Wno-non-virtual-dtor")
+  endif (XCODE_VERSION GREATER 4.9)
 
   set(CMAKE_C_FLAGS "${GCC_WARNINGS} ${CMAKE_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${GCC_CXX_WARNINGS} ${CMAKE_CXX_FLAGS}")

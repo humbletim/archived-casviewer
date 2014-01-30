@@ -47,6 +47,8 @@ public:
 		TEXTURE_MATRIX1,
 		TEXTURE_MATRIX2,
 		TEXTURE_MATRIX3,
+		OBJECT_PLANE_S,
+		OBJECT_PLANE_T,
 		VIEWPORT,
 		LIGHT_POSITION,
 		LIGHT_DIRECTION,
@@ -109,6 +111,7 @@ public:
 		GLOW_DELTA,
 
 		MINIMUM_ALPHA,
+		EMISSIVE_BRIGHTNESS,
 
 		DEFERRED_SHADOW_MATRIX,
 		DEFERRED_ENV_MAT,
@@ -120,10 +123,7 @@ public:
 		DEFERRED_SSAO_MAX_RADIUS,
 		DEFERRED_SSAO_FACTOR,
 		DEFERRED_SSAO_FACTOR_INV,
-		// <FS:Ansariel> Tofu's SSR
-		//DEFERRED_SSAO_EFFECT_MAT,
-		DEFERRED_SSAO_EFFECT,
-		// </FS:Ansariel> Tofu's SSR
+		DEFERRED_SSAO_EFFECT_MAT,
 		DEFERRED_SCREEN_RES,
 		DEFERRED_NEAR_CLIP,
 		DEFERRED_SHADOW_OFFSET,
@@ -167,10 +167,58 @@ public:
 		DEFERRED_LIGHT,
 		DEFERRED_BLOOM,
 		DEFERRED_PROJECTION,
+		DEFERRED_NORM_MATRIX,
+
+		GLOBAL_GAMMA,
+		TEXTURE_GAMMA,
+		
+		SPECULAR_COLOR,
+		ENVIRONMENT_INTENSITY,
+		AVATAR_MATRIX,
+		
 // <FS:CR> Import Vignette from Exodus
 		EXO_RENDER_VIGNETTE,
 		EXO_RENDER_SCREEN,
 // </FS:CR> Import Vignette from Exodus
+
+		WATER_SCREENTEX,
+		WATER_SCREENDEPTH,
+		WATER_REFTEX,
+		WATER_EYEVEC,
+		WATER_TIME,
+		WATER_WAVE_DIR1,
+		WATER_WAVE_DIR2,
+		WATER_LIGHT_DIR,
+		WATER_SPECULAR,
+		WATER_SPECULAR_EXP,
+		WATER_FOGCOLOR,
+		WATER_FOGDENSITY,
+		WATER_FOGKS,
+		WATER_REFSCALE,
+		WATER_WATERHEIGHT,
+		WATER_WATERPLANE,
+		WATER_NORM_SCALE,
+		WATER_FRESNEL_SCALE,
+		WATER_FRESNEL_OFFSET,
+		WATER_BLUR_MULTIPLIER,
+		WATER_SUN_ANGLE,
+		WATER_SCALED_ANGLE,
+		WATER_SUN_ANGLE2,
+		
+		WL_CAMPOSLOCAL,
+
+		AVATAR_WIND,
+		AVATAR_SINWAVE,
+		AVATAR_GRAVITY,
+
+		TERRAIN_DETAIL0,
+		TERRAIN_DETAIL1,
+		TERRAIN_DETAIL2,
+		TERRAIN_DETAIL3,
+		TERRAIN_ALPHARAMP,
+		
+		SHINY_ORIGIN,
+		DISPLAY_GAMMA,
 // <CV:David>
 		RIFT_FRAME_SIZE,
 		RIFT_SAMPLE_SIZE,
@@ -192,7 +240,7 @@ public:
 	void dumpObjectLog(GLhandleARB ret, BOOL warns = TRUE);
 	BOOL	linkProgramObject(GLhandleARB obj, BOOL suppress_errors = FALSE);
 	BOOL	validateProgramObject(GLhandleARB obj);
-	GLhandleARB loadShaderFile(const std::string& filename, S32 & shader_level, GLenum type, S32 texture_index_channels = -1);
+	GLhandleARB loadShaderFile(const std::string& filename, S32 & shader_level, GLenum type, boost::unordered_map<std::string, std::string>* defines = NULL, S32 texture_index_channels = -1);
 
 	// Implemented in the application to actually point to the shader directory.
 	virtual std::string getShaderDirPrefix(void) = 0; // Pure Virtual

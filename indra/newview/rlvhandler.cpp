@@ -1612,7 +1612,10 @@ ERlvCmdRet RlvHandler::processForceCommand(const RlvCommand& rlvCmd) const
 					F32 nValue = (rlvCmdOption.m_nPelvisToFoot - gAgentAvatarp->getPelvisToFoot()) * rlvCmdOption.m_nPelvisToFootDeltaMult;
 					nValue += rlvCmdOption.m_nPelvisToFootOffset;
 					// <FS:CR> FIRE-9759 - Temporarily remove setting AvatarZOffset
-					//gSavedPerAccountSettings.setF32(RLV_SETTING_AVATAROFFSET_Z, llclamp<F32>(nValue, -1.0f, 1.0f));
+					//if (!gAgentAvatarp->isUsingServerBakes())
+					//	gSavedSettings.setF32(RLV_SETTING_AVATAROFFSET_Z, llclamp<F32>(nValue, -1.0f, 1.0f));
+					//else
+					//	eRet = RLV_RET_FAILED_DISABLED;
 				}
 			}
 			break;
@@ -2008,6 +2011,12 @@ ERlvCmdRet RlvHandler::onGetAttach(const RlvCommand& rlvCmd, std::string& strRep
 			itAttach != gAgentAvatarp->mAttachmentPoints.end(); ++itAttach)
 	{
 		const LLViewerJointAttachment* pAttachPt = itAttach->second;
+		//<FS:TS> FIRE-11848 @getattach includes the LSL bridge
+		if (pAttachPt->getName() == "Bridge")
+		{
+			continue;
+		}
+		//</FS:TS> FIRE-11848
 		if ( (0 == idxAttachPt) || (itAttach->first == idxAttachPt) )
 		{
 			bool fWorn = (pAttachPt->getNumObjects() > 0) && 
@@ -2033,6 +2042,12 @@ ERlvCmdRet RlvHandler::onGetAttachNames(const RlvCommand& rlvCmd, std::string& s
 			itAttach != gAgentAvatarp->mAttachmentPoints.end(); ++itAttach)
 	{
 		const LLViewerJointAttachment* pAttachPt = itAttach->second;
+		//<FS:TS> FIRE-11848 @getattach includes the LSL bridge
+		if (pAttachPt->getName() == "Bridge")
+		{
+			continue;
+		}
+		//</FS:TS> FIRE-11848
 		if ( (RLV_ATTACHGROUP_INVALID == eAttachGroup) || (rlvAttachGroupFromIndex(pAttachPt->getGroup()) == eAttachGroup) )
 		{
 			bool fAdd = false;

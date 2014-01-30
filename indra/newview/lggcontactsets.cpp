@@ -30,8 +30,9 @@
 #include "llnotifications.h"
 #include "llsdserialize.h"
 #include "llviewercontrol.h"
-//#include "fsdata.h"
+#include "fsdata.h"
 #include "rlvhandler.h"
+
 
 LGGContactSets::LGGContactSets() :
 	mDefaultColor(LLColor4::grey)
@@ -339,17 +340,17 @@ LLColor4 LGGContactSets::getGroupColor(const std::string& groupName)
 
 LLColor4 LGGContactSets::colorize(const LLUUID& uuid, const LLColor4& cur_color, ELGGCSType type)
 {
+	static LLCachedControl<bool> legacy_radar_friend(gSavedSettings, "FSLegacyRadarFriendColoring");
+	static LLCachedControl<bool> legacy_radar_linden(gSavedSettings, "FSLegacyRadarLindenColoring");
+	bool rlv_shownames = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
 	LLColor4 color = cur_color;
-
-	// Leave generic colors if RLV restricted
-	if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
-		return color;
 	
-	else if (uuid == gAgent.getID())
+	if (uuid == gAgent.getID())
 	{
 		switch (type)
 		{
 			case LGG_CS_CHAT:
+			case LGG_CS_IM:
 				color = LLUIColorTable::instance().getColor("UserChatColor", LLColor4::white);
 				break;
 			case LGG_CS_TAG:
@@ -360,15 +361,54 @@ LLColor4 LGGContactSets::colorize(const LLUUID& uuid, const LLColor4& cur_color,
 				break;
 			case LGG_CS_RADAR:
 			default:
-				llwarns << "Unhandled colorize case!" << llendl;
+				lldebugs << "Unhandled colorize case!" << llendl;
 				break;
 		}
+	}
+	else if (LLAvatarTracker::instance().getBuddyInfo(uuid) != NULL)
+	{
+		switch (type)
+		{
+			case LGG_CS_CHAT:
+				if (!rlv_shownames)
+					color = LLUIColorTable::instance().getColor("FriendsChatColor", LLColor4::white);
+				break;
+			case LGG_CS_IM:
+				color = LLUIColorTable::instance().getColor("FriendsChatColor", LLColor4::white);
+				break;
+			case LGG_CS_TAG:
+			{
+				// This is optional per prefs.
+				static LLUICachedControl<bool> color_friends("NameTagShowFriends");
+				if (color_friends && !rlv_shownames)
+				{
+					color = LLUIColorTable::instance().getColor("NameTagFriend", LLColor4::white);
+				}
+			}
+				break;
+			case LGG_CS_MINIMAP:
+				if (!rlv_shownames)
+					color = LLUIColorTable::instance().getColor("MapAvatarFriendColor", LLColor4::white);
+				break;
+			case LGG_CS_RADAR:
+				if (legacy_radar_friend && !rlv_shownames)
+					color = LLUIColorTable::instance().getColor("MapAvatarFriendColor", LLColor4::white);
+				break;
+			default:
+				lldebugs << "Unhandled colorize case!" << llendl;
+				break;
+		}
+	}
+	else if (rlv_shownames)
+	{
+		// Don't bother with the rest if we're rlv_shownames restricted.
 	}
 	else if (LLMuteList::getInstance()->isMuted(uuid))
 	{
 		switch (type)
 		{
 			case LGG_CS_CHAT:
+			case LGG_CS_IM:
 				color = LLUIColorTable::instance().getColor("MutedChatColor", LLColor4::grey3);
 				break;
 			case LGG_CS_TAG:
@@ -379,33 +419,27 @@ LLColor4 LGGContactSets::colorize(const LLUUID& uuid, const LLColor4& cur_color,
 				break;
 			case LGG_CS_RADAR:
 			default:
-				llwarns << "Unhandled colorize case!" << llendl;
+				lldebugs << "Unhandled colorize case!" << llendl;
 				break;
 		}
 	}
-	else if (LLAvatarTracker::instance().getBuddyInfo(uuid) != NULL)
+	else if (FSData::instance().isAgentFlag(uuid, FSData::CHAT_COLOR))
 	{
 		switch (type)
 		{
 			case LGG_CS_CHAT:
-				color = LLUIColorTable::instance().getColor("FriendsChatColor", LLColor4::white);
+			case LGG_CS_IM:
+				color = LLUIColorTable::instance().getColor("FirestormChatColor", LLColor4::red);
 				break;
 			case LGG_CS_TAG:
-				{
-					// This is optional per prefs.
-					static LLUICachedControl<bool> color_friends("NameTagShowFriends");
-					if (color_friends)
-					{
-						color = LLUIColorTable::instance().getColor("NameTagFriend", LLColor4::white);
-					}
-				}
+				color = LLUIColorTable::instance().getColor("NameTagFirestorm", LLColor4::red);
 				break;
 			case LGG_CS_MINIMAP:
-				color = LLUIColorTable::instance().getColor("MapAvatarFriendColor", LLColor4::white);
+				color = LLUIColorTable::instance().getColor("MapAvatarFirestormColor", LLColor4::red);
 				break;
 			case LGG_CS_RADAR:
 			default:
-				llwarns << "Unhandled colorize case!" << llendl;
+				lldebugs << "Unhandled colorize case!" << llendl;
 				break;
 		}
 	}
@@ -417,6 +451,7 @@ LLColor4 LGGContactSets::colorize(const LLUUID& uuid, const LLColor4& cur_color,
 			switch (type)
 			{
 				case LGG_CS_CHAT:
+				case LGG_CS_IM:
 					color = LLUIColorTable::instance().getColor("LindenChatColor", LLColor4::blue);
 					break;
 				case LGG_CS_TAG:
@@ -426,14 +461,17 @@ LLColor4 LGGContactSets::colorize(const LLUUID& uuid, const LLColor4& cur_color,
 					color = LLUIColorTable::instance().getColor("MapAvatarLindenColor", LLColor4::blue);
 					break;
 				case LGG_CS_RADAR:
+					if (legacy_radar_linden)
+						color = LLUIColorTable::instance().getColor("MapAvatarLindenColor", LLColor4::blue);
+					break;
 				default:
-					llwarns << "Unhandled colorize case!" << llendl;
+					lldebugs << "Unhandled colorize case!" << llendl;
 					break;
 			}
 		}
 	}
 	
-	if (isNonFriend(uuid))
+	if (!rlv_shownames && isNonFriend(uuid))
 	{
 		color = toneDownColor(color, 0.8f);
 	}
@@ -499,6 +537,7 @@ bool LGGContactSets::hasFriendColorThatShouldShow(const LLUUID& friend_id, ELGGC
 	switch (type)
 	{
 		case LGG_CS_CHAT:
+		case LGG_CS_IM:
 			if (!fsContactSetsColorizeChat)
 				return false;
 			break;

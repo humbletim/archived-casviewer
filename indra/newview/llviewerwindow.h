@@ -42,6 +42,7 @@
 #include "llwindowcallbacks.h"
 #include "lltimer.h"
 #include "llmousehandler.h"
+#include "llnotifications.h"
 #include "llhandle.h"
 #include "llinitparam.h"
 
@@ -65,6 +66,7 @@ class LLWindow;
 class LLRootView;
 class LLWindowListener;
 class LLViewerWindowListener;
+class LLVOPartGroup;
 class LLPopupView;
 
 #define PICK_HALF_WIDTH 5
@@ -87,7 +89,8 @@ public:
 	LLPickInfo();
 	LLPickInfo(const LLCoordGL& mouse_pos, 
 		MASK keyboard_mask, 
-		BOOL pick_transparent, 
+		BOOL pick_transparent,
+		BOOL pick_particle,
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
 		BOOL pick_rigged,
 // [/SL:KB]
@@ -111,6 +114,8 @@ public:
 	LLVector3d		mPosGlobal;
 	LLVector3		mObjectOffset;
 	LLUUID			mObjectID;
+	LLUUID			mParticleOwnerID;
+	LLUUID			mParticleSourceID;
 	S32				mObjectFace;
 	LLHUDIcon*		mHUDIcon;
 	LLVector3       mIntersection;
@@ -118,8 +123,10 @@ public:
 	LLVector2       mSTCoords;
 	LLCoordScreen	mXYCoords;
 	LLVector3		mNormal;
+	LLVector4		mTangent;
 	LLVector3		mBinormal;
 	BOOL			mPickTransparent;
+	BOOL			mPickParticle;
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
 	BOOL			mPickRigged;
 // [/SL:KB]
@@ -363,12 +370,12 @@ public:
 
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
 	void			pickAsync(S32 x, S32 y_from_bot, MASK mask, void (*callback)(const LLPickInfo& pick_info), BOOL pick_transparent = FALSE, BOOL pick_rigged = FALSE);
-	LLPickInfo		pickImmediate(S32 x, S32 y, BOOL pick_transparent, BOOL pick_rigged);
+	LLPickInfo		pickImmediate(S32 x, S32 y, BOOL pick_transparent, BOOL pick_particle, BOOL pick_rigged = FALSE);
 // [/SL:KB]
 //	void			pickAsync(S32 x, S32 y_from_bot, MASK mask, void (*callback)(const LLPickInfo& pick_info), BOOL pick_transparent = FALSE);
-//	LLPickInfo		pickImmediate(S32 x, S32 y, BOOL pick_transparent);
+//	LLPickInfo		pickImmediate(S32 x, S32 y, BOOL pick_transparent, BOOL pick_particle = FALSE);
 	LLHUDIcon* cursorIntersectIcon(S32 mouse_x, S32 mouse_y, F32 depth,
-										   LLVector3* intersection);
+										   LLVector4a* intersection);
 
 	LLViewerObject* cursorIntersect(S32 mouse_x = -1, S32 mouse_y = -1, F32 depth = 512.f,
 									LLViewerObject *this_object = NULL,
@@ -378,12 +385,12 @@ public:
 									BOOL pick_rigged = FALSE,
 // [/SL:KB]
 									S32* face_hit = NULL,
-									LLVector3 *intersection = NULL,
+									LLVector4a *intersection = NULL,
 									LLVector2 *uv = NULL,
-									LLVector3 *normal = NULL,
-									LLVector3 *binormal = NULL,
-									LLVector3* start = NULL,
-									LLVector3* end = NULL);
+									LLVector4a *normal = NULL,
+									LLVector4a *tangent = NULL,
+									LLVector4a* start = NULL,
+									LLVector4a* end = NULL);
 	
 	
 	// Returns a pointer to the last object hit
@@ -418,7 +425,6 @@ public:
 
 private:
 	bool                    shouldShowToolTipFor(LLMouseHandler *mh);
-	static bool onAlert(const LLSD& notify);
 
 	void			switchToolByMask(MASK mask);
 	void			destroyWindow();
@@ -437,6 +443,11 @@ private:
 	LLWindow*		mWindow;						// graphical window object
 	bool			mActive;
 	bool			mUIVisible;
+
+	LLNotificationChannelPtr mSystemChannel;
+	LLNotificationChannelPtr mCommunicationChannel;
+	LLNotificationChannelPtr mAlertsChannel;
+	LLNotificationChannelPtr mModalAlertsChannel;
 
 	LLRect			mWindowRectRaw;				// whole window, including UI
 	LLRect			mWindowRectScaled;			// whole window, scaled by UI size
@@ -516,13 +527,15 @@ extern LLFrameTimer		gAwayTimer;				// tracks time before setting the avatar awa
 extern LLFrameTimer		gAwayTriggerTimer;		// how long the avatar has been away
 
 extern LLViewerObject*  gDebugRaycastObject;
-extern LLVector3        gDebugRaycastIntersection;
+extern LLVector4a       gDebugRaycastIntersection;
+extern LLVOPartGroup*	gDebugRaycastParticle;
+extern LLVector4a		gDebugRaycastParticleIntersection;
 extern LLVector2        gDebugRaycastTexCoord;
-extern LLVector3        gDebugRaycastNormal;
-extern LLVector3        gDebugRaycastBinormal;
+extern LLVector4a       gDebugRaycastNormal;
+extern LLVector4a       gDebugRaycastTangent;
 extern S32				gDebugRaycastFaceHit;
-extern LLVector3		gDebugRaycastStart;
-extern LLVector3		gDebugRaycastEnd;
+extern LLVector4a		gDebugRaycastStart;
+extern LLVector4a		gDebugRaycastEnd;
 
 extern BOOL			gDisplayCameraPos;
 extern BOOL			gDisplayWindInfo;

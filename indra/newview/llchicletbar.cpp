@@ -25,48 +25,47 @@
  */
 
 #include "llviewerprecompiledheaders.h" // must be first include
-
 #include "llchicletbar.h"
 
-// library includes
-#include "llfloaterreg.h"
-#include "lllayoutstack.h"
-
-// newview includes
 #include "llchiclet.h"
-// <FS:Ansariel> [FS communication UI]
-//#include "llimfloater.h" // for LLIMFloater
-#include "fsfloaterim.h"
-// </FS:Ansariel> [FS communication UI]
+#include "lllayoutstack.h"
 #include "llpaneltopinfobar.h"
 #include "llsyswellwindow.h"
+
+// Firestorm includes
+#include "fsfloaterim.h"
+#include "llfloaterreg.h"
 
 namespace
 {
 	const std::string& PANEL_CHICLET_NAME	= "chiclet_list_panel";
 
-	S32 get_curr_width(LLUICtrl* ctrl)
-	{
-		S32 cur_width = 0;
-		if ( ctrl && ctrl->getVisible() )
-		{
-			cur_width = ctrl->getRect().getWidth();
-		}
-		return cur_width;
-	}
+	// Unused function 2013.10.12
+	//S32 get_curr_width(LLUICtrl* ctrl)
+	//{
+	//	S32 cur_width = 0;
+	//	if ( ctrl && ctrl->getVisible() )
+	//	{
+	//		cur_width = ctrl->getRect().getWidth();
+	//	}
+	//	return cur_width;
+	//}
 }
 
 LLChicletBar::LLChicletBar(const LLSD&)
 :	mChicletPanel(NULL),
 	mToolbarStack(NULL)
 {
+	// <FS:Ansariel> [FS communication UI]
 	// Firstly add our self to IMSession observers, so we catch session events
 	// before chiclets do that.
 	LLIMMgr::getInstance()->addSessionObserver(this);
+	// </FS:Ansariel> [FS communication UI]
 
 	buildFromFile("panel_chiclet_bar.xml");
 }
 
+// <FS:Ansariel> [FS communication UI]
 LLChicletBar::~LLChicletBar()
 {
 	if (!LLSingleton<LLIMMgr>::destroyed())
@@ -95,7 +94,7 @@ LLIMChiclet* LLChicletBar::createIMChiclet(const LLUUID& session_id)
 }
 
 //virtual
-void LLChicletBar::sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id)
+void LLChicletBar::sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id, BOOL has_offline_msg)
 {
 	if (!getChicletPanel()) return;
 
@@ -112,12 +111,6 @@ void LLChicletBar::sessionAdded(const LLUUID& session_id, const std::string& nam
 	{
 		chiclet->setIMSessionName(name);
 		chiclet->setOtherParticipantId(other_participant_id);
-		
-		// <FS:Ansariel> [FS communication UI]
-		//LLIMFloater::onIMChicletCreated(session_id);
-		FSFloaterIM::onIMChicletCreated(session_id);
-		// </FS:Ansariel> [FS communication UI]
-
 	}
 	else
 	{
@@ -131,10 +124,7 @@ void LLChicletBar::sessionRemoved(const LLUUID& session_id)
 	if(getChicletPanel())
 	{
 		// IM floater should be closed when session removed and associated chiclet closed
-		// <FS:Ansariel> [FS communication UI]
-		//LLIMFloater* iMfloater = LLFloaterReg::findTypedInstance<LLIMFloater>("impanel", session_id);
 		FSFloaterIM* iMfloater = LLFloaterReg::findTypedInstance<FSFloaterIM>("fs_impanel", session_id);
-		// </FS:Ansariel> [FS communication UI]
 		if (iMfloater != NULL)
 		{
 			iMfloater->closeFloater();
@@ -160,13 +150,16 @@ S32 LLChicletBar::getTotalUnreadIMCount()
 {
 	return getChicletPanel()->getTotalUnreadIMCount();
 }
+// </FS:Ansariel> [FS communication UI]
 
 BOOL LLChicletBar::postBuild()
 {
 	mToolbarStack = getChild<LLLayoutStack>("toolbar_stack");
 	mChicletPanel = getChild<LLChicletPanel>("chiclet_list");
 
+	// <FS:Ansariel> [FS communication UI]
 	showWellButton("im_well", !LLIMWellWindow::getInstance()->isWindowEmpty());
+
 	showWellButton("notification_well", !LLNotificationWellWindow::getInstance()->isWindowEmpty());
 
 	LLPanelTopInfoBar::instance().setResizeCallback(boost::bind(&LLChicletBar::fitWithTopInfoBar, this));

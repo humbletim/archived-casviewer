@@ -38,8 +38,6 @@
 #include "lluicolortable.h"
 #include "message.h"
 
-#include <boost/algorithm/string/find.hpp> //for boost::ifind_first -KC
-
 #define APP_HEADER_REGEX "(((hop|x-grid-location-info)://[-\\w\\.\\:\\@]+/app)|((hop|secondlife):///app))" // <AW: hop:// protocol>
 
 // Utility functions
@@ -350,7 +348,8 @@ std::string LLUrlEntrySLURL::getLocation(const std::string &url) const
 // secondlife:///app/agent/0e346d8b-4433-4d66-a6b0-fd37083abc4c/about
 // x-grid-location-info://lincoln.lindenlab.com/app/agent/0e346d8b-4433-4d66-a6b0-fd37083abc4c/about
 //
-LLUrlEntryAgent::LLUrlEntryAgent()
+LLUrlEntryAgent::LLUrlEntryAgent() :
+	mAvatarNameCacheConnection()
 {
 	mPattern = boost::regex(APP_HEADER_REGEX "/agent/[\\da-f-]+/\\w+",
 							boost::regex::perl|boost::regex::icase);
@@ -381,7 +380,9 @@ void LLUrlEntryAgent::callObservers(const std::string &id,
 void LLUrlEntryAgent::onAvatarNameCache(const LLUUID& id,
 										const LLAvatarName& av_name)
 {
-	std::string label = av_name.getCompleteName();
+	mAvatarNameCacheConnection.disconnect();
+	
+ 	std::string label = av_name.getCompleteName();
 
 	// received the agent name from the server - tell our observers
 	callObservers(id.asString(), label, mIcon);
@@ -466,9 +467,11 @@ std::string LLUrlEntryAgent::getLabel(const std::string &url, const LLUrlLabelCa
 	}
 	else
 	{
-		LLAvatarNameCache::get(agent_id,
-			boost::bind(&LLUrlEntryAgent::onAvatarNameCache,
-				this, _1, _2));
+		if (mAvatarNameCacheConnection.connected())
+		{
+			mAvatarNameCacheConnection.disconnect();
+		}
+		mAvatarNameCacheConnection = LLAvatarNameCache::get(agent_id, boost::bind(&LLUrlEntryAgent::onAvatarNameCache, this, _1, _2));
 		addObserver(agent_id_string, url, cb);
 		return LLTrans::getString("LoadingData");
 	}
@@ -509,6 +512,10 @@ std::string localize_slapp_label(const std::string& url, const std::string& full
 	{
 		return LLTrans::getString("SLappAgentRequestFriend") + " " + full_name;
 	}
+	if (LLStringUtil::endsWith(url, "/removefriend"))
+	{
+		return LLTrans::getString("SLappAgentRemoveFriend") + " " + full_name;
+	}
 	return full_name;
 }
 
@@ -525,12 +532,15 @@ std::string LLUrlEntryAgent::getIcon(const std::string &url)
 // secondlife:///app/agent/0e346d8b-4433-4d66-a6b0-fd37083abc4c/(completename|displayname|username)
 // x-grid-location-info://lincoln.lindenlab.com/app/agent/0e346d8b-4433-4d66-a6b0-fd37083abc4c/(completename|displayname|username)
 //
-LLUrlEntryAgentName::LLUrlEntryAgentName()
+LLUrlEntryAgentName::LLUrlEntryAgentName() :
+	mAvatarNameCacheConnection()
 {}
 
 void LLUrlEntryAgentName::onAvatarNameCache(const LLUUID& id,
 										const LLAvatarName& av_name)
 {
+	mAvatarNameCacheConnection.disconnect();
+
 	std::string label = getName(av_name);
 	// received the agent name from the server - tell our observers
 	callObservers(id.asString(), label, mIcon);
@@ -564,9 +574,11 @@ std::string LLUrlEntryAgentName::getLabel(const std::string &url, const LLUrlLab
 	}
 	else
 	{
-		LLAvatarNameCache::get(agent_id,
-			boost::bind(&LLUrlEntryAgentCompleteName::onAvatarNameCache,
-				this, _1, _2));
+		if (mAvatarNameCacheConnection.connected())
+		{
+			mAvatarNameCacheConnection.disconnect();
+		}
+		mAvatarNameCacheConnection = LLAvatarNameCache::get(agent_id, boost::bind(&LLUrlEntryAgentName::onAvatarNameCache, this, _1, _2));
 		addObserver(agent_id_string, url, cb);
 		return LLTrans::getString("LoadingData");
 	}
@@ -607,7 +619,7 @@ LLUrlEntryAgentDisplayName::LLUrlEntryAgentDisplayName()
 
 std::string LLUrlEntryAgentDisplayName::getName(const LLAvatarName& avatar_name)
 {
-	return avatar_name.mDisplayName;
+	return avatar_name.getDisplayName();
 }
 
 //
@@ -623,7 +635,7 @@ LLUrlEntryAgentUserName::LLUrlEntryAgentUserName()
 
 std::string LLUrlEntryAgentUserName::getName(const LLAvatarName& avatar_name)
 {
-	return avatar_name.mUsername.empty() ? avatar_name.getLegacyName() : avatar_name.mUsername;
+	return avatar_name.getAccountName();
 }
 
 // [RLVa:KB] - Checked: 2010-11-01 (RLVa-1.2.2a) | Added: RLVa-1.2.2a
@@ -1223,7 +1235,8 @@ std::string LLUrlEntryIcon::getIcon(const std::string &url)
 //
 LLUrlEntryJira::LLUrlEntryJira()
 {
-	mPattern = boost::regex("((?:ARVD|BUG|CHOP|CTS|DOC|DN|ECC|EXP|FIRE|LEAP|LLSD|MAINT|MISC|OPEN|PATHBUG|PHOE|PLAT|PYO|SCR|SEC|SH|SINV|SNOW|SOCIAL|STORM|SUP|SVC|SPOT|VWR|WEB)-\\d+)",
+	// <FS:CR> Please make sure to sync these with the items in LLURLRegistry::stringHasJira() if you make a change
+	mPattern = boost::regex("((?:ARVD|BUG|CHOP|CHUIBUG|DOC|DN|ECC|EXP|FIRE|LEAP|LLSD|MATBUG|MISC|OPEN|PATHBUG|PLAT|PYO|SCR|SH|SINV|SLS|SOCIAL|STORM|SUN|SVC|SPOT|SUN|SUP|TPV|VWR|WEB)-\\d+)",
 				// <FS:Ansariel> FIRE-917: Match case to reduce number of false positives
 				//boost::regex::perl|boost::regex::icase);
 				boost::regex::perl);
@@ -1243,12 +1256,9 @@ std::string LLUrlEntryJira::getTooltip(const std::string &string) const
 
 std::string LLUrlEntryJira::getUrl(const std::string &string) const
 {
-	if (boost::ifind_first(string, "PHOE") ||
-		boost::ifind_first(string, "FIRE") ||
-		boost::ifind_first(string, "SPOT") ||
-		//<FS:TS> FIRE-8319: SUP JIRAs link to secondlife.com
-		boost::ifind_first(string, "SUP"))
-		//</FS:TS> FIRE-8319
+	if (string.find("FIRE") != std::string::npos ||
+		string.find("SLS") != std::string::npos ||
+		string.find("SUP") != std::string::npos )
 	{
 		return llformat("http://jira.phoenixviewer.com/browse/%s", string.c_str());
 	}

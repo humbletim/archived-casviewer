@@ -20,12 +20,11 @@ if(WINDOWS)
     set(vivox_src_dir "${ARCH_PREBUILT_DIRS_RELEASE}")
     set(vivox_files
         SLVoice.exe
+        ca-bundle.crt
         libsndfile-1.dll
         vivoxplatform.dll
         vivoxsdk.dll
         ortp.dll
-        alut.dll
-        wrap_oal.dll
         zlib1.dll
         vivoxoal.dll
         )
@@ -39,12 +38,10 @@ if(WINDOWS)
         libapr-1.dll
         libaprutil-1.dll
         libapriconv-1.dll
-        growl++.dll
-        growl.dll
         ssleay32.dll
         libeay32.dll
         libcollada14dom22-d.dll
-        glod.dll	
+        glod.dll
         libhunspell.dll
         )
 
@@ -54,28 +51,34 @@ if(WINDOWS)
         libapr-1.dll
         libaprutil-1.dll
         libapriconv-1.dll
-        growl++.dll
-        growl.dll
         ssleay32.dll
         libeay32.dll
         libcollada14dom22.dll
         glod.dll
         libhunspell.dll
         )
+    
+    set(debug_files ${debug_files} growl++.dll growl.dll )
+    set(release_files ${release_files} growl++.dll growl.dll )
 
     if(USE_TCMALLOC)
       set(debug_files ${debug_files} libtcmalloc_minimal-debug.dll)
       set(release_files ${release_files} libtcmalloc_minimal.dll)
     endif(USE_TCMALLOC)
 
-    if (FMOD)
-      set(debug_files ${debug_files} fmod.dll)
-      set(release_files ${release_files} fmod.dll)
-    endif (FMOD)
+    if (FMODEX)
+      if( NOT ND_BUILD64BIT_ARCH )
+        set(release_files ${release_files} fmodex.dll)
+      else( NOT ND_BUILD64BIT_ARCH )
+        set(release_files ${release_files} fmodex64.dll)
+      endif( NOT ND_BUILD64BIT_ARCH )
+    endif (FMODEX)
 
 # <FS:ND> Copy pdb files for symbol generation too
-    set(debug_files ${debug_files} ssleay32.pdb libeay32.pdb apr-1.pdb aprutil-1.pdb growl.pdb growl++.pdb )
-    set(release_files ${release_files} ssleay32.pdb libeay32.pdb apr-1.pdb aprutil-1.pdb growl.pdb growl++.pdb )
+   if( NOT ND_BUILD64BIT_ARCH )
+     set(debug_files ${debug_files} ssleay32.pdb libeay32.pdb apr-1.pdb aprutil-1.pdb growl.pdb growl++.pdb )
+     set(release_files ${release_files} ssleay32.pdb libeay32.pdb apr-1.pdb aprutil-1.pdb growl.pdb growl++.pdb )
+   endif( NOT ND_BUILD64BIT_ARCH )
 # </FS:ND>
 
 #*******************************
@@ -207,10 +210,10 @@ elseif(DARWIN)
     set(vivox_src_dir "${ARCH_PREBUILT_DIRS_RELEASE}")
     set(vivox_files
         SLVoice
+        ca-bundle.crt
         libsndfile.dylib
         libvivoxoal.dylib
         libortp.dylib
-        libalut.dylib
         libvivoxplatform.dylib
         libvivoxsdk.dylib
        )
@@ -219,6 +222,10 @@ elseif(DARWIN)
        )
     set(release_src_dir "${ARCH_PREBUILT_DIRS_RELEASE}")
     set(release_files
+        libapr-1.0.dylib
+        libapr-1.dylib
+        libaprutil-1.0.dylib
+        libaprutil-1.dylib
         libexpat.1.5.2.dylib
         libexpat.dylib
         libGLOD.dylib
@@ -235,9 +242,11 @@ elseif(DARWIN)
     if(RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING)
       set(release_files ${release_files} "libexception_handler.dylib")
     endif(RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING)
-
-    # fmod is statically linked on darwin
-    set(fmod_files "")
+    
+    if (FMODEX)
+      set(debug_files ${debug_files} libfmodexL.dylib)
+      set(release_files ${release_files} libfmodex.dylib)
+    endif (FMODEX)
 
 elseif(LINUX)
     # linux is weird, multiple side by side configurations aren't supported
@@ -254,6 +263,7 @@ elseif(LINUX)
         libvivoxplatform.so
         libvivoxsdk.so
         SLVoice
+        # ca-bundle.crt   #No cert for linux.  It is actually still 3.2SDK.
        )
     # *TODO - update this to use LIBS_PREBUILT_DIR and LL_ARCH_DIR variables
     # or ARCH_PREBUILT_DIRS
@@ -268,19 +278,20 @@ elseif(LINUX)
         libapr-1.so.0
         libaprutil-1.so.0
         libatk-1.0.so
+        libboost_context-mt.so.${BOOST_VERSION}.0
+        libboost_filesystem-mt.so.${BOOST_VERSION}.0
         libboost_program_options-mt.so.${BOOST_VERSION}.0
         libboost_regex-mt.so.${BOOST_VERSION}.0
-        libboost_thread-mt.so.${BOOST_VERSION}.0
-        libboost_filesystem-mt.so.${BOOST_VERSION}.0
         libboost_signals-mt.so.${BOOST_VERSION}.0
         libboost_system-mt.so.${BOOST_VERSION}.0
+        libboost_thread-mt.so.${BOOST_VERSION}.0
         libboost_wave-mt.so.${BOOST_VERSION}.0
-#        libbreakpad_client.so.0
         libcollada14dom.so
         libcrypto.so.1.0.0
         libdb-5.1.so
         libexpat.so
         libexpat.so.1
+        libfreetype.so.6
         libGLOD.so
 #        libgmock_main.so
 #        libgmock.so.0
@@ -306,14 +317,9 @@ elseif(LINUX)
       set(release_files ${release_files} "libtcmalloc_minimal.so")
     endif (USE_TCMALLOC)
 
-    # <FS:ND> We only ever need google breakpad when crash reporting is used
-    if(RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING)
-      set(release_files ${release_files} "libbreakpad_client.so.0")
-    endif(RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING)
-
-    if (FMOD)
-      set(release_files ${release_files} "libfmod-3.75.so")
-    endif (FMOD)
+    if (FMODEX)
+      set(release_file ${release_files} "libfmodex.so")
+    endif (FMODEX)
 
 else(WINDOWS)
     message(STATUS "WARNING: unrecognized platform for staging 3rd party libs, skipping...")
@@ -327,8 +333,6 @@ else(WINDOWS)
     # or ARCH_PREBUILT_DIRS
     set(release_src_dir "${CMAKE_SOURCE_DIR}/../libraries/i686-linux/lib/release")
     set(release_files "")
-
-    set(fmod_files "")
 
     set(debug_llkdu_src "")
     set(debug_llkdu_dst "")
@@ -391,30 +395,6 @@ copy_if_different(
     ${release_files}
     )
 set(third_party_targets ${third_party_targets} ${out_targets})
-
-if (FMOD_SDK_DIR)
-    copy_if_different(
-        ${FMOD_SDK_DIR} 
-        "${CMAKE_CURRENT_BINARY_DIR}/Debug"
-        out_targets 
-        ${fmod_files}
-        )
-    set(all_targets ${all_targets} ${out_targets})
-    copy_if_different(
-        ${FMOD_SDK_DIR} 
-        "${CMAKE_CURRENT_BINARY_DIR}/Release"
-        out_targets 
-        ${fmod_files}
-        )
-    set(all_targets ${all_targets} ${out_targets})
-    copy_if_different(
-        ${FMOD_SDK_DIR} 
-        "${CMAKE_CURRENT_BINARY_DIR}/RelWithDbgInfo"
-        out_targets 
-        ${fmod_files}
-        )
-    set(all_targets ${all_targets} ${out_targets})
-endif (FMOD_SDK_DIR)
 
 if(NOT STANDALONE)
   add_custom_target(

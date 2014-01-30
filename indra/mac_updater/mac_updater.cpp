@@ -47,6 +47,11 @@
 
 #include "llerrorcontrol.h"
 
+#if LL_DARWIN
+// FSPathMakeRef, FSObjectCopy, deprecations...
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 enum
 {
 	kEventClassCustom = 'Cust',
@@ -355,7 +360,7 @@ int parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	// We assume that all the logs we're looking for reside on the current drive
-	gDirUtilp->initAppDirs("Firestorm");
+	gDirUtilp->initAppDirs("SecondLife");
 
 	LLError::initForApplication( gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, ""));
 
@@ -391,7 +396,15 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			gProductName = "Firestorm";
+			gProductName = "Second Life";
+		}
+		if (gBundleID)
+		{
+			llinfos << "Bundle ID is: " << gBundleID << llendl;
+		}
+		else
+		{
+			gBundleID = "com.secondlife.indra.viewer";
 		}
 	}
 	
@@ -484,7 +497,7 @@ int main(int argc, char **argv)
 		err = CreateStandardAlert(
 				kAlertStopAlert,
 				CFSTR("Error"),
-				CFSTR("An error occurred while updating Firestorm.  Please download the latest version from www.phoenixviewer.com."),
+				CFSTR("An error occurred while updating Second Life.  Please download the latest version from www.secondlife.com."),
 				&params,
 				&alert);
 		
@@ -620,7 +633,8 @@ static bool isFSRefViewerBundle(FSRef *targetRef)
 	CFURLRef targetURL = NULL;
 	CFBundleRef targetBundle = NULL;
 	CFStringRef targetBundleID = NULL;
-	
+	CFStringRef sourceBundleID = NULL;
+
 	targetURL = CFURLCreateFromFSRef(NULL, targetRef);
 
 	if(targetURL == NULL)
@@ -647,7 +661,8 @@ static bool isFSRefViewerBundle(FSRef *targetRef)
 	}
 	else
 	{
-		if(CFStringCompare(targetBundleID, CFSTR("com.secondlife.indra.viewer"), 0) == kCFCompareEqualTo)
+		sourceBundleID = CFStringCreateWithCString(NULL, gBundleID, kCFStringEncodingUTF8);
+		if(CFStringCompare(sourceBundleID, targetBundleID, 0) == kCFCompareEqualTo)
 		{
 			// This is the bundle we're looking for.
 			result = true;
@@ -958,7 +973,7 @@ void *updatethreadproc(void*)
 		}
 
 		
-		strncat(temp, "/FirestormUpdate_XXXXXX", (sizeof(temp) - strlen(temp)) - 1);
+		strncat(temp, "/SecondLifeUpdate_XXXXXX", (sizeof(temp) - strlen(temp)) - 1);
 		if(mkdtemp(temp) == NULL)
 		{
 			throw 0;
@@ -976,7 +991,7 @@ void *updatethreadproc(void*)
 				
 		chdir(tempDir);
 		
-		snprintf(temp, sizeof(temp), "Firestorm.dmg");		
+		snprintf(temp, sizeof(temp), "SecondLife.dmg");		
 		
 		downloadFile = LLFile::fopen(temp, "wb");		/* Flawfinder: ignore */
 		if(downloadFile == NULL)
@@ -1245,3 +1260,7 @@ void *updatethreadproc(void*)
 	
 	return(NULL);
 }
+
+#if LL_DARWIN
+#pragma GCC diagnostic warning "-Wdeprecated-declarations"
+#endif

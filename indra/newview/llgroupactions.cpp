@@ -36,29 +36,23 @@
 #include "llfloaterreg.h"
 #include "llfloatersidepanelcontainer.h"
 #include "llgroupmgr.h"
+#include "llfloaterimcontainer.h"
 #include "llimview.h" // for gIMMgr
 #include "llnotificationsutil.h"
 #include "llstatusbar.h"	// can_afford_transaction()
-// <FS:Ansariel> [FS communication UI]
-//#include "llimfloater.h"
-#include "fsfloaterim.h"
-// </FS:Ansariel> [FS communication UI]
 #include "groupchatlistener.h"
-// [RLVa:KB] - Checked: 2011-03-28 (RLVa-1.3.0f)
-#include "llslurl.h"
-#include "rlvhandler.h"
-// [/RLVa:KB]
 
-// [RLVa:KB] - Checked: 2011-03-28 (RLVa-1.3.0f)
-#include "llslurl.h"
-#include "rlvhandler.h"
-// [/RLVa:KB]
+// Firestorm includes
 #include "exogroupmutelist.h"
-// <FS:Ansariel> Standalone group floater
-#include "fsfloatergroup.h"
-#include "llpanelgroup.h"
-// </FS:Ansariel>
 #include "fscontactsfloater.h"
+#include "fsdata.h"
+#include "fsfloatergroup.h"
+#include "fsfloaterim.h"
+#include "llpanelgroup.h"
+#include "llslurl.h"
+#include "rlvactions.h"
+#include "rlvcommon.h"
+#include "rlvhandler.h"
 
 //
 // Globals
@@ -146,6 +140,80 @@ public:
 };
 LLGroupHandler gGroupHandler;
 
+// This object represents a pending request for specified group member information
+// which is needed to check whether avatar can leave group
+class LLFetchGroupMemberData : public LLGroupMgrObserver
+{
+public:
+	LLFetchGroupMemberData(const LLUUID& group_id) : 
+		mGroupId(group_id),
+		mRequestProcessed(false),
+		LLGroupMgrObserver(group_id) 
+	{
+		llinfos << "Sending new group member request for group_id: "<< group_id << llendl;
+		LLGroupMgr* mgr = LLGroupMgr::getInstance();
+		// register ourselves as an observer
+		mgr->addObserver(this);
+		// send a request
+		mgr->sendGroupPropertiesRequest(group_id);
+		mgr->sendCapGroupMembersRequest(group_id);
+	}
+
+	~LLFetchGroupMemberData()
+	{
+		if (!mRequestProcessed)
+		{
+			// Request is pending
+			llwarns << "Destroying pending group member request for group_id: "
+				<< mGroupId << llendl;
+		}
+		// Remove ourselves as an observer
+		LLGroupMgr::getInstance()->removeObserver(this);
+	}
+
+	void changed(LLGroupChange gc)
+	{
+		if (gc == GC_MEMBER_DATA && !mRequestProcessed)
+		{
+			LLGroupMgrGroupData* gdatap = LLGroupMgr::getInstance()->getGroupData(mGroupId);
+			if (!gdatap)
+			{
+				llwarns << "LLGroupMgr::getInstance()->getGroupData() was NULL" << llendl;
+			} 
+			else if (!gdatap->isMemberDataComplete())
+			{
+				llwarns << "LLGroupMgr::getInstance()->getGroupData()->isMemberDataComplete() was FALSE" << llendl;
+			}
+			else
+			{
+				processGroupData();
+				mRequestProcessed = true;
+			}
+		}
+	}
+
+	LLUUID getGroupId() { return mGroupId; }
+	virtual void processGroupData() = 0;
+protected:
+	LLUUID mGroupId;
+private:
+	bool mRequestProcessed;
+};
+
+class LLFetchLeaveGroupData: public LLFetchGroupMemberData
+{
+public:
+	 LLFetchLeaveGroupData(const LLUUID& group_id)
+		 : LLFetchGroupMemberData(group_id)
+	 {}
+	 void processGroupData()
+	 {
+		 LLGroupActions::processLeaveGroupDataResponse(mGroupId);
+	 }
+};
+
+LLFetchLeaveGroupData* gFetchLeaveGroupData = NULL;
+
 // static
 void LLGroupActions::search()
 {
@@ -164,8 +232,8 @@ void LLGroupActions::startCall(const LLUUID& group_id)
 		return;
 	}
 
-// [RLVa:KB] - Checked: 2011-04-11 (RLVa-1.3.0h) | Added: RLVa-1.3.0h
-	if ( (rlv_handler_t::isEnabled()) && (!gRlvHandler.canStartIM(group_id)) && (!gIMMgr->hasSession(group_id)) )
+// [RLVa:KB] - Checked: 2013-05-09 (RLVa-1.4.9)
+	if ( (!RlvActions::canStartIM(group_id)) && (!RlvActions::hasOpenGroupSession(group_id)) )
 	{
 		make_ui_sound("UISndInvalidOp");
 		RlvUtil::notifyBlocked(RLV_STRING_BLOCKED_STARTIM, LLSD().with("RECIPIENT", LLSLURL("group", group_id, "about").getSLURLString()));
@@ -194,6 +262,13 @@ void LLGroupActions::join(const LLUUID& group_id)
 		LLNotificationsUtil::add("JoinedTooManyGroups");
 		return;
 	}
+
+	// <FS:Techwolf Lupindo> fsdata support
+	if (FSData::instance().isSupportGroup(group_id) && FSData::instance().isAgentFlag(gAgentID, FSData::NO_SUPPORT))
+	{
+		return;
+	}
+	// </FS:Techwolf Lupindo>
 
 	LLGroupMgrGroupData* gdatap = 
 		LLGroupMgr::getInstance()->getGroupData(group_id);
@@ -247,27 +322,58 @@ bool LLGroupActions::onJoinGroup(const LLSD& notification, const LLSD& response)
 void LLGroupActions::leave(const LLUUID& group_id)
 {
 //	if (group_id.isNull())
+//	{
 //		return;
+//	}
 // [RLVa:KB] - Checked: 2011-03-28 (RLVa-1.4.1a) | Added: RLVa-1.3.0f
 	if ( (group_id.isNull()) || ((gAgent.getGroupID() == group_id) && (gRlvHandler.hasBehaviour(RLV_BHVR_SETGROUP))) )
+	{
 		return;
+	}
 // [/RLVa:KB]
 
-	S32 count = gAgent.mGroups.count();
-	S32 i;
-	for (i = 0; i < count; ++i)
+	LLGroupData group_data;
+	if (gAgent.getGroupData(group_id, group_data))
 	{
-		if(gAgent.mGroups.get(i).mID == group_id)
-			break;
+		LLGroupMgrGroupData* gdatap = LLGroupMgr::getInstance()->getGroupData(group_id);
+		if (!gdatap || !gdatap->isMemberDataComplete())
+		{
+			if (gFetchLeaveGroupData != NULL)
+			{
+				delete gFetchLeaveGroupData;
+				gFetchLeaveGroupData = NULL;
+			}
+			gFetchLeaveGroupData = new LLFetchLeaveGroupData(group_id);
+		}
+		else
+		{
+			processLeaveGroupDataResponse(group_id);
+		}
 	}
-	if (i < count)
+}
+
+//static
+void LLGroupActions::processLeaveGroupDataResponse(const LLUUID group_id)
+{
+	LLGroupMgrGroupData* gdatap = LLGroupMgr::getInstance()->getGroupData(group_id);
+	LLUUID agent_id = gAgent.getID();
+	LLGroupMgrGroupData::member_list_t::iterator mit = gdatap->mMembers.find(agent_id);
+	//get the member data for the group
+	if ( mit != gdatap->mMembers.end() )
 	{
-		LLSD args;
-		args["GROUP"] = gAgent.mGroups.get(i).mName;
-		LLSD payload;
-		payload["group_id"] = group_id;
-		LLNotificationsUtil::add("GroupLeaveConfirmMember", args, payload, onLeaveGroup);
+		LLGroupMemberData* member_data = (*mit).second;
+
+		if ( member_data && member_data->isOwner() && gdatap->mMemberCount == 1)
+		{
+			LLNotificationsUtil::add("OwnerCannotLeaveGroup");
+			return;
+		}
 	}
+	LLSD args;
+	args["GROUP"] = gdatap->mName;
+	LLSD payload;
+	payload["group_id"] = group_id;
+	LLNotificationsUtil::add("GroupLeaveConfirmMember", args, payload, onLeaveGroup);
 }
 
 // static
@@ -470,8 +576,8 @@ LLUUID LLGroupActions::startIM(const LLUUID& group_id)
 {
 	if (group_id.isNull()) return LLUUID::null;
 
-// [RLVa:KB] - Checked: 2011-04-11 (RLVa-1.3.0h) | Added: RLVa-1.3.0h
-	if ( (rlv_handler_t::isEnabled()) && (!gRlvHandler.canStartIM(group_id)) && (!gIMMgr->hasSession(group_id)) )
+// [RLVa:KB] - Checked: 2013-05-09 (RLVa-1.4.9)
+	if ( (!RlvActions::canStartIM(group_id)) && (!RlvActions::hasOpenGroupSession(group_id)) )
 	{
 		make_ui_sound("UISndInvalidOp");
 		RlvUtil::notifyBlocked(RLV_STRING_BLOCKED_STARTIM, LLSD().with("RECIPIENT", LLSLURL("group", group_id, "about").getSLURLString()));
@@ -493,7 +599,7 @@ LLUUID LLGroupActions::startIM(const LLUUID& group_id)
 		if (session_id != LLUUID::null)
 		{
 			// <FS:Ansariel> [FS communication UI]
-			//LLIMFloater::show(session_id);
+			//LLFloaterIMContainer::getInstance()->showConversation(session_id);
 			FSFloaterIM::show(session_id);
 			// </FS:Ansariel> [FS communication UI]
 		}
@@ -594,12 +700,46 @@ bool LLGroupActions::canEjectFromGroup(const LLUUID& idGroup, const LLUUID& idAg
 
 void LLGroupActions::ejectFromGroup(const LLUUID& idGroup, const LLUUID& idAgent)
 {
-	if (!canEjectFromGroup(idGroup, idAgent))
-		return;
+	// <FS:CR> FIRE-8499 - Eject from group confirmation 
+	//if (!canEjectFromGroup(idGroup, idAgent))
+	//	return;
 
-	uuid_vec_t idAgents;
-	idAgents.push_back(idAgent);
-	LLGroupMgr::instance().sendGroupMemberEjects(idGroup, idAgents);
+	//uuid_vec_t idAgents;
+	//idAgents.push_back(idAgent);
+	//LLGroupMgr::instance().sendGroupMemberEjects(idGroup, idAgents);
+	LLSD args;
+	LLSD payload;
+	payload["avatar_id"] = idAgent;
+	payload["group_id"] = idGroup;
+	std::string fullname = LLSLURL("agent", idAgent, "inspect").getSLURLString();
+	args["AVATAR_NAME"] = fullname;
+	LLNotificationsUtil::add("EjectGroupMemberWarning",
+							 args,
+							 payload,
+							 callbackEject);
+}
+
+bool LLGroupActions::callbackEject(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
+	if (2 == option) // Cancel button
+	{
+		return false;
+	}
+	if (0 == option) // Eject button
+	{
+		LLUUID idAgent = notification["payload"]["avatar_id"].asUUID();
+		LLUUID idGroup = notification["payload"]["group_id"].asUUID();
+		
+		if (!canEjectFromGroup(idGroup, idAgent))
+			return false;
+		
+		uuid_vec_t idAgents;
+		idAgents.push_back(idAgent);
+		LLGroupMgr::instance().sendGroupMemberEjects(idGroup, idAgents);
+	}
+	return false;
+	// </FS:CR>
 }
 // [/SL:KB]
 

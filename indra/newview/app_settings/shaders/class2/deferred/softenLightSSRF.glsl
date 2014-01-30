@@ -38,7 +38,6 @@ uniform sampler2DRect lightMap;
 uniform sampler2DRect depthMap;
 uniform samplerCube environmentMap;
 uniform sampler2D	  lightFunc;
-uniform vec3 gi_quad;
 
 uniform float blur_size;
 uniform float blur_fidelity;
@@ -60,16 +59,13 @@ uniform float density_multiplier;
 uniform float distance_multiplier;
 uniform float max_y;
 uniform vec4 glow;
+uniform float global_gamma;
 uniform float scene_light_strength;
 uniform mat3 env_mat;
 uniform vec4 shadow_clip;
-uniform float ssao_effect;
-
-uniform mat4 inv_proj;
-uniform vec2 screen_res;
+uniform mat3 ssao_effect_mat;
 
 uniform vec3 sun_dir;
-
 VARYING vec2 vary_fragcoord;
 
 vec3 vary_PositionEye;
@@ -78,6 +74,63 @@ vec3 vary_SunlitColor;
 vec3 vary_AmblitColor;
 vec3 vary_AdditiveColor;
 vec3 vary_AtmosAttenuation;
+
+uniform mat4 inv_proj;
+uniform vec2 screen_res;
+
+vec3 srgb_to_linear(vec3 cs)
+{
+	vec3 low_range = cs / vec3(12.92);
+	vec3 high_range = pow((cs+vec3(0.055))/vec3(1.055), vec3(2.4));
+	bvec3 lte = lessThanEqual(cs,vec3(0.04045));
+
+#ifdef OLD_SELECT
+	vec3 result;
+	result.r = lte.r ? low_range.r : high_range.r;
+	result.g = lte.g ? low_range.g : high_range.g;
+	result.b = lte.b ? low_range.b : high_range.b;
+    return result;
+#else
+	return mix(high_range, low_range, lte);
+#endif
+
+}
+
+vec3 linear_to_srgb(vec3 cl)
+{
+	cl = clamp(cl, vec3(0), vec3(1));
+	vec3 low_range  = cl * 12.92;
+	vec3 high_range = 1.055 * pow(cl, vec3(0.41666)) - 0.055;
+	bvec3 lt = lessThan(cl,vec3(0.0031308));
+
+#ifdef OLD_SELECT
+	vec3 result;
+	result.r = lt.r ? low_range.r : high_range.r;
+	result.g = lt.g ? low_range.g : high_range.g;
+	result.b = lt.b ? low_range.b : high_range.b;
+    return result;
+#else
+	return mix(high_range, low_range, lt);
+#endif
+
+}
+
+vec2 encode_normal(vec3 n)
+{
+	float f = sqrt(8 * n.z + 8);
+	return n.xy / f + 0.5;
+}
+
+vec3 decode_normal (vec2 enc)
+{
+    vec2 fenc = enc*4-2;
+    float f = dot(fenc,fenc);
+    float g = sqrt(1-f/4);
+    vec3 n;
+    n.xy = fenc*g;
+    n.z = 1-f/2;
+    return n;
+}
 
 vec4 getPosition_d(vec2 pos_screen, float depth)
 {
@@ -117,7 +170,6 @@ vec3 getAtmosAttenuation()
 {
 	return vary_AtmosAttenuation;
 }
-
 
 void setPositionEye(vec3 v)
 {
@@ -204,21 +256,78 @@ void calcAtmospherics(vec3 inPositionEye, float ambFactor) {
 	
 	//increase ambient when there are more clouds
 	vec4 tmpAmbient = ambient + (vec4(1.) - ambient) * cloud_shadow * 0.5;
-	
+
 	//haze color
 	setAdditiveColor(
 		vec3(blue_horizon * blue_weight * (sunlight*(1.-cloud_shadow) + tmpAmbient)
 	  + (haze_horizon * haze_weight) * (sunlight*(1.-cloud_shadow) * temp2.x
 		  + tmpAmbient)));
 
-	// decrease ambient value for occluded areas
-	tmpAmbient *= mix(ssao_effect, 1.0, ambFactor);
+	/*  decrease value and saturation (that in HSV, not HSL) for occluded areas
+	 * // for HSV color/geometry used here, see http://gimp-savvy.com/BOOK/index.html?node52.html
+	 * // The following line of code performs the equivalent of:
+	 * float ambAlpha = tmpAmbient.a;
+	 * float ambValue = dot(vec3(tmpAmbient), vec3(0.577)); // projection onto <1/rt(3), 1/rt(3), 1/rt(3)>, the neutral white-black axis
+	 * vec3 ambHueSat = vec3(tmpAmbient) - vec3(ambValue);
+	 * tmpAmbient = vec4(RenderSSAOEffect.valueFactor * vec3(ambValue) + RenderSSAOEffect.saturationFactor *(1.0 - ambFactor) * ambHueSat, ambAlpha);
+	 */
+	tmpAmbient = vec4(mix(ssao_effect_mat * tmpAmbient.rgb, tmpAmbient.rgb, ambFactor), tmpAmbient.a);
 
 	//brightness of surface both sunlight and ambient
+	/*setSunlitColor(pow(vec3(sunlight * .5), vec3(global_gamma)) * global_gamma);
+	setAmblitColor(pow(vec3(tmpAmbient * .25), vec3(global_gamma)) * global_gamma);
+	setAdditiveColor(pow(getAdditiveColor() * vec3(1.0 - temp1), vec3(global_gamma)) * global_gamma);*/
+
 	setSunlitColor(vec3(sunlight * .5));
 	setAmblitColor(vec3(tmpAmbient * .25));
 	setAdditiveColor(getAdditiveColor() * vec3(1.0 - temp1));
 }
+
+#ifdef WATER_FOG
+uniform vec4 waterPlane;
+uniform vec4 waterFogColor;
+uniform float waterFogDensity;
+uniform float waterFogKS;
+
+vec4 applyWaterFogDeferred(vec3 pos, vec4 color)
+{
+	//normalize view vector
+	vec3 view = normalize(pos);
+	float es = -(dot(view, waterPlane.xyz));
+
+	//find intersection point with water plane and eye vector
+	
+	//get eye depth
+	float e0 = max(-waterPlane.w, 0.0);
+	
+	vec3 int_v = waterPlane.w > 0.0 ? view * waterPlane.w/es : vec3(0.0, 0.0, 0.0);
+	
+	//get object depth
+	float depth = length(pos - int_v);
+		
+	//get "thickness" of water
+	float l = max(depth, 0.1);
+
+	float kd = waterFogDensity;
+	float ks = waterFogKS;
+	vec4 kc = waterFogColor;
+	
+	float F = 0.98;
+	
+	float t1 = -kd * pow(F, ks * e0);
+	float t2 = kd + ks * es;
+	float t3 = pow(F, t2*l) - 1.0;
+	
+	float L = min(t1/t2*t3, 1.0);
+	
+	float D = pow(0.98, l*kd);
+	
+	color.rgb = color.rgb * D + kc.rgb * L;
+	color.a = kc.a + color.a;
+	
+	return color;
+}
+#endif
 
 vec3 atmosLighting(vec3 light)
 {
@@ -232,6 +341,15 @@ vec3 atmosTransport(vec3 light) {
 	light += getAdditiveColor() * 2.0;
 	return light;
 }
+
+vec3 fullbrightAtmosTransport(vec3 light) {
+	float brightness = dot(light.rgb, vec3(0.33333));
+
+	return mix(atmosTransport(light.rgb), light.rgb + getAdditiveColor().rgb, brightness * brightness);
+}
+
+
+
 vec3 atmosGetDiffuseSunlightColor()
 {
 	return getSunlitColor();
@@ -266,58 +384,82 @@ vec3 scaleSoftClip(vec3 light)
 	return light;
 }
 
-float rand(vec2 co){
+
+vec3 fullbrightScaleSoftClip(vec3 light)
+{
+	//soft clip effect:
+	return light;
+}
+
+
+float rand(vec2 co)
+{
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
+
 
 void main() 
 {
 	vec2 tc = vary_fragcoord.xy;
 	float depth = texture2DRect(depthMap, tc.xy).r;
 	vec3 pos = getPosition_d(tc, depth).xyz;
-	vec3 norm = texture2DRect(normalMap, tc).xyz;
-	norm = (norm.xyz-0.5)*2.0; // unpack norm
+	vec4 norm = texture2DRect(normalMap, tc);
+	float envIntensity = norm.z;
+	norm.xyz = decode_normal(norm.xy); // unpack norm
 		
 	float da = max(dot(norm.xyz, sun_dir.xyz), 0.0);
-	
+
+	float light_gamma = 1;//1.0/1.3;
+	da = pow(da, light_gamma);
+
+
 	vec4 diffuse = texture2DRect(diffuseRect, tc);
 
-	vec3 col;
+	vec3 col = diffuse.rgb;
+
 	float bloom = 0.0;
 	float fullbrightification = diffuse.a;
 
 	if (fullbrightification < 1.0)
 	{
+		//convert to gamma space
+		diffuse.rgb = linear_to_srgb(diffuse.rgb);
+
 		vec4 spec = texture2DRect(specularRect, vary_fragcoord.xy);
 		
 		vec2 scol_ambocc = texture2DRect(lightMap, vary_fragcoord.xy).rg;
-		float scol = scol_ambocc.r;//1220*max(scol_ambocc.r, fullbrightification); 
-		//float scol = scol_ambocc.r;//max(scol_ambocc.r, scol_ambocc.r*(1.0 - fullbrightification));//1;//da;//max(da, scol_ambocc.r);
+		scol_ambocc = pow(scol_ambocc, vec2(light_gamma));
+
+		float scol = max(scol_ambocc.r, diffuse.a); 
+
+		
+
 		float ambocc = scol_ambocc.g;
 	
 		calcAtmospherics(pos.xyz, ambocc);
 	
 		col = atmosAmbient(vec3(0));
-		//col += atmosAffectDirectionalLight(max(min(da, scol), fullbrightification));
+
+		//col += atmosAffectDirectionalLight(max(min(da, scol), 0.0));
 		col += atmosAffectDirectionalLight(min(da, scol));
-	
+
 		col *= diffuse.rgb;
 	
-		//spec.rgba = max(spec.rbga, vec4(0.8, 0.8, 0.8, 0.2));
-		//spec.rgba = max(spec.rbga, vec4(1.0, 1.0, 1.0, 0.0));
-
-		//spec.rgba *= (1.0-dot(diffuse.rgb, vec3(0.299, 0.587, 0.144)));
+		vec3 refnormpersp = normalize(reflect(pos.xyz, norm.xyz));
+//spec.rgba = max(spec.rgba, vec4(1.0, 1.0, 1.0, 0.95));
 		if (spec.a > 0.0) // specular reflection
 		{
-			// the old infinite-sky shiny reflection
+		  			// the old infinite-sky shiny reflection
 			//
 			vec3 refnormpersp = normalize(reflect(pos.xyz, norm.xyz));
 			float sa = dot(refnormpersp, sun_dir.xyz);
-			float magic = 3.0; // TODO: work out what shadow val is being pre-div'd by
-			vec3 dumbshiny = (vary_SunlitColor)*(scol * magic)*(2.0 * texture2D(lightFunc, vec2(sa, spec.a)).r);
+			sa = pow(sa, light_gamma);
+
+			float magic = 1.0/2.6; // TODO: work out what shadow val is being pre-div'd by
+			vec3 dumbshiny = (vary_SunlitColor)*(scol * magic)*(6.0 * texture2D(lightFunc, vec2(sa, spec.a)).r);
 			dumbshiny = min(dumbshiny, vec3(1));
 
-			// screen-space cheap fakey reflection map
+			// screen-space cheapish fakey reflection map
 			//
 			vec3 refnorm = normalize(reflect(vec3(0,0,-1), norm.xyz));
 			depth -= 0.5; // unbias depth
@@ -355,6 +497,7 @@ void main()
 			const float itsf = 26.0;
 			for (int guessnum = 1; guessnum <= its; ++guessnum)
 			{
+			float rnd2 = rand(vec2(guessnum+rnd, tc.x));
 			  //float rdpow2 = float(guessnum)/(26.0);
 			  float guessnumfp = float(guessnum);
 			  //guessnumfp -= rnd;
@@ -364,11 +507,12 @@ void main()
 			  //float rdpow2 = (guessnumfp)/(26.0);
 			  float rd = guessnumfp / itsf;
 			  float rdpow2 = rd * rd;
-			  float refdist = 0.5*(screen_res.y * (rd));// / (-depth) ;
+			  float refdist = (-2.5/(-1.0+pos.z))*(1.0-(norm.z*norm.z))*(screen_res.y * (rdpow2));// / (-depth) ;
 			  //float refdist = 0.25*(screen_res.y * (rdpow2)) ;
 			  //float refdist = (0.13* (screen_res.y) * ((1-abs(norm.z)) + ((1-depth)))) * (1.0*(guessnum+1)/161.0);
 			  //vec2 ref2d = mix(orig_ref2d, orig_ref2dpersp, 0*fract(orig_ref2d.y*12345.678)) * refdist;
-			  vec2 ref2d = (orig_ref2d + (1.0 - min(length(spec.rgb), 1.0))*0.13*vec2(rnd*2.0-1.0)) * refdist;
+			  //vec2 ref2d = (orig_ref2d + (1.0 - min(length(spec.rgb), 1.0))*90.913*vec2(rnd*2.0-1.0)) * refdist;
+			  vec2 ref2d = (orig_ref2d + (1.0 - spec.a)*0.25*vec2(rnd2*2.0-1.0)) * refdist;
 			
 			  //ref2d.x += checkerboard;
 
@@ -384,26 +528,40 @@ void main()
 			  ref2d += tc.xy; // use as offset from destination
 
 			  if (ref2d.y < 0.0 || ref2d.y > screen_res.y ||
-			      ref2d.x < 0.0 || ref2d.x > screen_res.x) break;
+			      ref2d.x < 0.0 || ref2d.x > screen_res.x) continue;
 
 			  // Get attributes from the 2D guess point.
 			  float refdepth = texture2DRect(depthMap, ref2d).r;
 			  //if (refdepth == 1.0) continue; // don't sample the sky
 			  vec3 refcol = texture2DRect(diffuseRect, ref2d).rgb;
+			  //convert to gamma space
+				refcol.rgb = linear_to_srgb(refcol.rgb);
+
+			  //refcol.rgb = pow(refcol.rgb, vec3(1.0/2.2));
 			  vec3 refpos = getPosition_d(ref2d, refdepth).xyz;
 			  // figure out how appropriate our guess actually was, directionwise
 			  //float refapprop=1;
 			  //float refapprop = max(0.0, dot(refnorm, normalize(refpos - pos)));
-			  float refapprop = 1.0 - rdpow2;
+			  float refposdistpow2 = dot(refpos - pos, refpos - pos);
+			  float refapprop = 1.0;
+			  //float refapprop = 1.0-rdpow2;
 			  if (refdepth < 1.0) { // non-sky
+			    //refapprop /= (1.0 + refposdistpow2);
 			    //refapprop *= step(0.0, dot(refnorm, (refpos - pos)));
-			    refapprop *= max(0.0, dot(refnorm, normalize(refpos - pos)));
+			    //float angleapprop = max(0.0, dot(normalize(refnorm), (refpos - pos)));
+			    //float angleapprop = max(0.0, dot(normalize(refnorm), normalize(refpos - pos)));
+			    //float angleapprop = sqrt(max(0.0, dot(refnorm, (refpos - pos)) / (1.0 + refposdistpow2 )));
+			    float angleapprop = sqrt(max(0.0, dot(refnorm, (refpos - pos)) / (1.0 + refposdistpow2 )));
+			    refapprop = min(refapprop, angleapprop);
+			    //refapprop = min(refapprop, 4.0 * angleapprop*angleapprop*angleapprop*angleapprop);
+			    //refapprop = min(refapprop, sqrt(angleapprop));
 			    //refapprop *= (1.0 - sqrt(rdpow2));
 			    float refshad = texture2DRect(lightMap, ref2d).r;
-			    vec3 refn = normalize(texture2DRect(normalMap, ref2d).rgb * 2.0 - 1.0);
+			    refshad = pow(refshad, light_gamma);
+			    vec3 refn = /*normalize*/(decode_normal(texture2DRect(normalMap, ref2d).xy));
 			    // darken reflections from points which face away from the reflected ray - our guess was a back-face
-			    //refapprop *= step(dot(refnorm, refn), 0.0);
-			    refapprop = max(min(refapprop, -dot(refnorm, refn)), 0.0);
+			    refapprop = min(refapprop, step(dot(refnorm, refn), 0.001));
+			    //refapprop = max(min(refapprop, -dot(refnorm, refn)), 0.0);
 			    //refapprop = min(refapprop, max(0.0, -dot(refnorm, refn))); // more conservative variant
 			    // kill guesses which are 'behind' the reflector
 			    float ppdist = dot(norm.xyz, refpos.xyz - pos.xyz);
@@ -411,7 +569,7 @@ void main()
 			    //  refapprop = 0.0;
 			    //}
 
-			    refapprop *= step(0.0, ppdist);
+			    refapprop = min(refapprop, step(0.01, ppdist));
 			    //refapprop = min(refapprop, smoothstep(0.0, 0.05, ppdist));
 
 			    ////			refapprop = min(refapprop, 1.0-smoothstep(3.0, 5.0, ppdist));
@@ -426,10 +584,18 @@ void main()
 			    //refapprop *= 1.0/(1.0+distance(refpos.xyz,pos.xyz));
 
 			    //refapprop = /*magickybooster*/2.5*(refapprop);
+			    //refapprop = sqrt(refapprop); // we just plain like the appropriateness of non-sky reflections better where available
 			    total_refapprop += refapprop;
 			    best_refn += refn.xyz * refapprop;
 			    best_refshad += refshad * refapprop;
-			    best_refcol += ( (vary_AmblitColor + vary_SunlitColor * min(max(0.0, dot(reflight, refn)), refshad)) * refcol.rgb + vary_AdditiveColor) * refapprop;
+			    float sunc = max(0.0, dot(reflight, refn));
+			    //sunc = pow(sunc, light_gamma);
+
+			    best_refcol += //pow
+			      (
+			       ((vary_AmblitColor + vary_SunlitColor * min(sunc, refshad)) * (refcol.rgb) + vary_AdditiveColor)
+					       //, vec3(light_gamma)
+					       ) * refapprop;
 			    //if (refapprop > best_refapprop) {
 			    //best_refapprop = refapprop;
 			    ////best_refn = refn.xyz;
@@ -437,30 +603,45 @@ void main()
 			  }
 			  else  // sky
 			  {
+			    //refapprop *= 1.0 / itsf;
+			    //refapprop *= 1.0 - rdpow2;
+			    //refapprop = min(refapprop, (1.0 - rdpow2));
 			    //refapprop = 0.0;
 
 			    // avoid forward-pointing reflections picking up sky
 			    //refapprop = max(min(refapprop, -dot(refnorm, vec3(0,0,1))), 0.0);
-			    refapprop *= max(-refnorm.z, 0.0);//dot(refnorm, vec3(0.0, 0.0, -1.0));
+			    refapprop = min(refapprop, max(-refnorm.z, 0.0));//dot(refnorm, vec3(0.0, 0.0, -1.0));
  
-			    //			    refapprop *= 0.5;
+			    refapprop *= 0.5; // we just plain like the appropriateness of non-sky reflections better where available
+
+
 			    total_refapprop += refapprop;
 			    //best_refn += vec3(0.0, 0.0, -1.0);//reflight.xyz * refapprop; // treat sky samples as if they always face the sun
 			    best_refn += reflight.xyz * refapprop; // treat sky samples as if they always face the sun
 			    best_refshad += 1.0 * refapprop; // sky is not shadowed
 			    best_refcol += refcol.rgb * refapprop;
+			    //best_refcol += vec3(0,1,0) * refapprop;
 			    //bloomdamp += refapprop; // even though we say they face the sun, don't want sky reflections blooming
 			  }
 			}
 			if (total_refapprop > 0.0) {
+			  // we must have the power of >= 25% voters, else damp progressively
+			  float use_refapprop = max(itsf*0.25, (total_refapprop));
+
 			  best_refn = normalize(best_refn);
-			  best_refshad /= total_refapprop;
-			  best_refcol /= total_refapprop;
-			  bloomdamp /= total_refapprop;
+			  best_refshad /= use_refapprop;
+			  best_refcol /= use_refapprop * 2.0; // div2 cos we'll be doubled again
+			  bloomdamp /= use_refapprop;
+			  best_refapprop = 1.0;//use_refapprop;//1.0;//min(1.0, total_refapprop);
+			}
+			else {
+			  //best_refcol.rgb = vec3(0,0,1);
+			  best_refcol.rgb = vec3(0,0,0);
+			  best_refapprop = 0.0;
 			}
 			//best_refapprop = min((total_refapprop / ((itsf+1.0) * 0.4)), 1.0);
-			best_refapprop = min((total_refapprop / ((itsf))), 1.0);
-			//best_refapprop = min(total_refapprop, 1.0);
+			//best_refapprop = min((total_refapprop / ((itsf))), 1.0);
+			//best_refapprop = min((1.0 * total_refapprop / ((itsf))), 1.0);
 			// USE: refn, refshad, refapprop, refcol
 
 			// get appropriate light strength for guess-point
@@ -478,6 +659,7 @@ void main()
 			//vec3 env_vec = env_mat * refnormpersp;
 			//vec3 env_col = textureCube(environmentMap, env_vec).rgb;
 			vec3 refprod = best_refcol.rgb * best_refapprop;
+			//refprod = pow(refprod, vec3(light_gamma));
 			vec3 ssshiny = (refprod);// * spec.a);
 			//vec3 refprod = mix(env_col, vary_SunlitColor * refcol.rgb * refmod * spec.a, refapprop*0+1);
 
@@ -515,18 +697,41 @@ void main()
 			//(0.25*textureCube(environmentMap, env_vecx).rgb + spec_contrib.rgb) * min((2.0 - 0.333*(diffuse.r+diffuse.g+diffuse.b)) * scol_ambocc.g * spec.a, 1.0);
 			//col = mix(col.rgb, 0.3*textureCube(environmentMap, env_vecx).rgb, scol_ambocc.g * max(spec.a-diffuse.a*2.0, 0.0));
 			//col += spec_contrib;// * scol_ambocc.g;
+
+		}
+	
+		
+		col = mix(col, diffuse.rgb, diffuse.a);
+
+		if(false)if (envIntensity > 0.0)
+		{ //add environmentmap
+			vec3 env_vec = env_mat * refnormpersp;
+			
+			vec3 refcol = textureCube(environmentMap, env_vec).rgb;
+
+			col = mix(col.rgb, refcol, 
+				envIntensity);  
+
+		}
+						
+		if (norm.w < 0.5)
+		{
+			col = mix(atmosLighting(col), fullbrightAtmosTransport(col), diffuse.a);
+			col = mix(scaleSoftClip(col), fullbrightScaleSoftClip(col), diffuse.a);
 		}
 
-		col = atmosLighting(col);
-		col = scaleSoftClip(col);
+		#ifdef WATER_FOG
+			vec4 fogged = applyWaterFogDeferred(pos,vec4(col, bloom));
+			col = fogged.rgb;
+			bloom = fogged.a;
+		#endif
 
-		//col.rgb = mix(col.rgb, diffuse.rgb, diffuse.a)
+		col = srgb_to_linear(col);
+
+		//col = vec3(1,0,1);
+		//col.g = envIntensity;
 	}
-	else
-	{
-	  col = diffuse.rgb; // raw sky
-	}
-		
+	
 	frag_color.rgb = col;
 	frag_color.a = bloom;
 }

@@ -43,6 +43,7 @@
 #include "llcapabilityprovider.h"
 #include "m4math.h"					// LLMatrix4
 #include "llhttpclient.h"
+#include "llframetimer.h"
 
 // Surface id's
 #define LAND  1
@@ -312,11 +313,17 @@ public:
 	bool meshRezEnabled() const;
 	bool meshUploadEnabled() const;
 
-	void getSimulatorFeatures(LLSD& info);	
+	void getSimulatorFeatures(LLSD& info) const;	
 	void setSimulatorFeatures(const LLSD& info);
 
 	
 	bool dynamicPathfindingEnabled() const;
+
+// </FS:CR>
+#ifdef OPENSIM
+	std::set<std::string> getGods() { return mGodNames; };	
+#endif // OPENSIM
+// </FS:CR>
 
 	typedef enum
 	{
@@ -361,7 +368,12 @@ public:
 	void getNeighboringRegionsStatus( std::vector<S32>& regions );
 	const LLViewerRegionImpl * getRegionImpl() const { return mImpl; }
 	LLViewerRegionImpl * getRegionImplNC() { return mImpl; }
-
+	
+	// implements the materials capability throttle
+	bool materialsCapThrottled() const { return !mMaterialsCapThrottleTimer.hasExpired(); }
+	void resetMaterialsCapThrottle();
+	
+	U32 getMaxMaterialsPerTransaction() const;
 public:
 	struct CompareDistance
 	{
@@ -396,6 +408,8 @@ public:
 	// we stop supporting the old CoarseLocationUpdate message.
 	LLDynamicArray<U32> mMapAvatars;
 	LLDynamicArray<LLUUID> mMapAvatarIDs;
+
+	LLFrameTimer &	getRenderInfoRequestTimer()			{ return mRenderInfoRequestTimer;		};
 
 private:
 	LLViewerRegionImpl * mImpl;
@@ -447,6 +461,12 @@ private:
 
 	LLDynamicArray<U32>						mCacheMissFull;
 	LLDynamicArray<U32>						mCacheMissCRC;
+			
+	// <FS:CR> Opensim region capabilities
+#ifdef OPENSIM
+	std::set<std::string> mGodNames;
+#endif
+	// </FS:CR>
 
 // [SL:KB] - Patch: World-MinimapOverlay | Checked: 2012-07-26 (Catznip-3.3)
 	mutable LLPointer<LLViewerTexture>		mWorldMapTile;
@@ -459,6 +479,10 @@ private:
 	BOOL mReleaseNotesRequested;
 	
 	LLSD mSimulatorFeatures;
+
+	// the materials capability throttle
+	LLFrameTimer mMaterialsCapThrottleTimer;
+LLFrameTimer	mRenderInfoRequestTimer;
 };
 
 inline BOOL LLViewerRegion::getRegionProtocol(U64 protocol) const

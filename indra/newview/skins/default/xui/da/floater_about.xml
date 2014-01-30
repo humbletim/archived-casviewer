@@ -8,7 +8,9 @@
 		Bygget med [COMPILER] version [COMPILER_VERSION]
 	</floater.string>
 	<floater.string name="AboutPosition">
-		Du er ved [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1] i regionen [REGION] lokaliseret ved &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+		Du er ved [POSITION_LOCAL_0,number,1], [POSITION_LOCAL_1,number,1], [POSITION_LOCAL_2,number,1] i regionen [REGION] lokaliseret ved &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+SLURL: &lt;nolink&gt;[SLURL]&lt;/nolink&gt;
+(globale koordinater [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1])
 [SERVER_VERSION]
 [SERVER_RELEASE_NOTES_URL]
 	</floater.string>
@@ -43,27 +45,6 @@ Voice Server Version: [VOICE_VERSION]
 			<button label="Kopiér til udklipsholder" name="copy_btn"/>
 		</panel>
 		<panel label="Tak til" name="credits_panel">
-		</panel>
-
-<!-- Firestorm Credits -->
-	  <panel label="Firestorm" name="fs_credits_panel">
-	  <text name="firestorm_intro" >
-Firestorm is a community development project to improve the SecondLife(tm) Viewer experience.  We package contributions from various community developers along with code from Linden Lab and ourselves to bring you a quality, feature-rich viewer experience backed up by a large volunteer support team.  Firestorm is brought to you by The Phoenix Firestorm Project, Inc., a non-profit organization.
-
-The Firestorm Development Team:
-      </text>
-      <text name="fs_contrib_intro" >
-Additional code generously contributed to Firestorm by:
-      </text>
-      <text name="fs_support_intro" >
-Special thanks to our Firestorm Support Team, wiki editors, educators, and translators:
-      </text>
-      <text name="fs_art_intro" >
-Firestorm includes Starlight, modified for Firestorm.  It is provided by residents for residents, with the intention of providing an alternative, brighter, and hopefully easier to use interface.  For further details see &lt;nolink&gt;https://wiki.secondlife.com/wiki/Viewer_Skins/Starlight&lt;/nolink&gt;.
-
-UI Artists and Designers:
-      </text>
-
 		</panel>
 		<panel label="Licenser" name="licenses_panel">
 		</panel>

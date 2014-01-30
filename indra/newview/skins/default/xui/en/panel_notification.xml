@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<!-- lots of colors changed in this file -->
 <panel
   background_opaque="false"
       border_visible="false"
@@ -11,7 +10,6 @@
   left="0"
   name="notification_panel"
   chrome="true"
-  show_title="false"
   top="0"
   	height="140"
   translate="false"
@@ -98,4 +96,18 @@
     This panel holds buttons of notification. Change of its size can affect the layout of buttons. 
      -->
   </panel>
+
+  <!-- <FS:Zi> Dialog Stacking browser -->
+  <button
+    layout="topleft"
+    follows="right|bottom"
+    name="DialogStackButton"
+    visibility_control="DialogStackIconVisible"
+    image_selected="Icon_DialogStack"
+    image_unselected="Icon_DialogStack"   
+    width="24"
+    height="14"
+    right="-2"
+    bottom="-2" />
+  <!-- <FS:Zi> Dialog Stacking browser -->
 </panel>

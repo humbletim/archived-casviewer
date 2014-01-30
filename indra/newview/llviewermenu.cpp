@@ -59,6 +59,7 @@
 #include "llbuycurrencyhtml.h"
 #include "llfloatergodtools.h"
 #include "llfloaterinventory.h"
+#include "llfloaterimcontainer.h"
 #include "llfloaterland.h"
 #include "llfloaterpathfindingcharacters.h"
 #include "llfloaterpathfindinglinksets.h"
@@ -107,6 +108,7 @@
 #include "llviewerparcelmgr.h"
 #include "llviewerstats.h"
 #include "llvoavatarself.h"
+#include "llvoicevivox.h"
 #include "llworldmap.h"
 #include "pipeline.h"
 #include "llviewerjoystick.h"
@@ -122,6 +124,10 @@
 #include "llwindow.h"
 #include "llpathfindingmanager.h"
 #include "boost/unordered_map.hpp"
+// [RLVa:KB] - Checked: 2011-05-22 (RLVa-1.3.1a)
+#include "rlvhandler.h"
+#include "rlvlocks.h"
+// [/RLVa:KB]
 
 // Firestorm includes
 // [RLVa:KB] - Checked: 2011-05-22 (RLVa-1.3.1a)
@@ -130,7 +136,7 @@
 // [/RLVa:KB]
 #include "fslslbridge.h"
 #include "fscommon.h"
-#include "fsexport.h"
+#include "fsfloaterexport.h"
 #include "fscontactsfloater.h"	// <FS:Zi> Display group list in contacts floater
 #include "fspose.h"	// <FS:CR> FIRE-4345: Undeform
 #include "fswsassetblacklist.h"
@@ -141,6 +147,8 @@
 #include "llvovolume.h"
 #include "particleeditor.h"
 #include "piemenu.h"	// ## Zi: Pie Menu
+#include "llfloaterpreference.h"	//<FS:KC> Volume controls prefs
+#include "llcheckboxctrl.h"			//<FS:KC> Volume controls prefs
 
 
 using namespace LLAvatarAppearanceDefines;
@@ -165,6 +173,8 @@ void handle_test_load_url(void*);
 //extern BOOL gDebugAvatarRotation;
 extern BOOL gDebugClicks;
 extern BOOL gDebugWindowProc;
+extern BOOL gShaderProfileFrame;
+
 //extern BOOL gDebugTextEditorTips;
 //extern BOOL gDebugSelectMgr;
 
@@ -185,6 +195,7 @@ LLContextMenu	*gMenuObject = NULL;
 LLContextMenu	*gMenuAttachmentSelf = NULL;
 LLContextMenu	*gMenuAttachmentOther = NULL;
 LLContextMenu	*gMenuLand	= NULL;
+LLContextMenu	*gMenuMuteParticle = NULL;
 
 // ## Zi: Pie menu
 // Pie menus
@@ -217,11 +228,8 @@ PieMenu* gPieDetachScreenMenu = NULL;
 PieMenu* gPieDetachBodyPartMenus[10];
 // ## Zi: Pie menu
 
-LLMenuItemCallGL* gAFKMenu = NULL;
-LLMenuItemCallGL* gBusyMenu = NULL;
 LLMenuItemCallGL* gAutorespondMenu = NULL;
 LLMenuItemCallGL* gAutorespondNonFriendsMenu = NULL;
-
 //
 // Local prototypes
 
@@ -335,6 +343,7 @@ void request_friendship(const LLUUID& agent_id);
 
 // Tools menu
 void handle_selected_texture_info(void*);
+void handle_selected_material_info();
 
 void handle_dump_followcam(void*);
 void handle_viewer_enable_message_log(void*);
@@ -358,6 +367,8 @@ BOOL enable_save_into_task_inventory(void*);
 BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
+
+void avatar_tex_refresh();	// <FS:CR> FIRE-11800
 
 // <CV:David>
 S32 mWindowHResolution;
@@ -484,6 +495,9 @@ void init_menus()
 	gMenuLand = LLUICtrlFactory::createFromFile<LLContextMenu>(
 		"menu_land.xml", gMenuHolder, registry);
 
+	gMenuMuteParticle = LLUICtrlFactory::createFromFile<LLContextMenu>(
+		"menu_mute_particle.xml", gMenuHolder, registry);
+
 // ## Zi: Pie menu
 	gPieMenuAvatarSelf = LLUICtrlFactory::createFromFile<PieMenu>(
 		"menu_pie_avatar_self.xml", gMenuHolder, registry);
@@ -588,8 +602,6 @@ void init_menus()
 	gMenuHolder->childSetLabelArg("Upload Animation", "[COST]", upload_cost);
 	gMenuHolder->childSetLabelArg("Bulk Upload", "[COST]", upload_cost);
 	
-	gAFKMenu = gMenuBarView->getChild<LLMenuItemCallGL>("Set Away", TRUE);
-	gBusyMenu = gMenuBarView->getChild<LLMenuItemCallGL>("Set Busy", TRUE);
 	gAutorespondMenu = gMenuBarView->getChild<LLMenuItemCallGL>("Set Autorespond", TRUE);
 	gAutorespondNonFriendsMenu = gMenuBarView->getChild<LLMenuItemCallGL>("Set Autorespond to non-friends", TRUE);
 	gAttachSubMenu = gMenuBarView->findChildMenuByName("Attach Object", TRUE);
@@ -1198,10 +1210,6 @@ class LLAdvancedCheckInfoDisplay : public view_listener_t
 		U32 info_display = info_display_from_string( userdata.asString() );
 		bool new_value = false;
 
-		// <FS:Ansariel> Silence log spam
-		//LL_INFOS("ViewerMenu") << "check " << userdata.asString() << LL_ENDL;
-		LL_DEBUGS("ViewerMenu") << "check " << userdata.asString() << LL_ENDL;
-
 		if ( info_display != 0 )
 		{
 			new_value = LLPipeline::toggleRenderDebugControl( (void*)(ptrdiff_t)info_display );
@@ -1326,28 +1334,6 @@ class LLAdvancedCheckWireframe : public view_listener_t
 	}
 };
 	
-//////////////////////
-// TEXTURE ATLAS //
-//////////////////////
-
-class LLAdvancedToggleTextureAtlas : public view_listener_t
-{
-	bool handleEvent(const LLSD& userdata)
-	{
-		LLViewerTexture::sUseTextureAtlas = !LLViewerTexture::sUseTextureAtlas;
-		gSavedSettings.setBOOL("EnableTextureAtlas", LLViewerTexture::sUseTextureAtlas) ;
-		return true;
-	}
-};
-
-class LLAdvancedCheckTextureAtlas : public view_listener_t
-{
-	bool handleEvent(const LLSD& userdata)
-	{
-		bool new_value = LLViewerTexture::sUseTextureAtlas; // <-- make this using LLCacheControl
-		return new_value;
-	}
-};
 
 //////////////////////////
 // DUMP SCRIPTED CAMERA //
@@ -2722,6 +2708,9 @@ void cleanup_menus()
 	delete gMenuLand;
 	gMenuLand = NULL;
 
+	delete gMenuMuteParticle;
+	gMenuMuteParticle = NULL;
+
 	delete gMenuBarView;
 	gMenuBarView = NULL;
 
@@ -2921,22 +2910,27 @@ class LLObjectTexRefresh : public view_listener_t
     }
 };
 
+void avatar_tex_refresh()
+{
+	LLVOAvatar* avatar = find_avatar_from_object(LLSelectMgr::getInstance()->getSelection()->getPrimaryObject());
+	if(avatar)
+	{
+		// I bet this can be done more elegantly, but this is just straightforward
+		destroy_texture(avatar->getTE(TEX_HEAD_BAKED)->getID());
+		destroy_texture(avatar->getTE(TEX_UPPER_BAKED)->getID());
+		destroy_texture(avatar->getTE(TEX_LOWER_BAKED)->getID());
+		destroy_texture(avatar->getTE(TEX_EYES_BAKED)->getID());
+		destroy_texture(avatar->getTE(TEX_SKIRT_BAKED)->getID());
+		destroy_texture(avatar->getTE(TEX_HAIR_BAKED)->getID());
+		LLAvatarPropertiesProcessor::getInstance()->sendAvatarTexturesRequest(avatar->getID());
+	}
+}
+
 class LLAvatarTexRefresh : public view_listener_t
 {
     bool handleEvent(const LLSD& userdata)
     {
-		LLVOAvatar* avatar=find_avatar_from_object(LLSelectMgr::getInstance()->getSelection()->getPrimaryObject());
-		if(avatar)
-		{
-			// I bet this can be done more elegantly, but this is just straightforward
-			destroy_texture(avatar->getTE(TEX_HEAD_BAKED)->getID());
-			destroy_texture(avatar->getTE(TEX_UPPER_BAKED)->getID());
-			destroy_texture(avatar->getTE(TEX_LOWER_BAKED)->getID());
-			destroy_texture(avatar->getTE(TEX_EYES_BAKED)->getID());
-			destroy_texture(avatar->getTE(TEX_SKIRT_BAKED)->getID());
-			destroy_texture(avatar->getTE(TEX_HAIR_BAKED)->getID());
-			LLAvatarPropertiesProcessor::getInstance()->sendAvatarTexturesRequest(avatar->getID());
-		}
+		avatar_tex_refresh();
 
         return true;
     }
@@ -3329,6 +3323,13 @@ bool enable_object_edit()
 	return enable;
 }
 
+bool enable_mute_particle()
+{
+	const LLPickInfo& pick = LLToolPie::getInstance()->getPick();
+
+	return pick.mParticleOwnerID != LLUUID::null && pick.mParticleOwnerID != gAgent.getID();
+}
+
 // mutually exclusive - show either edit option or build in menu
 bool enable_object_build()
 {
@@ -3482,6 +3483,67 @@ bool enable_object_unmute()
 			   LLMuteList::getInstance()->isMuted(object->getID());;
 	}
 }
+
+
+// 0 = normal, 1 = always, 2 = never
+class LLAvatarCheckImpostorMode : public view_listener_t
+{	
+	bool handleEvent(const LLSD& userdata)
+	{
+		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+		if (!object) return false;
+
+		LLVOAvatar* avatar = find_avatar_from_object(object); 
+		if (!avatar) return false;
+		
+		U32 mode = userdata.asInteger();
+		switch (mode) 
+		{
+			case 0:
+				return (avatar->getVisualMuteSettings() == LLVOAvatar::VISUAL_MUTE_NOT_SET);
+			case 1:
+				return (avatar->getVisualMuteSettings() == LLVOAvatar::ALWAYS_VISUAL_MUTE);
+			case 2:
+				return (avatar->getVisualMuteSettings() == LLVOAvatar::NEVER_VISUAL_MUTE);
+			default:
+				return false;
+		}
+	}	// handleEvent()
+};
+
+// 0 = normal, 1 = always, 2 = never
+class LLAvatarSetImpostorMode : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		LLViewerObject* object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+		if (!object) return false;
+
+		LLVOAvatar* avatar = find_avatar_from_object(object); 
+		if (!avatar) return false;
+		
+		U32 mode = userdata.asInteger();
+		switch (mode) 
+		{
+			case 0:
+				avatar->setVisualMuteSettings(LLVOAvatar::VISUAL_MUTE_NOT_SET);
+				break;
+			case 1:
+				avatar->setVisualMuteSettings(LLVOAvatar::ALWAYS_VISUAL_MUTE);
+				break;
+			case 2:
+				avatar->setVisualMuteSettings(LLVOAvatar::NEVER_VISUAL_MUTE);
+				break;
+			default:
+				return false;
+		}
+
+		avatar->forceUpdateVisualMuteSettings();
+		LLVOAvatar::cullAvatarsByPixelArea();
+		return true;
+	}	// handleEvent()
+};
+
 
 class LLObjectMute : public view_listener_t
 {
@@ -3906,15 +3968,6 @@ bool enable_freeze_eject(const LLSD& avatar_id)
 //	return new_value;
 }
 
-
-void login_done(S32 which, void *user)
-{
-	llinfos << "Login done " << which << llendl;
-
-	LLPanelLogin::closePanel();
-}
-
-
 bool callback_leave_group(const LLSD& notification, const LLSD& response)
 {
 	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
@@ -4148,26 +4201,81 @@ class FSSelfCheckForceSit : public view_listener_t
 	}
 };
 
-// Phantom mode -KC
-class FSSelfTogglePhantom : public view_listener_t
+// Phantom mode -KC & <FS:CR>
+class FSSelfToggleMoveLock : public view_listener_t
     {
         bool handleEvent(const LLSD& userdata)
         {
-			gAgent.togglePhantom();
+			if (LLGridManager::getInstance()->isInSecondLife())
+			{
+				bool new_value = !gSavedSettings.getBOOL("UseMoveLock");
+				gSavedSettings.setBOOL("UseMoveLock", new_value);
+				if (new_value)
+				{
+					reportToNearbyChat(LLTrans::getString("MovelockEnabled"));
+				}
+				else
+				{
+					reportToNearbyChat(LLTrans::getString("MovelockDisabled"));
+				}
+			}
+#ifdef OPENSIM
+			else
+			{
+				gAgent.togglePhantom();
+			}
+#endif // OPENSIM
 			//TODO: feedback to local chat
             return true;
         }
     };
 
 
-class FSSelfCheckPhantom : public view_listener_t
+class FSSelfCheckMoveLock : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		bool new_value = gAgent.getPhantom();
+		bool new_value(false);
+		if (LLGridManager::getInstance()->isInSecondLife())
+		{
+			new_value = gSavedSettings.getBOOL("UseMoveLock");
+		}
+#ifdef OPENSIM
+		else
+		{
+			new_value = gAgent.getPhantom();
+		}
+#endif // OPENSIM
 		return new_value;
 	}
 };
+
+bool enable_bridge_function()
+{
+#ifdef OPENSIM
+	if (LLGridManager::getInstance()->isInOpenSim() && !LLGridManager::getInstance()->isInAuroraSim())
+		// No bridge on OpenSim yet.
+		return false;
+#endif // OPENSIM
+	return (gSavedSettings.getBOOL("UseLSLBridge") && FSLSLBridge::instance().isBridgeValid());
+}
+
+bool enable_move_lock()
+{
+#ifdef OPENSIM
+	// Phantom mode always works on opensim, at least right now.
+	if (LLGridManager::getInstance()->isInOpenSim())
+		return true;
+#endif // OPENSIM
+	return enable_bridge_function();
+}
+
+bool enable_script_info()
+{
+	return (!LLSelectMgr::getInstance()->getSelection()->isEmpty()
+			&& enable_bridge_function());
+}
+// </FS:CR>
 
 // [SJ - Adding IgnorePrejump in Menu ]
 class FSSelfToggleIgnorePreJump : public view_listener_t
@@ -4213,13 +4321,29 @@ class LLTogglePanelPeopleTab : public view_listener_t
 		LLSD param;
 		param["people_panel_tab_name"] = panel_name;
 
+		// <FS:Ansariel> Handle blocklist separately because of standalone option
+		if (panel_name == "blocked_panel")
+		{
+			if (gSavedSettings.getBOOL("FSUseStandaloneBlocklistFloater"))
+			{
+				LLFloaterReg::showInstance("fs_blocklist");
+			}
+			else
+			{
+				togglePeoplePanel(panel_name, param);
+			}
+			return true;
+		}
+		// </FS:Ansariel>
+
 		// <FS:Zi> Open groups and friends lists in communicate floater
 		// <FS:Lo> Adding an option to still use v2 windows
 		if(gSavedSettings.getBOOL("FSUseV2Friends"))
 		{
 			if (   panel_name == "friends_panel"
 				|| panel_name == "groups_panel"
-				|| panel_name == "nearby_panel")
+				|| panel_name == "nearby_panel"
+				|| panel_name == "blocked_panel")
 			{
 				return togglePeoplePanel(panel_name, param);
 			}
@@ -4236,12 +4360,44 @@ class LLTogglePanelPeopleTab : public view_listener_t
 			}
 			else if(panel_name=="groups_panel")
 			{
-				FSFloaterContacts::getInstance()->openTab("groups");
+				if (gSavedSettings.getBOOL("ContactsTornOff"))
+				{
+					FSFloaterContacts* instance = FSFloaterContacts::getInstance();
+					std::string activetab = instance->getChild<LLTabContainer>("friends_and_groups")->getCurrentPanel()->getName();
+					if (instance->getVisible() && activetab == panel_name) 
+					{
+						instance->closeFloater();
+					}
+					else
+					{
+						instance->openTab("groups");
+					}
+				}
+				else
+				{
+					FSFloaterContacts::getInstance()->openTab("groups");
+				}
 				return true;
 			}
 			else if(panel_name=="friends_panel")
 			{
-				FSFloaterContacts::getInstance()->openTab("friends");
+				if (gSavedSettings.getBOOL("ContactsTornOff"))
+				{
+					FSFloaterContacts* instance = FSFloaterContacts::getInstance();
+					std::string activetab = instance->getChild<LLTabContainer>("friends_and_groups")->getCurrentPanel()->getName();
+					if (instance->getVisible() && activetab == panel_name) 
+					{
+						instance->closeFloater();
+					}
+					else
+					{
+						instance->openTab("friends");
+					}
+				}
+				else
+				{
+					FSFloaterContacts::getInstance()->openTab("friends");
+				}
 				return true;
 			}
 			else
@@ -6492,26 +6648,6 @@ void show_v1_menus()	// V1 menu system	-WoLf
 // 	gExportDialog = LLUploadDialog::modalUploadDialog("Exporting selected objects...");
 // }
 //
-
-class LLCommunicateBlockList : public view_listener_t
-{
-	bool handleEvent(const LLSD& userdata)
-	{
-		// <FS:Ansariel> Optional standalone blocklist floater
-		//LLFloaterSidePanelContainer::showPanel("people", "panel_block_list_sidetray", LLSD());
-		if (gSavedSettings.getBOOL("FSUseStandaloneBlocklistFloater"))
-		{
-			LLFloaterReg::showInstance("fs_blocklist", LLSD());
-		}
-		else
-		{
-			LLFloaterSidePanelContainer::showPanel("people", "panel_block_list_sidetray", LLSD());
-		}
-		// </FS:Ansariel>
-		return true;
-	}
-};
-
 class LLWorldSetHomeLocation : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -6594,18 +6730,18 @@ class LLWorldGetAway : public view_listener_t
 	}
 };
 
-class LLWorldSetBusy : public view_listener_t
+class LLWorldSetDoNotDisturb : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if (gAgent.getBusy())
+		if (gAgent.isDoNotDisturb())
 		{
-			gAgent.clearBusy();
+			gAgent.setDoNotDisturb(false);
 		}
 		else
 		{
-			gAgent.setBusy();
-			LLNotificationsUtil::add("BusyModeSet");
+			gAgent.setDoNotDisturb(true);
+			LLNotificationsUtil::add("DoNotDisturbModeSet");
 		}
 		return true;
 	}
@@ -6616,7 +6752,7 @@ class LLWorldGetBusy : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		bool new_value = gAgent.getBusy();
+		bool new_value = gAgent.isDoNotDisturb();
 		return new_value;
 	}
 };
@@ -6676,6 +6812,35 @@ class LLWorldGetAutorespondNonFriends : public view_listener_t
 		return new_value;
 	}
 };
+
+// <FS:PP> FIRE-1245: Option to block/reject teleport offers
+class LLWorldSetRejectTeleportOffers : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		if (gAgent.getRejectTeleportOffers())
+		{
+			gAgent.clearRejectTeleportOffers();
+		}
+		else
+		{
+			gAgent.setRejectTeleportOffers();
+			LLNotificationsUtil::add("RejectTeleportOffersModeSet");
+		}
+		return true;
+	}
+};
+
+// [SJ - FIRE-2177 - Making Autorespons a simple Check in the menu again for clarity]
+class LLWorldGetRejectTeleportOffers : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool new_value = gAgent.getRejectTeleportOffers();
+		return new_value;
+	}
+};
+// </FS:PP> FIRE-1245: Option to block/reject teleport offers
 
 class LLWorldCreateLandmark : public view_listener_t
 {
@@ -6788,7 +6953,9 @@ void handle_look_at_selection(const LLSD& param)
 void handle_zoom_to_object(LLUUID object_id, const LLVector3d& object_pos)
 // </FS:Ansariel> Option to try via exact position
 {
-	const F32 PADDING_FACTOR = 2.f;
+	// <FS:Zi> Fix camera zoom to look at the avatar's face from the front
+	// const F32 PADDING_FACTOR = 2.f;
+	// </FS:Zi>
 
 	LLViewerObject* object = gObjectList.findObject(object_id);
 
@@ -6796,18 +6963,32 @@ void handle_zoom_to_object(LLUUID object_id, const LLVector3d& object_pos)
 	{
 		gAgentCamera.setFocusOnAvatar(FALSE, ANIMATE);
 
-		LLBBox bbox = object->getBoundingBoxAgent() ;
-		F32 angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getAspect() > 1.f ? LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect() : LLViewerCamera::getInstance()->getView());
-		F32 distance = bbox.getExtentLocal().magVec() * PADDING_FACTOR / atan(angle_of_view);
+		// <FS:Zi> Fix camera zoom to look at the avatar's face from the front
+		// LLBBox bbox = object->getBoundingBoxAgent() ;
+		// F32 angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getAspect() > 1.f ? LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect() : LLViewerCamera::getInstance()->getView());
+		// F32 distance = bbox.getExtentLocal().magVec() * PADDING_FACTOR / atan(angle_of_view);
 
-		LLVector3 obj_to_cam = LLViewerCamera::getInstance()->getOrigin() - bbox.getCenterAgent();
-		obj_to_cam.normVec();
+		// LLVector3 obj_to_cam = LLViewerCamera::getInstance()->getOrigin() - bbox.getCenterAgent();
+		// obj_to_cam.normVec();
 
 
-			LLVector3d object_center_global = gAgent.getPosGlobalFromAgent(bbox.getCenterAgent());
+		//	LLVector3d object_center_global = gAgent.getPosGlobalFromAgent(bbox.getCenterAgent());
 
-			gAgentCamera.setCameraPosAndFocusGlobal(object_center_global + LLVector3d(obj_to_cam * distance), 
-											object_center_global, 
+		// 	gAgentCamera.setCameraPosAndFocusGlobal(object_center_global + LLVector3d(obj_to_cam * distance), 
+		// 									object_center_global, 
+
+		LLVector3d object_center_global=object->getPositionGlobal();
+
+		float eye_distance=gSavedSettings.getF32("CameraZoomDistance");
+		float eye_z_offset=gSavedSettings.getF32("CameraZoomEyeZOffset");
+		LLVector3d focus_z_offset=LLVector3d(0.0f,0.0f,gSavedSettings.getF32("CameraZoomFocusZOffset"));
+
+		LLVector3d eye_offset(eye_distance,0.0f,eye_z_offset);
+		eye_offset=eye_offset*object->getRotationRegion();
+
+		gAgentCamera.setCameraPosAndFocusGlobal(object_center_global+eye_offset, 
+										object_center_global+focus_z_offset, 
+		// </FS:Zi>
 											object_id );
 	}
 	// <FS:Ansariel> Option to try via exact position
@@ -6906,7 +7087,7 @@ bool complete_give_money(const LLSD& notification, const LLSD& response, LLObjec
 	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
 	if (option == 0)
 	{
-		gAgent.clearBusy();
+		gAgent.setDoNotDisturb(false);
 	}
 
 	LLViewerObject* objectp = selection->getPrimaryObject();
@@ -6939,12 +7120,12 @@ bool complete_give_money(const LLSD& notification, const LLSD& response, LLObjec
 
 void handle_give_money_dialog()
 {
-	LLNotification::Params params("BusyModePay");
+	LLNotification::Params params("DoNotDisturbModePay");
 	params.functor.function(boost::bind(complete_give_money, _1, _2, LLSelectMgr::getInstance()->getSelection()));
 
-	if (gAgent.getBusy())
+	if (gAgent.isDoNotDisturb())
 	{
-		// warn users of being in busy mode during a transaction
+		// warn users of being in do not disturb mode during a transaction
 		LLNotifications::instance().add(params);
 	}
 	else
@@ -7115,8 +7296,31 @@ class LLShowHelp : public view_listener_t
 	bool handleEvent(const LLSD& userdata)
 	{
 		std::string help_topic = userdata.asString();
+#ifdef OPENSIM
+		if (help_topic.find("grid_") != std::string::npos)
+		{
+			help_topic.erase(0,5);
+			
+			std::string url;
+			LLSD grid_info;
+			LLGridManager::getInstance()->getGridData(grid_info);
+			if (grid_info.has(help_topic))
+			{
+				url = grid_info[help_topic].asString();
+			}
+			
+			if(!url.empty())
+			{
+				LLWeb::loadURLInternal(url);
+			}
+			lldebugs << "grid_help " <<  help_topic << " url " << url << llendl;
+
+			return true;
+		}
+#endif // OPENSIM
 		LLViewerHelp* vhelp = LLViewerHelp::getInstance();
 		vhelp->showTopic(help_topic);
+		
 		return true;
 	}
 };
@@ -7192,8 +7396,6 @@ bool update_grid_help()
 // <FS:CR> Show/hide some menu items depending on if they're supported by the platform or not
 	gMenuHolder->childSetVisible("firestorm_support_group", LLGridManager::getInstance()->isInSLMain()); // <FS:CR> FVS only exists on Agni
 	bool opensim = LLGridManager::getInstance()->isInOpenSim();
-	gMenuHolder->childSetVisible("Avatar Phantom", opensim);
-	gMenuHolder->childSetEnabled("Avatar Phantom", opensim);
 	gMenuHolder->childSetVisible("Manage Account", !opensim);
 	gMenuHolder->childSetVisible("MerchantOutbox", !opensim);
 	// FIX ME: gMenuHolder->childSetVisible("Pathfinding", !opensim);
@@ -7419,6 +7621,33 @@ class LLLandEdit : public view_listener_t
 
 		// Switch to land edit toolset
 		LLToolMgr::getInstance()->getCurrentToolset()->selectTool( LLToolSelectLand::getInstance() );
+		return true;
+	}
+};
+
+class LLMuteParticle : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		LLUUID id = LLToolPie::getInstance()->getPick().mParticleOwnerID;
+		
+		if (id.notNull())
+		{
+			std::string name;
+			gCacheName->getFullName(id, name);
+
+			LLMute mute(id, name, LLMute::AGENT);
+			if (LLMuteList::getInstance()->isMuted(mute.mID))
+			{
+				LLMuteList::getInstance()->remove(mute);
+			}
+			else
+			{
+				LLMuteList::getInstance()->add(mute);
+				LLPanelBlockedList::showPanelAndSelect(mute.mID);
+			}
+		}
+
 		return true;
 	}
 };
@@ -7685,7 +7914,7 @@ class LLAttachmentDetachFromPoint : public view_listener_t
 				ids_to_remove.push_back(attached_object->getAttachmentItemID());
 // [/RLVa:KB]
 			}
-		}
+			}
 		if (!ids_to_remove.empty())
 		{
 			LLAppearanceMgr::instance().removeItemsFromAvatar(ids_to_remove);
@@ -8251,6 +8480,47 @@ void handle_selected_texture_info(void*)
 	}
 }
 
+void handle_selected_material_info()
+{
+	for (LLObjectSelection::valid_iterator iter = LLSelectMgr::getInstance()->getSelection()->valid_begin();
+		iter != LLSelectMgr::getInstance()->getSelection()->valid_end(); iter++)
+	{
+		LLSelectNode* node = *iter;
+		
+		std::string msg;
+		msg.assign("Material info for: \n");
+		msg.append(node->mName);
+		
+		U8 te_count = node->getObject()->getNumTEs();
+		// map from material ID to list of faces using it
+		typedef std::map<LLMaterialID, std::vector<U8> > map_t;
+		map_t faces_per_material;
+		for (U8 i = 0; i < te_count; i++)
+		{
+			if (!node->isTESelected(i)) continue;
+	
+			const LLMaterialID& material_id = node->getObject()->getTE(i)->getMaterialID();
+			faces_per_material[material_id].push_back(i);
+		}
+		// Per-material, dump which faces are using it.
+		map_t::iterator it;
+		for (it = faces_per_material.begin(); it != faces_per_material.end(); ++it)
+		{
+			const LLMaterialID& material_id = it->first;
+			msg += llformat("%s on face ", material_id.asString().c_str());
+			for (U8 i = 0; i < it->second.size(); ++i)
+			{
+				msg.append( llformat("%d ", (S32)(it->second[i])));
+			}
+			msg.append("\n");
+		}
+
+		LLSD args;
+		args["MESSAGE"] = msg;
+		LLNotificationsUtil::add("SystemMessage", args);
+	}
+}
+
 void handle_test_male(void*)
 {
 // [RLVa:KB] - Checked: 2010-03-19 (RLVa-1.2.0c) | Modified: RLVa-1.2.0a
@@ -8388,6 +8658,15 @@ class LLAdvancedClickRenderShadowOption: public view_listener_t
 		{
 			gSavedSettings.setS32(control_name, 0);
 		}
+		return true;
+	}
+};
+
+class LLAdvancedClickRenderProfile: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		gShaderProfileFrame = TRUE;
 		return true;
 	}
 };
@@ -8805,6 +9084,24 @@ class FSStreamListImportXML :public view_listener_t
 };
 // </FS:CR> Stream list import/export
 
+// <FS:CR> Dump SimulatorFeatures to chat
+class FSDumpSimulatorFeaturesToChat : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		if (LLViewerRegion* region = gAgent.getRegion())
+		{
+			LLSD sim_features;
+			std::stringstream out_str;
+			region->getSimulatorFeatures(sim_features);
+			LLSDSerialize::toPrettyXML(sim_features, out_str);
+			reportToNearbyChat(out_str.str());
+		}
+		return true;
+	}
+};
+// </FS:CR> Dump SimulatorFeatures to chat
+
 class LLToolsSelectOnlyMyObjects : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -9179,6 +9476,20 @@ void handle_web_content_test(const LLSD& param)
 	LLWeb::loadURLInternal(url);
 }
 
+void handle_show_url(const LLSD& param)
+{
+	std::string url = param.asString();
+	if(gSavedSettings.getBOOL("UseExternalBrowser"))
+	{
+		LLWeb::loadURLExternal(url);
+	}
+	else
+	{
+		LLWeb::loadURLInternal(url);
+	}
+
+}
+
 void handle_buy_currency_test(void*)
 {
 	std::string url =
@@ -9205,6 +9516,7 @@ void handle_rebake_textures(void*)
 	if (gAgent.getRegion() && gAgent.getRegion()->getCentralBakeVersion())
 	{
 		LLAppearanceMgr::instance().requestServerAppearanceUpdate();
+		avatar_tex_refresh();	// <FS:CR> FIRE-11800 - Refresh the textures too
 	}
 }
 
@@ -9437,6 +9749,22 @@ class LLViewCheckRenderType : public view_listener_t
 			new_value = LLPipeline::toggleRenderTypeControlNegated((void *)LLPipeline::RENDER_TYPE_PARTICLES);
 		}
 		return new_value;
+	}
+};
+
+class LLViewStatusAway : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		return (gAgent.isInitialized() && gAgent.getAFK());
+	}
+};
+
+class LLViewStatusDoNotDisturb : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		return (gAgent.isInitialized() && gAgent.isDoNotDisturb());
 	}
 };
 
@@ -9705,11 +10033,7 @@ class LLWorldPostProcess : public view_listener_t
 
 void handle_flush_name_caches()
 {
-	// Toggle display names on and off to flush
-	bool use_display_names = LLAvatarNameCache::useDisplayNames();
-	LLAvatarNameCache::setUseDisplayNames(!use_display_names);
-	LLAvatarNameCache::setUseDisplayNames(use_display_names);
-
+	LLAvatarNameCache::cleanupClass();
 	if (gCacheName) gCacheName->clear();
 }
 
@@ -9737,6 +10061,11 @@ public:
 // </FS:AW opensim currency support>
 	}
 };
+
+void handle_voice_morphing_subscribe()
+{
+	LLWeb::loadURLExternal(LLTrans::getString("voice_morphing_url"));
+}
 
 class LLToggleUIHints : public view_listener_t
 {
@@ -9870,10 +10199,16 @@ void toggleTeleportHistory()
 // <FS:Techwolf Lupindo> export
 BOOL enable_export_object()
 {
-    // <FS:CR> FIRE-9682 - Temporarily disable export by setting (default off)
-	//return LLSelectMgr::getInstance()->selectGetAllValid();
-    bool allow_export = (LLSelectMgr::getInstance()->selectGetAllValid() && gSavedSettings.getBOOL("FSEnableObjectExports"));
-    return allow_export;
+    // <FS:CR>
+	for (LLObjectSelection::root_iterator iter = LLSelectMgr::getInstance()->getSelection()->root_begin();
+		 iter != LLSelectMgr::getInstance()->getSelection()->root_end(); iter++)
+	{
+		LLSelectNode* node = *iter;
+		LLViewerObject* obj = node->getObject();
+		if (obj || node)
+			return gSavedSettings.getBOOL("FSEnableObjectExports");
+	}
+    return false;
     // </FS:CR>
 }
 
@@ -9881,11 +10216,29 @@ class FSObjectExport : public view_listener_t
 {
 	bool handleEvent( const LLSD& userdata)
 	{
-		FSExport::getInstance()->exportSelection();
+		LLViewerObject* objectp = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+		if (objectp)
+		{
+			LLFloaterReg::showInstance("fs_export");
+		}
 		return true;
 	}
 };
 // </FS:Techwolf Lupindo>
+// <FS:CR>
+class FSObjectExportCollada : public view_listener_t
+{
+	bool handleEvent( const LLSD& userdata)
+	{
+		LLViewerObject* objectp = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+		if (objectp)
+		{
+			LLFloaterReg::showInstance("export_collada");
+		}
+		return true;
+	}
+};
+// </FS:CR>
 
 // <CV:David>
 bool viewer_3d_configured()
@@ -10054,6 +10407,52 @@ void initialize_spellcheck_menu()
 	enable.add("SpellCheck.EnableAddToIgnore", boost::bind(&enable_spellcheck_add_to_ignore, _1));
 }
 
+//<FS:KC> Centralize a some of these volume panel callbacks
+static void volume_controls_open_volume_prefs()
+{
+	// bring up the prefs floater
+	LLFloaterPreference* prefsfloater = LLFloaterReg::showTypedInstance<LLFloaterPreference>("preferences");
+	if (prefsfloater)
+	{
+		// grab the 'audio' panel from the preferences floater and bring it the front!
+		prefsfloater->selectPanel("audio");
+	}
+}
+
+void volume_controls_on_click_set_sounds(const LLUICtrl* ctrl)
+{
+	const LLPanel* volume_control_panel = dynamic_cast<const LLPanel*>(ctrl->getParent());
+	if (volume_control_panel)
+	{
+		// Disable Enable gesture/collisions sounds checkbox if the master sound is disabled
+		// or if sound effects are disabled.
+		volume_control_panel->getChild<LLCheckBoxCtrl>("gesture_audio_play_btn")->setEnabled(!gSavedSettings.getBOOL("MuteSounds"));
+		volume_control_panel->getChild<LLCheckBoxCtrl>("collisions_audio_play_btn")->setEnabled(!gSavedSettings.getBOOL("MuteSounds"));
+	}
+}
+
+void volume_controls_set_control_false(const LLUICtrl* ctrl, const LLSD& user_data)
+{
+	LLPanel* volume_control_panel = dynamic_cast<LLPanel*>(ctrl->getParent());
+	if (volume_control_panel)
+	{
+		std::string control_name = user_data.asString();
+		LLControlVariable* control = volume_control_panel->findControl(control_name);
+		
+		if (control)
+			control->set(LLSD(FALSE));
+	}
+}
+
+void initialize_volume_controls_callbacks()
+{
+	LLUICtrl::CommitCallbackRegistry::Registrar& commit = LLUICtrl::CommitCallbackRegistry::currentRegistrar();
+	commit.add("MediaListCtrl.GoMediaPrefs",	boost::bind(&volume_controls_open_volume_prefs));
+	commit.add("Pref.SetSounds",				boost::bind(&volume_controls_on_click_set_sounds, _1));
+	commit.add("Pref.setControlFalse",			boost::bind(&volume_controls_set_control_false, _1, _2));
+}
+//</FS:KC>
+
 void initialize_menus()
 {
 	// A parameterized event handler used as ctrl-8/9/0 zoom controls below.
@@ -10083,8 +10482,8 @@ void initialize_menus()
 
 	view_listener_t::addEnable(new LLUploadCostCalculator(), "Upload.CalculateCosts");
 
-
-	commit.add("Inventory.NewWindow", boost::bind(&LLFloaterInventory::showAgentInventory));
+	// <FS:Ansariel> [FS communication UI]
+	//enable.add("Conversation.IsConversationLoggingAllowed", boost::bind(&LLFloaterIMContainer::isConversationLoggingAllowed));
 
 	// Agent
 	commit.add("Agent.toggleFlying", boost::bind(&LLAgent::toggleFlying));
@@ -10137,17 +10536,24 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLViewCheckShowHoverTips(), "View.CheckShowHoverTips");
 	view_listener_t::addMenu(new LLViewCheckHighlightTransparent(), "View.CheckHighlightTransparent");
 	view_listener_t::addMenu(new LLViewCheckRenderType(), "View.CheckRenderType");
+	view_listener_t::addMenu(new LLViewStatusAway(), "View.Status.CheckAway");
+	view_listener_t::addMenu(new LLViewStatusDoNotDisturb(), "View.Status.CheckDoNotDisturb");
 	view_listener_t::addMenu(new LLViewCheckHUDAttachments(), "View.CheckHUDAttachments");
 	// <FS:Zi> Add reset camera angles menu
 	view_listener_t::addMenu(new LLViewResetCameraAngles(), "View.ResetCameraAngles");
 	// </FS:Zi>
-
+	
 	// Me > Movement
 	view_listener_t::addMenu(new LLAdvancedAgentFlyingInfo(), "Agent.getFlying");
-	
-	// Communicate
-	view_listener_t::addMenu(new LLCommunicateBlockList(), "Communicate.BlockList");
-	
+
+	// Communicate > Voice morphing > Subscribe...
+	commit.add("Communicate.VoiceMorphing.Subscribe", boost::bind(&handle_voice_morphing_subscribe));
+	LLVivoxVoiceClient * voice_clientp = LLVivoxVoiceClient::getInstance();
+	enable.add("Communicate.VoiceMorphing.NoVoiceMorphing.Check"
+		, boost::bind(&LLVivoxVoiceClient::onCheckVoiceEffect, voice_clientp, "NoVoiceMorphing"));
+	commit.add("Communicate.VoiceMorphing.NoVoiceMorphing.Click"
+		, boost::bind(&LLVivoxVoiceClient::onClickVoiceEffect, voice_clientp, "NoVoiceMorphing"));
+
 	// World menu
 	view_listener_t::addMenu(new LLWorldAlwaysRun(), "World.AlwaysRun");
 	view_listener_t::addMenu(new LLWorldCreateLandmark(), "World.CreateLandmark");
@@ -10155,14 +10561,18 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLWorldSetHomeLocation(), "World.SetHomeLocation");
 	view_listener_t::addMenu(new LLWorldTeleportHome(), "World.TeleportHome");
 	view_listener_t::addMenu(new LLWorldSetAway(), "World.SetAway");
+	view_listener_t::addMenu(new LLWorldSetDoNotDisturb(), "World.SetDoNotDisturb");
 	view_listener_t::addMenu(new LLWorldGetAway(), "World.GetAway"); //[SJ FIRE-2177]
-	view_listener_t::addMenu(new LLWorldSetBusy(), "World.SetBusy");
 	view_listener_t::addMenu(new LLWorldGetBusy(), "World.GetBusy"); //[SJ FIRE-2177]
 	view_listener_t::addMenu(new LLWorldSetAutorespond(), "World.SetAutorespond");
 	view_listener_t::addMenu(new LLWorldGetAutorespond(), "World.GetAutorespond");  //[SJ FIRE-2177]
+	// <FS:PP> FIRE-1245: Option to block/reject teleport requests
+	view_listener_t::addMenu(new LLWorldSetRejectTeleportOffers(), "World.SetRejectTeleportOffers");
+	view_listener_t::addMenu(new LLWorldGetRejectTeleportOffers(), "World.GetRejectTeleportOffers");
+	// </FS:PP>
 	view_listener_t::addMenu(new LLWorldSetAutorespondNonFriends(), "World.SetAutorespondNonFriends");
 	view_listener_t::addMenu(new LLWorldGetAutorespondNonFriends(), "World.GetAutorespondNonFriends");  //[SJ FIRE-2177]
-
+// <FS:TM> CHUI Merge check above
 	view_listener_t::addMenu(new LLWorldEnableCreateLandmark(), "World.EnableCreateLandmark");
 // [RLVa:KB]
 	enable.add("World.EnablePlaceProfile", boost::bind(&enable_place_profile));
@@ -10260,11 +10670,10 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedToggleInfoDisplay(), "Advanced.ToggleInfoDisplay");
 	view_listener_t::addMenu(new LLAdvancedCheckInfoDisplay(), "Advanced.CheckInfoDisplay");
 	view_listener_t::addMenu(new LLAdvancedSelectedTextureInfo(), "Advanced.SelectedTextureInfo");
+	commit.add("Advanced.SelectedMaterialInfo", boost::bind(&handle_selected_material_info));
 	view_listener_t::addMenu(new LLAdvancedToggleWireframe(), "Advanced.ToggleWireframe");
 	view_listener_t::addMenu(new LLAdvancedCheckWireframe(), "Advanced.CheckWireframe");
 	// Develop > Render
-	view_listener_t::addMenu(new LLAdvancedToggleTextureAtlas(), "Advanced.ToggleTextureAtlas");
-	view_listener_t::addMenu(new LLAdvancedCheckTextureAtlas(), "Advanced.CheckTextureAtlas");
 	view_listener_t::addMenu(new LLAdvancedEnableObjectObjectOcclusion(), "Advanced.EnableObjectObjectOcclusion");
 	view_listener_t::addMenu(new LLAdvancedEnableRenderFBO(), "Advanced.EnableRenderFBO");
 	view_listener_t::addMenu(new LLAdvancedEnableRenderDeferred(), "Advanced.EnableRenderDeferred");
@@ -10278,6 +10687,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedHandleAttachedLightParticles(), "Advanced.HandleAttachedLightParticles");
 	view_listener_t::addMenu(new LLAdvancedCheckRenderShadowOption(), "Advanced.CheckRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderShadowOption(), "Advanced.ClickRenderShadowOption");
+	view_listener_t::addMenu(new LLAdvancedClickRenderProfile(), "Advanced.ClickRenderProfile");
 	//[FIX FIRE-1927 - enable DoubleClickTeleport shortcut : SJ]
 	view_listener_t::addMenu(new LLAdvancedToggleDoubleClickTeleport, "Advanced.ToggleDoubleClickTeleport");
 
@@ -10294,6 +10704,7 @@ void initialize_menus()
 	// Advanced > UI
 	commit.add("Advanced.WebBrowserTest", boost::bind(&handle_web_browser_test,	_2));	// sigh! this one opens the MEDIA browser
 	commit.add("Advanced.WebContentTest", boost::bind(&handle_web_content_test, _2));	// this one opens the Web Content floater
+	commit.add("Advanced.ShowURL", boost::bind(&handle_show_url, _2));
 	view_listener_t::addMenu(new LLAdvancedBuyCurrencyTest(), "Advanced.BuyCurrencyTest");
 	view_listener_t::addMenu(new LLAdvancedDumpSelectMgr(), "Advanced.DumpSelectMgr");
 	view_listener_t::addMenu(new LLAdvancedDumpInventory(), "Advanced.DumpInventory");
@@ -10430,8 +10841,9 @@ void initialize_menus()
 	view_listener_t::addMenu(new FSSelfForceSit(), "Self.ForceSit"); //KC
 	enable.add("Self.EnableForceSit", boost::bind(&enable_forcesit_self)); //KC
 	view_listener_t::addMenu(new FSSelfCheckForceSit(), "Self.getForceSit"); //KC
-	view_listener_t::addMenu(new FSSelfTogglePhantom(), "Self.togglePhantom"); //KC
-	view_listener_t::addMenu(new FSSelfCheckPhantom(), "Self.getPhantom"); //KC
+	view_listener_t::addMenu(new FSSelfToggleMoveLock(), "Self.ToggleMoveLock"); //KC
+	view_listener_t::addMenu(new FSSelfCheckMoveLock(), "Self.GetMoveLock"); //KC
+	enable.add("Self.EnableMoveLock", boost::bind(&enable_move_lock));	// <FS:CR>
 	view_listener_t::addMenu(new FSSelfToggleIgnorePreJump(), "Self.toggleIgnorePreJump"); //SJ
 	view_listener_t::addMenu(new FSSelfCheckIgnorePreJump(), "Self.getIgnorePreJump"); //SJ
 	view_listener_t::addMenu(new LLSelfRemoveAllAttachments(), "Self.RemoveAllAttachments");
@@ -10443,6 +10855,8 @@ void initialize_menus()
 	view_listener_t::addMenu( new LLCheckPanelPeopleTab(), "SideTray.CheckPanelPeopleTab");
 
 	 // Avatar pie menu
+	view_listener_t::addMenu(new LLAvatarCheckImpostorMode(), "Avatar.CheckImpostorMode");
+	view_listener_t::addMenu(new LLAvatarSetImpostorMode(), "Avatar.SetImpostorMode");
 	view_listener_t::addMenu(new LLObjectMute(), "Avatar.Mute");
 	view_listener_t::addMenu(new LLAvatarAddFriend(), "Avatar.AddFriend");
 	view_listener_t::addMenu(new LLAvatarAddContact(), "Avatar.AddContact");
@@ -10514,6 +10928,7 @@ void initialize_menus()
 	enable.add("Object.EnableUnmute", boost::bind(&enable_object_unmute));
 	enable.add("Object.EnableBuy", boost::bind(&enable_buy_object));
 	commit.add("Object.ZoomIn", boost::bind(&handle_look_at_selection, "zoom"));
+	enable.add("Object.EnableScriptInfo", boost::bind(&enable_script_info));	// <FS:CR>
 
 	// Attachment pie menu
 	enable.add("Attachment.Label", boost::bind(&onEnableAttachmentLabel, _1, _2));
@@ -10529,6 +10944,9 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLLandSit(), "Land.Sit");
 	view_listener_t::addMenu(new LLLandBuyPass(), "Land.BuyPass");
 	view_listener_t::addMenu(new LLLandEdit(), "Land.Edit");
+
+	// Particle muting
+	view_listener_t::addMenu(new LLMuteParticle(), "Particle.Mute");
 
 	view_listener_t::addMenu(new LLLandEnableBuyPass(), "Land.EnableBuyPass");
 	commit.add("Land.Buy", boost::bind(&handle_buy_land));
@@ -10552,17 +10970,18 @@ void initialize_menus()
 	view_listener_t::addMenu(new FSResetPerAccountControl(), "ResetPerAccountControl");
 	// </FS:Ansariel> Reset to default control
 
-	// <FS:Ansariel> Commented out - already definied earlier in this method
-	//commit.add("Inventory.NewWindow", boost::bind(&LLFloaterInventory::showAgentInventory));
+	commit.add("Inventory.NewWindow", boost::bind(&LLFloaterInventory::showAgentInventory));
 
 	enable.add("EnablePayObject", boost::bind(&enable_pay_object));
 	enable.add("EnablePayAvatar", boost::bind(&enable_pay_avatar));
 	enable.add("EnableEdit", boost::bind(&enable_object_edit));
+	enable.add("EnableMuteParticle", boost::bind(&enable_mute_particle));
 	enable.add("VisibleBuild", boost::bind(&enable_object_build));
 	commit.add("Pathfinding.Linksets.Select", boost::bind(&LLFloaterPathfindingLinksets::openLinksetsWithSelectedObjects));
 	enable.add("EnableSelectInPathfindingLinksets", boost::bind(&enable_object_select_in_pathfinding_linksets));
 	commit.add("Pathfinding.Characters.Select", boost::bind(&LLFloaterPathfindingCharacters::openCharactersWithSelectedObjects));
 	enable.add("EnableSelectInPathfindingCharacters", boost::bind(&enable_object_select_in_pathfinding_characters));
+	enable.add("EnableBridgeFunction", boost::bind(&enable_bridge_function));	// <FS:CR>
 
 	view_listener_t::addMenu(new LLFloaterVisible(), "FloaterVisible");
 	view_listener_t::addMenu(new LLSomethingSelected(), "SomethingSelected");
@@ -10597,9 +11016,12 @@ void initialize_menus()
 	// <FS:CR> Stream list import/export
 	view_listener_t::addMenu(new FSStreamListExportXML(), "Streamlist.xml_export");
 	view_listener_t::addMenu(new FSStreamListImportXML(), "Streamlist.xml_import");
+	// <FS:CR> Dump SimulatorFeatures to chat
+	view_listener_t::addMenu(new FSDumpSimulatorFeaturesToChat(), "Develop.DumpSimFeaturesToChat");
 
 	// <FS:Techwolf Lupindo> export
 	view_listener_t::addMenu(new FSObjectExport(), "Object.Export");
+	view_listener_t::addMenu(new FSObjectExportCollada(), "Object.ExportCollada");
 	enable.add("Object.EnableExport", boost::bind(&enable_export_object));
 	// </FS:Techwolf Lupindo>
 }

@@ -8,7 +8,9 @@
 		コンパイラー [COMPILER] [COMPILER_VERSION] バージョン
 	</floater.string>
 	<floater.string name="AboutPosition">
-		あなたの現在地は、[POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1] の [REGION] です。位置は &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; です。（[HOSTIP]）
+		あなたの現在地は、[POSITION_LOCAL_0,number,1]、[POSITION_LOCAL_1,number,1]、[POSITION_LOCAL_2,number,1] の [REGION] です。位置は &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; です。（[HOSTIP]）
+SLURL:&lt;nolink&gt;[SLURL]&lt;/nolink&gt;
+(グローバル座標 [POSITION_0,number,1]、[POSITION_1,number,1]、[POSITION_2,number,1])
 [SERVER_VERSION]
 [SERVER_RELEASE_NOTES_URL]
 	</floater.string>
@@ -67,25 +69,6 @@ Second Life の提供元： Lindens の：
 				Dummy Name は実行時間に置き換え
 			</text_editor>
 		</panel>
-<!-- Firestorm Credits -->
-      <panel label="Firestorm" name="fs_credits_panel">      
-			<text name="firestorm_intro" height="100" >
-Firestorm is a community development project to improve the SecondLife(tm) Viewer experience.  We package contributions from various community developers along with code from Linden Lab and ourselves to bring you a quality, feature-rich viewer experience backed up by a large volunteer support team.  Firestorm is brought to you by The Phoenix Firestorm Project, Inc., a non-profit organization.          
-          
-The Firestorm Development Team:
-     		 </text>
-      		<text name="fs_contrib_intro" >
-Additional code generously contributed to Firestorm by:
-      		</text>
-      		<text name="fs_support_intro" >
-Special thanks to our Firestorm Support Team, wiki editors, educators, and translators:
-      		</text>
-      		<text name="fs_art_intro" >
-Firestorm includes Starlight, modified for Firestorm.  It is provided by residents for residents, with the intention of provi ding an alternative, brighter, and hopefully easier to use interface.  For further details see &lt;nolink&gt;https://wiki.sec ondlife.com/wiki/Viewer_Skins/Starlight&lt;/nolink&gt;.
-
-UI Artists and Designers:
-      		</text>
-        </panel>
 		<panel label="ライセンス" name="licenses_panel">
 			<text_editor name="credits_editor">
 				3Dconnexion SDK Copyright (C) 1992-2009 3Dconnexion
@@ -94,6 +77,7 @@ Collada DOM Copyright 2006 Sony Computer Entertainment Inc.
 cURL Copyright (C) 1996-2010, Daniel Stenberg, (daniel@haxx.se)
 DBus/dbus-glib Copyright (C) 2002, 2003  CodeFactory AB / Copyright (C) 2003, 2004 Red Hat, Inc.
 expat Copyright (C) 1998, 1999, 2000 Thai Open Source Software Center Ltd.
+FMOD Sound System Copyright (C) Firelight Technologies Pty, Ltd., 1994-2013
 FreeType Copyright (C) 1996-2002, 2006 David Turner, Robert Wilhelm, and Werner Lemberg.
 GL Copyright (C) 1999-2004 Brian Paul.
 GLOD Copyright (C) 2003-04 Jonathan Cohen, Nat Duca, Chris Niski, Johns Hopkins University and David Luebke, Brenden Schubert, University of Virginia.

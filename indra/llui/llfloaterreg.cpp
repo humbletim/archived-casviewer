@@ -296,17 +296,9 @@ bool LLFloaterReg::hideInstance(const std::string& name, const LLSD& key)
 	LLFloater* instance = findInstance(name, key); 
 	if (instance)
 	{
-		// When toggling *visibility*, close the host instead of the floater when hosted
-		if (instance->getHost())
-			instance->getHost()->closeFloater();
-		else
-			instance->closeFloater();
-		return true;
+		instance->closeHostedFloater();
 	}
-	else
-	{
-		return false;
-	}
+	return (instance != NULL);
 }
 
 //static
@@ -316,11 +308,7 @@ bool LLFloaterReg::toggleInstance(const std::string& name, const LLSD& key)
 	LLFloater* instance = findInstance(name, key); 
 	if (LLFloater::isShown(instance))
 	{
-		// When toggling *visibility*, close the host instead of the floater when hosted
-		if (instance->getHost())
-			instance->getHost()->closeFloater();
-		else
-			instance->closeFloater();
+		instance->closeHostedFloater();
 		return false;
 	}
 	else
@@ -400,8 +388,8 @@ std::string LLFloaterReg::declareRectControl(const std::string& name)
 {
 	std::string controlname = getRectControlName(name);
 	LLFloater::getControlGroup()->declareRect(controlname, LLRect(),
-												 llformat("Window Size for %s", name.c_str()),
-												 TRUE);
+											  llformat("Window Size for %s", name.c_str()),
+											  LLControlVariable::PERSIST_NONDFT);
 	return controlname;
 }
 
@@ -411,7 +399,7 @@ std::string LLFloaterReg::declarePosXControl(const std::string& name)
 	LLFloater::getControlGroup()->declareF32(controlname, 
 											10.f,
 											llformat("Window X Position for %s", name.c_str()),
-											TRUE);
+											LLControlVariable::PERSIST_NONDFT);
 	return controlname;
 }
 
@@ -421,7 +409,7 @@ std::string LLFloaterReg::declarePosYControl(const std::string& name)
 	LLFloater::getControlGroup()->declareF32(controlname,
 											10.f,
 											llformat("Window Y Position for %s", name.c_str()),
-											TRUE);
+											LLControlVariable::PERSIST_NONDFT);
 
 	return controlname;
 }
@@ -448,7 +436,7 @@ std::string LLFloaterReg::declareVisibilityControl(const std::string& name)
 	std::string controlname = getVisibilityControlName(name);
 	LLFloater::getControlGroup()->declareBOOL(controlname, FALSE,
 												 llformat("Window Visibility for %s", name.c_str()),
-												 TRUE);
+												 LLControlVariable::PERSIST_NONDFT);
 	return controlname;
 }
 
@@ -458,7 +446,7 @@ std::string LLFloaterReg::declareDockStateControl(const std::string& name)
 	std::string controlname = getDockStateControlName(name);
 	LLFloater::getControlGroup()->declareBOOL(controlname, TRUE,
 												 llformat("Window Docking state for %s", name.c_str()),
-												 TRUE);
+												 LLControlVariable::PERSIST_NONDFT);
 	return controlname;
 
 }
@@ -470,24 +458,6 @@ std::string LLFloaterReg::getDockStateControlName(const std::string& name)
 	LLStringUtil::replaceChar( res, ' ', '_' );
 	return res;
 }
-
-// [SL:KB] - Patch: UI-FloaterTearOffState | Checked: 2011-09-30 (Catznip-3.2.0a) | Added: Catznip-3.0.0a
-//static
-std::string LLFloaterReg::declareTearOffStateControl(const std::string& name)
-{
-	std::string controlname = getTearOffStateControlName(name);
-	LLFloater::getControlGroup()->declareBOOL(controlname, TRUE, llformat("Window Tear Off state for %s", name.c_str()), TRUE);
-	return controlname;
-}
-
-//static
-std::string LLFloaterReg::getTearOffStateControlName(const std::string& name)
-{
-	std::string res = std::string("floater_tearoff_") + name;
-	LLStringUtil::replaceChar(res, ' ', '_');
-	return res;
-}
-// [/SL:KB]
 
 //static
 void LLFloaterReg::registerControlVariables()
@@ -536,51 +506,63 @@ void LLFloaterReg::toggleInstanceOrBringToFront(const LLSD& sdname, const LLSD& 
 	//       * Also, if it is not on top, bring it forward when focus is given.
 	// * Else the target floater is open, close it.
 	// 
-
 	std::string name = sdname.asString();
 	LLFloater* instance = getInstance(name, key); 
+	
 
 	if (!instance)
 	{
 		lldebugs << "Unable to get instance of floater '" << name << "'" << llendl;
+		return;
 	}
-	else if (instance->isMinimized())
+	
+	// If hosted, we need to take that into account
+	LLFloater* host = instance->getHost();
+	
+	if (host)
 	{
-		instance->setMinimized(FALSE);
-		instance->setVisibleAndFrontmost();
-	}
-	else if (!instance->isShown())
-	{
-// [RLVa:KB] - Checked: 2011-12-17 (RLVa-1.4.5a) | Added: RLVa-1.4.5a
-		// [See LLFloaterReg::showInstance()]
-		if ( ((!sBlockShowFloaters) || (sAlwaysShowableList.find(name) != sAlwaysShowableList.end())) && (mValidateSignal(name, key)) )
+		//FS:LO from above: * Else if the target floater does not have focus, give it focus. * Also, if it is not on top, bring it forward when focus is given.
+		//if (host->isMinimized() || !host->isShown() || !host->isFrontmost())
+		if (host->isMinimized() || !host->isShown() || (!host->hasFocus() || !host->isFrontmost()))
+		{
+			host->setMinimized(FALSE);
+			instance->openFloater(key);
+			instance->setVisibleAndFrontmost(true, key);
+		}
+		else if (!instance->getVisible())
 		{
 			instance->openFloater(key);
-			instance->setVisibleAndFrontmost();
+			instance->setVisibleAndFrontmost(true, key);
+			instance->setFocus(TRUE);
 		}
-// [/RLVa:KB]
-//		instance->openFloater(key);
-//		instance->setVisibleAndFrontmost();
+		else
+		{
+			instance->closeHostedFloater();
+		}
 	}
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-11-23 (Catznip-3.2.0b) | Modified: Catznip-3.2.0b
 	else
 	{
-		// Give focus to, or close, the host rather than the floater when hosted
-		LLFloater* floaterp = (!instance->getHost()) ? instance : instance->getHost();
-		if (!floaterp->isFrontmost() || !floaterp->hasFocus())
-			floaterp->setVisibleAndFrontmost();
+		if (instance->isMinimized())
+		{
+			instance->setMinimized(FALSE);
+			instance->setVisibleAndFrontmost(true, key);
+		}
+		else if (!instance->isShown())
+		{
+			instance->openFloater(key);
+			instance->setVisibleAndFrontmost(true, key);
+		}
+		//FS:LO from above: * Else if the target floater does not have focus, give it focus. * Also, if it is not on top, bring it forward when focus is given.
+		//else if (!instance->isFrontmost())
+		else if (!instance->hasFocus() || !instance->isFrontmost())
+		{
+			instance->setVisibleAndFrontmost(true, key);
+		}
 		else
-			floaterp->closeFloater();
+		{
+			instance->closeHostedFloater();
+		}
 	}
-// [/SL:KB]
-//	else if (!instance->isFrontmost())
-//	{
-//		instance->setVisibleAndFrontmost();
-//	}
-//	else
-//	{
-//		instance->closeFloater();
-//	}
 }
 
 // static

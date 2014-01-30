@@ -1974,7 +1974,11 @@ LLVector3d LLAgentCamera::calcCameraPositionTargetGlobal(BOOL *hit_limit)
 		camera_position_global = focusPosGlobal + mCameraFocusOffset;
 	}
 
-	if (!gSavedSettings.getBOOL("DisableCameraConstraints") && !gAgent.isGodlike())
+	// <FS:Ansariel> Replace frequently called gSavedSettings
+	//if (!gSavedSettings.getBOOL("DisableCameraConstraints") && !gAgent.isGodlike())
+	static LLCachedControl<bool> sDisableCameraConstraints(gSavedSettings, "DisableCameraConstraints");
+	if (!sDisableCameraConstraints && !gAgent.isGodlike())
+	// </FS:Ansariel>
 	{
 		LLViewerRegion* regionp = LLWorld::getInstance()->getRegionFromPosGlobal(camera_position_global);
 		bool constrain = true;
@@ -2122,7 +2126,11 @@ F32 LLAgentCamera::getCameraMinOffGround()
 	}
 	else
 	{
-		if (gSavedSettings.getBOOL("DisableCameraConstraints"))
+		// <FS:Ansariel> Replace frequently called gSavedSettings
+		//if (gSavedSettings.getBOOL("DisableCameraConstraints"))
+		static LLCachedControl<bool> sDisableCameraConstraints(gSavedSettings, "DisableCameraConstraints");
+		if (sDisableCameraConstraints)
+		// </FS:Ansariel>
 		{
 			return -1000.f;
 		}
@@ -2403,6 +2411,13 @@ void LLAgentCamera::changeCameraToCustomizeAvatar()
 	}
 // [/RLVa:KB]
 
+// [RLVa:KB] - Checked: 2010-03-07 (RLVa-1.2.0c) | Modified: RLVa-1.0.0g
+	if ( (rlv_handler_t::isEnabled()) && (!gRlvHandler.canStand()) )
+	{
+		return;
+	}
+// [/RLVa:KB]
+
 	gAgent.standUp(); // force stand up
 	gViewerWindow->getWindow()->resetBusyCount();
 
@@ -2422,22 +2437,22 @@ void LLAgentCamera::changeCameraToCustomizeAvatar()
 		gFocusMgr.setKeyboardFocus( NULL );
 		gFocusMgr.setMouseCapture( NULL );
 
-		// Remove any pitch or rotation from the avatar
-		LLVector3 at = gAgent.getAtAxis();
-		at.mV[VZ] = 0.f;
-		at.normalize();
-		gAgent.resetAxes(at);
+			// Remove any pitch or rotation from the avatar
+			LLVector3 at = gAgent.getAtAxis();
+			at.mV[VZ] = 0.f;
+			at.normalize();
+			gAgent.resetAxes(at);
 
-		gAgent.sendAnimationRequest(ANIM_AGENT_CUSTOMIZE, ANIM_REQUEST_START);
-		gAgent.setCustomAnim(TRUE);
-		gAgentAvatarp->startMotion(ANIM_AGENT_CUSTOMIZE);
-		LLMotion* turn_motion = gAgentAvatarp->findMotion(ANIM_AGENT_CUSTOMIZE);
+			gAgent.sendAnimationRequest(ANIM_AGENT_CUSTOMIZE, ANIM_REQUEST_START);
+			gAgent.setCustomAnim(TRUE);
+			gAgentAvatarp->startMotion(ANIM_AGENT_CUSTOMIZE);
+			LLMotion* turn_motion = gAgentAvatarp->findMotion(ANIM_AGENT_CUSTOMIZE);
 
-		if (turn_motion)
-		{
-			// delay camera animation long enough to play through turn animation
-			setAnimationDuration(turn_motion->getDuration() + CUSTOMIZE_AVATAR_CAMERA_ANIM_SLOP);
-		}
+			if (turn_motion)
+			{
+				// delay camera animation long enough to play through turn animation
+				setAnimationDuration(turn_motion->getDuration() + CUSTOMIZE_AVATAR_CAMERA_ANIM_SLOP);
+			}
 	}
 
 	LLVector3 agent_at = gAgent.getAtAxis();
@@ -2962,8 +2977,6 @@ S32 LLAgentCamera::directionToKey(S32 direction)
 }
 
 // <FS:Ansariel> FIRE-7758: Save/load camera position feature
-// Copyright (C) 2012, Ansariel Hiller @ Second Life for Phoenix Firestorm Viewer
-// This code is licensed unter the GNU Lesser General Public License version 2.1
 void LLAgentCamera::storeCameraPosition()
 {
 	mStoredCameraPos = getCameraPositionGlobal();
@@ -3047,4 +3060,3 @@ void LLAgentCamera::calcRiftValues()
 // </CV:David>
 
 // EOF
-

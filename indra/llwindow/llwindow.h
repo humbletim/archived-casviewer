@@ -42,6 +42,7 @@ class LLWindowCallbacks;
 class LLWindow : public LLInstanceTracker<LLWindow>
 {
 public:
+
 	struct LLWindowResolution
 	{
 		S32 mWidth;
@@ -170,6 +171,7 @@ public:
 	virtual void setTitle(const std::string& win_title) {};
 //-TT
 protected:
+	// <CV:David> Added output_type parameter.
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags, U32 output_type);
 	virtual ~LLWindow();
 	// Defaults to true
@@ -277,6 +279,7 @@ public:
 		BOOL fullscreen = FALSE,
 		BOOL clearBg = FALSE,
 		BOOL disable_vsync = TRUE,
+		BOOL use_gl = TRUE,
 		BOOL ignore_pixel_depth = FALSE,
 		U32 fsaa_samples = 0,
 		U32 output_type = 0);

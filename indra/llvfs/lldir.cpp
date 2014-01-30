@@ -90,7 +90,8 @@ LLDir::LLDir()
 	mCAFile(""),
 	mTempDir(""),
 	mDirDelimiter("/"), // fallback to forward slash if not overridden
-	mLanguage("en")
+	mLanguage("en"),
+	mUserName("undefined")
 {
 }
 
@@ -295,7 +296,22 @@ std::string LLDir::buildSLOSCacheDir() const
 	}
 	else
 	{
-		res = add(getOSCacheDir(), "CtrlAltStudio Viewer");
+// <CV:David> Directories renamed for CtrlAltStudio Viewer.
+// <FS:CR> FIRE-8226 - Different flavoured cache directories.
+#ifdef OPENSIM
+  #ifdef ND_BUILD64BIT_ARCH
+		res = add(getOSCacheDir(), "CtrlAltStudio Viewer OS x64");
+  #else
+		res = add(getOSCacheDir(), "CtrlAltStudio Viewer OS");
+  #endif
+#else
+  #ifdef ND_BUILD64BIT_ARCH
+		res = add(getOSCacheDir(), "CtrlAltStudio Viewer x64");
+  #else
+		res = add(getOSCacheDir(), "CtrlAltStudio Viewer ");
+  #endif
+#endif // OPENSIM
+// </FS:CR>
 	}
 	return res;
 }
@@ -353,6 +369,11 @@ const std::string LLDir::getSkinBaseDir() const
 const std::string &LLDir::getLLPluginDir() const
 {
 	return mLLPluginDir;
+}
+
+const std::string &LLDir::getUserName() const
+{
+	return mUserName;
 }
 
 static std::string ELLPathToString(ELLPath location)
@@ -611,10 +632,20 @@ void LLDir::walkSearchSkinDirs(const std::string& subdir,
 		BOOST_FOREACH(std::string subsubdir, subsubdirs)
 		{
 			std::string full_path(add(add(subdir_path, subsubdir), filename));
-			if (fileExists(full_path))
-			{
-				function(subsubdir, full_path);
-			}
+		
+			// <FS:ND> To avoid doing IO calls (expensive) in walkdSearchedSkinDirs cache results.
+
+			// if (fileExists(full_path))
+			// {
+			// 	function(subsubdir, full_path);
+			// }
+
+			std::pair< tSkinDirCache::iterator, bool > prInsert = mSkinDirCache.insert( SkinDirFile( full_path, false ) );
+			if( prInsert.second && fileExists(full_path) )
+				prInsert.first->mExists = true;
+
+			if( prInsert.first->mExists )
+				function( subsubdir, full_path );
 		}
 	}
 }
@@ -858,6 +889,11 @@ void LLDir::setChatLogsDir(const std::string &path)
 	}
 }
 
+void LLDir::updatePerAccountChatLogsDir()
+{
+	mPerAccountChatLogsDir = add(getChatLogsDir(), mUserName);
+}
+
 // <FS:CR> Seperate user directories per grid on OS build
 #ifdef OPENSIM
 void LLDir::setPerAccountChatLogsDir(const std::string &username, const std::string &gridname)
@@ -881,7 +917,8 @@ void LLDir::setPerAccountChatLogsDir(const std::string &username)
 		LLStringUtil::replaceChar(gridlower, ' ', '_');
 #endif // OPENSIM
 // </FS:CR>
-		mPerAccountChatLogsDir = add(getChatLogsDir(), userlower);
+		mUserName = userlower;
+		updatePerAccountChatLogsDir();
 // <FS:CR> Seperate user directories per grid on OS build
 #ifdef OPENSIM
 		if (!gridname.empty() && gridlower != "second_life")
@@ -896,7 +933,6 @@ void LLDir::setPerAccountChatLogsDir(const std::string &username)
 	{
 		llerrs << "NULL name for LLDir::setPerAccountChatLogsDir" << llendl;
 	}
-	
 }
 
 //void LLDir::setSkinFolder(const std::string &skin_folder, const std::string& language)
@@ -931,6 +967,7 @@ void LLDir::setSkinFolder(const std::string &skin_folder, const std::string& the
 	append(mSkinDir, skin_folder);
 	// Next level of generality is a skin installed with the viewer.
 	addSearchSkinDir(mSkinDir);
+		updatePerAccountChatLogsDir();
 
 // [SL:KB] - Patch: Viewer-Skins | Checked: 2012-12-26 (Catznip-3.4)
 	if (!theme_folder.empty())

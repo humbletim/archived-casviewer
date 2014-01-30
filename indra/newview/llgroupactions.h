@@ -118,10 +118,19 @@ public:
 	static bool canEjectFromGroup(const LLUUID& idGroup, const LLUUID& idAgent);
 	static void ejectFromGroup(const LLUUID& idGroup, const LLUUID& idAgent);
 // [/SL:KB]
+	static bool callbackEject(const LLSD& notification, const LLSD& response);	// <FS:CR> FIRE-8499 - Eject from group confirmation
 
 private:
 	static bool onJoinGroup(const LLSD& notification, const LLSD& response);
 	static bool onLeaveGroup(const LLSD& notification, const LLSD& response);
+	
+	/**
+	 * This function is called by LLFetchLeaveGroupData upon receiving a response to a group 
+	 * members data request.
+	 */
+	static void processLeaveGroupDataResponse(const LLUUID group_id);
+
+	friend class LLFetchLeaveGroupData;
 };
 
 #endif // LL_LLGROUPACTIONS_H

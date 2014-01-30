@@ -93,7 +93,7 @@
 	<key>FSIMChatHistoryFade</key>
 	<map>
 		<key>Comment</key>
-		<string>Ammount to fade IM text into the background of the chat history floater (0.25-1.0, 0.25 for really light, 1 for fully visible).</string>
+		<string>Amount to fade IM text into the background of the chat transcript floater (0.25-1.0, 0.25 for really light, 1 for fully visible).</string>
 		<key>Persist</key>
 		<integer>1</integer>
 		<key>Type</key>
@@ -107,7 +107,7 @@
 			<real>0.24</real>
 		</array>
 		<key>SanityComment</key>
-		<string>If you make this too small you might not be able to read IMs that are shown in chat history.</string>
+		<string>If you make this too small you might not be able to read IMs that are shown in chat transcript.</string>
 	</map>
   <key>UsePieMenu</key>
   <map>
@@ -313,7 +313,7 @@
 	<key>FSShowIMInChatHistory</key>
 	<map>
 		<key>Comment</key>
-		<string>If true, IM will also be shown in the nearby chat history.</string>
+		<string>If true, IM will also be shown in the nearby chat transcript.</string>
 		<key>Persist</key>
 		<integer>1</integer>
 		<key>Type</key>
@@ -335,7 +335,7 @@
 	<key>FSLogIMInChatHistory</key>
 	<map>
 		<key>Comment</key>
-		<string>If true, IM will also be logged in the nearby chat history if logging nearby chat and showing IMs in nearby chat is enabled.</string>
+		<string>If true, IM will also be logged in the nearby chat transcript if logging nearby chat and showing IMs in nearby chat is enabled.</string>
 		<key>Persist</key>
 		<integer>1</integer>
 		<key>Type</key>
@@ -839,18 +839,6 @@
       <string>))</string>
     </map>
 
-  <key>FSPlayChatAnimation</key>
-    <map>
-      <key>Comment</key>
-      <string>Play the avatar chat animations, e.g. shouting</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>  
-
   <key>FSShowChatChannel</key>
     <map>
       <key>Comment</key>
@@ -863,10 +851,47 @@
       <integer>0</integer>
     </map>  
 
+  <key>FSShowChatType</key>
+    <map>
+      <key>Comment</key>
+      <string>Shows/Hides the chat type selector (Whisper, Say, Shout)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>  
+
+  <key>ScriptDialogsPosition</key>
+    <map>
+      <key>Comment</key>
+      <string>Holds the position where script llDialog floaters will show up. 1 = docked to chiclet, 2 = top left, 3 = top right, 4 = bottom left, 5 = bottom right, 0 = follow legacy ShowScriptDialogsTopRight</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+
+  <key>DialogStackIconVisible</key>
+    <map>
+      <key>Comment</key>
+      <string>Internal, volatile control that defines if the dialog stack browser icon is visible.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+
+  <!-- Legacy setting, can be removed when ScriptDialogsPosition was adopted -->
   <key>ShowScriptDialogsTopRight</key>
     <map>
       <key>Comment</key>
-      <string>Show script llDialog floaters always in the top right corner of the screen.</string>
+      <string>Show script llDialog floaters always in the top right corner of the screen (OBSOLETE, see ScriptDialogsPosition).</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -1102,27 +1127,38 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-  <key>FSHideTimestampsIM</key>
+  <key>FSShowTimestampsIM</key>
     <map>
       <key>Comment</key>
-      <string>Hide timestamps in IM</string>
+      <string>Show timestamps in IM</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
-  <key>FSHideTimestampsNearbyChat</key>
+  <key>FSShowTimestampsNearbyChat</key>
     <map>
       <key>Comment</key>
-      <string>Hide timestamps in nearby chat</string>
+      <string>Show timestamps in nearby chat</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
+    </map>
+  <key>FSShowTimestampsTranscripts</key>
+    <map>
+      <key>Comment</key>
+      <string>Show timestamps in transcripts</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
     </map>
   <key>FSSecondsinChatTimestamps</key>
     <map>
@@ -1204,7 +1240,7 @@
   <key>OnlineOfflinetoNearbyChatHistory</key>
     <map>
       <key>Comment</key>
-      <string>Show online/offline notifications only in chat history</string>
+      <string>Show online/offline notifications only in chat transcript</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -1296,7 +1332,7 @@
     <key>ShowChatMiniIcons</key>
     <map>
       <key>Comment</key>
-      <string>Toggles the display of mini icons in chat history</string>
+      <string>Toggles the display of mini icons in chat transcript</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -1577,6 +1613,28 @@
       <string>http://search.metaverseink.com/opensim/results.jsp?query=[QUERY]&amp;submit=[CATEGORY]</string>
     </map>
 
+    <key>IMShowTime</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable(disable) timestamp showing in the chat.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>IMShowNamesForP2PConv</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable(disable) showing of a names in the chat.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>CrashHostUrl</key>
     <map>
       <key>Comment</key>
@@ -1678,6 +1736,17 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
+    </map>
+    <key>AnalyzePerformance</key>
+    <map>
+      <key>Comment</key>
+      <string>Request performance analysis for a particular viewer run</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>AnimateTextures</key>
     <map>
@@ -1890,6 +1959,17 @@
       <string>F32</string>
       <key>Value</key>
       <real>1.0</real>
+    </map>
+    <key>AudioLevelUnderwaterRolloff</key>
+    <map>
+      <key>Comment</key>
+      <string>Controls the distance-based dropoff of audio volume underwater(fraction or multiple of default audio rolloff)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>5.0</real>
     </map>
     <key>AudioLevelSFX</key>
     <map>
@@ -2921,8 +3001,6 @@
       <string>F32</string>
       <key>Value</key>
       <real>1.047197551</real>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraOffset</key>
     <map>
@@ -2933,8 +3011,6 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
-      <key>Backup</key>
       <integer>0</integer>
     </map>
     <key>CameraOffsetBuild</key>
@@ -2951,8 +3027,6 @@
         <real>0.0</real>
         <real>6.0</real>
       </array>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraOffsetRearView</key>
     <map>
@@ -2968,8 +3042,6 @@
         <real>0.0</real>
         <real>0.75</real>
       </array>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraOffsetFrontView</key>
     <map>
@@ -2985,8 +3057,6 @@
         <real>0.0</real>
         <real>0.0</real>
       </array>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraOffsetGroupView</key>
     <map>
@@ -3002,8 +3072,6 @@
         <real>0.7</real>
         <real>0.5</real>
       </array>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraOffsetScale</key>
     <map>
@@ -3015,8 +3083,6 @@
       <string>F32</string>
       <key>Value</key>
       <real>1.0</real>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraPosOnLogout</key>
     <map>
@@ -3032,8 +3098,6 @@
         <real>0.0</real>
         <real>0.0</real>
       </array>
-      <key>Backup</key>
-      <integer>0</integer>
     </map>
     <key>CameraPositionSmoothing</key>
     <map>
@@ -3055,8 +3119,6 @@
       <key>Type</key>
       <string>U32</string>
       <key>Value</key>
-      <integer>0</integer>
-      <key>Backup</key>
       <integer>0</integer>
     </map>
 
@@ -3212,13 +3274,35 @@
     <key>ChatHistoryTornOff</key>
     <map>
       <key>Comment</key>
-      <string>Show chat history window separately from Communicate window.</string>
+      <string>Show chat transcript window separately from Communicate window.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>ChatLoadGroupMaxMembers</key>
+    <map>
+        <key>Comment</key>
+        <string>Max number of active members we'll show up for an unresponsive group</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>S32</string>
+        <key>Value</key>
+        <real>100</real>
+    </map>
+    <key>ChatLoadGroupTimeout</key>
+    <map>
+        <key>Comment</key>
+        <string>Time we give the server to send group participants before we hit the server for group info (seconds)</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>10.0</real>
     </map>
     <key>ChatOnlineNotification</key>
     <map>
@@ -3254,17 +3338,6 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
-    <key>ChatWindow</key>
-    <map>
-      <key>Comment</key>
-      <string>Show chat in multiple windows(by default) or in one multi-tabbed window(requires restart)</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>S32</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>
     <key>CheesyBeacon</key>
     <map>
       <key>Comment</key>
@@ -3287,6 +3360,61 @@
       <key>Value</key>
       <string />
     </map>
+    <key>ContextConeInAlpha</key>
+    <map>
+      <key>Comment</key>
+      <string>Cone In Alpha</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.0</real>
+    </map>
+    <key>ContextConeOutAlpha</key>
+    <map>
+      <key>Comment</key>
+      <string>Cone Out Alpha</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>ContextConeFadeTime</key>
+    <map>
+      <key>Comment</key>
+      <string>Cone Fade Time</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>.08</real>
+    </map>
+    <key>ConversationHistoryPageSize</key>
+    <map>
+      <key>Comment</key>
+      <string>Chat transcript of conversation opened from call log is displayed by pages. So this is number of entries per page.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>100</integer>
+    </map>
+    <key>ConversationSortOrder</key>
+    <map>
+      <key>Comment</key>
+      <string>Specifies sort key for conversations</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>131073</integer>
+    </map>
     <key>CloseChatOnReturn</key>
     <map>
       <key>Comment</key>
@@ -3298,10 +3426,21 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>CmdLineChannel</key>
+    <map>
+      <key>Comment</key>
+      <string>Command line specified channel name</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string />
+    </map>
     <key>CloseChatOnEmptyReturn</key>
     <map>
       <key>Comment</key>
-      <string>Close the chat history floater after hitting return on an empty line</string>
+      <string>Close the chat transcript floater after hitting return on an empty line</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -3342,6 +3481,17 @@
       <key>Value</key>
       <string />
     </map>
+    <key>CmdLineUpdateService</key>
+    <map>
+      <key>Comment</key>
+      <string>Override the url base for the update query.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string />
+    </map>
     <key>CmdLineHelperURI</key>
     <map>
       <key>Comment</key>
@@ -3365,6 +3515,17 @@
       <array>
         <string />
       </array>
+    </map>
+    <key>CmdLineLoginLocation</key>
+    <map>
+      <key>Comment</key>
+      <string>Startup destination requested on command line</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string/>
     </map>
     <key>CmdLineLoginURI1</key>
     <map>
@@ -3426,7 +3587,7 @@
     <key>ConsoleBufferSize</key>
     <map>
       <key>Comment</key>
-      <string>Size of chat console history (lines of chat)</string>
+      <string>Size of chat console transcript (lines of chat)</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -3512,6 +3673,28 @@
       <string>Normally, clicking on your avatar resets the camera position. This option removes this behavior.</string>
       <key>Persist</key>
       <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>CoroutineStackSize</key>
+    <map>
+      <key>Comment</key>
+      <string>Size (in bytes) for each coroutine stack</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>262144</integer>
+    </map>
+    <key>CrashOnStartup</key>
+    <map>
+      <key>Comment</key>
+      <string>User-requested crash on viewer startup</string>
+      <key>Persist</key>
+      <integer>0</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -3788,6 +3971,28 @@
       <key>Backup</key>
       <integer>0</integer>
     </map>
+    <key>DebugSession</key>
+    <map>
+      <key>Comment</key>
+      <string>Request debugging for a particular viewer session</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>DebugShowAvatarRenderInfo</key>
+    <map>
+      <key>Comment</key>
+      <string>Show avatar render cost information</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>DebugShowColor</key>
     <map>
       <key>Comment</key>
@@ -3879,17 +4084,6 @@
       <key>Backup</key>
       <integer>0</integer>
     </map>
-  <key>DebugShowUploadCost</key>
-  <map>
-    <key>Comment</key>
-    <string>Show mesh upload cost</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <integer>1</integer>
-  </map>
   <key>DebugShowXUINames</key>
     <map>
       <key>Comment</key>
@@ -4598,6 +4792,17 @@
       <key>Backup</key>
       <integer>0</integer>
     </map>
+  <key>DefaultBlankNormalTexture</key>
+  <map>
+    <key>Comment</key>
+    <string>Texture used as 'Blank' in texture picker for normal maps. (UUID texture reference)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string>5b53359e-59dd-d8a2-04c3-9e65134da47a</string>
+  </map>
 	<key>DefaultFemaleAvatar</key>
 	<map>
 	  <key>Comment</key>
@@ -4620,8 +4825,29 @@
 	  <key>Value</key>
 	  <string>Male Shape &amp; Outfit</string>
 	</map>
-
-    <key>DefaultObjectTexture</key>
+  <key>DefaultObjectNormalTexture</key>
+  <map>
+    <key>Comment</key>
+    <string>Texture used as 'Default' in texture picker for normal map. (UUID texture reference)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string>85f28839-7a1c-b4e3-d71d-967792970a7b</string>
+  </map>
+  <key>DefaultObjectSpecularTexture</key>
+  <map>
+    <key>Comment</key>
+    <string>Texture used as 'Default' in texture picker for specular map. (UUID texture reference)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string>87e0e8f7-8729-1ea8-cfc9-8915773009db</string>
+  </map>
+  <key>DefaultObjectTexture</key>
     <map>
       <key>Comment</key>
       <string>Texture used as 'Default' in texture picker. (UUID texture reference)</string>
@@ -4664,6 +4890,17 @@
       <string>Disable the normal bounds put on the camera by avatar position</string>
       <key>Persist</key>
       <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>DisableCrashLogger</key>
+    <map>
+      <key>Comment</key>
+      <string>Do not send crash report to Linden server</string>
+      <key>Persist</key>
+      <integer>0</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -5116,27 +5353,6 @@
       <key>Backup</key>
       <integer>0</integer>
     </map>
-    <key>EnableTextureAtlas</key>
-    <map>
-      <key>Comment</key>
-      <string>Whether to use texture atlas or not</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-      <key>SanityCheckType</key>
-      <string>Equals</string>
-      <key>SanityValue</key>
-      <array>
-        <integer>0</integer>
-      </array>
-      <key>SanityComment</key>
-      <string>This is an experimental feature and might result in textures being stretched in a weird way across surfaces.</string>
-      <key>Backup</key>
-      <integer>0</integer>
-    </map>
     <key>EnableUIHints</key>
     <map>
       <key>Comment</key>
@@ -5234,7 +5450,7 @@
         <key>Type</key>
         <string>String</string>
         <key>Value</key>
-        <string>http://viewer-settings.secondlife.com</string>
+        <string>http://viewer-settings.firestormviewer.org</string>
         <key>Backup</key>
         <integer>0</integer>
     </map>
@@ -5251,18 +5467,29 @@
         <key>Backup</key>
             <integer>0</integer>
         </map>
-    <key>FilterItemsPerFrame</key>
+    <key>FilterItemsMaxTimePerFrameVisible</key>
+    <map>
+        <key>Comment</key>
+        <string>Max time devoted to items filtering per frame for visible inventory listings (in milliseconds)</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>S32</string>
+        <key>Value</key>
+        <integer>10</integer>
+        <key>Backup</key>
+        <integer>0</integer>
+    </map>
+    <key>FilterItemsMaxTimePerFrameUnvisible</key>
     <map>
       <key>Comment</key>
-      <string>Maximum number of inventory items to match against search filter every frame (lower to increase frame rate while searching, higher to improve search speed)</string>
+        <string>Max time devoted to items filtering per frame for non visible inventory listings (in milliseconds)</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>S32</string>
       <key>Value</key>
-      <integer>500</integer>
-      <key>Backup</key>
-      <integer>0</integer>
+        <integer>1</integer>
     </map>
     <key>FindLandArea</key>
     <map>
@@ -5492,7 +5719,7 @@
     <key>FloaterStatisticsRect</key>
     <map>
       <key>Comment</key>
-      <string>Rectangle for chat history</string>
+      <string>Rectangle for chat transcript</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -6161,6 +6388,17 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
+     <key>IMShowContentPanel</key>
+    <map>
+      <key>Comment</key>
+      <string>Show Toolbar and Body Panels</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>IgnoreAllNotifications</key>
     <map>
       <key>Comment</key>
@@ -6170,6 +6408,16 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
+      <integer>0</integer>
+      <key>SanityCheckType</key>
+      <string>Equals</string>
+      <key>SanityValue</key>
+      <array>
+        <integer>0</integer>
+      </array>
+      <key>SanityComment</key>
+      <string>This setting can lead to strange things happening in your conversations floater, personal IMs and group chats.</string>
+      <key>Backup</key>
       <integer>0</integer>
     </map>  
     <key>IgnorePixelDepth</key>
@@ -6205,7 +6453,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.65</real>
+      <real>0.95</real>
     </map>
     <key>InBandwidth</key>
     <map>
@@ -7182,6 +7430,28 @@
       <string>Log network traffic</string>
       <key>Persist</key>
       <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>LogMetrics</key>
+    <map>
+      <key>Comment</key>
+      <string>Log viewer metrics</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string/>
+    </map>
+    <key>LogPerformance</key>
+    <map>
+      <key>Comment</key>
+      <string>Log performance analysis for a particular viewer run</string>
+      <key>Persist</key>
+      <integer>0</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -8548,6 +8818,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>NoQuickTime</key>
+    <map>
+      <key>Comment</key>
+      <string>Disable QuickTime for a particular viewer run</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>NoVerifySSLCert</key>
     <map>
       <key>Comment</key>
@@ -8592,6 +8873,90 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>NotificationConferenceIMOptions</key>
+    <map>
+      <key>Comment</key>
+      <string>
+        Specifies how the UI responds to Conference IM Notifications.
+        Allowed values: [openconversations,toast,flash,noaction]
+      </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>toast</string>
+    </map>  
+    <key>NotificationFriendIMOptions</key>
+    <map>
+      <key>Comment</key>
+      <string>
+        Specifies how the UI responds to Friend IM Notifications.
+        Allowed values: [openconversations,toast,flash,noaction]
+      </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>toast</string>
+    </map>
+    <key>NotificationGroupChatOptions</key>
+    <map>
+      <key>Comment</key>
+      <string>
+        Specifies how the UI responds to Group Chat Notifications.
+        Allowed values: [openconversations,toast,flash,noaction]
+      </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>toast</string>
+    </map>
+    <key>NotificationNearbyChatOptions</key>
+    <map>
+      <key>Comment</key>
+      <string>
+        Specifies how the UI responds to Nearby Chat Notifications.
+        Allowed values: [openconversations,toast,flash,noaction]
+      </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>toast</string>
+    </map>
+    <key>NotificationNonFriendIMOptions</key>
+    <map>
+      <key>Comment</key>
+      <string>
+        Specifies how the UI responds to Non Friend IM Notifications.
+        Allowed values: [openconversations,toast,flash,noaction]
+      </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>toast</string>
+    </map>  
+    <key>NotificationObjectIMOptions</key>
+    <map>
+      <key>Comment</key>
+      <string>
+        Specifies how the UI responds to Object IM Notifications.
+        Allowed values: [openconversations,toast,flash,noaction]
+      </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>toast</string>
+    </map>  
     <key>NotificationToastLifeTime</key>
     <map>
       <key>Comment</key>
@@ -9131,6 +9496,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <real>90.0</real>
     </map>
+    <key>PlayChatAnim</key>
+    <map>
+      <key>Comment</key>
+      <string>Your avatar plays the chat animation whenever you say, shout or whisper something in nearby chat</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>PlayTypingAnim</key>
     <map>
       <key>Comment</key>
@@ -9141,6 +9517,72 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
+    </map>
+    <key>PlaySoundFriendIM</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when friend's IM received.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>PlaySoundNonFriendIM</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when non-friend's IM received.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>PlaySoundConferenceIM</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when conference IM received.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>PlaySoundGroupChatIM</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when group chat IM received.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>PlaySoundNearbyChatIM</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when nearby chat IM received.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>PlaySoundObjectIM</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when IM fom an object received.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>PluginAttachDebuggerToPlugins</key>
     <map>
@@ -9170,7 +9612,7 @@ Change of this parameter will affect the layout of buttons in notification toast
    <key>PlainTextChatHistory</key>
     <map>
       <key>Comment</key>
-      <string>Enable/Disable plain text chat history style</string>
+      <string>Enable/Disable plain text chat transcript style</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -9884,7 +10326,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>S32</string>
     <key>Value</key>
-    <integer>4</integer>
+    <integer>3</integer>
     <key>Backup</key>
     <integer>0</integer>
   </map>
@@ -10291,7 +10733,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>1500.0</real>
+    <real>500.0</real>
     <key>Backup</key>
     <integer>0</integer>
   </map>
@@ -10304,7 +10746,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>U32</string>
     <key>Value</key>
-    <integer>250</integer>
+    <integer>200</integer>
     <key>Backup</key>
     <integer>0</integer>
   </map>
@@ -10317,14 +10759,14 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>5.0</real>
+    <real>0.30</real>
     <key>Backup</key>
     <integer>0</integer>
   </map>
   <key>RenderSSAOEffect</key>
   <map>
     <key>Comment</key>
-    <string>Multiplier for (1) value for areas which are totally occluded.  Blends with original color for partly-occluded areas.  (Only first component is used.)</string>
+    <string>Multiplier for (1) value and (2) saturation (HSV definition), for areas which are totally occluded.  Blends with original color for partly-occluded areas.  (Third component is unused.)</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -10678,6 +11120,18 @@ Change of this parameter will affect the layout of buttons in notification toast
     <integer>0</integer>
   </map>
 
+  <key>RenderDepthOfFieldInEditMode</key>
+  <map>
+    <key>Comment</key>
+    <string>Whether to use depth of field effect when in edit mode</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
+
   <key>CameraDoFResScale</key>
   <map>
     <key>Comment</key>
@@ -10742,7 +11196,6 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Backup</key>
     <integer>0</integer>
   </map>
-
   <key>RenderDeferredTreeShadowBias</key>
   <map>
     <key>Comment</key>
@@ -10837,6 +11290,18 @@ Change of this parameter will affect the layout of buttons in notification toast
     </array>
   </map>
 
+  <key>RenderSpecularPrecision</key>
+  <map>
+    <key>Comment</key>
+    <string>Force 32-bit floating point LUT</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>U32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  
   <key>RenderSpecularResX</key>
   <map>
     <key>Comment</key>
@@ -10846,7 +11311,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>U32</string>
     <key>Value</key>
-    <real>512</real>
+    <real>1024</real>
     <key>Backup</key>
     <integer>0</integer>
   </map>
@@ -10860,7 +11325,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>U32</string>
     <key>Value</key>
-    <real>128</real>
+    <real>256</real>
     <key>Backup</key>
     <integer>0</integer>
   </map>
@@ -10882,7 +11347,7 @@ Change of this parameter will affect the layout of buttons in notification toast
   <key>RenderDeferred</key>
   <map>
     <key>Comment</key>
-    <string>Use deferred rendering pipeline.</string>
+    <string>Use deferred rendering pipeline (Advanced Lighting Model).</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -11010,7 +11475,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <string>Vector3</string>
     <key>Value</key>
     <array>
-      <real>1.0</real>
+      <real>3.0</real>
       <real>2.0</real>
       <real>0.0</real>
     </array>
@@ -11027,7 +11492,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>3.0</real>
+    <real>1.4</real>
     <key>Backup</key>
     <integer>0</integer>
   </map>
@@ -11096,7 +11561,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>RenderAutoMaskAlphaNonDeferred</key>
     <map>
       <key>Comment</key>
-      <string>Use alpha masks where appropriate, in the non-deferred rendering graphics mode</string>
+      <string>Use alpha masks where appropriate when not using the Advanced Lighting Model</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -11107,7 +11572,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>RenderAutoMaskAlphaDeferred</key>
     <map>
       <key>Comment</key>
-      <string>Use alpha masks where appropriate, in the deferred rendering graphics mode</string>
+      <string>Use alpha masks where appropriate in the Advanced Lighting Model</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -11159,6 +11624,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <real>1.0</real>
     </map>
+  <key>RenderDeferredDisplayGamma</key>
+  <map>
+    <key>Comment</key>
+    <string>Gamma ramp exponent for final correction before display gamma.</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>2.2</real>
+  </map>
     <key>RenderGLCoreProfile</key>
     <map>
       <key>Comment</key>
@@ -11683,6 +12159,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <real>1.0</real>
     </map>
+    <key>FSATIFullTextureMem</key>
+    <map>
+      <key>Comment</key>
+      <string>Don't reduce ATI card texture memory automatically (EXPERIMENTAL)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>RenderTrackerBeacon</key>
     <map>
       <key>Comment</key>
@@ -11788,10 +12275,22 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
+  
   <key>RenderAutoMuteByteLimit</key>
   <map>
     <key>Comment</key>
-    <string>Maximum bytes of attachments before an avatar is automatically visually muted (0 for no limit).</string>
+    <string>Maximum bytes of attachments before an avatar is rendered as a simple impostor (0 for no limit).</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>U32</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
+  <key>RenderAutoMuteRenderWeightLimit</key>
+  <map>
+    <key>Comment</key>
+    <string>Maximum render weight before an avatar is rendered as a simple impostor (0 to not use this limit).</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -11804,7 +12303,7 @@ Change of this parameter will affect the layout of buttons in notification toast
   <key>RenderAutoMuteSurfaceAreaLimit</key>
   <map>
     <key>Comment</key>
-    <string>Maximum surface area of attachments before an avatar is automatically visually muted (0 for no limit).</string>
+    <string>Maximum surface area of attachments before an avatar is rendered as a simple impostor (0 to not use this limit).</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -11814,7 +12313,28 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Backup</key>
     <integer>0</integer>
   </map>
-    
+  <key>RenderAutoMuteFunctions</key>
+  <map>
+    <key>Comment</key>
+    <string>Developing feature to render some avatars using simple impostors or colored silhouettes.  (Set to 7 for all functionality)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>U32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>RenderAutoMuteLogging</key>
+  <map>
+    <key>Comment</key>
+    <string>Show extra information in viewer logs about avatar rendering costs</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>    
   <key>RenderAutoHideSurfaceAreaLimit</key>
   <map>
     <key>Comment</key>
@@ -11928,6 +12448,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Backup</key>
       <integer>0</integer>
     </map>
+    <key>RenderWaterMaterials</key>
+    <map>
+      <key>Comment</key>
+      <string>Water planar reflections include materials rendering.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>RenderWaterMipNormal</key>
     <map>
       <key>Comment</key>
@@ -11958,6 +12489,28 @@ Change of this parameter will affect the layout of buttons in notification toast
     <map>
       <key>Comment</key>
       <string>Display selected parcel outline</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>ReplaySession</key>
+    <map>
+      <key>Comment</key>
+      <string>Request replay of previously-recorded pilot file</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RevokePermsOnStopAnimation</key>
+    <map>
+      <key>Comment</key>
+      <string>Clear animation permssions when choosing "Stop Animating Me"</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -12051,7 +12604,15 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>U32</string>
     <key>Value</key>
-    <integer>32</integer>
+    <integer>16</integer>
+    <key>SanityCheckType</key>
+    <string>LessThan</string>
+    <key>SanityValue</key>
+    <array>
+      <integer>33</integer>
+    </array>
+    <key>SanityComment</key>
+    <string>Setting this value too high will make it less likely that mesh objects will load correctly and cause performace degradation for you and others in the same region.</string>
   </map>
    <key>RunMultipleThreads</key>
     <map>
@@ -12497,7 +13058,7 @@ Change of this parameter will affect the layout of buttons in notification toast
 	<key>ShowScriptErrorsLocation</key>
     <map>
       <key>Comment</key>
-      <string>Show script error in chat or window</string>
+      <string>Show script error in chat (0) or window (1).</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -12536,7 +13097,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>   
+      <integer>0</integer>
     </map>
     <key>ShowMiniLocationPanel</key>
     <map>
@@ -12636,6 +13197,39 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>U32</string>
       <key>Value</key>
       <integer>2</integer>
+    </map>
+    <key>BlockPeopleSortOrder</key>
+    <map>
+      <key>Comment</key>
+      <string>Specifies sort order for recent people (0 = by name, 1 = by type)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>CallLogSortOrder</key>
+    <map>
+      <key>Comment</key>
+      <string>Specifies sort order for Call Log (0 = by name, 1 = by date)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>SortFriendsFirst</key>
+    <map>
+      <key>Comment</key>
+      <string>Specifies whether friends will be sorted first in Call Log</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
     </map>
     <key>ShowPGSearchAll</key>    
     <map>
@@ -14606,6 +15200,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <real>10.0</real>
     </map>
+    <key>UISndIncomingVoiceCall</key>
+    <map>
+      <key>Comment</key>
+      <string>Sound file for incoming voice call (uuid for sound asset)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>c80260ba-41fd-8a46-768a-6bf236360e3a</string>
+    </map>
     <key>UISndInvalidOp</key>
     <map>
       <key>Comment</key>
@@ -14616,6 +15221,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>String</string>
       <key>Value</key>
       <string>4174f859-0d3d-c517-c424-72923dc21f65</string>
+    </map>
+    <key>UISndInventoryOffer</key>
+    <map>
+      <key>Comment</key>
+      <string>Sound file for inventory offer (uuid for sound asset)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>67cc2844-00f3-2b3c-b991-6418d01e1bb7</string>
     </map>
     <key>UISndFSKeywordSound</key>
     <map>
@@ -15149,16 +15765,16 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <string>check</string>
     </map>
-    <key>UpdaterServiceProtocolVersion</key>
+    <key>UpdaterWillingToTest</key>
     <map>
       <key>Comment</key>
-      <string>The update protocol version to use.</string>
+      <string>Whether or not the updater should offer test candidate upgrades.</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
-      <string>String</string>
+      <string>Boolean</string>
       <key>Value</key>
-      <string>v1.0</string>
+      <string>1</string>
     </map>
     <key>UploadBakedTexOld</key>
     <map>
@@ -15473,6 +16089,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
+  <key>UsePeopleAPI</key>
+  <map>
+    <key>Comment</key>
+    <string>Use the people API cap for avatar name fetching, use old legacy protocol if false. Requires restart.</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>1</integer>
+  </map>
     <key>UseStartScreen</key>
     <map>
       <key>Comment</key>
@@ -15524,13 +16151,13 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>UserLoginInfo</key>
     <map>
       <key>Comment</key>
-      <string>Users logging data.</string>
+      <string>User login data.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
-      <string>String</string>
+      <string>LLSD</string>
       <key>Value</key>
-      <string />
+      <string/>
     </map>
     <key>UserLoginInfo1</key>
     <map>
@@ -15541,7 +16168,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>LLSD</string>
       <key>Value</key>
-      <string />
     </map>
     <key>UseLSLBridge</key>
     <map>
@@ -15564,7 +16190,29 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>    
-      </map>
+    </map>
+    <key>UseMoveLock</key>
+    <map>
+      <key>Comment</key>
+      <string>Use the client LSL bridge for movelock</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>    
+    </map>
+    <key>RelockMoveLockAfterRegionChange</key>
+    <map>
+      <key>Comment</key>
+      <string>TRUE: Re-lock movelock after region change - refresh avatar position and send to LSL-Client Bridge script. FALSE: Disengage the lock automatically after region change.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>    
+    </map>
     <key>VFSOldSize</key>
     <map>
       <key>Comment</key>
@@ -15754,6 +16402,28 @@ Change of this parameter will affect the layout of buttons in notification toast
     <map>
       <key>Comment</key>
       <string>Silently reject all incoming group voice calls.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>VoiceCallsRejectAdHoc</key>
+    <map>
+      <key>Comment</key>
+      <string>Silently reject all incoming AdHoc (conference) voice calls.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>VoiceCallsRejectP2P</key>
+    <map>
+      <key>Comment</key>
+      <string>Silently reject all incoming P2P (avatar with avatar) voice calls.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -15968,7 +16638,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>WarningsAsChat</key>
     <map>
       <key>Comment</key>
-      <string>Display warning messages in chat history</string>
+      <string>Display warning messages in chat transcript</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -16080,27 +16750,27 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <real>50.0</real>
     </map>
-    <key>WellIconFlashCount</key>
+    <key>FlashCount</key>
     <map>
       <key>Comment</key>
-      <string>Number of flashes of IM Well and Notification Well icons after which flashing buttons stay lit up. Requires restart.</string>
+      <string>Number of flashes of item. Requires restart.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>S32</string>
       <key>Value</key>
-      <integer>3</integer>
+      <integer>8</integer>
     </map>
-    <key>WellIconFlashPeriod</key>
+    <key>FlashPeriod</key>
     <map>
       <key>Comment</key>
-      <string>Period at which IM Well and Notification Well icons flash (seconds). Requires restart.</string>
+      <string>Period at which item flash (seconds). Requires restart.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.25</real>
+      <real>0.5</real>
     </map>
     <key>WindLightUseAtmosShaders</key>
     <map>
@@ -16267,7 +16937,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <integer>-1.0</integer>
+      <real>-1.0</real>
     </map>
     <key>ForcePeriodicRenderingTime</key>
     <map>
@@ -16278,7 +16948,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <integer>-1.0</integer>
+      <real>-1.0</real>
     </map>
     <key>ZoomDirect</key>
     <map>
@@ -16690,7 +17360,7 @@ Change of this parameter will affect the layout of buttons in notification toast
 		<key>FSCmdLineClearChat</key>
 		<map>
 			<key>Comment</key>
-			<string>Clear chat history to stop lag from chat spam</string>
+			<string>Clear chat transcript to stop lag from chat spam</string>
 			<key>Persist</key>
 			<integer>1</integer>
 			<key>Type</key>
@@ -16840,6 +17510,17 @@ Change of this parameter will affect the layout of buttons in notification toast
 			<string>String</string>
 			<key>Value</key>
 			<string>tp2</string>
+		</map>
+		<key>FSCmdLineCopyCam</key>
+		<map>
+			<key>Comment</key>
+			<string>Copies the current camera location to a vector of the form &lt;x, y, z&gt; to the clipboard.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>String</string>
+			<key>Value</key>
+			<string>cpcampos</string>
 		</map>
 <!--<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues-->  
     <key>FSCmdLineBandWidth</key>
@@ -17959,7 +18640,6 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Value</key>
     <integer>0</integer>
   </map>
-
   <key>DisablePrecacheDelayAfterTeleporting</key>
   <map>
     <key>Comment</key>
@@ -17970,6 +18650,39 @@ Change of this parameter will affect the layout of buttons in notification toast
     <string>Boolean</string>
     <key>Value</key>
     <integer>0</integer>
+  </map>
+  <key>FMODExProfilerEnable</key>
+  <map>
+    <key>Comment</key>
+    <string>Enable profiler tool if using FMOD Ex</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+    </map>
+  <key>FMODExDecodeBufferSize</key>
+  <map>
+    <key>Comment</key>
+    <string>Sets the streaming decode buffer size (in milliseconds)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>U32</string>
+    <key>Value</key>
+    <integer>1000</integer>
+    </map>
+  <key>FMODExStreamBufferSize</key>
+  <map>
+    <key>Comment</key>
+    <string>Sets the streaming buffer size (in milliseconds)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>U32</string>
+    <key>Value</key>
+    <integer>7000</integer>
   </map>
   
     <key>GroupMembersSortOrder</key>
@@ -18577,39 +19290,6 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Value</key>
     <integer>0</integer>
   </map>
-    <key>FSButtonFlashCount</key>
-    <map>
-      <key>Comment</key>
-      <string>Number of flashes after which flashing buttons stay lit up</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>S32</string>
-      <key>Value</key>
-      <integer>8</integer>
-    </map>
-    <key>FSButtonFlashRate</key>
-    <map>
-      <key>Comment</key>
-      <string>Frequency at which buttons flash (hz)</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>1.25</real>
-    </map>
-  <key>FSGlobalButtonFlashOverride</key>
-  <map>
-    <key>Comment</key>
-    <string>If enabled, button flash rate and count will be overridden globally.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <integer>0</integer>
-  </map>
   <key>FSTagShowDistanceColors</key>
   <map>
     <key>Comment</key>
@@ -18882,7 +19562,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Type</key>
     <string>S32</string>
     <key>Value</key>
-    <real>60</real>
+    <real>150</real>
   </map>
     <key>ExodusFlickrLastTags</key>
     <map>
@@ -18949,6 +19629,18 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+
+  <key>VersionChannelName</key>
+    <map>
+      <key>Comment</key>
+      <string>Version information generated by running the viewer</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string />
     </map>
     <key>FSShowServerVersionChangeNotice</key>
     <map>
@@ -19139,6 +19831,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>PlayModeUISndIncomingVoiceCall</key>
+    <map>
+      <key>Comment</key>
+      <string>Plays a sound when have an incoming voice call. Holds state for Prefs &gt; Sound/Media &gt; UI Sounds - UISndIncomingVoiceCall.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>PlayModeUISndInvalidOp</key>
     <map>
       <key>Comment</key>
@@ -19149,6 +19852,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
+    </map>
+    <key>PlayModeUISndInventoryOffer</key>
+    <map>
+      <key>Comment</key>
+      <string>Holds state for Prefs &gt; Sound/Media &gt; UI Sounds - UISndInventoryOffer.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>PlayModeUISndFSKeywordSound</key>
     <map>
@@ -19485,7 +20199,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSShowMutedChatHistory</key>
     <map>
       <key>Comment</key>
-      <string>Shows the muted text in nearby chat history if enabled.</string>
+      <string>Shows the muted text in nearby chat transcript if enabled.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -19583,16 +20297,16 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
-    <key>DontTrimLegacyNames</key>
+    <key>FSTrimLegacyNames</key>
     <map>
       <key>Comment</key>
-      <string>Don't trim "Resident" from Legacy Names.</string>
+      <string>Trim "Resident" from Legacy Names.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
 
     <!-- Start: Sounds for Prefs > Chat > Radar -->
@@ -20098,11 +20812,11 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSMaxAnimationPriority</key>
     <map>
       <key>Comment</key>
-      <string>Allow uploading animations with higher priority (up to 7) NOTE: Only priorities up to level 5 are supported! (Default: 4)</string>
+      <string>Allow uploading animations with higher priority (up to 6) NOTE: Only priorities up to level 5 are supported! (Default: 4)</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
-      <string>U32</string>
+      <string>S32</string>
       <key>Value</key>
       <integer>4</integer>
     </map>
@@ -20263,7 +20977,7 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>FSBuildPrefs_Temporary</key>
     <map>
       <key>Comment</key>
-      <string>New object created default of tempary</string>
+      <string>New object created default of temporary</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -20388,7 +21102,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
     <key>FSReportTotalScriptCountChanges</key>
     <map>
@@ -20698,5 +21412,471 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>5</integer>
     </map>
+    <key>FSLegacyEdgeSnap</key>
+    <map>
+      <key>Comment</key>
+      <string>Use old method for adjusting edge snap regions.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSBetterGroupNoticesToIMLog</key>
+    <map>
+      <key>Comment</key>
+      <string>Improved logging of group notices to group IM log.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSFadeGroupNotices</key>
+    <map>
+      <key>Comment</key>
+      <string>Fade group notices. (V3 default: true)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSShowUploadPaymentToast</key>
+    <map>
+      <key>Comment</key>
+      <string>Show UploadPayment Notifications</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSSortFSFoldersToTop</key>
+    <map>
+      <key>Comment</key>
+      <string>Sorts the #FS and #RLV folders to the top like system folders.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSChatHistoryShowYou</key>
+    <map>
+      <key>Comment</key>
+      <string>Show localized "You" instead of your avatar's username (like CHUI)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSVolumeControlsPanelOpen</key>
+    <map>
+      <key>Comment</key>
+      <string>Internal control for visibility of volume control panel.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>HideFromEditor</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSEmphasizeShoutWhisper</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables bolding shouted chat and italicizing whispered chat</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSIMSystemMessageBrackets</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables surrounding system messages with square brackets in chat transcript. []</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSLegacyNametagPosition</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables the legacy nametag behavior of staying fixed at the avatar's position instead of following animation movements.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSDisableBlockListAutoOpen</key>
+    <map>
+      <key>Comment</key>
+      <string>Disables automatic opening of the block list when muting people or objects.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSOpenIMContainerOnOfflineMessage</key>
+    <map>
+      <key>Comment</key>
+      <string>Open the IM container at login when an offline message is present.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSUseBuiltInHistory</key>
+    <map>
+      <key>Comment</key>
+      <string>Open the conversation transcript in the built in log viewer.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>MediaFilterSinglePrompt</key>
+    <map>
+      <key>Comment</key>
+      <string>Use a single legacy style dialog for media filter prompt, instead of two seperate allow/deny and whitelist/blacklist prompts.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSColorIMsDistinctly</key>
+    <map>
+      <key>Comment</key>
+      <string>Color IM/Group messages distinctly in the console.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSChatWindow</key>
+    <map>
+      <key>Comment</key>
+      <string>Show chat in multiple windows(by default) or in one multi-tabbed window(requires restart)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <!-- <FS_Zi> Animated dialogs -->
+    <key>FSAnimatedScriptDialogs</key>
+    <map>
+      <key>Comment</key>
+      <string>Animates script dialogs V1 style. Only effective when dialogs in top right are activated.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <!-- <FS_Zi> Animated dialogs -->
+    <key>FSAllowGroupInvitationOnlyWithoutFee</key>
+    <map>
+      <key>Comment</key>
+      <string>If True, then group invitation notices that require a fee have the "Join" button removed and a little bit of information added.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSLegacyRadarFriendColoring</key>
+    <map>
+      <key>Comment</key>
+      <string>Use old style for friends on the radar. Uses same color as minimap.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSLegacyRadarLindenColoring</key>
+    <map>
+      <key>Comment</key>
+      <string>Color Lindens on the radar the same as the minimap.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSPoseStandLastSelectedPose</key>
+    <map>
+      <key>Comment</key>
+      <string>Last selected pose in the pose stand</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string />
+    </map>
+    <key>FSFirstRunAfterSettingsRestore</key>
+    <map>
+      <key>Comment</key>
+      <string>Specifies that you have not run the viewer since you performed a settings restore</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+      <key>Backup</key>
+      <integer>0</integer>
+    </map>
+    <key>FSRadarColorNamesByDistance</key>
+    <map>
+      <key>Comment</key>
+      <string>Colors avatar nametags by distance in the radar.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSSyncronizeTextureMaps</key>
+      <map>
+      <key>Comment</key>
+      <string>Align texture maps (texture, bumpy, shiny) across the faces of a prim</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <!-- <FS_Zi> Add avatar hitbox debug -->
+    <key>DebugRenderHitboxes</key>
+    <map>
+      <key>Comment</key>
+      <string>Renders the avatars' hitboxes (collision areas) which are unaffected by viewer side animations.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <!-- <FS_Zi> Add avatar hitbox debug -->
+    <key>FSShowCurrencyBalanceInSnapshots</key>
+    <map>
+      <key>Comment</key>
+      <string>Show your currency balance in snapshots</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>DAEExportConsolidateMaterials</key>
+    <map>
+      <key>Comment</key>
+      <string>Combine faces with same texture</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>DAEExportSkipTransparent</key>
+    <map>
+      <key>Comment</key>
+      <string>Skip exporting faces with default transparent texture or full transparent</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>DAEExportTextures</key>
+    <map>
+      <key>Comment</key>
+      <string>Export textures when exporting Collada</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>DAEExportTextureParams</key>
+    <map>
+      <key>Comment</key>
+      <string>Apply texture params suchs as repeats to the exported UV map</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>DAEExportTexturesFormat</key>
+    <map>
+      <key>Comment</key>
+      <string>Image file format to use when exporting Collada</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <!-- <FS:Zi> Fix camera zoom to look at the avatar's face from the front -->
+    <key>CameraZoomDistance</key>
+    <map>
+      <key>Comment</key>
+      <string>Camera distance to the zoomed in avatar</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <integer>2.5</integer>
+    </map>
+    <key>CameraZoomFocusZOffset</key>
+    <map>
+      <key>Comment</key>
+      <string>Camera height offset of zoomed point on the zoomed in avatar from avatar center</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <integer>0.6</integer>
+    </map>
+    <key>CameraZoomEyeZOffset</key>
+    <map>
+      <key>Comment</key>
+      <string>Camera height offset of the camera itself on the zoomed in avatar from avatar center</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <integer>1.0</integer>
+    </map>
+    <!-- </FS:Zi> Fix camera zoom to look at the avatar's face from the front -->
+    <key>FSExportContents</key>
+    <map>
+      <key>Comment</key>
+      <string>Export object contents in linkset backups</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>FSImportBuildOffset</key>
+    <map>
+      <key>Comment</key>
+      <string>Distance from user the importer begins to build</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Vector3</string>
+      <key>Value</key>
+      <array>
+        <real>5.0</real>
+        <real>0.0</real>
+        <real>2.0</real>
+      </array>
+    </map>
+    <key>FSBuildToolDecimalPrecision</key>
+    <map>
+      <key>Comment</key>
+      <string>Decimal digits to display on various build tool controls (0-7)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>5</integer>
+    </map>
+    <key>FSFlashOnScriptDialog</key>
+    <map>
+      <key>Comment</key>
+      <string>Flash/Bounce the app icon when a script dialog is received and Firestorm is not in focus</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSFlashOnMessage</key>
+    <map>
+      <key>Comment</key>
+      <string>Flash/Bounce the app icon when a new message is recieved and Firestorm is not in focus</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSDisableReturnObjectNotification</key>
+    <map>
+      <key>Comment</key>
+      <string>Disable 'Object has been returned to your inventory Lost and Found folder' notifications</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>FSDisableAMDTextureMemoryCheck</key>
+    <map>
+      <key>Comment</key>
+      <string>Disable checking for low texture memory on AMD graphics cards</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
 </map>
 </llsd>
+

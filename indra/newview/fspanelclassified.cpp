@@ -232,7 +232,7 @@ void FSPanelClassifiedInfo::onOpen(const LLSD& key)
 	llinfos << "Opening classified [" << getClassifiedName() << "] (" << getClassifiedId() << ")" << llendl;
 
 	LLAvatarPropertiesProcessor::getInstance()->addObserver(getAvatarId(), this);
-	LLAvatarPropertiesProcessor::getInstance()->sendClassifiedInfoRequest(getClassifiedId());
+	// LLAvatarPropertiesProcessor::getInstance()->sendClassifiedInfoRequest(getClassifiedId());
 	gGenericDispatcher.addHandler("classifiedclickthrough", &sClassifiedClickThrough);
 
 	// While we're at it let's get the stats from the new table if that
@@ -251,6 +251,11 @@ void FSPanelClassifiedInfo::onOpen(const LLSD& key)
 	sendClickMessage("profile");
 
 	setInfoLoaded(false);
+}
+
+void FSPanelClassifiedInfo::updateData()
+{
+	LLAvatarPropertiesProcessor::getInstance()->sendClassifiedInfoRequest(getClassifiedId());
 }
 
 void FSPanelClassifiedInfo::processProperties(void* data, EAvatarProcessorType type)
@@ -862,9 +867,7 @@ S32 FSPanelClassifiedEdit::getClassifiedFee()
 #ifdef OPENSIM
 	if (LLGridManager::getInstance()->isInOpenSim())
 	{
-		LLSD grid_info;
-		LLGridManager::getInstance()->getGridData(grid_info);
-		fee = grid_info[GRID_CLASSIFIED_FEE].asInteger();
+		fee = LLGridManager::getInstance()->getClassifiedFee();
 	}
 #endif // OPENSIM
 	return fee;

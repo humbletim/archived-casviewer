@@ -27,29 +27,33 @@
 #ifndef LL_LLSYSWELLWINDOW_H
 #define LL_LLSYSWELLWINDOW_H
 
+#include "llimview.h"
+#include "llnotifications.h"
+#include "llscreenchannel.h"
 #include "llsyswellitem.h"
-
 #include "lltransientdockablefloater.h"
+
+// Firestorm includes
 #include "llbutton.h"
 #include "llscreenchannel.h"
 #include "llscrollcontainer.h"
 #include "llimview.h"
-
 #include "boost/shared_ptr.hpp"
 
 class LLAvatarName;
-class LLFlatListView;
 class LLChiclet;
+class LLFlatListView;
 class LLIMChiclet;
 class LLScriptChiclet;
 class LLSysWellChiclet;
 
-
 class LLSysWellWindow : public LLTransientDockableFloater
 {
 public:
+	LOG_CLASS(LLSysWellWindow);
+
     LLSysWellWindow(const LLSD& key);
-    ~LLSysWellWindow();
+    virtual ~LLSysWellWindow();
 	BOOL postBuild();
 
 	// other interface functions
@@ -58,6 +62,7 @@ public:
 
 	// Operating with items
 	void removeItemByID(const LLUUID& id);
+	LLPanel * findItemByID(const LLUUID& id);
 
 	// Operating with outfit
 	virtual void setVisible(BOOL visible);
@@ -84,7 +89,6 @@ protected:
 	virtual const std::string& getAnchorViewName() = 0;
 
 	void reshapeWindow();
-	void releaseNewMessagesState();
 
 	// pointer to a corresponding channel's instance
 	LLNotificationsUI::LLScreenChannel*	mChannel;
@@ -113,7 +117,7 @@ public:
 
 	/*virtual*/ BOOL postBuild();
 	/*virtual*/ void setVisible(BOOL visible);
-
+	/*virtual*/ void onAdd(LLNotificationPtr notify);
 	// Operating with items
 	void addItem(LLSysWellItem::Params p);
 
@@ -125,6 +129,18 @@ public:
 	void unlockWindowUpdate();
 
 protected:
+	struct WellNotificationChannel : public LLNotificationChannel
+	{
+		WellNotificationChannel(LLNotificationWellWindow*);
+		void onDelete(LLNotificationPtr notify)
+		{
+			mWellWindow->removeItemByID(notify->getID());
+		} 
+
+		LLNotificationWellWindow* mWellWindow;
+	};
+
+	LLNotificationChannelPtr mNotificationUpdates;
 	/*virtual*/ const std::string& getAnchorViewName() { return NOTIFICATION_WELL_ANCHOR_NAME; }
 
 private:
@@ -132,11 +148,7 @@ private:
 	void initChannel();
 	void clearScreenChannels();
 
-
 	void onStoreToast(LLPanel* info_panel, LLUUID id);
-
-	// connect counter and list updaters to the corresponding signals
-	void connectListUpdaterToSignal(std::string notification_type);
 
 	// Handlers
 	void onItemClick(LLSysWellItem* item);
@@ -152,7 +164,10 @@ private:
  * 
  * It contains a list list of all active IM sessions.
  */
+// <FS:Ansariel> [FS communication UI]
+//class LLIMWellWindow : public LLSysWellWindow, LLInitClass<LLIMWellWindow>
 class LLIMWellWindow : public LLSysWellWindow, LLIMSessionObserver, LLInitClass<LLIMWellWindow>
+// </FS:Ansariel> [FS communication UI]
 {
 public:
 	LLIMWellWindow(const LLSD& key);
@@ -164,16 +179,20 @@ public:
 
 	/*virtual*/ BOOL postBuild();
 
+	// <FS:Ansariel> [FS communication UI]
 	// LLIMSessionObserver observe triggers
-	/*virtual*/ void sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id);
+	/*virtual*/ void sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id, BOOL has_offline_msg);
+	/*virtual*/ void sessionActivated(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id) {}
+	/*virtual*/ void sessionVoiceOrIMStarted(const LLUUID& session_id) {};
 	/*virtual*/ void sessionRemoved(const LLUUID& session_id);
 	/*virtual*/ void sessionIDUpdated(const LLUUID& old_session_id, const LLUUID& new_session_id);
 
-	void addObjectRow(const LLUUID& notification_id, bool new_message = false);
-	void removeObjectRow(const LLUUID& notification_id);
-
 	void addIMRow(const LLUUID& session_id);
 	bool hasIMRow(const LLUUID& session_id);
+	// </FS:Ansariel> [FS communication UI]
+
+	void addObjectRow(const LLUUID& notification_id, bool new_message = false);
+	void removeObjectRow(const LLUUID& notification_id);
 
 	void closeAll();
 
@@ -181,13 +200,15 @@ protected:
 	/*virtual*/ const std::string& getAnchorViewName() { return IM_WELL_ANCHOR_NAME; }
 
 private:
-	LLChiclet * findIMChiclet(const LLUUID& sessionId);
 	LLChiclet* findObjectChiclet(const LLUUID& notification_id);
 
-	void addIMRow(const LLUUID& sessionId, S32 chicletCounter, const std::string& name, const LLUUID& otherParticipantId);
-	void delIMRow(const LLUUID& sessionId);
 	bool confirmCloseAll(const LLSD& notification, const LLSD& response);
 	void closeAllImpl();
+
+	// <FS:Ansariel> [FS communication UI]
+	LLChiclet * findIMChiclet(const LLUUID& sessionId);
+	void addIMRow(const LLUUID& sessionId, S32 chicletCounter, const std::string& name, const LLUUID& otherParticipantId);
+	void delIMRow(const LLUUID& sessionId);
 
 	/**
 	 * Scrolling row panel.
@@ -214,6 +235,7 @@ private:
 		LLButton*	mCloseBtn;
 		const LLSysWellWindow* mParent;
 	};
+	// </FS:Ansariel> [FS communication UI]
 
 	class ObjectRowPanel: public LLPanel
 	{

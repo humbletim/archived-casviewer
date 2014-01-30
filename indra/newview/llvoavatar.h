@@ -72,8 +72,11 @@ class LLVoiceVisualizer;
 class LLHUDNameTag;
 class LLHUDEffectSpiral;
 class LLTexGlobalColor;
-class LLViewerJoint;
+struct LLVOAvatarBoneInfo;
+struct LLVOAvatarChildJoint;
+//class LLViewerJoint;
 struct LLAppearanceMessageContents;
+struct LLVOAvatarSkeletonInfo;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // LLVOAvatar
@@ -129,15 +132,15 @@ protected:
 public:
 	/*virtual*/ void			updateGL();
 	/*virtual*/ LLVOAvatar*		asAvatar();
-	virtual U32    	 	 		processUpdateMessage(LLMessageSystem *mesgsys,
+	virtual U32    	 	 	processUpdateMessage(LLMessageSystem *mesgsys,
 													 void **user_data,
 													 U32 block_num,
 													 const EObjectUpdateType update_type,
 													 LLDataPacker *dp);
-	virtual void   	 	 		idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
+	virtual void   	 	 	idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time);
 	/*virtual*/ BOOL   	 	 	updateLOD();
-	BOOL  	 	 	 	 		updateJointLODs();
-	void						updateLODRiggedAttachments( void );
+	BOOL  	 	 	 	 	updateJointLODs();
+	void					updateLODRiggedAttachments( void );
 	/*virtual*/ BOOL   	 	 	isActive() const; // Whether this object needs to do an idleUpdate.
 	S32 						totalTextureMemForUUIDS(std::set<LLUUID>& ids);
 	bool 						allTexturesCompletelyDownloaded(std::set<LLUUID>& ids) const;
@@ -163,28 +166,28 @@ public:
 	/*virtual*/ void   	 	 	updateRegion(LLViewerRegion *regionp);
 	/*virtual*/ void   	 	 	updateSpatialExtents(LLVector4a& newMin, LLVector4a &newMax);
 	/*virtual*/ void   	 	 	getSpatialExtents(LLVector4a& newMin, LLVector4a& newMax);
-	/*virtual*/ BOOL   	 	 	lineSegmentIntersect(const LLVector3& start, const LLVector3& end,
+	/*virtual*/ BOOL   	 	 	lineSegmentIntersect(const LLVector4a& start, const LLVector4a& end,
 												 S32 face = -1,                    // which face to check, -1 = ALL_SIDES
 												 BOOL pick_transparent = FALSE,
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
 												 BOOL pick_rigged = FALSE,
 // [/SL:KB]
 												 S32* face_hit = NULL,             // which face was hit
-												 LLVector3* intersection = NULL,   // return the intersection point
+												 LLVector4a* intersection = NULL,   // return the intersection point
 												 LLVector2* tex_coord = NULL,      // return the texture coordinates of the intersection point
-												 LLVector3* normal = NULL,         // return the surface normal at the intersection point
-												 LLVector3* bi_normal = NULL);     // return the surface bi-normal at the intersection point
-	LLViewerObject*	lineSegmentIntersectRiggedAttachments(const LLVector3& start, const LLVector3& end,
+												 LLVector4a* normal = NULL,         // return the surface normal at the intersection point
+												 LLVector4a* tangent = NULL);     // return the surface tangent at the intersection point
+	LLViewerObject*	lineSegmentIntersectRiggedAttachments(const LLVector4a& start, const LLVector4a& end,
 												 S32 face = -1,                    // which face to check, -1 = ALL_SIDES
 												 BOOL pick_transparent = FALSE,
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
 												 BOOL pick_rigged = FALSE,
 // [/SL:KB]
 												 S32* face_hit = NULL,             // which face was hit
-												 LLVector3* intersection = NULL,   // return the intersection point
+												 LLVector4a* intersection = NULL,   // return the intersection point
 												 LLVector2* tex_coord = NULL,      // return the texture coordinates of the intersection point
-												 LLVector3* normal = NULL,         // return the surface normal at the intersection point
-												 LLVector3* bi_normal = NULL);     // return the surface bi-normal at the intersection point
+												 LLVector4a* normal = NULL,         // return the surface normal at the intersection point
+												 LLVector4a* tangent = NULL);     // return the surface tangent at the intersection point
 
 	//--------------------------------------------------------------------
 	// LLCharacter interface and related
@@ -248,7 +251,7 @@ public:
 	void 			idleUpdateWindEffect();
 	void 			idleUpdateNameTag(const LLVector3& root_pos_last);
 	void			idleUpdateNameTagText(BOOL new_name);
-	LLVector3		idleUpdateNameTagPosition(const LLVector3& root_pos_last);
+	void			idleUpdateNameTagPosition(const LLVector3& root_pos_last);
 	void			idleUpdateNameTagAlpha(BOOL new_name, F32 alpha);
 	// <FS:CR> Colorize tags
 	//LLColor4		getNameTagColor(bool is_friend);
@@ -258,8 +261,25 @@ public:
 	static void		invalidateNameTag(const LLUUID& agent_id);
 	// force all name tags to rebuild, useful when display names turned on/off
 	static void		invalidateNameTags();
-	void			addNameTagLine(const std::string& line, const LLColor4& color, S32 style, const LLFontGL* font);
+	// <FS:Ansariel> Fix nametag not properly updating when display name arrives
+	//void			addNameTagLine(const std::string& line, const LLColor4& color, S32 style, const LLFontGL* font);
+	void			addNameTagLine(const std::string& line, const LLColor4& color, S32 style, const LLFontGL* font, bool is_name = false);
+	// </FS:Ansariel>
 	void 			idleUpdateRenderCost();
+	void			calculateUpdateRenderCost();
+	void			updateVisualComplexity() { mVisualComplexityStale = TRUE; }
+	
+	S32				getVisualComplexity()			{ return mVisualComplexity;				};		// Numbers calculated here by rendering AV
+	S32				getAttachmentGeometryBytes()	{ return mAttachmentGeometryBytes;		};		// number of bytes in attached geometry
+	F32				getAttachmentSurfaceArea()		{ return mAttachmentSurfaceArea;		};		// estimated surface area of attachments
+
+	S32				getReportedVisualComplexity()					{ return mReportedVisualComplexity;				};	// Numbers as reported by the SL server
+	void			setReportedVisualComplexity(S32 value)			{ mReportedVisualComplexity = value;			};
+	
+	S32				getUpdatePeriod()				{ return mUpdatePeriod;			};
+	const LLColor4 &  getMutedAVColor()				{ return mMutedAVColor;			};
+
+
 	void 			idleUpdateBelowWater();
 
 	//--------------------------------------------------------------------
@@ -320,12 +340,15 @@ public:
 	static void 	logPendingPhasesAllAvatars();
 	void 			logMetricsTimerRecord(const std::string& phase_name, F32 elapsed, bool completed);
 
+	static LLColor4 calcMutedAVColor(F32 value, S32 range_low, S32 range_high);
+
 protected:
 	LLViewerStats::PhaseMap& getPhases() { return mPhases; }
 	BOOL			updateIsFullyLoaded();
 	BOOL			processFullyLoadedChange(bool loading);
 	void			updateRuthTimer(bool loading);
 	F32 			calcMorphAmount();
+
 private:
 	BOOL			mFirstFullyVisible;
 	BOOL			mFullyLoaded;
@@ -333,6 +356,8 @@ private:
 	BOOL			mFullyLoadedInitialized;
 	S32				mFullyLoadedFrameCounter;
 	S32				mVisualComplexity;
+	BOOL			mVisualComplexityStale;
+	LLColor4		mMutedAVColor;
 	LLFrameTimer	mFullyLoadedTimer;
 	LLFrameTimer	mRuthTimer;
 
@@ -369,6 +394,8 @@ public:
 	F32					mLastPelvisToFoot;
 	F32					mPelvisFixup;
 	F32					mLastPelvisFixup;
+	LLVector3			mCurRootToHeadOffset;
+	LLVector3			mTargetRootToHeadOffset;
 
 	S32					mLastSkeletonSerialNum;
 
@@ -384,20 +411,32 @@ public:
 
 public:
 	U32 		renderImpostor(LLColor4U color = LLColor4U(255,255,255,255), S32 diffuse_channel = 0);
-	bool		isVisuallyMuted() const;
+	bool		isVisuallyMuted();
+	void		setCachedVisualMute(bool muted)						{ mCachedVisualMute = muted;	};
+	void		forceUpdateVisualMuteSettings();
+
+	enum VisualMuteSettings
+	{
+		VISUAL_MUTE_NOT_SET = 0,
+		ALWAYS_VISUAL_MUTE  = 1,
+		NEVER_VISUAL_MUTE   = 2
+	};
+	void		setVisualMuteSettings(VisualMuteSettings set)		{ mVisuallyMuteSetting = set;	};
+	VisualMuteSettings  getVisualMuteSettings()						{ return mVisuallyMuteSetting;	};
 
 	U32 		renderRigid();
 	U32 		renderSkinned(EAvatarRenderPass pass);
 	F32			getLastSkinTime() { return mLastSkinTime; }
-	U32			renderSkinnedAttachments();
 	U32 		renderTransparent(BOOL first_pass);
 	void 		renderCollisionVolumes();
 	static void	deleteCachedImages(bool clearAll=true);
 	static void	destroyGL();
 	static void	restoreGL();
 	S32			mSpecialRenderMode; // special lighting
-	U32			mAttachmentGeometryBytes; //number of bytes in attached geometry
+	S32			mAttachmentGeometryBytes; //number of bytes in attached geometry
 	F32			mAttachmentSurfaceArea; //estimated surface area of attachments
+
+	S32			mReportedVisualComplexity;			// Numbers as reported by the SL server
 
 private:
 	bool		shouldAlphaMask();
@@ -407,6 +446,11 @@ private:
 
 	S32	 		mUpdatePeriod;
 	S32  		mNumInitFaces; //number of faces generated when creating the avatar drawable, does not inculde splitted faces due to long vertex buffer.
+
+	bool		mCachedVisualMute;				// cached return value for isVisuallyMuted()
+	F64			mCachedVisualMuteUpdateTime;	// Time to update mCachedVisualMute
+
+	VisualMuteSettings		mVisuallyMuteSetting;			// Always or never visually mute this AV
 
 	//--------------------------------------------------------------------
 	// Morph masks
@@ -446,7 +490,7 @@ private:
 	// Impostors
 	//--------------------------------------------------------------------
 public:
-	BOOL 		isImpostor() const;
+	BOOL 		isImpostor();
 	BOOL 	    needsImpostorUpdate() const;
 	const LLVector3& getImpostorOffset() const;
 	const LLVector2& getImpostorDim() const;
@@ -734,7 +778,6 @@ public:
 public:
 	BOOL 				hasHUDAttachment() const;
 	LLBBox 				getHUDBBox() const;
-	void 				rebuildHUD();
 	void 				resetHUDAttachments();
 	BOOL				canAttachMoreObjects() const;
 	BOOL				canAttachMoreObjects(U32 n) const;
@@ -878,12 +921,12 @@ protected:
 	static void		getAnimLabels(LLDynamicArray<std::string>* labels);
 	static void		getAnimNames(LLDynamicArray<std::string>* names);	
 private:
-	std::string		mNameString;		// UTF-8 title + name + status
+    bool            mNameIsSet;
 	LLSD			mClientTagData;
 	bool			mHasClientTagColor;
 	std::string  	mTitle;
 	bool	  		mNameAway;
-	bool	  		mNameBusy;
+	bool	  		mNameDoNotDisturb;
 	bool	  		mNameMute;
 	bool      		mNameAppearance;
 	bool			mNameFriend;

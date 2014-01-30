@@ -1,3 +1,4 @@
+
 /** 
  * @file llmeshrepository.cpp
  * @brief Mesh repository implementation.
@@ -98,6 +99,11 @@ U32 LLMeshRepository::sPeakKbps = 0;
 	
 
 const U32 MAX_TEXTURE_UPLOAD_RETRIES = 5;
+
+//<FS:TS> FIRE-11451: Cap concurrent mesh requests at a sane value
+const U32 MESH_CONCURRENT_REQUEST_LIMIT = 64;	// upper limit
+const U32 MESH_CONCURRENT_REQUEST_RESET = 16;	// reset to this if too high
+//</FS:TS> FIRE-11451
 
 static S32 dump_num = 0;
 std::string make_dump_name(std::string prefix, S32 num)
@@ -289,7 +295,14 @@ public:
 
 	~LLMeshSkinInfoResponder()
 	{
-		llassert(mProcessed);
+		if (!LLApp::isQuitting() &&
+			!mProcessed &&
+			mMeshID.notNull())
+		{	// Something went wrong, retry
+			llwarns << "Timeout or service unavailable, retrying loadMeshSkinInfo() for " << mMeshID << llendl;
+			LLMeshRepository::sHTTPRetryCount++;
+			gMeshRepo.mThread->loadMeshSkinInfo(mMeshID);
+		}
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -314,7 +327,14 @@ public:
 
 	~LLMeshDecompositionResponder()
 	{
-		llassert(mProcessed);
+		if (!LLApp::isQuitting() &&
+			!mProcessed &&
+			mMeshID.notNull())
+		{	// Something went wrong, retry
+			llwarns << "Timeout or service unavailable, retrying loadMeshDecomposition() for " << mMeshID << llendl;
+			LLMeshRepository::sHTTPRetryCount++;
+			gMeshRepo.mThread->loadMeshDecomposition(mMeshID);
+		}
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -339,7 +359,14 @@ public:
 
 	~LLMeshPhysicsShapeResponder()
 	{
-		llassert(mProcessed);
+		if (!LLApp::isQuitting() &&
+			!mProcessed &&
+			mMeshID.notNull())
+		{	// Something went wrong, retry
+			llwarns << "Timeout or service unavailable, retrying loadMeshPhysicsShape() for " << mMeshID << llendl;
+			LLMeshRepository::sHTTPRetryCount++;
+			gMeshRepo.mThread->loadMeshPhysicsShape(mMeshID);
+		}
 	}
 
 	virtual void completedRaw(U32 status, const std::string& reason,
@@ -580,7 +607,7 @@ void LLMeshRepoThread::run()
 				count = 0;	
 
 				// <FS:Ansariel> Mesh header/LOD retry functionality
-				F32 curl_timeout = llmax((F32)fsMeshRequestTimeout, 30.f) + 2.f; // 30 secs minimum timeout as defined in LLCurl.cpp
+				F32 curl_timeout = llmax((F32)fsMeshRequestTimeout, 150.f) + 2.f; // 150 secs minimum timeout as defined in LLCurl.cpp (30s connect, 120s operation)
 
 				if (mMutex)
 				{
@@ -650,7 +677,7 @@ void LLMeshRepoThread::run()
 					if (!fetchMeshLOD(req.mMeshParams, req.mLOD, count))//failed, resubmit
 					{
 						mMutex->lock();
-						mLODReqQ.push(req) ; 
+						mLODReqQ.push(req); 
 						mMutex->unlock();
 					}
 				}
@@ -1305,8 +1332,7 @@ bool LLMeshRepoThread::headerReceived(const LLVolumeParams& mesh_params, U8* dat
 			LLMutexLock lock(mHeaderMutex);
 			mMeshHeaderSize[mesh_id] = header_size;
 			mMeshHeader[mesh_id] = header;
-			}
-
+		}
 
 		LLMutexLock lock(mMutex); // make sure only one thread access mPendingLOD at the same time.
 
@@ -1320,10 +1346,8 @@ bool LLMeshRepoThread::headerReceived(const LLVolumeParams& mesh_params, U8* dat
 				mLODReqQ.push(req);
 				LLMeshRepository::sLODProcessing++;
 			}
-
-			mPendingLOD.erase(iter); // <FS:ND/> FIRE-7182, only call erase if iter is really valid.
+			mPendingLOD.erase(iter);
 		}
-		//		mPendingLOD.erase(iter); // <FS:ND/> avoid crash by moving erase up.
 	}
 
 	return true;
@@ -2037,8 +2061,8 @@ void LLMeshLODResponder::completedRaw(U32 status, const std::string& reason,
 		// <FS:Ansariel> Also retry on 408: Request timeout (The client did
 		//               not produce a request within the time that the server
 		//               was prepared to wait.)
-		//if (status == 499 || status == 503)
-		if (status == 408 || status == 499 || status == 503)
+		//if (status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
+		if (status == HTTP_REQUEST_TIME_OUT || status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
 		{ //timeout or service unavailable, try again
 			llwarns << "Timeout or service unavailable, retrying." << llendl;
 			LLMeshRepository::sHTTPRetryCount++;
@@ -2046,7 +2070,7 @@ void LLMeshLODResponder::completedRaw(U32 status, const std::string& reason,
 		}
 		else
 		{
-			llassert(status == 499 || status == 503); //intentionally trigger a breakpoint
+			llassert(status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE); //intentionally trigger a breakpoint
 			llwarns << "Unhandled status " << status << llendl;
 		}
 		return;
@@ -2105,16 +2129,16 @@ void LLMeshSkinInfoResponder::completedRaw(U32 status, const std::string& reason
 		// <FS:Ansariel> Also retry on 408: Request timeout (The client did
 		//               not produce a request within the time that the server
 		//               was prepared to wait.)
-		//if (status == 499 || status == 503)
-		if (status == 408 || status == 499 || status == 503)
+		//if (status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
+		if (status == HTTP_REQUEST_TIME_OUT || status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
 		{ //timeout or service unavailable, try again
-			llwarns << "Timeout or service unavailable, retrying." << llendl;
+			llwarns << "Timeout or service unavailable, retrying loadMeshSkinInfo() for " << mMeshID << llendl;
 			LLMeshRepository::sHTTPRetryCount++;
 			gMeshRepo.mThread->loadMeshSkinInfo(mMeshID);
 		}
 		else
 		{
-			llassert(status == 499 || status == 503); //intentionally trigger a breakpoint
+			llassert(status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE); //intentionally trigger a breakpoint
 			llwarns << "Unhandled status " << status << llendl;
 		}
 		return;
@@ -2172,16 +2196,16 @@ void LLMeshDecompositionResponder::completedRaw(U32 status, const std::string& r
 		// <FS:Ansariel> Also retry on 408: Request timeout (The client did
 		//               not produce a request within the time that the server
 		//               was prepared to wait.)
-		//if (status == 499 || status == 503)
-		if (status == 408 || status == 499 || status == 503)
+		//if (status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
+		if (status == HTTP_REQUEST_TIME_OUT || status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
 		{ //timeout or service unavailable, try again
-			llwarns << "Timeout or service unavailable, retrying." << llendl;
+			llwarns << "Timeout or service unavailable, retrying loadMeshDecomposition() for " << mMeshID << llendl;
 			LLMeshRepository::sHTTPRetryCount++;
 			gMeshRepo.mThread->loadMeshDecomposition(mMeshID);
 		}
 		else
 		{
-			llassert(status == 499 || status == 503); //intentionally trigger a breakpoint
+			llassert(status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE); //intentionally trigger a breakpoint
 			llwarns << "Unhandled status " << status << llendl;
 		}
 		return;
@@ -2240,16 +2264,16 @@ void LLMeshPhysicsShapeResponder::completedRaw(U32 status, const std::string& re
 		// <FS:Ansariel> Also retry on 408: Request timeout (The client did
 		//               not produce a request within the time that the server
 		//               was prepared to wait.)
-		//if (status == 499 || status == 503)
-		if (status == 408 || status == 499 || status == 503)
+		//if (status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
+		if (status == HTTP_REQUEST_TIME_OUT || status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE)
 		{ //timeout or service unavailable, try again
-			llwarns << "Timeout or service unavailable, retrying." << llendl;
+			llwarns << "Timeout or service unavailable, retrying loadMeshPhysicsShape() for " << mMeshID << llendl;
 			LLMeshRepository::sHTTPRetryCount++;
 			gMeshRepo.mThread->loadMeshPhysicsShape(mMeshID);
 		}
 		else
 		{
-			llassert(status == 499 || status == 503); //intentionally trigger a breakpoint
+			llassert(status == HTTP_INTERNAL_ERROR || status == HTTP_SERVICE_UNAVAILABLE); //intentionally trigger a breakpoint
 			llwarns << "Unhandled status " << status << llendl;
 		}
 		return;
@@ -2311,21 +2335,16 @@ void LLMeshHeaderResponder::completedRaw(U32 status, const std::string& reason,
 		//	<< "Header responder failed with status: "
 		//	<< status << ": " << reason << llendl;
 
-		// 503 (service unavailable) or 499 (timeout)
+		// 503 (service unavailable) or 499 (internal Linden-generated error)
 		// can be due to server load and can be retried
 
 		// TODO*: Add maximum retry logic, exponential backoff
 		// and (somewhat more optional than the others) retries
 		// again after some set period of time
-		// <FS:Ansariel> Also retry on 408: Request timeout (The client did
-		//               not produce a request within the time that the server
-		//               was prepared to wait.)
 
-		//llassert(status == 503 || status == 499);
-		//if (status == 499 || status == 503)
+		llassert(status == HTTP_NOT_FOUND || status == HTTP_SERVICE_UNAVAILABLE || status == HTTP_REQUEST_TIME_OUT || status == HTTP_INTERNAL_ERROR);
 
-		llassert(status == 408 || status == 499|| status == 503);
-		if (status == 408 || status == 499 || status == 503)
+		if (status == HTTP_SERVICE_UNAVAILABLE || status == HTTP_REQUEST_TIME_OUT || status == HTTP_INTERNAL_ERROR)
 		{ //retry
 			llwarns << "Timeout or service unavailable, retrying." << llendl;
 			LLMeshRepository::sHTTPRetryCount++;
@@ -2337,7 +2356,7 @@ void LLMeshHeaderResponder::completedRaw(U32 status, const std::string& reason,
 		}
 		else
 		{
-			llwarns << "Unhandled status." << llendl;
+			llwarns << "Unhandled status: " << status << llendl;
 		}
 	}
 
@@ -2603,6 +2622,17 @@ void LLMeshRepository::notifyLoadedMeshes()
 	// <FS:Ansariel> Use faster LLCachedControls for frequently visited locations
 	//LLMeshRepoThread::sMaxConcurrentRequests = gSavedSettings.getU32("MeshMaxConcurrentRequests");
 	static LLCachedControl<U32> meshMaxConcurrentRequests(gSavedSettings, "MeshMaxConcurrentRequests");
+	//<FS:TS> FIRE-11451: Cap concurrent requests at a sane value
+	if ((U32)meshMaxConcurrentRequests > MESH_CONCURRENT_REQUEST_LIMIT)
+	{
+		LLSD args;
+		args["VALUE"] = llformat("%d", (U32)meshMaxConcurrentRequests);
+		args["MAX"] = llformat("%d", MESH_CONCURRENT_REQUEST_LIMIT);
+		args["DEFAULT"] = llformat("%d", MESH_CONCURRENT_REQUEST_RESET);
+		LLNotificationsUtil::add("MeshMaxConcurrentReqTooHigh", args);
+		gSavedSettings.setU32("MeshMaxConcurrentRequests",MESH_CONCURRENT_REQUEST_RESET);
+	}
+	//</FS:TS> FIRE-11451
 	LLMeshRepoThread::sMaxConcurrentRequests = (U32)meshMaxConcurrentRequests;
 	// </FS:Ansariel>
 

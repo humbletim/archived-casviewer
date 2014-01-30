@@ -49,11 +49,17 @@ bool FSKeywords::chatContainsKeyword(const LLChat& chat, bool is_local)
 	{
 		if(source.find(mWordList[i]) != std::string::npos)
 		{
-			if(gSavedSettings.getBOOL("PlayModeUISndFSKeywordSound"))
-				LLUI::sAudioCallback(LLUUID(gSavedSettings.getString("UISndFSKeywordSound")));
-
 			return true;
 		}
 	}
 	return false;
 }
+
+// <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground
+void FSKeywords::notify(const LLChat& chat)
+{
+	static LLCachedControl<bool> PlayModeUISndFSKeywordSound(gSavedSettings, "PlayModeUISndFSKeywordSound");
+	if(PlayModeUISndFSKeywordSound)
+		LLUI::sAudioCallback(LLUUID(gSavedSettings.getString("UISndFSKeywordSound")));
+}
+// </FS:PP>

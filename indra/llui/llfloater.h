@@ -112,6 +112,8 @@ struct LLCoordFloater : LLCoord<LL_COORD_FLOATER>
 	bool operator!=(const LLCoordFloater& other) const { return !(*this == other); }
 
 	void setFloater(LLFloater& floater);
+
+	
 };
 
 class LLFloater : public LLPanel, public LLInstanceTracker<LLFloater>
@@ -121,6 +123,7 @@ class LLFloater : public LLPanel, public LLInstanceTracker<LLFloater>
 	friend class LLMultiFloater;
 
 public:
+
 	struct KeyCompare
 	{
 //		static bool compare(const LLSD& a, const LLSD& b);
@@ -161,9 +164,6 @@ public:
 								save_rect,
 								save_visibility,
 								save_dock_state,
-// [SL:KB] - Patch: UI-FloaterTearOffState | Checked: 2011-09-30 (Catznip-3.2.0a) | Added: Catznip-3.0.0a
-								save_tearoff_state,
-// [/SL:KB]
 								can_dock,
 								show_title;
 		
@@ -210,9 +210,6 @@ public:
 	bool buildFromFile(const std::string &filename);
 
 	boost::signals2::connection setMinimizeCallback( const commit_signal_t::slot_type& cb );
-// [SL:KB] - Patch: UI-FloaterTearOffSignal | Checked: 2011-11-12 (Catznip-3.2.0a) | Added: Catznip-3.2.0a
-	boost::signals2::connection setTearOffCallback( const commit_signal_t::slot_type& cb );
-// [/SL:KB]
 	boost::signals2::connection setOpenCallback( const commit_signal_t::slot_type& cb );
 	boost::signals2::connection setCloseCallback( const commit_signal_t::slot_type& cb );
 
@@ -225,13 +222,17 @@ public:
 	/*virtual*/ void setFocus( BOOL b );
 	/*virtual*/ void setIsChrome(BOOL is_chrome);
 	/*virtual*/ void setRect(const LLRect &rect);
+                void setIsSingleInstance(BOOL is_single_instance);
 
 	void 			initFloater(const Params& p);
 
 	void			openFloater(const LLSD& key = LLSD());
 
 	// If allowed, close the floater cleanly, releasing focus.
-	void			closeFloater(bool app_quitting = false);
+	virtual void	closeFloater(bool app_quitting = false);
+
+	// Close the floater or its host. Use when hidding or toggling a floater instance.
+	virtual void	closeHostedFloater();
 
 	/*virtual*/ void reshape(S32 width, S32 height, BOOL called_from_parent = TRUE);
 	
@@ -242,9 +243,7 @@ public:
 	void			center();
 
 	LLMultiFloater* getHost();
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-11-25 (Catznip-3.2.0b) | Added: Catznip-3.2.0b
-	LLMultiFloater* getLastHost() const;
-// [/SL:KB]
+	bool isDetachedAndNotMinimized();
 
 	void			applyTitle();
 	std::string		getCurrentTitle() const;
@@ -268,7 +267,7 @@ public:
 	static bool     isVisible(const LLFloater* floater);
 	static bool     isMinimized(const LLFloater* floater);
 	BOOL			isFirstLook() { return mFirstLook; } // EXT-2653: This function is necessary to prevent overlapping for secondary showed toasts
-	BOOL			isFrontmost();
+	virtual BOOL	isFrontmost();
 	BOOL			isDependent()					{ return !mDependeeHandle.isDead(); }
 	void			setCanMinimize(BOOL can_minimize);
 	void			setCanClose(BOOL can_close);
@@ -312,6 +311,7 @@ public:
 	/*virtual*/ void handleVisibilityChange ( BOOL new_visibility ); // do not override
 	
 	void			setFrontmost(BOOL take_focus = TRUE);
+    virtual void	setVisibleAndFrontmost(BOOL take_focus=TRUE, const LLSD& key = LLSD());    
 	
 	// Defaults to false.
 	virtual BOOL	canSaveAs() const { return FALSE; }
@@ -334,10 +334,9 @@ public:
 	bool            isDocked() const { return mDocked; }
 	virtual void    setDocked(bool docked, bool pop_on_undock = true);
 
-// [SL:KB] - Patch: UI-FloaterTearOffState | Checked: 2011-09-30 (Catznip-3.2.0a) | Added: Catznip-3.0.0a
-	bool            isTornOff() const { return mTornOff; }
-	virtual void    setTornOff(bool torn_off);
-// [/SL:KB]
+	virtual void    setTornOff(bool torn_off) { mTornOff = torn_off; }
+	bool isTornOff() {return mTornOff;}
+	void setOpenPositioning(LLFloaterEnums::EOpenPositioning pos) {mPositioning = pos;}
 
 
 	// Close the floater returned by getFrontmostClosableFloater() and 
@@ -368,26 +367,20 @@ protected:
 
 	void			stackWith(LLFloater& other);
 
+	virtual void    initRectControl();
 	virtual bool	applyRectControl();
 	bool			applyDockState();
 	void			applyPositioning(LLFloater* other, bool on_open);
 	void			applyRelativePosition();
 
-// [SL:KB] - Patch: UI-FloaterTearOffState | Checked: 2011-09-30 (Catznip-3.2.0a) | Added: Catznip-3.0.0a
-	void			applyTearOffState();
-// [/SL:KB]
 	void			storeRectControl();
 	void			storeVisibilityControl();
 	void			storeDockStateControl();
-// [SL:KB] - Patch: UI-FloaterTearOffState | Checked: 2011-09-30 (Catznip-3.2.0a) | Added: Catznip-3.0.0a
-	void			storeTearOffStateControl();
-// [/SL:KB]
 
 	void		 	setKey(const LLSD& key);
 	void		 	setInstanceName(const std::string& name);
 	
 	virtual void	bringToFront(S32 x, S32 y);
-	virtual void	setVisibleAndFrontmost(BOOL take_focus=TRUE);    
 	
 	void			setExpandedRect(const LLRect& rect) { mExpandedRect = rect; } // size when not minimized
 	const LLRect&	getExpandedRect() const { return mExpandedRect; }
@@ -440,9 +433,6 @@ public:
 	commit_signal_t mCloseSignal;		
 
 	commit_signal_t* mMinimizeSignal;
-// [SL:KB] - Patch: UI-FloaterTearOffSignal | Checked: 2011-11-12 (Catznip-3.2.0a) | Added: Catznip-3.2.0a
-	commit_signal_t* mTearOffSignal;
-// [/SL:KB]
 
 protected:
 	bool			mSaveRect;
@@ -451,10 +441,6 @@ protected:
 	std::string		mPosYControl;
 	std::string		mVisibilityControl;
 	std::string		mDocStateControl;
-// [SL:KB] - Patch: UI-FloaterTearOffState | Checked: 2011-09-30 (Catznip-3.2.0a) | Added: Catznip-3.0.0a
-	std::string		mTearOffStateControl;
-// [/SL:KB]
-
 	LLSD			mKey;				// Key used for retrieving instances; set (for now) by LLFLoaterReg
 
 	LLDragHandle*	mDragHandle;
@@ -468,9 +454,10 @@ private:
 	LLUIString		mTitle;
 	LLUIString		mShortTitle;
 	
-	BOOL			mSingleInstance;	// TRUE if there is only ever one instance of the floater
-	bool			mReuseInstance;		// true if we want to hide the floater when we close it instead of destroying it
-	std::string		mInstanceName;		// Store the instance name so we can remove ourselves from the list
+	BOOL			mSingleInstance;	  // TRUE if there is only ever one instance of the floater
+	bool			mReuseInstance;		  // true if we want to hide the floater when we close it instead of destroying it
+    bool            mIsReuseInitialized;  // true if mReuseInstance already set from parameters
+	std::string		mInstanceName;		  // Store the instance name so we can remove ourselves from the list
 	
 	BOOL			mDropShadow;		// ## Zi: Optional Drop Shadows
 	S32				mLabelVPadding;	// <FS:Zi> Make vertical label padding a per-skin option
@@ -549,7 +536,7 @@ public:
 	LLRect			findNeighboringPosition( LLFloater* reference_floater, LLFloater* neighbor );
 
 	// Given a child of gFloaterView, make sure this view can fit entirely onscreen.
-	void			adjustToFitScreen(LLFloater* floater, BOOL allow_partial_outside);
+	void			adjustToFitScreen(LLFloater* floater, BOOL allow_partial_outside, BOOL snap_in_toolbars = false);
 
 	void			setMinimizePositionVerticalOffset(S32 offset) { mMinimizePositionVOffset = offset; }
 	void			getMinimizePosition( S32 *left, S32 *bottom);
@@ -588,6 +575,13 @@ public:
 	void setFloaterSnapView(LLHandle<LLView> snap_view) {mSnapView = snap_view; }
 	LLFloater* getFrontmostClosableFloater(); 
 
+	// <FS:KC> Fix for bad edge snapping
+	void setSnapOffsetBottom(S32 offset) { mSnapOffsetBottom = offset; }
+	void setSnapOffsetChatBar(S32 offset) { mSnapOffsetChatBar = offset; }
+	void setSnapOffsetRight(S32 offset) { mSnapOffsetRight = offset; }
+	void setSnapOffsetLeft(S32 offset) { mSnapOffsetLeft = offset; }
+	// </FS:KC> Fix for bad edge snapping
+
 private:
 	void hiddenFloaterClosed(LLFloater* floater);
 
@@ -595,10 +589,13 @@ private:
 	LLHandle<LLView>	mSnapView;
 	BOOL			mFocusCycleMode;
 	S32				mSnapOffsetBottom;
+	S32				mSnapOffsetChatBar; // <FS:KC> Fix for bad edge snapping
+	S32				mSnapOffsetLeft; // <FS:KC> Fix for bad edge snapping
 	S32				mSnapOffsetRight;
 	S32				mMinimizePositionVOffset;
 	typedef std::vector<std::pair<LLHandle<LLFloater>, boost::signals2::connection> > hidden_floaters_t;
 	hidden_floaters_t mHiddenFloaters;
+	LLFloater *		mFrontChild;
 };
 
 //
