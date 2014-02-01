@@ -5,8 +5,8 @@ See the Firestorm build instruction text files plus the instructions at the foll
 
 Oculus Rift SDK
 
-You need to provision, package, and install the Oculus Rift SDK yourself: the Oculus Rift SDK is packaged up with autobuild 
-in the same manner as FMOD. The resultant package file however cannot be put online for distribution because per the SDK 
+You need to provision and package the Oculus Rift SDK yourself: the Oculus Rift SDK is packaged up with autobuild
+in the same manner as FmodEX. The resultant package file however cannot be put online for distribution because per the SDK 
 license, "source redistributions must include the whole of the Oculus SDK".
 
 To build the package, "3p-ovr-sdk":
@@ -19,19 +19,19 @@ To build the package, "3p-ovr-sdk":
 - Make note of the package filename and checksum for use in the next step.
 
 To use the package in building the viewer for a Windows build:
-- In the Viewer root directory, copy the autobuild.xml file to my_autobuild.xml. If you're including FMOD in your build you 
+- In the Viewer root directory, copy the autobuild.xml file to my_autobuild.xml. If you're including FmodEX in your build you 
   will have already done this step.
 - In a command prompt, change to your viewer source root directory.
 - Then: set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
 - Then: autobuild installables edit OVR platform=windows hash=<md5 value> url=file:///<sdk path>	
 - Then, before doing an autobuild configure or autobuild build command, remember to: set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
 
-Setting up Mac OSX and Linux SDK versions will be similar along the lines of the FMOD instructions for these platforms.
+Setting up Mac OSX and Linux SDK versions will be similar along the lines of the FmodEX instructions for these platforms.
 
 
 Kinect for Windows SDK
 
-If building a Windows viewer you need to download and install the Kinect for Windows SDK. Then you need:
+If building a Windows viewer you need to download and install the Kinect for Windows SDK. Then you need to:
 - Copy Nui*.h from C:\Program Files\Microsoft SDKs\Kinect\v1.8\inc into \Viewer\build-vc100\packages\include.
 
 
@@ -39,10 +39,17 @@ For building the viewer, the Firestorm target names such as ReleaseFS_open are r
 
 For example, to build your own private version without installer:
 set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
-autobuild configure -c ReleaseFS_open -- -DPACKAGE:BOOL=FALSE
+autobuild configure -c ReleaseFS_open -- -DFMODEX:BOOL=TRUE -DPACKAGE:BOOL=TRUE
 autobuild build -c ReleaseFS_open --no-configure
 
+Note: You need to do a build with -DPACKAGE:BOOL=TRUE before building with this setting FALSE in order for the viewer to run.
+
 Note: For Max OSX and Linux builds, set configure_casviewer.sh as executable: chmod +x scripts configure_casviewer.sh.
+
+
+Building and running on Mac OSX worked once but something broke after changeset 34322. And updating to the Firestorm 4.5.1 
+codebasemay have introduced changes that need modifying for CtrlAltStudio Viewer. Updates to get Mac OSX building again are 
+welcome!
 
 Building and running on Linux has not been fully updated. In particular, while much of the build scripts have been updated, 
 certain Linux-specific files have not been renamed or updated, including:

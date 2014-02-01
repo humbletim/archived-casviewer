@@ -430,7 +430,7 @@ LLWindow* LLWindowManager::createWindow(
 	{
 		new_window = new LLWindowHeadless(callbacks,
 			title, name, x, y, width, height, flags, 
-			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth);
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, output_type);
 	}
 
 	if (FALSE == new_window->isValid())

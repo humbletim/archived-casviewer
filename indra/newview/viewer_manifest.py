@@ -272,7 +272,7 @@ class ViewerManifest(LLManifest):
         #elif re.match('^(beta|project).*',channel_type) :
         #    app_suffix=self.channel_unique()
         #return "Second Life "+app_suffix
-        app = 'CtrlAltStudio Viewer'
+        app = 'CtrlAltStudio-Viewer'
         #if (self.flavor() == 'oss') :
         #    app = 'FirestormOS'
         app_suffix = ''.join(self.channel_unique().split())
@@ -355,7 +355,7 @@ class WindowsManifest(ViewerManifest):
         #elif re.match('^(beta|project).*',channel_type) :
         #    app_suffix=''.join(self.channel_unique().split())
         #return "SecondLife"+app_suffix+".exe"
-        app = 'CtrlAltStudio Viewer'
+        app = 'CtrlAltStudio-Viewer'
         #if (self.flavor() == 'oss') :
         #    app = 'FirestormOS'
         app_suffix = ''.join(self.channel_unique().split())
@@ -695,7 +695,7 @@ class WindowsManifest(ViewerManifest):
         if self.default_channel():
             if self.default_grid():
                 # release viewer
-                installer_file = "%(app_name)s-%(version_dashes)s_Setup.exe"
+                installer_file = "%(app_name)s_%(version_dashes)s_Setup.exe"
                 grid_vars_template = """
                 OutFile "%(installer_file)s"
                 !define INSTFLAGS "%(flags)s"
@@ -706,7 +706,7 @@ class WindowsManifest(ViewerManifest):
                 """
             else:
                 # alternate grid viewer
-                installer_file = "%(app_name)s-%(version_dashes)s_(%(grid_caps)s)_Setup.exe"
+                installer_file = "%(app_name)s_%(version_dashes)s_(%(grid_caps)s)_Setup.exe"
                 grid_vars_template = """
                 OutFile "%(installer_file)s"
                 !define INSTFLAGS "%(flags)s"
@@ -719,7 +719,7 @@ class WindowsManifest(ViewerManifest):
         else:
             # some other channel (grid name not used)
             #installer_file = "Second_Life_%(version_dashes)s_%(subchannel_underscores)s_Setup.exe"
-            installer_file = "%(app_name)s-%(version_dashes)s_Setup.exe" #<FS:CR>
+            installer_file = "%(app_name)s_%(version_dashes)s_Setup.exe" #<FS:CR>
             grid_vars_template = """
             OutFile "%(installer_file)s"
             !define INSTFLAGS "%(flags)s"
@@ -767,7 +767,7 @@ class WindowsManifest(ViewerManifest):
           self.run_command('"' + proper_windows_path(NSIS_path) + '" /V2 ' + self.dst_path_of(tempfile))
           # self.remove(self.dst_path_of(tempfile))
         else:
-          installer_file = "Phoenix-%(app_name)s-%(version_dashes)s_Setup.msi" % substitution_strings
+          installer_file = "%(app_name)s-%(version_dashes)s_Setup.msi" % substitution_strings
           createMSI = "installers/windows_x64/build.bat"
           createMSI  = self.dst_path_of( "../../../indra/newview/" + createMSI)
           settingsFile = "settings_%s_v4.xml" % self.app_name()
@@ -800,7 +800,7 @@ class WindowsManifest(ViewerManifest):
         # Store windows symbols we want to keep for debugging in a tar file, this will be later compressed with xz (lzma)
         # Using tat+xz gives far superior compression than zip (~half the size of the zip archive).
         # Python3 natively supports tar+xz via mode 'w:xz'. But we're stuck with Python2 for nowo.
-        symbolTar = tarfile.TarFile("%s/Phoenix-%s_%s_%s_pdbsymbols-windows.tar" % (self.args['configuration'].lower(),
+        symbolTar = tarfile.TarFile("%s/%s_%s_%s_pdbsymbols-windows.tar" % (self.args['configuration'].lower(),
                                                                                     self.channel_legacy_oneword(),
                                                                                     substitution_strings['version_dashes'],
                                                                                     self.args['viewer_flavor']),

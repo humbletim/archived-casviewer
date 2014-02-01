@@ -290,9 +290,9 @@ static LLAppViewerListener sAppViewerListener(LLAppViewer::instance);
 // <FS:CR>
 //const char * const LL_VERSION_BUNDLE_ID = "com.secondlife.indra.viewer";
 #ifdef OPENSIM
-const char * const LL_VERSION_BUNDLE_ID = "com.phoenixviewer.firestorm.viewer-oss";
+const char * const LL_VERSION_BUNDLE_ID = "com.ctrlaltstudio.viewer-oss";
 #else // !OPENSIM
-const char * const LL_VERSION_BUNDLE_ID = "com.phoenixviewer.firestorm.viewer-hvk";
+const char * const LL_VERSION_BUNDLE_ID = "com.ctrlaltstudio.viewer-hvk";
 #endif // OPENSIM
 // </FS:CR>
 extern void init_apple_menu(const char* product);
