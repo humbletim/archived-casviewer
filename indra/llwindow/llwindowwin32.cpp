@@ -519,6 +519,14 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 		current_refresh = 60;
 	}
 
+	// <CV:David>
+	if (gSavedSettings.getBOOL("SetOutput120Hz") && current_refresh != 120)
+	{
+		current_refresh = 120;
+		llinfos << "Try setting display output to 120Hz" << llendl;
+	}
+	// <CV:David>
+
 	//-----------------------------------------------------------------------
 	// Drop resolution and go fullscreen
 	// use a display mode with our desired size and depth, with a refresh
@@ -930,6 +938,14 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	{
 		current_refresh = 60;
 	}
+
+	// <CV:David>
+	if (gSavedSettings.getBOOL("SetOutput120Hz") && current_refresh != 120)
+	{
+		current_refresh = 120;
+		llinfos << "Try setting display output to 120Hz" << llendl;
+	}
+	// <CV:David>
 
 	gGLManager.shutdownGL();
 	//destroy gl context

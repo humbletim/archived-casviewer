@@ -1376,6 +1376,19 @@
           width="150" />
       </radio_group>
 
+      <check_box
+      control_name="SetOutput120Hz"
+      height="16"
+      initial_value="false"
+      label=" Set output to 120Hz"
+      layout="topleft"
+      left="344"
+      name="SetOutput120Hz"
+      tool_tip="Try setting display output to 120Hz."
+      top="48"
+      width="180">
+      </check_box>
+
       <slider
        control_name="EyeSeparation"
        decimal_digits="3"
