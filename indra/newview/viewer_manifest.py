@@ -926,7 +926,7 @@ class DarwinManifest(ViewerManifest):
                                 "libapr-1.0.dylib",
                                 "libaprutil-1.0.dylib",
                                 "libexpat.1.5.2.dylib",
-                                #"libexception_handler.dylib",
+                                "libexception_handler.dylib",
                                 "libfmodex.dylib",
                                 "libfmodexL.dylib",
                                 "libGLOD.dylib",

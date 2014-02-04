@@ -107,8 +107,8 @@ BOOL gDepthDirty = FALSE;
 BOOL gResizeScreenTexture = FALSE;
 BOOL gWindowResized = FALSE;
 BOOL gSnapshot = FALSE;
-BOOL gRebuild = FALSE;
 BOOL gShaderProfileFrame = FALSE;
+BOOL gRebuild = FALSE;  // <CV:David>
 
 U32 gRecentFrameCount = 0; // number of 'recent' frames
 LLFrameTimer gRecentFPSTime;
@@ -316,7 +316,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	}
 
 	gSnapshot = for_snapshot;
-	gRebuild = rebuild;
+	gRebuild = rebuild;  // <CV:David>
 
 	LLGLSDefault gls_default;
 	LLGLDepthTest gls_depth(GL_TRUE, GL_TRUE, GL_LEQUAL);
@@ -833,6 +833,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	LLAppViewer::instance()->pingMainloopTimeout("Display:Done");
 
 	gShiftFrame = false;
+
+	if (gShaderProfileFrame)
+	{
+		gShaderProfileFrame = FALSE;
+		LLGLSLShader::finishProfile();
+	}
 }
 
 void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
@@ -1163,7 +1169,7 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 	{
 		gGL.setColorMask(true, true);
 					
-			if (LLPipeline::sRenderDeferred)
+		if (LLPipeline::sRenderDeferred)
 		{
 			gPipeline.mDeferredScreen.bindTarget();
 			glClearColor(1,0,1,1);
@@ -1216,7 +1222,7 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 
 
 		gGL.setColorMask(true, false);
-			if (LLPipeline::sRenderDeferred)
+		if (LLPipeline::sRenderDeferred)
 		{
 			gPipeline.renderGeomDeferred(*LLViewerCamera::getInstance());
 		}
@@ -1253,7 +1259,7 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 		
 	if (to_texture)
 	{
-			if (LLPipeline::sRenderDeferred)
+		if (LLPipeline::sRenderDeferred)
 		{
 			gPipeline.mDeferredScreen.flush();
 			if(LLRenderTarget::sUseFBO)
@@ -1279,18 +1285,12 @@ void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for
 		}
 	}
 
-		if (LLPipeline::sRenderDeferred)
+	if (LLPipeline::sRenderDeferred)
 	{
 		gPipeline.renderDeferredLighting();
 	}
 
 	LLPipeline::sUnderWaterRender = FALSE;
-
-	if (gShaderProfileFrame)
-	{
-		gShaderProfileFrame = FALSE;
-		LLGLSLShader::finishProfile();
-	}
 }
 
 void render_hud_attachments()
@@ -1586,6 +1586,18 @@ void render_ui(F32 zoom_factor, int subfield)
 		glh_set_current_modelview(saved_view);
 		gGL.popMatrix();
 	}
+
+	// <CV:David>
+	// Moved up to display.
+	/*
+	if (gDisplaySwapBuffers)
+	{
+		LLFastTimer t(FTM_SWAP);
+		gViewerWindow->getWindow()->swapBuffers();
+	}
+	gDisplaySwapBuffers = TRUE;
+	*/
+	// </CV:David>
 }
 
 void renderCoordinateAxes()

@@ -436,7 +436,7 @@ void LLUpdaterServiceImpl::response(LLSD const & content)
 		*/
 		LLSD event;
 		event["type"] = LLSD(LLUpdaterService::DOWNLOAD_AVAILABLE);
-		event["required"] = LLSD(false);
+		event["required"] = LLSD(content["required"].asBoolean());
 		LLEventPumps::instance().obtain(LLUpdaterService::pumpName()).post(event);
 		// </CV:David>
 		

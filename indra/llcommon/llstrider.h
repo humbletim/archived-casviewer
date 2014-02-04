@@ -148,10 +148,8 @@ public:
 		if( aBuffer < mBufferEnd )
 			return true;
 
-		// For final release, jsut warn and return true.
-		llwarns << "Vertex buffer access beyond end of VBO" << llendl;
-		llassert( false );
-		return true;
+		llerrs << "Vertex buffer access beyond end of VBO" << llendl;
+		return false;
 	}
 
 private:

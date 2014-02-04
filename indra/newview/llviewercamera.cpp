@@ -448,7 +448,10 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	//calcProjection(z_far); // Update the projection matrix cache
 	// </CV:David>
 
+	// <CV:David>
+	//proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, TRUE);
 	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
+	// </CV:David>
 
 	gGL.loadMatrix(proj_mat.m);
 

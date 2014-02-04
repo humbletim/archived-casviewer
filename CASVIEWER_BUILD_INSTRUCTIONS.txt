@@ -35,7 +35,7 @@ If building a Windows viewer you need to download and install the Kinect for Win
 - Copy Nui*.h from C:\Program Files\Microsoft SDKs\Kinect\v1.8\inc into \Viewer\build-vc100\packages\include.
 
 
-For building the viewer, the Firestorm target names such as ReleaseFS_open are retained.
+For building the viewer, the Firestorm target names such as ReleaseFS_open are retained. Note: Use the OpenSim variations.
 
 For example, to build your own private version without installer:
 set AUTOBUILD_CONFIG_FILE=my_autobuild.xml
@@ -48,8 +48,9 @@ Note: For Max OSX and Linux builds, set configure_casviewer.sh as executable: ch
 
 
 Building and running on Mac OSX worked once but something broke after changeset 34322. And updating to the Firestorm 4.5.1 
-codebasemay have introduced changes that need modifying for CtrlAltStudio Viewer. Updates to get Mac OSX building again are 
-welcome!
+codebase may have introduced new changes that need modifying for CtrlAltStudio Viewer. Updates to get Mac OSX building again 
+are welcome! Files that may need attention include:
+- indra\mac_updater
 
 Building and running on Linux has not been fully updated. In particular, while much of the build scripts have been updated, 
 certain Linux-specific files have not been renamed or updated, including:

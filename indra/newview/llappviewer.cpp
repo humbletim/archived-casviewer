@@ -435,7 +435,10 @@ std::string SafeFileName(std::string filename)
 //															  LL_VERSION_MINOR,
 //															  LL_VERSION_PATCH,
 //															  LL_VERSION_BUILD )));
-const std::string SAFE_FILE_NAME_PREFIX(SafeFileName("Firestorm"));
+// <CV:David>
+//const std::string SAFE_FILE_NAME_PREFIX(SafeFileName("Firestorm"));
+const std::string SAFE_FILE_NAME_PREFIX(SafeFileName("CtrlAltStudioViewer"));
+// </CV:David>
 static std::string gArgs;
 const int MAX_MARKER_LENGTH = 1024;
 const std::string MARKER_FILE_NAME(SAFE_FILE_NAME_PREFIX + ".exec_marker"); //FS orig modified LL
@@ -3826,8 +3829,9 @@ bool LLAppViewer::initWindow()
 #endif // !LL_DARWIN
 // </FS:CR>
 		.ignore_pixel_depth(ignorePixelDepth)
-		.output_type(gOutputType);
+		.output_type(gOutputType);  // <CV:David>
 
+	// <CV:David>
 	if (gRift3DConfigured && window_params.fullscreen)
 	{
 		LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHResolution << ", Height = " << gRiftVResolution << LL_ENDL;
@@ -5708,18 +5712,6 @@ void LLAppViewer::idleShutdown()
 		LLLocationHistory::getInstance()->save(); // *TODO: find a better place for doing this
 		return;
 	}
-
-	// <CV:David>
-	// Saving a snapshot here causes a disconcerting pink screen to be displayed during logout.
-	// This is due to conflict with the snapshot also being saved just before LLAppViewer::mainLoop() exits.
-	//static bool saved_snapshot = false;
-	//if (!saved_snapshot)
-	//{
-	//	saved_snapshot = true;
-	//	//saveFinalSnapshot();
-	//	return;
-	//}
-	// </CV:David>
 
 	const F32 SHUTDOWN_UPLOAD_SAVE_TIME = 5.f;
 

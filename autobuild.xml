@@ -2125,11 +2125,11 @@
     <key>package_description</key>
     <map>
       <key>description</key>
-      <string>Firestorm viewer</string>
+      <string>CtrlAltStudio Viewer</string>
       <key>license</key>
       <string>various open</string>
       <key>name</key>
-      <string>firestorm</string>
+      <string>casviewer</string>
       <key>platforms</key>
       <map>
         <key>common</key>
@@ -2161,7 +2161,7 @@
               <key>configure</key>
               <map>
                 <key>command</key>
-                <string>bash ../scripts/configure_firestorm.sh</string>
+                <string>bash ../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--btype Debug</string>
@@ -2407,7 +2407,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
@@ -2742,7 +2742,7 @@
               <key>build</key>
               <map>
                 <key>command</key>
-                <string>../scripts/configure_firestorm.sh</string>
+                <string>../scripts/configure_casviewer.sh</string>
                 <key>options</key>
                 <array>
                   <string>--build</string>
