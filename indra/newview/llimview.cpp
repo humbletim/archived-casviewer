@@ -4071,7 +4071,7 @@ public:
 			{
 				if (FSMuteAllGroups || (FSMuteGroupWhenNoticesDisabled && !group_data.mAcceptNotices))
 				{
-					llinfos << "Firestorm: muting group chat: " << group_data.mName << LL_ENDL;
+					llinfos << "Muting group chat: " << group_data.mName << LL_ENDL;
 
 					if (gSavedSettings.getBOOL("FSReportMutedGroupChat"))
 					{

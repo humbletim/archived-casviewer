@@ -63,10 +63,10 @@
 	<string name="Quit">Quit</string>
 	<string name="create_account_url">http://join.secondlife.com/?sourceid=[sourceid]</string>
 
-	<string name="ViewerDownloadURL">http://www.firestormviewer.org/downloads/</string>
+	<string name="ViewerDownloadURL">http://ctrlaltstudio.com/viewer</string>
 	<string name="LoginFailedViewerNotPermitted">
 The viewer you are using can no longer access Second Life. Please visit the following page to download a new viewer:
-http://firestormviewer.org/downloads
+http://ctrlaltstudio.com/viewer
 
 For more information, see our FAQ below:
 http://secondlife.com/viewer-access-faq</string>

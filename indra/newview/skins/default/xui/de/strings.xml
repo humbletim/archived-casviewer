@@ -131,11 +131,11 @@
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-		http://secondlife.com/download
-	</string>
+    http://ctrlaltstudio.com/viewer
+  </string>
 	<string name="LoginFailedViewerNotPermitted">
 		Mit dem von Ihnen verwendeten Viewer ist der Zugriff auf Second Life nicht mehr möglich. Laden Sie von den folgenden Seite einen neuen Viewer herunter:
-http://firestormviewer.org/downloads
+http://ctrlaltstudio.com/viewer
 
 Weitere Informationen finden Sie auf der folgenden FAQ-Seite: 
 http://secondlife.com/viewer-access-faq
@@ -5619,7 +5619,7 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Die Ausrichtung ist beendet.
 	</string>
 	<string name="fsbridge_cant_create_disabled">
-		Firestorm kann die LSL-Brücke nicht erstellen, wenn „LSL-Client-Brücke aktivieren“ in den Einstellungen deaktiviert ist.
+		CtrlAltStudio Viewer kann die LSL-Brücke nicht erstellen, wenn „LSL-Client-Brücke aktivieren“ in den Einstellungen deaktiviert ist.
 	</string>
 	<string name="fsbridge_no_library">
 		CtrlAltStudio Viewer konnte die LSL-Brücke nicht erstellen. Bitte die Bibliothek aktivieren und neu einloggen.
