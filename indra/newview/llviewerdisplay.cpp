@@ -133,6 +133,7 @@ BOOL gRiftStanding = FALSE;
 BOOL gRiftStrafe = FALSE;
 BOOL gRiftHeadReorients = FALSE;
 U32 gRiftHeadReorientsAfter = RIFT_HEAD_REORIENTS_AFTER_DEFAULT;
+U32 gRiftHeadReorientsSpeed = RIFT_HEAD_REORIENTS_SPEED_DEFAULT;
 BOOL gRiftMouseCursor = TRUE;
 BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right

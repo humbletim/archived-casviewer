@@ -1134,6 +1134,8 @@ bool LLAppViewer::init()
 		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar = " << gRiftHeadReorients << LL_ENDL;
 		gRiftHeadReorientsAfter = gSavedSettings.getU32("RiftHeadReorientsAfter");
 		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar after = " << gRiftHeadReorientsAfter << LL_ENDL;
+		gRiftHeadReorientsSpeed = gSavedSettings.getU32("RiftHeadReorientsSpeed");
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar speed = " << gRiftHeadReorientsSpeed << LL_ENDL;
 		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
 		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
 		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");

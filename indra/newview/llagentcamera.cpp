@@ -3020,7 +3020,7 @@ void LLAgentCamera::calcRiftValues()
 		}
 		if ((mRotatingView < 0 && mEyeYaw < .1f * DEG_TO_RAD) || (mRotatingView > 0 && mEyeYaw > .1f * DEG_TO_RAD))
 		{
-			gAgent.rotate(mEyeYaw / (30.f - 2 * gAgent.getWalkSpeed()), LLVector3::z_axis);
+			gAgent.rotate(mEyeYaw / (32.f - 2.f * (F32)gRiftHeadReorientsSpeed), LLVector3::z_axis);
 		}
 		else
 		{

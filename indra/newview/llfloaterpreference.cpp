@@ -510,6 +510,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.RiftHeadReorientsEnable",	boost::bind(&LLFloaterPreference::onRiftHeadReorientsEnable, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsAfter, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsAfter, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsSpeed",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsSpeed, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsSpeed",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsSpeed, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
@@ -3636,6 +3638,17 @@ void LLFloaterPreference::onClickResetRiftHeadReorientsAfter()
 {
 	gSavedSettings.setU32("RiftHeadReorientsAfter", RIFT_HEAD_REORIENTS_AFTER_DEFAULT);
 	gRiftHeadReorientsAfter = RIFT_HEAD_REORIENTS_AFTER_DEFAULT;
+}
+
+void LLFloaterPreference::onChangeRiftHeadReorientsSpeed()
+{
+	gRiftHeadReorientsSpeed = getChild<LLSliderCtrl>("RiftHeadReorientsSpeed")->getValue().asInteger();
+}
+
+void LLFloaterPreference::onClickResetRiftHeadReorientsSpeed()
+{
+	gSavedSettings.setU32("RiftHeadReorientsSpeed", RIFT_HEAD_REORIENTS_SPEED_DEFAULT);
+	gRiftHeadReorientsSpeed = RIFT_HEAD_REORIENTS_SPEED_DEFAULT;
 }
 
 void LLFloaterPreference::onClickResetRiftUIDepth()
