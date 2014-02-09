@@ -96,7 +96,10 @@ glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height
 	return glh::matrix4f(m);
 }
 
+// <CV:David>
+//glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
 glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display)
+// </CV:David>
 {
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
 
@@ -449,7 +452,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	// </CV:David>
 
 	// <CV:David>
-	//proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, TRUE);
+	//proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far);
 	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 	// </CV:David>
 
