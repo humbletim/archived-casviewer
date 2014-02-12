@@ -219,6 +219,7 @@ public:
 		
 		SHINY_ORIGIN,
 		DISPLAY_GAMMA,
+
 // <CV:David>
 		RIFT_FRAME_SIZE,
 		RIFT_SAMPLE_SIZE,
