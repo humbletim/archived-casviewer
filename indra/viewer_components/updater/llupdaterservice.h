@@ -72,13 +72,24 @@ public:
 	LLUpdaterService();
 	~LLUpdaterService();
 
-	void initialize(const std::string& 	channel,
+	// <CV:David>
+	//void initialize(const std::string& 	channel,
+	//			    const std::string& 	version,
+	//				const std::string&  platform,
+	//				const std::string&  platform_version,
+	//				const unsigned char uniqueid[MD5HEX_STR_SIZE],
+	//				const bool&         willing_to_test
+	//				);
+	void initialize(const std::string& 	url,
+				    const std::string& 	path,
+				    const std::string& 	channel,
 				    const std::string& 	version,
 					const std::string&  platform,
 					const std::string&  platform_version,
 					const unsigned char uniqueid[MD5HEX_STR_SIZE],
 					const bool&         willing_to_test
 					);
+	// </CV:David>
 
 	void setCheckPeriod(unsigned int seconds);
 	void setBandwidthLimit(U64 bytesPerSecond);

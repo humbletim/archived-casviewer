@@ -94,6 +94,10 @@ class LLUpdaterServiceImpl :
 	static const std::string sListenerName;
 	
 	std::string   mProtocolVersion;
+	// <CV:David>
+	std::string   mUrl;
+	std::string   mPath;
+	// </CV:David>
 	std::string   mChannel;
 	std::string   mVersion;
 	std::string   mPlatform;
@@ -119,13 +123,24 @@ public:
 	LLUpdaterServiceImpl();
 	virtual ~LLUpdaterServiceImpl();
 
-	void initialize(const std::string& 	channel,
+	// <CV:David>
+	//void initialize(const std::string& 	channel,
+	//				const std::string& 	version,
+	//				const std::string&  platform,
+	//				const std::string&  platform_version,
+	//				const unsigned char uniqueid[MD5HEX_STR_SIZE],
+	//				const bool&         willing_to_test					
+	//				);
+	void initialize(const std::string& 	url,
+					const std::string& 	path,
+					const std::string& 	channel,
 					const std::string& 	version,
 					const std::string&  platform,
 					const std::string&  platform_version,
 					const unsigned char uniqueid[MD5HEX_STR_SIZE],
 					const bool&         willing_to_test					
 					);
+	// </CV:David>
 	
 	void setCheckPeriod(unsigned int seconds);
 	void setBandwidthLimit(U64 bytesPerSecond);
@@ -180,12 +195,22 @@ LLUpdaterServiceImpl::~LLUpdaterServiceImpl()
 	LLEventPumps::instance().obtain("mainloop").stopListening(sListenerName);
 }
 
-void LLUpdaterServiceImpl::initialize(const std::string&  channel,
+// <CV:David>
+//void LLUpdaterServiceImpl::initialize(const std::string&  channel,
+//									  const std::string&  version,
+//									  const std::string&  platform,
+//									  const std::string&  platform_version,
+//									  const unsigned char uniqueid[MD5HEX_STR_SIZE],
+//									  const bool&         willing_to_test)
+void LLUpdaterServiceImpl::initialize(const std::string&  url,
+									  const std::string&  path,
+									  const std::string&  channel,
 									  const std::string&  version,
 									  const std::string&  platform,
 									  const std::string&  platform_version,
 									  const unsigned char uniqueid[MD5HEX_STR_SIZE],
 									  const bool&         willing_to_test)
+// </CV:David>
 {
 	if(mIsChecking || mIsDownloading)
 	{
@@ -193,6 +218,10 @@ void LLUpdaterServiceImpl::initialize(const std::string&  channel,
 										   "while updater is running.");
 	}
 		
+	// <CV:David>
+	mUrl = url;
+	mPath = path;
+	// </CV:David>
 	mChannel = channel;
 	mVersion = version;
 	mPlatform = platform;
@@ -219,7 +248,10 @@ void LLUpdaterServiceImpl::setBandwidthLimit(U64 bytesPerSecond)
 
 void LLUpdaterServiceImpl::startChecking(bool install_if_ready)
 {
-	if(mChannel.empty() || mVersion.empty())
+	// <CV:David>
+	//if(mChannel.empty() || mVersion.empty())
+	if(mUrl.empty() || mChannel.empty() || mVersion.empty())
+	// </CV:David>
 	{
 		throw LLUpdaterService::UsageError("Set params before call to "
 			"LLUpdaterService::startCheck().");
@@ -406,21 +438,19 @@ void LLUpdaterServiceImpl::response(LLSD const & content)
 	
 		setState(LLUpdaterService::UP_TO_DATE);
 	}
+	// <CV:David>
+	/*
 	else if ( content.isMap() && content.has("url") )
 	{
 		// there is an update available...
 		stopTimer();
 		mNewChannel = content["channel"].asString();
-
 		if (mNewChannel.empty())
 		{
 			LL_INFOS("UpdaterService") << "no channel supplied, assuming current channel" << LL_ENDL;
 			mNewChannel = mChannel;
 		}
 		mNewVersion = content["version"].asString();
-
-		// <CV:David>
-		/*
 		mIsDownloading = true;
 		setState(LLUpdaterService::DOWNLOADING);
 		BOOL required = content["required"].asBoolean();
@@ -433,14 +463,16 @@ void LLUpdaterServiceImpl::response(LLSD const & content)
 			<< " more info '" << more_info << "'"
 			<< LL_ENDL;
 		mUpdateDownloader.download(url, content["hash"].asString(), mNewChannel, mNewVersion, more_info, required);
-		*/
+	}
+	*/
+	else if (content.has("required"))
+	{
 		LLSD event;
 		event["type"] = LLSD(LLUpdaterService::DOWNLOAD_AVAILABLE);
 		event["required"] = LLSD(content["required"].asBoolean());
 		LLEventPumps::instance().obtain(LLUpdaterService::pumpName()).post(event);
-		// </CV:David>
-		
 	}
+	// </CV:David>
 	else
 	{
 		LL_WARNS("UpdaterService") << "Invalid update query response ignored; retry in "
@@ -571,30 +603,35 @@ bool LLUpdaterServiceImpl::onMainLoop(LLSD const & event)
 			
 			setState(LLUpdaterService::TERMINAL);
 		}
-		//<FS:TM> 3.6.4 check this, commented out to compile
-		//else
-		//{
-		//	std::string query_url = LLGridManager::getInstance()->getUpdateServiceURL();
-		//	if ( !query_url.empty() )
-		//	{
-		//		mUpdateChecker.checkVersion(query_url, mChannel, mVersion,
-		//									mPlatform, mPlatformVersion, mUniqueId,
-		//									mWillingToTest);
-		//		setState(LLUpdaterService::CHECKING_FOR_UPDATE);
-		//	}
-		//	else
-		//	{
-		//		LL_WARNS("UpdaterService")
-		//			<< "No updater service defined for grid '" << LLGridManager::getInstance()->getGrid()
-		//			<< "' will check again in " << mCheckPeriod << " seconds"
-		//			<< LL_ENDL;
-		//		// Because the grid can be changed after the viewer is started (when the first check takes place)
-		//		// but before the user logs in, the next check may be on a different grid, so set the retry timer
-		//		// even though this check did not happen.  The default time is once an hour, and if we're not
-		//		// doing the check anyway the performance impact is completely insignificant.
-		//		restartTimer(mCheckPeriod);
-		//	}
-		//}
+		// <CV:David> Uncommented for CtrlAltStudio
+		////<FS:TM> 3.6.4 check this, commented out to compile
+		// </CV:David>
+		else
+		{
+			// <CV:David>
+			//std::string query_url = LLGridManager::getInstance()->getUpdateServiceURL();
+			std::string query_url = LLURI::buildHTTP(mUrl, mPath).asString();
+			// </CV:David>
+			if ( !query_url.empty() )
+			{
+				mUpdateChecker.checkVersion(query_url, mChannel, mVersion,
+											mPlatform, mPlatformVersion, mUniqueId,
+											mWillingToTest);
+				setState(LLUpdaterService::CHECKING_FOR_UPDATE);
+			}
+			else
+			{
+				LL_WARNS("UpdaterService")
+					<< "No updater service defined for grid '" << LLGridManager::getInstance()->getGrid()
+					<< "' will check again in " << mCheckPeriod << " seconds"
+					<< LL_ENDL;
+				// Because the grid can be changed after the viewer is started (when the first check takes place)
+				// but before the user logs in, the next check may be on a different grid, so set the retry timer
+				// even though this check did not happen.  The default time is once an hour, and if we're not
+				// doing the check anyway the performance impact is completely insignificant.
+				restartTimer(mCheckPeriod);
+			}
+		}
 	} 
 	else 
 	{
@@ -637,7 +674,20 @@ LLUpdaterService::~LLUpdaterService()
 {
 }
 
-void LLUpdaterService::initialize(const std::string& channel,
+// <CV:David>
+//void LLUpdaterService::initialize(const std::string& channel,
+//								  const std::string& version,
+//								  const std::string& platform,
+//								  const std::string& platform_version,
+//								  const unsigned char uniqueid[MD5HEX_STR_SIZE],
+//								  const bool&         willing_to_test
+//)
+//{
+//	mImpl->initialize(channel, version, platform, platform_version, uniqueid, willing_to_test);
+//}
+void LLUpdaterService::initialize(const std::string& url,
+								  const std::string& path,
+								  const std::string& channel,
 								  const std::string& version,
 								  const std::string& platform,
 								  const std::string& platform_version,
@@ -645,8 +695,9 @@ void LLUpdaterService::initialize(const std::string& channel,
 								  const bool&         willing_to_test
 )
 {
-	mImpl->initialize(channel, version, platform, platform_version, uniqueid, willing_to_test);
+	mImpl->initialize(url, path, channel, version, platform, platform_version, uniqueid, willing_to_test);
 }
+// </CV:David>
 
 void LLUpdaterService::setCheckPeriod(unsigned int seconds)
 {

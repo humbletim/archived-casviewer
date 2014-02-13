@@ -3724,6 +3724,10 @@ void LLAppViewer::initUpdater()
 	 * it is now obtained from the grid manager.  The settings above
 	 * are no longer used.
 	 *****************************************************************/
+	// <CV:David> CtrlAltStudio Viewer retains use of UpdateServerURL and UpdateServerPath
+	std::string url = gSavedSettings.getString("UpdaterServiceURL");
+	std::string service_path = gSavedSettings.getString("UpdaterServicePath");
+	// </CV:David>
 	std::string channel = LLVersionInfo::getChannel();
 	std::string version = LLVersionInfo::getVersion();
 
@@ -3751,13 +3755,24 @@ void LLAppViewer::initUpdater()
 	}
 
 	mUpdater->setAppExitCallback(boost::bind(&LLAppViewer::forceQuit, this));
-	mUpdater->initialize(channel, 
+	// <CV:David>
+	//mUpdater->initialize(channel, 
+	//					 version,
+	//					 gPlatform,
+	//					 getOSInfo().getOSVersionString(),
+	//					 unique_id,
+	//					 willing_to_test
+	//					 );
+	mUpdater->initialize(url,
+						 service_path,
+						 channel, 
 						 version,
 						 gPlatform,
 						 getOSInfo().getOSVersionString(),
 						 unique_id,
 						 willing_to_test
 						 );
+	// </CV:David>
  	mUpdater->setCheckPeriod(check_period);
 	mUpdater->setBandwidthLimit((int)gSavedSettings.getF32("UpdaterMaximumBandwidth") * (1024/8));
 	gSavedSettings.getControl("UpdaterMaximumBandwidth")->getSignal()->

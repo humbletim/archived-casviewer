@@ -80,7 +80,10 @@ void LLUpdateChecker::checkVersion(std::string const & urlBase,
 
 
 const char * LLUpdateChecker::Implementation::sLegacyProtocolVersion = "v1.0";
-const char * LLUpdateChecker::Implementation::sProtocolVersion = "v1.1";
+// <CV:David>
+//const char * LLUpdateChecker::Implementation::sProtocolVersion = "v1.1";
+const char * LLUpdateChecker::Implementation::sProtocolVersion = "v1.0";
+// </CV:David>
 
 
 LLUpdateChecker::Implementation::Implementation(LLUpdateChecker::Client & client):
