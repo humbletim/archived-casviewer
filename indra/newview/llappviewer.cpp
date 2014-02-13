@@ -3373,6 +3373,7 @@ bool LLAppViewer::initConfiguration()
 	// Set the name of the window
 	//
 	gWindowTitle = LLVersionInfo::getChannelAndVersion();	// <FS:CR>
+	LLStringUtil::replaceChar(gWindowTitle, '-', ' ');  // <CV:David>
 #if LL_DEBUG
 	gWindowTitle += std::string(" [DEBUG] ") + gArgs;
 #else
