@@ -13,7 +13,7 @@
      name="real_url"
      translate="false"
     >
-        http://phoenixviewer.com/app/loginV3/
+      http://viewer-login.agni.lindenlab.com/
     </panel.string>
     <string
      name="reg_in_client_url"
