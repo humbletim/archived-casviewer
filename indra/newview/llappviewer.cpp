@@ -6073,13 +6073,6 @@ void LLAppViewer::handleLoginComplete()
 	// we logged in successfully, so save settings on logout
 	lldebugs << "Login successful, per account settings will be saved on logout." << llendl;
 	mSavePerAccountSettings=true;
-
-	// <CV:David> Automatically toggle into Riftlook if "--riftlook" command line parameter specified.
-	if (gSavedSettings.getBOOL("RiftStartupInRiftlook"))
-	{
-		setRiftlook(TRUE);
-	}
-	// </CV:David>
 }
 
 void LLAppViewer::launchUpdater()
