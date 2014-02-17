@@ -145,6 +145,7 @@
 
 #include "llappviewer.h"  // <CV:David>
 #include "llviewerdisplay.h"  // <CV:David>
+#include "llviewermenu.h"  // <CV:David>
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
 const F32 MIN_USER_FAR_CLIP = 64.f;
@@ -1004,6 +1005,16 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 
 void LLFloaterPreference::onVertexShaderEnable()
 {
+	// <CV:David>
+	if (gRift3DEnabled && !gSavedSettings.getBOOL("VertexShaderEnable"))
+	{
+		// Temporarily set VertexShaderEnable so that setRiftlook() reshapes the window correctly.
+		gSavedSettings.setBOOL("VertexShaderEnable", TRUE);
+		setRiftlook(false);
+		gSavedSettings.setBOOL("VertexShaderEnable", FALSE);
+	}
+	// </CV:David>
+
 	refreshEnabledGraphics();
 }
 
