@@ -35,7 +35,7 @@ class CASKinectHandler;
 class CASKinectController
 {
 public:
-	CASKinectController();
+	CASKinectController(bool swap_fly_up_and_fly_down);
 	~CASKinectController();
 
 	bool kinectConfigured();
