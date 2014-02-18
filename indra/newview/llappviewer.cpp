@@ -1196,6 +1196,8 @@ bool LLAppViewer::init()
 		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar = " << gRiftHeadReorients << LL_ENDL;
 		gRiftHeadReorientsAfter = gSavedSettings.getU32("RiftHeadReorientsAfter");
 		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar after = " << gRiftHeadReorientsAfter << LL_ENDL;
+		gRiftHeadReorientsSpeed = gSavedSettings.getU32("RiftHeadReorientsSpeed");
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar speed = " << gRiftHeadReorientsSpeed << LL_ENDL;
 		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
 		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
 		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");
@@ -1509,12 +1511,8 @@ bool LLAppViewer::init()
 	#if LL_WINDOWS
 		if (gSavedSettings.getBOOL("KinectEnabled"))
 		{
-			gKinectController = new CASKinectController();
-			if (gKinectController->kinectConfigured())
-			{
-				gKinectController->swapFlyUpAndFlyDown(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
-			}
-			else
+			gKinectController = new CASKinectController(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
+			if (!gKinectController->kinectConfigured())
 			{
 				gSavedSettings.setBOOL("KinectEnabled", FALSE);
 				LLNotificationsUtil::add("KinectNotInitialized");
@@ -6305,13 +6303,6 @@ void LLAppViewer::handleLoginComplete()
 	// we logged in successfully, so save settings on logout
 	lldebugs << "Login successful, per account settings will be saved on logout." << llendl;
 	mSavePerAccountSettings=true;
-
-	// <CV:David> Automatically toggle into Riftlook if "--riftlook" command line parameter specified.
-	if (gSavedSettings.getBOOL("RiftStartupInRiftlook"))
-	{
-		setRiftlook(TRUE);
-	}
-	// </CV:David>
 }
 
 void LLAppViewer::launchUpdater()

@@ -341,13 +341,6 @@
       <string>ReplaySession</string>
     </map>
 
-    <!-- CV:David Toggle into Riftlook immediately after login. -->
-    <key>riftlook</key>
-    <map>
-      <key>map-to</key>
-      <string>RiftStartupInRiftlook</string>
-    </map>
-
     <key>rotate</key>
     <map>
       <key>map-to</key>

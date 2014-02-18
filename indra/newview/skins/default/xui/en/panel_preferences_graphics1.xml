@@ -1412,6 +1412,19 @@
           width="150" />
       </radio_group>
 
+      <check_box
+      control_name="SetOutput120Hz"
+      height="16"
+      initial_value="false"
+      label=" Set output to 120Hz"
+      layout="topleft"
+      left="344"
+      name="SetOutput120Hz"
+      tool_tip="Try setting display output to 120Hz."
+      top="48"
+      width="180">
+      </check_box>
+
       <slider
        control_name="EyeSeparation"
        decimal_digits="3"
@@ -1617,7 +1630,7 @@
           layout="topleft"
           name="RiftStanding"
           value="1"
-          top_pad="44"
+          top_pad="62"
           width="50" />
       </radio_group>
       <check_box
@@ -1683,13 +1696,47 @@
        label="Reset"
        label_selected="Reset"
        layout="topleft"
-       left_pad="8"
+       left_pad="4"
        name="ResetRiftHeadReorientsAfter"
        top_delta="-2"
        bottom_pad="2"
        width="60">
         <button.commit_callback
          function="Pref.ResetRiftHeadReorientsAfter" />
+      </button>
+      <slider
+       control_name="RiftHeadReorientsSpeed"
+       decimal_digits="0"
+       follows="left|top"
+       height="16"
+       increment="1"
+       initial_value="5"
+       layout="topleft"
+       top="242"
+       left="94"
+       max_val="10"
+       min_val="1"
+       name="RiftHeadReorientsSpeed"
+       label="Turn speed:"
+       label_width="128"
+       width="275"
+       tool_tip="How fast your avatar turns with your head.">
+        <slider.commit_callback
+         function="Pref.ChangeRiftHeadReorientsSpeed" />
+      </slider>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="50"
+       name="ResetRiftHeadReorientsSpeed"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftHeadReorientsSpeed" />
       </button>
 
       <check_box
@@ -1746,7 +1793,7 @@
        max_val="120"
        min_val="80"
        name="RiftUIDepth"
-       width="314"
+       width="321"
        label_width="100"
        tool_tip="Adjusts the depth the UI is displayed at."/>
       <button
@@ -1755,7 +1802,7 @@
        label="Reset"
        label_selected="Reset"
        layout="topleft"
-       left_pad="50"
+       left_pad="43"
        name="ResetRiftUIDepth"
        top_delta="-2"
        bottom_pad="2"
@@ -1777,14 +1824,12 @@
        width="50" />
       <check_box
        control_name="RiftHoverText"
-       height="14"
+       height="16"
        initial_value="false"
        label="Show hover text"
-       layout="topleft"
        left="54"
        name="RiftHoverText"
        tool_tip="Show hover text in Riftlook view."
-       top_pad="6"
        width="50" />
       <check_box
        control_name="RiftAvatar"
@@ -1792,7 +1837,8 @@
        initial_value="true"
        label="Show avatar"
        layout="topleft"
-       left="54"
+       top="390"
+       left="270"
        name="RiftAvatar"
        tool_tip="Show avatar in Riftlook view."
        top_pad="6"

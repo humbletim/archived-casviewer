@@ -136,6 +136,7 @@
 
 #include "llappviewer.h"  // <CV:David>
 #include "llviewerdisplay.h"  // <CV:David>
+#include "llviewermenu.h"  // <CV:David>
 
 const F32 MAX_USER_FAR_CLIP = 512.f;
 const F32 MIN_USER_FAR_CLIP = 64.f;
@@ -512,6 +513,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.RiftHeadReorientsEnable",	boost::bind(&LLFloaterPreference::onRiftHeadReorientsEnable, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsAfter, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsAfter",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsAfter, this));
+	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsSpeed",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsSpeed, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsSpeed",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsSpeed, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
@@ -1007,6 +1010,16 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 
 void LLFloaterPreference::onVertexShaderEnable()
 {
+	// <CV:David>
+	if (gRift3DEnabled && !gSavedSettings.getBOOL("VertexShaderEnable"))
+	{
+		// Temporarily set VertexShaderEnable so that setRiftlook() reshapes the window correctly.
+		gSavedSettings.setBOOL("VertexShaderEnable", TRUE);
+		setRiftlook(false);
+		gSavedSettings.setBOOL("VertexShaderEnable", FALSE);
+	}
+	// </CV:David>
+
 	refreshEnabledGraphics();
 }
 
@@ -3933,6 +3946,17 @@ void LLFloaterPreference::onClickResetRiftHeadReorientsAfter()
 	gRiftHeadReorientsAfter = RIFT_HEAD_REORIENTS_AFTER_DEFAULT;
 }
 
+void LLFloaterPreference::onChangeRiftHeadReorientsSpeed()
+{
+	gRiftHeadReorientsSpeed = getChild<LLSliderCtrl>("RiftHeadReorientsSpeed")->getValue().asInteger();
+}
+
+void LLFloaterPreference::onClickResetRiftHeadReorientsSpeed()
+{
+	gSavedSettings.setU32("RiftHeadReorientsSpeed", RIFT_HEAD_REORIENTS_SPEED_DEFAULT);
+	gRiftHeadReorientsSpeed = RIFT_HEAD_REORIENTS_SPEED_DEFAULT;
+}
+
 void LLFloaterPreference::onClickResetRiftUIDepth()
 {
 	gSavedSettings.setU32("RiftUIDepth", 90);
@@ -3961,7 +3985,7 @@ void LLFloaterPreference::onKinectEnable()
 	{
 		if (!gKinectController)
 		{
-			gKinectController = new CASKinectController();
+			gKinectController = new CASKinectController(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
 			if (!gKinectController->kinectConfigured())
 			{
 				gSavedSettings.setBOOL("KinectEnabled", FALSE);

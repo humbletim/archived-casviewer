@@ -43,6 +43,8 @@
 #include "lldir.h"
 #include "llglslshader.h"
 #include "../newview/llviewercontrol.h"
+#include "llframetimer.h"  // <CV:David>
+#include "../newview/llviewerdisplay.h"  // <CV:David>
 
 // System includes
 #include <commdlg.h>
@@ -519,6 +521,14 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 		current_refresh = 60;
 	}
 
+	// <CV:David>
+	if ((mOutputType == OUTPUT_TYPE_STEREO) && gSavedSettings.getBOOL("SetOutput120Hz") && current_refresh != 120)
+	{
+		current_refresh = 120;
+		llinfos << "Try setting display output to 120Hz" << llendl;
+	}
+	// <CV:David>
+
 	//-----------------------------------------------------------------------
 	// Drop resolution and go fullscreen
 	// use a display mode with our desired size and depth, with a refresh
@@ -932,6 +942,14 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		current_refresh = 60;
 	}
 
+	// <CV:David>
+	if ((mOutputType == OUTPUT_TYPE_STEREO) && gSavedSettings.getBOOL("SetOutput120Hz") && current_refresh != 120)
+	{
+		current_refresh = 120;
+		llinfos << "Try setting display output to 120Hz" << llendl;
+	}
+	// <CV:David>
+
 	gGLManager.shutdownGL();
 	//destroy gl context
 	if (mhRC)
@@ -1063,7 +1081,7 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	LL_INFOS("Window") << "window is created." << llendl ;
 
 	// <CV:David> Request stereoscopic 3D if user configured.
-	BOOL stereo = (mOutputType == 1);
+	BOOL stereo = (mOutputType == OUTPUT_TYPE_STEREO);
 	U32 pfdStereo = stereo ? PFD_STEREO : 0;
 	// </CV:David>
 
