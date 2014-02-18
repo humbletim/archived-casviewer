@@ -1446,12 +1446,8 @@ bool LLAppViewer::init()
 	#if LL_WINDOWS
 		if (gSavedSettings.getBOOL("KinectEnabled"))
 		{
-			gKinectController = new CASKinectController();
-			if (gKinectController->kinectConfigured())
-			{
-				gKinectController->swapFlyUpAndFlyDown(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
-			}
-			else
+			gKinectController = new CASKinectController(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
+			if (!gKinectController->kinectConfigured())
 			{
 				gSavedSettings.setBOOL("KinectEnabled", FALSE);
 				LLNotificationsUtil::add("KinectNotInitialized");

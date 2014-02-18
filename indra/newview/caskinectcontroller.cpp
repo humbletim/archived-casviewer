@@ -604,9 +604,10 @@ void CASKinectHandler::stopMoving()
 
 // Controller --------------------------------------------------------------------------------------
 
-CASKinectController::CASKinectController()
+CASKinectController::CASKinectController(bool swap_fly_up_and_fly_down)
 {
 	mKinectHandler = new CASKinectHandler();
+	mKinectHandler->swapFlyUpAndFlyDown(swap_fly_up_and_fly_down);
 }
 
 CASKinectController::~CASKinectController()

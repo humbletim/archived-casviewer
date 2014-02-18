@@ -3690,7 +3690,7 @@ void LLFloaterPreference::onKinectEnable()
 	{
 		if (!gKinectController)
 		{
-			gKinectController = new CASKinectController();
+			gKinectController = new CASKinectController(gSavedSettings.getBOOL("KinectSwapFlyUpAndFlyDown"));
 			if (!gKinectController->kinectConfigured())
 			{
 				gSavedSettings.setBOOL("KinectEnabled", FALSE);
