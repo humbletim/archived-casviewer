@@ -22,7 +22,7 @@
  * 
  * Linden Research, Inc., 945 Battery Street, San Francisco, CA  94111  USA
  * $/LicenseInfo$
- */
+ */ 
 
 #ifndef LL_LLPANELPEOPLE_H
 #define LL_LLPANELPEOPLE_H
@@ -30,9 +30,14 @@
 #include <llpanel.h>
 
 #include "llcallingcard.h" // for avatar tracker
+#include "llfloaterwebcontent.h"
 #include "llvoiceclient.h"
 
 #include "llfloater.h"
+
+// [FS:CR] Contact sets
+#include "lggcontactsets.h"
+#include <boost/signals2.hpp>
 
 class LLAvatarList;
 class LLAvatarName;
@@ -61,10 +66,7 @@ public:
 	// when voice is available
 	/*virtual*/ void onChange(EStatusType status, const std::string &channelURI, bool proximal);
 
-// [RLVa:KB] - Checked: 2010-04-05 (RLVa-1.2.0d) | Added: RLVa-1.2.0d
-	// Externalized to FSRadar
-	//LLAvatarList* getNearbyList() { return mNearbyList; }
-// [/RLVa:KB]
+    bool mTryToConnectToFbc;
 
 	// internals
 	class Updater;
@@ -77,6 +79,8 @@ private:
 		E_SORT_BY_MOST_RECENT = 2,
 		E_SORT_BY_DISTANCE = 3,
 		E_SORT_BY_RECENT_SPEAKERS = 4,
+		// <FS:Ansariel> FIRE-5283: Sort by username
+		E_SORT_BY_USERNAME = 5,
 	} ESortOrder;
 
     void				    removePicker();
@@ -84,8 +88,10 @@ private:
 	// methods indirectly called by the updaters
 	void					updateFriendListHelpText();
 	void					updateFriendList();
+	bool					updateSuggestedFriendList();
 	void					updateNearbyList();
 	void					updateRecentList();
+	void					updateFacebookList(bool visible);
 
 	bool					isItemsFreeOfFriends(const uuid_vec_t& uuids);
 
@@ -132,6 +138,8 @@ private:
 
 	void					onFriendListRefreshComplete(LLUICtrl*ctrl, const LLSD& param);
 
+	bool					onConnectedToFacebook(const LLSD& data);
+
 	void					setAccordionCollapsedByUser(LLUICtrl* acc_tab, bool collapsed);
 	void					setAccordionCollapsedByUser(const std::string& name, bool collapsed);
 	bool					isAccordionCollapsedByUser(LLUICtrl* acc_tab);
@@ -144,7 +152,9 @@ private:
 	LLTabContainer*			mTabContainer;
 	LLAvatarList*			mOnlineFriendList;
 	LLAvatarList*			mAllFriendList;
+	LLAvatarList*			mSuggestedFriends;
 	LLAvatarList*			mNearbyList;
+	LLAvatarList*			mContactSetList;	// [FS:CR] Contact sets
 	// <FS:Ansariel> Firestorm radar
 	FSPanelRadar*			mRadarPanel;
 	// </FS:Ansariel> Firestorm radar
@@ -160,8 +170,22 @@ private:
 	//Updater*				mNearbyListUpdater;
 	// </FS:Ansariel> Firestorm radar
 	Updater*				mRecentListUpdater;
+	Updater*				mFacebookListUpdater;
 	Updater*				mButtonsUpdater;
     LLHandle< LLFloater >	mPicker;
+	
+	// [FS:CR] Contact sets
+	bool					onContactSetsEnable(const LLSD& userdata);
+	void					onContactSetsMenuItemClicked(const LLSD& userdata);
+	void					handlePickerCallback(const uuid_vec_t& ids, const std::string& set);
+	void					refreshContactSets();
+	void					generateContactList(const std::string& contact_set);
+	void					generateCurrentContactList();
+	
+	void					updateContactSets(LGGContactSets::EContactSetUpdate type);
+	boost::signals2::connection mContactSetChangedConnection;
+	LLComboBox* mContactSetCombo;
+	// [/FS:CR]
 };
 
 #endif //LL_LLPANELPEOPLE_H

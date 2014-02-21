@@ -150,6 +150,7 @@ BOOL FSFloaterNearbyChat::postBuild()
 		mInputEditor->setPassDelete(TRUE);
 		mInputEditor->setFont(LLViewerChat::getChatFont());
 		mInputEditor->setLabel(getString("chatbox_label"));
+		mInputEditor->enableSingleLineMode(gSavedSettings.getBOOL("FSUseSingleLineChatEntry"));
 	}
 	mChatLayoutPanel = getChild<LLLayoutPanel>("chat_layout_panel");
 	mInputPanels = getChild<LLLayoutStack>("input_panels");
@@ -298,7 +299,9 @@ void FSFloaterNearbyChat::addMessage(const LLChat& chat,bool archive,const LLSD 
 			// FS:LO FIRE-5230 - Chat Console Improvement: Replacing the "IM" in front of group chat messages with the actual group name
 		}
 		// <FS:LO> Make logging IMs to the chat history file toggleable again
-		if (!(chat.mChatType == CHAT_TYPE_IM || chat.mChatType == CHAT_TYPE_IM_GROUP) || gSavedSettings.getBOOL("FSLogIMInChatHistory"))
+		if (!(chat.mChatType == CHAT_TYPE_IM || chat.mChatType == CHAT_TYPE_IM_GROUP) ||
+			(chat.mChatType == CHAT_TYPE_IM && chat.mSourceType == CHAT_SOURCE_OBJECT) ||
+			gSavedSettings.getBOOL("FSLogIMInChatHistory"))
 		{
 			LLLogChat::saveHistory("chat", from_name, chat.mFromID, chat.mText);
 		}
@@ -807,7 +810,7 @@ void FSFloaterNearbyChat::onChatBoxKeystroke()
 				
 				// Select to end of line, starting from the character
 				// after the last one the user typed.
-				mInputEditor->selectNext(rest_of_match, false);
+				mInputEditor->selectByCursorPosition(utf8_out_str.size()-rest_of_match.size(),utf8_out_str.size());
 			}
 		}
 		else if (matchChatTypeTrigger(utf8_trigger, &utf8_out_str))
@@ -934,9 +937,7 @@ void FSFloaterNearbyChat::onChatBoxKeystroke()
 				if (!rest_of_match.empty())
 				{
 					mInputEditor->setText(prefix + replaced_text + suffix);
-					// *HACK: I don't know how to select text in a textbox. :(
-					mInputEditor->setCursorPos(prefix.size());
-					mInputEditor->selectNext((rest_of_match + " "), false);
+					mInputEditor->selectByCursorPosition(prefix.size() + match.size(), prefix.size() + replaced_text.size());
 				}
 			}
 		}
@@ -953,7 +954,7 @@ void FSFloaterNearbyChat::onChatBoxFocusLost()
 
 void FSFloaterNearbyChat::onChatBoxFocusReceived()
 {
-	mInputEditor->setEnabled(!gDisconnected);
+	mInputEditor->setEnabled(!gDisconnected && gSavedSettings.getBOOL("FSNearbyChatbar"));
 }
 
 void FSFloaterNearbyChat::reshapeChatLayoutPanel()
@@ -1062,7 +1063,7 @@ void FSFloaterNearbyChat::sendChat( EChatType type )
 	
 	// If the user wants to stop chatting on hitting return, lose focus
 	// and go out of chat mode.
-	if (gSavedSettings.getBOOL("CloseChatOnReturn"))
+	if (gSavedSettings.getBOOL("CloseChatOnReturn") && gSavedSettings.getBOOL("FSUnfocusChatHistoryOnReturn"))
 	{
 		stopChat();
 	}

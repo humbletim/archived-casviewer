@@ -40,18 +40,20 @@ import subprocess
 import zipfile
 #/AO
 
+from fs_viewer_manifest import FSViewerManifest #<FS:ND/> Manifest extensions for Firestorm
+
 viewer_dir = os.path.dirname(__file__)
 # Add indra/lib/python to our path so we don't have to muck with PYTHONPATH.
 # Put it FIRST because some of our build hosts have an ancient install of
 # indra.util.llmanifest under their system Python!
 sys.path.insert(0, os.path.join(viewer_dir, os.pardir, "lib", "python"))
-from indra.util.llmanifest import LLManifest, main, proper_windows_path, path_ancestors
+from indra.util.llmanifest import LLManifest, main, proper_windows_path, path_ancestors, CHANNEL_VENDOR_BASE, RELEASE_CHANNEL, ManifestError
 try:
     from llbase import llsd
 except ImportError:
     from indra.base import llsd
 
-class ViewerManifest(LLManifest):
+class ViewerManifest(LLManifest,FSViewerManifest):
     def is_packaging_viewer(self):
         # Some commands, files will only be included
         # if we are packaging the viewer on windows.
@@ -62,9 +64,6 @@ class ViewerManifest(LLManifest):
 
     def do_copy_artwork( self ):
         return self.args.has_key( 'copy_artwork' )
-
-    def is_64bit_build( self ):
-        return self.args.has_key( 'm64' )
 
     def construct(self):
         super(ViewerManifest, self).construct()
@@ -133,26 +132,43 @@ class ViewerManifest(LLManifest):
                 self.path("beamsColors")
 
 
-                # CHOP-955: If we have "sourceid" in the build process
-                # environment, generate it into settings_install.xml.
-                try:
-                    sourceid = os.environ["sourceid"]
-                except KeyError:
-                    # no sourceid, no settings_install.xml file
-                    pass
-                else:
-                    if sourceid:
-                        # Single-entry subset of the LLSD content of settings.xml
-                        content = dict(sourceid=dict(Comment='Identify referring agency to Linden web servers',
-                                                     Persist=1,
-                                                     Type='String',
-                                                     Value=sourceid))
-                        # put_in_file(src=) need not be an actual pathname; it
-                        # only needs to be non-empty
-                        settings_install = self.put_in_file(llsd.format_pretty_xml(content),
-                                                            "settings_install.xml",
-                                                            src="environment")
-                        print "Put sourceid '%s' in %s" % (sourceid, settings_install)
+                # CHOP-955: If we have "sourceid" or "viewer_channel" in the
+                # build process environment, generate it into
+                # settings_install.xml.
+                settings_template = dict(
+                    sourceid=dict(Comment='Identify referring agency to Linden web servers',
+                                  Persist=1,
+                                  Type='String',
+                                  Value=''),
+                    CmdLineGridChoice=dict(Comment='Default grid',
+                                  Persist=0,
+                                  Type='String',
+                                  Value=''),
+                    CmdLineChannel=dict(Comment='Command line specified channel name',
+                                        Persist=0,
+                                        Type='String',
+                                        Value=''))
+                settings_install = {}
+                if 'sourceid' in self.args and self.args['sourceid']:
+                    settings_install['sourceid'] = settings_template['sourceid'].copy()
+                    settings_install['sourceid']['Value'] = self.args['sourceid']
+                    print "Set sourceid in settings_install.xml to '%s'" % self.args['sourceid']
+
+                if 'channel_suffix' in self.args and self.args['channel_suffix']:
+                    settings_install['CmdLineChannel'] = settings_template['CmdLineChannel'].copy()
+                    settings_install['CmdLineChannel']['Value'] = self.channel_with_pkg_suffix()
+                    print "Set CmdLineChannel in settings_install.xml to '%s'" % self.channel_with_pkg_suffix()
+
+                if 'grid' in self.args and self.args['grid']:
+                    settings_install['CmdLineGridChoice'] = settings_template['CmdLineGridChoice'].copy()
+                    settings_install['CmdLineGridChoice']['Value'] = self.grid()
+                    print "Set CmdLineGridChoice in settings_install.xml to '%s'" % self.grid()
+
+                # put_in_file(src=) need not be an actual pathname; it
+                # only needs to be non-empty
+                self.put_in_file(llsd.format_pretty_xml(settings_install),
+                                 "settings_install.xml",
+                                 src="environment")
 
                 self.end_prefix("app_settings")
 
@@ -250,78 +266,88 @@ class ViewerManifest(LLManifest):
 
     def grid(self):
         return self.args['grid']
+
     def channel(self):
         return self.args['channel']
-    def channel_unique(self):
-        return self.channel().replace("CtrlAltStudio-Viewer", "").strip()
-    def channel_legacy_oneword(self):
-        return "".join(self.channel().split())
-    def channel_oneword(self):
-        return "".join(self.channel_unique().split())
-    def channel_lowerword(self):
-        return self.channel_oneword().lower()
-    def flavor(self):               # Viewer Flavor [FS:CR]
-        return self.args['viewer_flavor']  # [oss or hvk]
+
+    def channel_with_pkg_suffix(self):
+        fullchannel=self.channel()
+        if 'channel_suffix' in self.args and self.args['channel_suffix']:
+            fullchannel+=' '+self.args['channel_suffix']
+        return fullchannel
+
+    def channel_variant(self):
+        global CHANNEL_VENDOR_BASE
+        return self.channel().replace(CHANNEL_VENDOR_BASE, "").strip()
+
+    def channel_type(self): # returns 'release', 'beta', 'project', or 'test'
+        global CHANNEL_VENDOR_BASE
+        channel_qualifier=self.channel().replace(CHANNEL_VENDOR_BASE, "").lower().strip()
+        if channel_qualifier.startswith('release'):
+            channel_type='release'
+        elif channel_qualifier.startswith('beta'):
+            channel_type='beta'
+        elif channel_qualifier.startswith('project'):
+            channel_type='project'
+        else:
+            channel_type='test'
+        return channel_type
+
+    def channel_variant_app_suffix(self):
+        # get any part of the compiled channel name after the CHANNEL_VENDOR_BASE
+        suffix=self.channel_variant()
+        # by ancient convention, we don't use Release in the app name
+        if self.channel_type() == 'release':
+            suffix=suffix.replace('Release', '').strip()
+        # for the base release viewer, suffix will now be null - for any other, append what remains
+        if len(suffix) > 0:
+            suffix = "_"+ ("_".join(suffix.split()))
+        # the additional_packages mechanism adds more to the installer name (but not to the app name itself)
+        if 'channel_suffix' in self.args and self.args['channel_suffix']:
+            suffix+='_'+("_".join(self.args['channel_suffix'].split()))
+        return suffix
+
+    def installer_base_name(self):
+        global CHANNEL_VENDOR_BASE
+        # a standard map of strings for replacing in the templates
+        substitution_strings = {
+            'channel_vendor_base' : '_'.join(CHANNEL_VENDOR_BASE.split()),
+            'channel_variant_underscores':self.channel_variant_app_suffix(),
+            'version_underscores' : '_'.join(self.args['version']),
+            'arch':self.args['arch']
+            }
+        return "%(channel_vendor_base)s%(channel_variant_underscores)s_%(version_underscores)s_%(arch)s" % substitution_strings
 
     def app_name(self):
-        # [FS:CR]
-        #app_suffix='Test'
-        #channel_type=self.channel_lowerword()
-        #if channel_type.startswith('release') :
-        #    app_suffix='Viewer'
-        #elif re.match('^(beta|project).*',channel_type) :
-        #    app_suffix=self.channel_unique()
-        #return "Second Life "+app_suffix
-        app = 'CtrlAltStudio-Viewer'
-        #if (self.flavor() == 'oss') :
-        #    app = 'FirestormOS'
-        app_suffix = ''.join(self.channel_unique().split())
-        return app + app_suffix
-        # [/FS:CR]
+        global CHANNEL_VENDOR_BASE
+        channel_type=self.channel_type()
+        if channel_type == 'release':
+            app_suffix='Viewer'
+        else:
+            app_suffix=self.channel_variant()
+			
+        #<FS:ND> tag "OS" after CHANNEL_VENDOR_BASE and before any suffix
+        if self.fs_flavor() == 'oss':
+		      app_suffix = "OS" + app_suffix
+        #</FS:ND>
+
+        #<FS:ND> Don't separate name by whitespace. This break a lot of things in the old FS installer logic.
+        #return CHANNEL_VENDOR_BASE + ' ' + app_suffix
+        return CHANNEL_VENDOR_BASE + app_suffix
+        #</FS:ND>
+
+    def app_name_oneword(self):
+        return ''.join(self.app_name().split())
+        
 
     def icon_path(self):
-        icon_path="icons/"
-        channel_type=self.channel_lowerword()
-        print "Icon channel type '%s'" % channel_type
-        if channel_type.startswith('release') :
-            icon_path += 'release'
-        elif re.match('^beta.*',channel_type) :
-            icon_path += 'beta'
-        elif re.match('^project.*',channel_type) :
-            icon_path += 'project'
-        else :
-            icon_path += 'private' # FS default
-        #[FS:CR] OpenSim app icons
-        if (self.flavor() == 'oss') :
-            icon_path += '-os'
-        # [/FS:CR]
-        return icon_path
+        # <FS:ND> Add -os for oss builds
+        if self.fs_flavor() == 'oss':
+            return "icons/" + self.channel_type() + "-os"
+        # </FS:ND>
+        return "icons/" + self.channel_type()
 
-    def flags_list(self):
-        """ Convenience function that returns the command-line flags
-        for the grid"""
-
-        # The original role of this method seems to have been to build a
-        # grid-specific viewer: one that would, on launch, preselect a
-        # particular grid. (Apparently that dates back to when the protocol
-        # between viewer and simulator required them to be updated in
-        # lockstep, so that "the beta grid" required "a beta viewer.") But
-        # those viewer command-line switches no longer work without tweaking
-        # user_settings/grids.xml. In fact, going forward, it's unclear what
-        # use case that would address.
-
-        # This method also set a channel-specific (or grid-and-channel-
-        # specific) user_settings/settings_something.xml file. It has become
-        # clear that saving user settings in a channel-specific file causes
-        # more problems (confusion) than it solves, so we've discontinued that.
-
-        # In fact we now avoid forcing viewer command-line switches at all,
-        # instead introducing a settings_install.xml file. Command-line
-        # switches don't aggregate well; for instance the generated --channel
-        # switch actually prevented the user specifying --channel on the
-        # command line. Settings files have well-defined override semantics.
-        return None
-
+        
     def extract_names(self,src):
         try:
             contrib_file = open(src,'r')
@@ -345,22 +371,9 @@ class ViewerManifest(LLManifest):
         random.shuffle(names)
         return ', '.join(names)
 
-class WindowsManifest(ViewerManifest):
+class Windows_i686_Manifest(ViewerManifest):
     def final_exe(self):
-        # [FS:CR]
-        #app_suffix="Test"
-        #channel_type=self.channel_lowerword()
-        #if channel_type.startswith('release') :
-        #    app_suffix=''
-        #elif re.match('^(beta|project).*',channel_type) :
-        #    app_suffix=''.join(self.channel_unique().split())
-        #return "SecondLife"+app_suffix+".exe"
-        app = 'CtrlAltStudio-Viewer'
-        #if (self.flavor() == 'oss') :
-        #    app = 'FirestormOS'
-        app_suffix = ''.join(self.channel_unique().split())
-        return app + app_suffix + ".exe"
-        # [/FS:CR]
+        return self.app_name_oneword()+".exe"
 
     def test_msvcrt_and_copy_action(self, src, dst):
         # This is used to test a dll manifest.
@@ -409,7 +422,7 @@ class WindowsManifest(ViewerManifest):
             print "Doesn't exist:", src
         
     def construct(self):
-        super(WindowsManifest, self).construct()
+        super(Windows_i686_Manifest, self).construct()
 
         if self.is_packaging_viewer():
             # Find secondlife-bin.exe in the 'configuration' dir, then rename it to the result of final_exe.
@@ -459,6 +472,15 @@ class WindowsManifest(ViewerManifest):
                     self.path("fmodex64.dll")
             except:
                 print "Skipping fmodex audio library(assuming other audio engine)"
+			
+            # Get Leap Motion SDK
+            try:
+                if self.args['configuration'].lower() == 'debug':
+                    self.path("Leapd.dll")
+                else:
+                    self.path("Leap.dll")
+            except:
+                print "Leap Motion library was not found"
 
             # For textures
             if self.args['configuration'].lower() == 'debug':
@@ -537,7 +559,7 @@ class WindowsManifest(ViewerManifest):
             self.end_prefix()
 
 
-        if self.args['configuration'].lower() == 'debug' and not self.is_64bit_build():
+        if self.args['configuration'].lower() == 'debug' and not self.fs_is_64bit_build():
             if self.prefix(src=os.path.join(os.pardir, 'packages', 'lib', 'debug'),
                            dst="llplugin"):
                 self.path("libeay32.dll")
@@ -568,7 +590,7 @@ class WindowsManifest(ViewerManifest):
                     self.end_prefix()
 
                 self.end_prefix()
-        elif not self.is_64bit_build():
+        elif not self.fs_is_64bit_build():
             if self.prefix(src=os.path.join(os.pardir, 'packages', 'lib', 'release'),
                            dst="llplugin"):
                 self.path("libeay32.dll")
@@ -599,7 +621,7 @@ class WindowsManifest(ViewerManifest):
                     self.end_prefix()
 
                 self.end_prefix()
-        elif self.is_64bit_build() and self.prefix( src = "../packages/bin_x86/slplugin", dst="" ):
+        elif self.fs_is_64bit_build() and self.prefix( src = "../packages/bin_x86/slplugin", dst="" ):
             self.path( "slplugin.exe" )
 
             if self.prefix( src = "llplugin", dst="llplugin" ):
@@ -676,84 +698,51 @@ class WindowsManifest(ViewerManifest):
             'version_short' : '.'.join(self.args['version'][:-1]),
             'version_dashes' : '-'.join(self.args['version']),
             'final_exe' : self.final_exe(),
-            'grid':self.args['grid'],
-            'grid_caps':self.args['grid'].upper(),
             'flags':'',
-            'channel':self.channel(),
-            'channel_oneword':self.channel_oneword(),
-            'channel_unique':self.channel_unique(),
-            'subchannel_underscores':'_'.join(self.channel_unique().split()),
-            'app_name' : self.app_name()    #[FS:CR]
+            'app_name':self.app_name(),
+            'app_name_oneword':self.app_name_oneword()
             }
 
+        substitution_strings = self.fs_splice_grid_substitution_strings( substitution_strings ) #<FS:ND/> Add grid args
+
+        # <FS:ND> Properly name OS version, also add Phoenix- in front of installer name
+        #installer_file = self.installer_base_name() + '_Setup.exe'
+        installer_file = "Phoenix-%(app_name)s-%(version_dashes)s_Setup.exe" % substitution_strings
+        # </FS:ND>
+        
+        substitution_strings['installer_file'] = installer_file
+        
         version_vars = """
         !define INSTEXE  "%(final_exe)s"
         !define VERSION "%(version_short)s"
         !define VERSION_LONG "%(version)s"
         !define VERSION_DASHES "%(version_dashes)s"
         """ % substitution_strings
-        if self.default_channel():
-            if self.default_grid():
-                # release viewer
-                installer_file = "%(app_name)s_%(version_dashes)s_Setup.exe"
-                grid_vars_template = """
-                OutFile "%(installer_file)s"
-                !define INSTFLAGS "%(flags)s"
-                !define INSTNAME   "%(app_name)s"
-                !define SHORTCUT   "%(app_name)s"
-                !define URLNAME   "secondlife"
-                Caption "%(app_name)s ${VERSION}"
-                """
-            else:
-                # alternate grid viewer
-                installer_file = "%(app_name)s_%(version_dashes)s_(%(grid_caps)s)_Setup.exe"
-                grid_vars_template = """
-                OutFile "%(installer_file)s"
-                !define INSTFLAGS "%(flags)s"
-                !define INSTNAME   "%(app_name)s%(grid_caps)s"
-                !define SHORTCUT   "%(app_name)s (%(grid_caps)s)"
-                !define URLNAME   "secondlife%(grid)s"
-                !define UNINSTALL_SETTINGS 1
-                Caption "%(app_name)s %(grid)s ${VERSION}"
-                """
+        
+        if self.channel_type() == 'release':
+            substitution_strings['caption'] = CHANNEL_VENDOR_BASE
         else:
-            # some other channel (grid name not used)
-            #installer_file = "Second_Life_%(version_dashes)s_%(subchannel_underscores)s_Setup.exe"
-            installer_file = "%(app_name)s_%(version_dashes)s_Setup.exe" #<FS:CR>
-            grid_vars_template = """
+            substitution_strings['caption'] = self.app_name() + ' ${VERSION}'
+
+        inst_vars_template = """
             OutFile "%(installer_file)s"
-            !define INSTFLAGS "%(flags)s"
-            !define INSTNAME   "%(app_name)s"
+            !define INSTNAME   "%(app_name_oneword)s"
             !define SHORTCUT   "%(app_name)s"
             !define URLNAME   "secondlife"
-            !define UNINSTALL_SETTINGS 1
-            Caption "%(app_name)s ${VERSION}"
+            Caption "%(caption)s"
             """
-        if 'installer_name' in self.args:
-            installer_file = self.args['installer_name']
-        else:
-            installer_file = installer_file % substitution_strings
-        substitution_strings['installer_file'] = installer_file
 
         tempfile = "secondlife_setup_tmp.nsi"
         
-        #AO: Try to sign original executable first, if we can, using best available signing cert.
-        try:
-            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\casviewer-bin.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\slplugin.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\SLVoice.exe"],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\"+self.final_exe()],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-        except Exception, e:
-            print "Couldn't sign final binary. Tried to sign %s" % self.args['configuration']+"\\"+self.final_exe()
-            
+        self.fs_sign_win_binaries() # <FS:ND/> Sign files, step one. Sign compiled binaries
 
-        if not self.is_64bit_build():
+        if not self.fs_is_64bit_build():
           # the following replaces strings in the nsi template
           # it also does python-style % substitution
           self.replace_in("installers/windows/installer_template.nsi", tempfile, {
                   "%%VERSION%%":version_vars,
                   "%%SOURCE%%":self.get_src_prefix(),
-                  "%%GRID_VARS%%":grid_vars_template % substitution_strings,
+                  "%%INST_VARS%%":inst_vars_template % substitution_strings,
                   "%%INSTALL_FILES%%":self.nsi_file_commands(True),
                   "%%DELETE_FILES%%":self.nsi_file_commands(False)})
 
@@ -772,23 +761,20 @@ class WindowsManifest(ViewerManifest):
           createMSI  = self.dst_path_of( "../../../indra/newview/" + createMSI)
           settingsFile = "settings_%s_v4.xml" % self.app_name()
 
+          substitution_strings['installer_file'] = installer_file
           self.run_command('"' + createMSI + '" ' + self.dst_path_of( "" ) +
-                           " " + substitution_strings[ 'channel' ] + " " + substitution_strings[ 'version' ] +
+                           " " + self.channel() + " " + substitution_strings[ 'version' ] +
                            " " + settingsFile + " " + installer_file + " " + " ".join( substitution_strings[ 'version' ].split(".") ) )
           
-        #AO: Try to sign installer next, if we can, using the "CtrlAltStudio Viewer" signing cert.
-        try:
-            subprocess.check_call(["signtool.exe","sign","/n","CtrlAltStudio","/d","Viewer","/du","http://ctrlaltstudio.com",self.args['configuration']+"\\"+substitution_strings['installer_file']],stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-        except Exception, e:
-            print "Working directory: %s" % os.getcwd()
-            print "Couldn't sign windows installer. Tried to sign %s" % self.args['configuration']+"\\"+substitution_strings['installer_file']
+
+        self.fs_sign_win_installer( substitution_strings ) # <FS:ND/> Sign files, step two. Sign installer.
 
         #AO: Try to package up symbols
         # New Method, for reading cross platform stack traces on a linux/mac host
         if (os.path.exists("%s/casviewer-symbols-windows.tar.bz2" % self.args['configuration'].lower())):
             # Rename to add version numbers
             sName = "%s/%s_%s_%s_symbols-windows.tar.bz2" % (self.args['configuration'].lower(),
-                                                                     self.channel_legacy_oneword(),
+                                                                     self.fs_channel_legacy_oneword(),
                                                                      substitution_strings['version_dashes'],
                                                                      self.args['viewer_flavor'])
 
@@ -801,7 +787,7 @@ class WindowsManifest(ViewerManifest):
         # Using tat+xz gives far superior compression than zip (~half the size of the zip archive).
         # Python3 natively supports tar+xz via mode 'w:xz'. But we're stuck with Python2 for nowo.
         symbolTar = tarfile.TarFile("%s/%s_%s_%s_pdbsymbols-windows.tar" % (self.args['configuration'].lower(),
-                                                                                    self.channel_legacy_oneword(),
+                                                                                    self.fs_channel_legacy_oneword(),
                                                                                     substitution_strings['version_dashes'],
                                                                                     self.args['viewer_flavor']),
                                                                                     'w')
@@ -831,7 +817,7 @@ class WindowsManifest(ViewerManifest):
         self.package_file = installer_file
 
 
-class DarwinManifest(ViewerManifest):
+class Darwin_i386_Manifest(ViewerManifest):
     def is_packaging_viewer(self):
         # darwin requires full app bundle packaging even for debugging.
         return True
@@ -856,7 +842,7 @@ class DarwinManifest(ViewerManifest):
 
             # most everything goes in the Resources directory
             if self.prefix(src="", dst="Resources"):
-                super(DarwinManifest, self).construct()
+                super(Darwin_i386_Manifest, self).construct()
 
                 if self.prefix("cursors_mac"):
                     self.path("*.tif")
@@ -930,6 +916,9 @@ class DarwinManifest(ViewerManifest):
                                 "libfmodex.dylib",
                                 "libfmodexL.dylib",
                                 "libGLOD.dylib",
+                                "libgrowl.dylib",
+                                "libgrowl++.dylib",
+                                "libLeap.dylib",
                                 ):
                     dylibs += path_optional(os.path.join(libdir, libfile), libfile)
 
@@ -995,21 +984,8 @@ class DarwinManifest(ViewerManifest):
             self.run_command("chmod +x %r" % os.path.join(self.get_dst_prefix(), script))
 
     def package_finish(self):
-	# <FS:AO> Copied from windows manifest, since we're starting to use many of the same vars
-        # a standard map of strings for replacing in the templates
-        substitution_strings = {
-            'version' : '.'.join(self.args['version']),
-            'version_short' : '.'.join(self.args['version'][:-1]),
-            'version_dashes' : '-'.join(self.args['version']),
-            'grid':self.args['grid'],
-            'grid_caps':self.args['grid'].upper(),
-            'channel':self.channel(),
-            'channel_oneword':self.channel_oneword(),
-            'channel_unique':self.channel_unique(),
-            'subchannel_underscores':'_'.join(self.channel_unique().split()),
-            'app_name' : self.app_name()    #[FS:CR]
-        }
-	# </FS:AO>
+        global CHANNEL_VENDOR_BASE
+        substitution_strings = self.fs_get_substitution_strings()         # <FS:AO> Copied from windows manifest, since we're starting to use many of the same vars
 
 #Comment out for now. FS:TM
 #Added from LL signing for OSX 10.8 
@@ -1031,35 +1007,45 @@ class DarwinManifest(ViewerManifest):
 #                keychain_pwd = open(keychain_pwd_path).read().rstrip()
 #
 #                self.run_command('security unlock-keychain -p "%s" "%s/Library/Keychains/viewer.keychain"' % ( keychain_pwd, home_path ) )
-#                self.run_command('codesign --verbose --force --keychain "%(home_path)s/Library/Keychains/viewer.keychain" --sign %(identity)r %(bundle)r' % {
-#                                 'home_path' : home_path,
-#                                 'identity': identity,
-#                                 'bundle': self.get_dst_prefix()
-#                })
+#                signed=False
+#                sign_attempts=3
+#                sign_retry_wait=15
+#                while (not signed) and (sign_attempts > 0):
+#                    try:
+#                        sign_attempts-=1;
+#                        self.run_command(
+#                           'codesign --verbose --force --keychain "%(home_path)s/Library/Keychains/viewer.keychain" --sign %(identity)r %(bundle)r' % {
+#                               'home_path' : home_path,
+#                               'identity': identity,
+#                               'bundle': self.get_dst_prefix()
+#                               })
+#                        signed=True # if no exception was raised, the codesign worked
+#                    except ManifestError, err:
+#                        if sign_attempts:
+#                            print >> sys.stderr, "codesign failed, waiting %d seconds before retrying" % sign_retry_wait
+#                            time.sleep(sign_retry_wait)
+#                            sign_retry_wait*=2
+#                        else:
+#                            print >> sys.stderr, "Maximum codesign attempts exceeded; giving up"
+#                            raise
 
         imagename = (self.app_name() + '-' + '-'.join(self.args['version']))
 
         # MBW -- If the mounted volume name changes, it breaks the .DS_Store's background image and icon positioning.
         #  If we really need differently named volumes, we'll need to create multiple DS_Store file images, or use some other trick.
 
-        #volname="CtrlAltStudio Viewer Installer"  # DO NOT CHANGE without understanding comment above
+        #volname=CHANNEL_VENDOR_BASE+" Installer"  # DO NOT CHANGE without understanding comment above
         #[FS:CR] Understood and disregarded!
         volname = (self.app_name() + " " + '.'.join(self.args['version']) + " Installer")
 
-        #if self.default_channel():
-        #    if not self.default_grid():
-        #        # beta case
-        #        imagename = imagename + '_' + self.args['grid'].upper()
-        #else:
-        #    # first look, etc
-        #    imagename = imagename + '_' + self.channel_oneword().upper()
+        #imagename = self.installer_base_name()
 
         sparsename = imagename + ".sparseimage"
         finalname = imagename + ".dmg"
         # make sure we don't have stale files laying about
         self.remove(sparsename, finalname)
 
-        self.run_command('hdiutil create %(sparse)r -volname %(vol)r -fs HFS+ -type SPARSE -megabytes 700 -layout SPUD' % {
+        self.run_command('hdiutil create %(sparse)r -volname %(vol)r -fs HFS+ -type SPARSE -megabytes 1000 -layout SPUD' % {
                 'sparse':sparsename,
                 'vol':volname})
 
@@ -1153,6 +1139,7 @@ class DarwinManifest(ViewerManifest):
 
         print "Converting temp disk image to final disk image"
         self.run_command('hdiutil convert %(sparse)r -format UDZO -imagekey zlib-level=9 -o %(final)r' % {'sparse':sparsename, 'final':finalname})
+        self.run_command('hdiutil internet-enable -yes %(final)r' % {'final':finalname})
         # get rid of the temp file
         self.package_file = finalname
         self.remove(sparsename)
@@ -1163,7 +1150,7 @@ class DarwinManifest(ViewerManifest):
             # Rename to add version numbers
             os.rename("%s/casviewer-symbols-darwin.tar.bz2" % self.args['configuration'].lower(),
                       "%s/%s_%s_%s_symbols-darwin.tar.bz2" % (self.args['configuration'].lower(),
-                                                                      self.channel_legacy_oneword(),
+                                                                      self.fs_channel_legacy_oneword(),
                                                                       substitution_strings['version_dashes'],
                                                                       self.args['viewer_flavor']))
 
@@ -1203,8 +1190,9 @@ class LinuxManifest(ViewerManifest):
             # recurse
             self.end_prefix("res-sdl")
 
-        # Get the icons based on the channel
+        # Get the icons based on the channel type
         icon_path = self.icon_path()
+        print "DEBUG: icon_path '%s'" % icon_path
         if self.prefix(src=icon_path, dst="") :
             self.path("casviewer_256.png","casviewer_48.png")
             if self.prefix(src="",dst="res-sdl") :
@@ -1222,42 +1210,100 @@ class LinuxManifest(ViewerManifest):
             print "Skipping llcommon.so (assuming llcommon was linked statically)"
 
         self.path("featuretable_linux.txt")
+        
+        if self.is_packaging_viewer():
+          if self.prefix("../packages/lib/release", dst="lib"):
+            self.path("libapr-1.so")
+            self.path("libapr-1.so.0")
+            self.path("libapr-1.so.0.4.5")
+            self.path("libaprutil-1.so")
+            self.path("libaprutil-1.so.0")
+            self.path("libaprutil-1.so.0.4.1")
+            self.path("libboost_context-mt.so.*")
+            self.path("libboost_filesystem-mt.so.*")
+            self.path("libboost_program_options-mt.so.*")
+            self.path("libboost_regex-mt.so.*")
+            self.path("libboost_signals-mt.so.*")
+            self.path("libboost_system-mt.so.*")
+            self.path("libboost_thread-mt.so.*")
+            self.path("libboost_chrono-mt.so.*") #<FS:TM> FS spcific
+            self.path("libboost_date_time-mt.so.*") #<FS:TM> FS spcific
+            self.path("libboost_wave-mt.so.*") #<FS:TM> FS spcific
+            self.path("libcollada14dom.so")
+            self.path("libdb*.so")
+            self.path("libcrypto.so.*")
+            self.path("libexpat.so.*")
+            self.path("libssl.so.1.0.0")
+            self.path("libGLOD.so")
+            self.path("libminizip.so")
+            self.path("libuuid.so*")
+            self.path("libSDL-1.2.so.*")
+            self.path("libdirectfb-1.*.so.*")
+            self.path("libfusion-1.*.so.*")
+            self.path("libdirect-1.*.so.*")
+            self.path("libopenjpeg.so*")
+            self.path("libdirectfb-1.4.so.5")
+            self.path("libfusion-1.4.so.5")
+            self.path("libdirect-1.4.so.5*")
+            self.path("libhunspell-1.3.so*")
+            self.path("libalut.so")
+            self.path("libpng15.so.15") #use provided libpng to workaround incompatible system versions on some distros
+            self.path("libpng15.so.15.13.0") #use provided libpng to workaround incompatible system versions on some distros
+            self.path("libopenal.so", "libopenal.so.1")
+            #self.path("libnotify.so.1.1.2", "libnotify.so.1") # LO - uncomment when testing libnotify(growl) on linux
+            self.path("libpangox-1.0.so*")
+            # KLUDGE: As of 2012-04-11, the 'fontconfig' package installs
+            # libfontconfig.so.1.4.4, along with symlinks libfontconfig.so.1
+            # and libfontconfig.so. Before we added support for library-file
+            # wildcards, though, this self.path() call specifically named
+            # libfontconfig.so.1.4.4 WITHOUT also copying the symlinks. When I
+            # (nat) changed the call to self.path("libfontconfig.so.*"), we
+            # ended up with the libfontconfig.so.1 symlink in the target
+            # directory as well. But guess what! At least on Ubuntu 10.04,
+            # certain viewer fonts look terrible with libfontconfig.so.1
+            # present in the target directory. Removing that symlink suffices
+            # to improve them. I suspect that means we actually do better when
+            # the viewer fails to find our packaged libfontconfig.so*, falling
+            # back on the system one instead -- but diagnosing and fixing that
+            # is a bit out of scope for the present project. Meanwhile, this
+            # particular wildcard specification gets us exactly what the
+            # previous call did, without having to explicitly state the
+            # version number.
+            self.path("libfontconfig.so.*.*")
+            try:
+                self.path("libtcmalloc.so*") #formerly called google perf tools
+                pass
+            except:
+                print "tcmalloc files not found, skipping"
+                pass
+
+            self.end_prefix("lib")
+
+            # Vivox runtimes
+            # Currentelly, the 32-bit ones will work with a 64-bit client.
+            if self.prefix(src="../packages/lib/release", dst="bin"):
+                    self.path("SLVoice")
+                    self.end_prefix()
+            if self.prefix(src="../packages/lib/release", dst="lib"):
+                    self.path("libortp.so")
+                    self.path("libsndfile.so.1")
+                    #self.path("libvivoxoal.so.1") # no - we'll re-use the viewer's own OpenAL lib
+                    self.path("libvivoxsdk.so")
+                    self.path("libvivoxplatform.so")
+                    self.end_prefix("lib")
 
     def copy_finish(self):
         # Force executable permissions to be set for scripts
         # see CHOP-223 and http://mercurial.selenic.com/bts/issue1802
-        for script in 'casviewer', 'bin/update_install':
+        for script in 'firestorm', 'bin/update_install':
             self.run_command("chmod +x %r" % os.path.join(self.get_dst_prefix(), script))
 
     def package_finish(self):
         # a standard map of strings for replacing in the templates
-        #installer_name_components = ['Phoenix',self.channel_oneword(),self.args.get('arch'),'.'.join(self.args['version'])]
         installer_name_components = ['Phoenix',self.app_name(),self.args.get('arch'),'.'.join(self.args['version'])]
         installer_name = "_".join(installer_name_components)
-
-	# <FS:AO> Copied from windows manifest, since we're starting to use many of the same vars
-        # a standard map of strings for replacing in the templates
-        substitution_strings = {
-            'version' : '.'.join(self.args['version']),
-            'version_short' : '.'.join(self.args['version'][:-1]),
-            'version_dashes' : '-'.join(self.args['version']),
-            'grid':self.args['grid'],
-            'grid_caps':self.args['grid'].upper(),
-            'channel':self.channel(),
-            'channel_oneword':self.channel_oneword(),
-            'channel_unique':self.channel_unique(),
-            'subchannel_underscores':'_'.join(self.channel_unique().split()),
-            'app_name' : self.app_name()    #[FS:CR]
-        }
-	# </FS:AO>
-
-        #if self.default_channel():
-        #    if not self.default_grid():
-        #        installer_name += '_' + self.args['grid'].upper()
-        #else:
-        #    installer_name += '_' + self.channel_oneword().upper()
-	print "installer name=%s" % installer_name
-
+        #installer_name = self.installer_base_name()
+        
         self.strip_binaries()
 
         # Fix access permissions
@@ -1300,83 +1346,23 @@ class LinuxManifest(ViewerManifest):
 
         #AO: Try to package up symbols
         # New Method, for reading cross platform stack traces on a linux/mac host
-        if (os.path.exists("%s/casviewer-symbols-linux.tar.bz2" % self.args['configuration'].lower())):
+        if (os.path.exists("%s/firestorm-symbols-linux.tar.bz2" % self.args['configuration'].lower())):
             # Rename to add version numbers
-            os.rename("%s/casviewer-symbols-linux.tar.bz2" % self.args['configuration'].lower(),
-                      "%s/%s_%s_%s_symbols-linux.tar.bz2" % (self.args['configuration'].lower(),
-                                                                     self.channel_legacy_oneword(),
+            os.rename("%s/firestorm-symbols-linux.tar.bz2" % self.args['configuration'].lower(),
+                      "%s/Phoenix_%s_%s_%s_symbols-linux.tar.bz2" % (self.args['configuration'].lower(),
+                                                                     self.fs_channel_legacy_oneword(),
                                                                      '-'.join( self.args['version'] ),
                                                                      self.args['viewer_flavor'] ) )
 
 
-class Linux_i686Manifest(LinuxManifest):
+class Linux_i686_Manifest(LinuxManifest):
     def construct(self):
-        super(Linux_i686Manifest, self).construct()
+        super(Linux_i686_Manifest, self).construct()
 
-        if self.prefix("../packages/lib/release", dst="lib"):
-            self.path("libapr-1.so")
-            self.path("libapr-1.so.0")
-            self.path("libapr-1.so.0.4.5")
-            self.path("libaprutil-1.so")
-            self.path("libaprutil-1.so.0")
-            self.path("libaprutil-1.so.0.4.1")
-            self.path("libboost_context-mt.so.*")
-            self.path("libboost_filesystem-mt.so.*")
-            self.path("libboost_program_options-mt.so.*")
-            self.path("libboost_regex-mt.so.*")
-            self.path("libboost_signals-mt.so.*")
-            self.path("libboost_system-mt.so.*")
-            self.path("libboost_thread-mt.so.*")
-            self.path("libboost_chrono-mt.so.*") #<FS:TM> FS spcific
-            self.path("libboost_date_time-mt.so.*") #<FS:TM> FS spcific
-            self.path("libboost_wave-mt.so.*") #<FS:TM> FS spcific
-            self.path("libcollada14dom.so")
-            self.path("libdb*.so")
-            self.path("libcrypto.so.*")
-            self.path("libexpat.so.*")
-            self.path("libssl.so.1.0.0")
-            self.path("libGLOD.so")
-            self.path("libminizip.so")
-            self.path("libuuid.so*")
-            self.path("libSDL-1.2.so.*")
-            self.path("libdirectfb-1.*.so.*")
-            self.path("libfusion-1.*.so.*")
-            self.path("libdirect-1.*.so.*")
-            self.path("libopenjpeg.so*")
-            self.path("libdirectfb-1.4.so.5")
-            self.path("libfusion-1.4.so.5")
-            self.path("libdirect-1.4.so.5*")
-            self.path("libhunspell-1.3.so*")
-            self.path("libalut.so")
-            self.path("libpng15.so.15") #use provided libpng to workaround incompatible system versions on some distros
-            self.path("libpng15.so.15.13.0") #use provided libpng to workaround incompatible system versions on some distros
-            self.path("libopenal.so", "libopenal.so.1")
+        if self.is_packaging_viewer():
+          if self.prefix("../packages/lib/release", dst="lib"):
+
             self.path("libopenal.so", "libvivoxoal.so.1") # vivox's sdk expects this soname
-            #self.path("libnotify.so.1.1.2", "libnotify.so.1") # LO - uncomment when testing libnotify(growl) on linux
-            # KLUDGE: As of 2012-04-11, the 'fontconfig' package installs
-            # libfontconfig.so.1.4.4, along with symlinks libfontconfig.so.1
-            # and libfontconfig.so. Before we added support for library-file
-            # wildcards, though, this self.path() call specifically named
-            # libfontconfig.so.1.4.4 WITHOUT also copying the symlinks. When I
-            # (nat) changed the call to self.path("libfontconfig.so.*"), we
-            # ended up with the libfontconfig.so.1 symlink in the target
-            # directory as well. But guess what! At least on Ubuntu 10.04,
-            # certain viewer fonts look terrible with libfontconfig.so.1
-            # present in the target directory. Removing that symlink suffices
-            # to improve them. I suspect that means we actually do better when
-            # the viewer fails to find our packaged libfontconfig.so*, falling
-            # back on the system one instead -- but diagnosing and fixing that
-            # is a bit out of scope for the present project. Meanwhile, this
-            # particular wildcard specification gets us exactly what the
-            # previous call did, without having to explicitly state the
-            # version number.
-            self.path("libfontconfig.so.*.*")
-            try:
-                self.path("libtcmalloc.so*") #formerly called google perf tools
-                pass
-            except:
-                print "tcmalloc files not found, skipping"
-                pass
 
             try:
                     self.path("libfmodex-*.so")
@@ -1388,24 +1374,37 @@ class Linux_i686Manifest(LinuxManifest):
 
             self.end_prefix("lib")
 
-            # Vivox runtimes
-            if self.prefix(src="../packages/lib/release", dst="bin"):
-                    self.path("SLVoice")
-                    self.end_prefix()
-            if self.prefix(src="../packages/lib/release", dst="lib"):
-                    self.path("libortp.so")
-                    self.path("libsndfile.so.1")
-                    #self.path("libvivoxoal.so.1") # no - we'll re-use the viewer's own OpenAL lib
-                    self.path("libvivoxsdk.so")
-                    self.path("libvivoxplatform.so")
-                    self.end_prefix("lib")
+            self.prefix(src="../packages/lib/release/x86", dst="lib")
 
-            self.strip_binaries()
+            try:
+                self.path("libLeap.so")
+            except:
+                print "Leap Motion library not found"
+
+            self.end_prefix("lib")
 
 
-class Linux_x86_64Manifest(LinuxManifest):
+class Linux_x86_64_Manifest(LinuxManifest):
     def construct(self):
-        super(Linux_x86_64Manifest, self).construct()
+        super(Linux_x86_64_Manifest, self).construct()
+
+        if self.is_packaging_viewer():        
+          if self.prefix("../packages/lib/release", dst="lib"):
+
+            # vivox 32-bit hack.
+            # one has to extract libopenal.so from the 32-bit openal package, or official LL viewer, and rename it to libopenal32.so
+            # and place it in the prebuilt lib/release directory
+            self.path("libopenal32.so", "libvivoxoal.so.1") # vivox's sdk expects this soname
+
+            try:
+                    self.path("libfmodex64-*.so")
+                    self.path("libfmodex64.so")
+                    pass
+            except:
+                    print "Skipping libfmodex.so - not found"
+                    pass
+
+            self.end_prefix("lib")
 
         # support file for valgrind debug tool
         self.path("secondlife-i686.supp")

@@ -37,6 +37,9 @@
 #include "llscriptfloater.h"
 #include "llsingleton.h"
 #include "llsyswellwindow.h"
+// [SL:KB] - Patch: UI-Notifications | Checked: 2013-05-09 (Catznip-3.5)
+#include "llchannelmanager.h"
+// [/SL:KB]
 
 // Firestorm includes
 #include "fsfloaterim.h"
@@ -341,25 +344,34 @@ void LLNotificationChiclet::setCounter(S32 counter)
 
 bool LLNotificationChiclet::ChicletNotificationChannel::filterNotification( LLNotificationPtr notification )
 {
-	bool display_notification;
+	bool displayNotification;
 	if (   (notification->getName() == "ScriptDialog") // special case for scripts
 		// if there is no toast window for the notification, filter it
 		|| (!LLNotificationWellWindow::getInstance()->findItemByID(notification->getID()))
 		)
 	{
-		display_notification = false;
+		displayNotification = false;
 	}
 	else if( !(notification->canLogToIM() && notification->hasFormElements())
 			&& (!notification->getPayload().has("give_inventory_notification")
 				|| notification->getPayload()["give_inventory_notification"]))
 	{
-		display_notification = true;
+		displayNotification = true;
 	}
+// [SL:KB] - Patch: UI-Notifications | Checked: 2013-05-09 (Catznip-3.5)
+	else if ("offer" == notification->getType())
+	{
+		// Assume that any offer notification with "getCanBeStored() == true" is the result of RLVa routing it to the notifcation syswell
+		/*const*/ LLNotificationsUI::LLScreenChannel* pChannel = LLNotificationsUI::LLChannelManager::instance().getNotificationScreenChannel();
+		/*const*/ LLNotificationsUI::LLToast* pToast = (pChannel) ? pChannel->getToastByNotificationID(notification->getID()) : NULL;
+		displayNotification = (pToast) && (pToast->getCanBeStored());
+	}
+// [/SL:KB]
 	else
 	{
-		display_notification = false;
+		displayNotification = false;
 	}
-	return display_notification;
+	return displayNotification;
 }
 
 //////////////////////////////////////////////////////////////////////////

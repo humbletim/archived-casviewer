@@ -30,12 +30,9 @@
      use_ellipses="true"
      top="0"
      width="394">
-      <first_tab
-       tab_bottom_image_flash="Toolbar_Left_Flash"/>
-      <middle_tab
-       tab_bottom_image_flash="Toolbar_Middle_Flash"/>
-      <last_tab
-       tab_bottom_image_flash="Toolbar_Right_Flash"/>
+        <first_tab tab_bottom_image_unselected="Toolbar_Left_IM_Unselected"/>
+        <middle_tab tab_bottom_image_unselected="Toolbar_Middle_IM_Unselected"/>
+        <last_tab tab_bottom_image_unselected="Toolbar_Right_IM_Unselected"/>
     </tab_container>
     <icon
      color="DefaultShadowLight"

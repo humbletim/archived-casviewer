@@ -239,6 +239,7 @@ public:
 		if( mID != regionp->getHttpResponderID() ) // region is no longer referring to this responder
 		{
 			LL_WARNS2("AppInit", "Capabilities") << "Received results for a stale http responder!" << LL_ENDL;
+			regionp->failedSeedCapability();
 			return ;
 		}
 
@@ -311,8 +312,8 @@ public:
 			llinfos << "BaseCapabilitiesCompleteTracker " << "sim " << regionp->getName()
 				<< " sent duplicate seed caps that differs in size - most likely content. " 
 				<< (S32) regionp->getRegionImpl()->mCapabilities.size() << " vs " << regionp->getRegionImpl()->mSecondCapabilitiesTracker.size()
-				<< llendl;
-
+				<< llendl;			
+			
 			//todo#add cap debug versus original check?
 			/*
 			CapabilityMap::const_iterator iter = regionp->getRegionImpl()->mCapabilities.begin();
@@ -1764,6 +1765,8 @@ void LLViewerRegionImpl::buildCapabilityNames(LLSD& capabilityNames)
 // </FS:CR> Aurora Sim
 	capabilityNames.append("EstateChangeInfo");
 	capabilityNames.append("EventQueueGet");
+	capabilityNames.append("FacebookConnect");
+	//capabilityNames.append("FacebookRedirect");
 
 	if (gSavedSettings.getBOOL("UseHTTPInventory"))
 	{

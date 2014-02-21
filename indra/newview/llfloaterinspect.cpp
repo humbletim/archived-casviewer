@@ -306,6 +306,16 @@ void LLFloaterInspect::refresh()
 		row["columns"][3]["column"] = "creation_date";
 		row["columns"][3]["type"] = "text";
 		row["columns"][3]["value"] = timeStr;
+		// <FS:PP> FIRE-12854: Include a Description column in the Inspect Objects floater
+		row["columns"][4]["column"] = "description";
+		row["columns"][4]["type"] = "text";
+		row["columns"][4]["value"] = obj->mDescription;
+		// </FS:PP>
+		// <FS:Ansariel> Correct creation date sorting
+		row["columns"][5]["column"] = "creation_date_sort";
+		row["columns"][5]["type"] = "text";
+		row["columns"][5]["value"] = llformat("%d", timestamp);
+		// </FS:Ansariel>
 		mObjectList->addElement(row, ADD_TOP);
 	}
 	if(selected_index > -1 && mObjectList->getItemIndex(selected_uuid) == selected_index)

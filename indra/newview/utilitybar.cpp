@@ -38,7 +38,12 @@
 
 UtilityBar::UtilityBar() :
 	LLSingleton<UtilityBar>(),
-	LLEventTimer(0.5)
+	LLEventTimer(0.5),
+	mAOInterfaceButton(NULL),
+	mVolumeControlsInterfaceButton(NULL),
+	mParcelMediaPlayButton(NULL),
+	mParcelStreamPlayButton(NULL),
+	mTalkButton(NULL)
 {
 	// Tried to do this cleanly with callbacks and controls, but ran into dead ends on every approach.
 	// This helper class works, but I am not at all satisfied with it. -Zi
@@ -50,7 +55,14 @@ UtilityBar::~UtilityBar()
 
 void UtilityBar::init()
 {
-	LLView* rootView=LLUI::getRootView();
+	LLView* rootView = LLUI::getRootView();
+
+	// Skip all this if we don't have a skin that needs it
+	if (rootView->findChildView("chat_bar_utility_bar_stack") == NULL)
+	{
+		mEventTimer.stop();
+		return;
+	}
 
 	mParcelStreamPlayButton = rootView->findChild<LLButton>("utility_parcel_audio_stream_button");
 	mParcelMediaPlayButton = rootView->findChild<LLButton>("utility_parcel_media_button");
@@ -58,12 +70,16 @@ void UtilityBar::init()
 	mAOInterfaceButton = rootView->findChild<LLButton>("show_ao_interface_button");
 	mVolumeControlsInterfaceButton = rootView->findChild<LLButton>("show_volume_controls_button");
 
-	if(mParcelStreamPlayButton)
-		mParcelStreamPlayButton->setCommitCallback(boost::bind(&UtilityBar::onParcelStreamClicked,this));
-	if(mParcelMediaPlayButton)
-		mParcelMediaPlayButton->setCommitCallback(boost::bind(&UtilityBar::onParcelMediaClicked,this));
+	if (mParcelStreamPlayButton)
+	{
+		mParcelStreamPlayButton->setCommitCallback(boost::bind(&UtilityBar::onParcelStreamClicked, this));
+	}
+	if (mParcelMediaPlayButton)
+	{
+		mParcelMediaPlayButton->setCommitCallback(boost::bind(&UtilityBar::onParcelMediaClicked, this));
+	}
 
-	if(mTalkButton)
+	if (mTalkButton)
 	{
 		mTalkButton->setMouseDownCallback(boost::bind(&LLAgent::pressMicrophone, _2));
 		mTalkButton->setMouseUpCallback(boost::bind(&LLAgent::releaseMicrophone, _2));

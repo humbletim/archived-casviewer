@@ -539,7 +539,7 @@
          mouse_opaque="false"
          name="autorespond_rto_response_label"
          top_pad="5"
-         width="450">
+         width="500">
            Automatic response to all avatars when in REJECT TELEPORT OFFERS mode:
         </text>
         <text_editor

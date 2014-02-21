@@ -241,6 +241,11 @@
 #include "llmachineid.h"
 #include "llmainlooprepeater.h"
 
+
+#include "llviewereventrecorder.h"
+
+#include "llleapmotioncontroller.h"
+
 // <CV:David>
 #include "llviewermenu.h"
 #include "OVR.h"
@@ -572,12 +577,16 @@ void idle_afk_check()
 // [RLVa:KB] - Checked: 2010-05-03 (RLVa-1.2.0g) | Modified: RLVa-1.2.0g
 #ifdef RLV_EXTENSION_CMD_ALLOWIDLE
 	// Enforce an idle time of 30 minutes if @allowidle=n restricted
-	F32 afk_timeout = (!gRlvHandler.hasBehaviour(RLV_BHVR_ALLOWIDLE)) ? gSavedSettings.getS32("AFKTimeout") : 60 * 30;
+	// <FS:CR> Cache frequently hit location
+	static LLCachedControl<S32> sAFKTimeout(gSavedSettings, "AFKTimeout");
+	S32 afk_timeout = (!gRlvHandler.hasBehaviour(RLV_BHVR_ALLOWIDLE)) ? sAFKTimeout : 60 * 30;
 #else
-	F32 afk_timeout = gSavedSettings.getS32("AFKTimeout");
+	static LLCachedControl<S32> afk_timeout(gSavedSettings, "AFKTimeout");	// <FS:CR>
 #endif // RLV_EXTENSION_CMD_ALLOWIDLE
 // [/RLVa:KB]
-	if (afk_timeout && (current_idle > afk_timeout) && ! gAgent.getAFK())
+	// <FS:CR> Explicit conversions just cos.
+	//if (afk_timeout && (current_idle > afk_timeout) && ! gAgent.getAFK())
+	if (static_cast<S32>(afk_timeout) && (current_idle > static_cast<F32>(afk_timeout)) && ! gAgent.getAFK())
 	{
 		LL_INFOS("IdleAway") << "Idle more than " << afk_timeout << " seconds: automatically changing to Away status" << LL_ENDL;
 		gAgent.setAFK();
@@ -786,7 +795,8 @@ LLAppViewer::LLAppViewer() :
 	mSavePerAccountSettings(false),		// don't save settings on logout unless login succeeded.
 	mQuitRequested(false),
 	mLogoutRequestSent(false),
-	mYieldTime(-1),
+	// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+	//mYieldTime(-1),
 	mMainloopTimeout(NULL),
 	mAgentRegionLastAlive(false),
 	mRandomizeFramerate(LLCachedControl<bool>(gSavedSettings,"Randomize Framerate", FALSE)),
@@ -819,6 +829,7 @@ LLAppViewer::LLAppViewer() :
 LLAppViewer::~LLAppViewer()
 {
 	delete mSettingsLocationList;
+	LLViewerEventRecorder::instance().~LLViewerEventRecorder();
 
 	LLLoginInstance::instance().setUpdaterService(0);
 	
@@ -988,7 +999,7 @@ bool LLAppViewer::init()
 		// QAModeTermCode set, terminate with that rc on LL_ERRS. Use _exit()
 		// rather than exit() because normal cleanup depends too much on
 		// successful startup!
-		LLError::setFatalFunction(boost::bind(_exit, rc));
+		//LLError::setFatalFunction(boost::bind(_exit, rc));
 	}
 
     mAlloc.setProfilingEnabled(gSavedSettings.getBOOL("MemProfiling"));
@@ -1696,11 +1707,16 @@ bool LLAppViewer::mainLoop()
 		joystick = LLViewerJoystick::getInstance();
 		joystick->setNeedsReset(true);
 		
+// [FS:CR]
+		gestureController = LLLeapMotionController::getInstance();
+// [/FS:CR]
+		
 #ifdef LL_DARWIN
 		// Ensure that this section of code never gets called again on OS X.
 		mMainLoopInitialized = true;
 #endif
 	}
+	
 	// As we do not (yet) send data on the mainloop LLEventPump that varies
 	// with each frame, no need to instantiate a new LLSD event object each
 	// time. Obviously, if that changes, just instantiate the LLSD at the
@@ -1710,9 +1726,15 @@ bool LLAppViewer::mainLoop()
 	
     LLSD newFrame;
 	
-	LLTimer frameTimer,idleTimer;
+	// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+	//LLTimer frameTimer,idleTimer;
+	LLTimer frameTimer,idleTimer,periodicRenderingTimer;
+	// </FS:Ansariel> MaxFPS Viewer-Chui merge error
 	LLTimer debugTime;
 	
+	// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+	BOOL restore_rendering_masks = FALSE;
+
 	//LLPrivateMemoryPoolTester::getInstance()->run(false) ;
 	//LLPrivateMemoryPoolTester::getInstance()->run(true) ;
 	//LLPrivateMemoryPoolTester::destroy() ;
@@ -1735,6 +1757,31 @@ bool LLAppViewer::mainLoop()
 		
 		try
 		{
+			// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+			// Check if we need to restore rendering masks.
+			if (restore_rendering_masks)
+			{
+				gPipeline.popRenderDebugFeatureMask();
+				gPipeline.popRenderTypeMask();
+			}
+			// Check if we need to temporarily enable rendering.
+			//F32 periodic_rendering = gSavedSettings.getF32("ForcePeriodicRenderingTime");
+			static LLCachedControl<F32> periodic_rendering(gSavedSettings, "ForcePeriodicRenderingTime");
+			if (periodic_rendering > F_APPROXIMATELY_ZERO && periodicRenderingTimer.getElapsedTimeF64() > periodic_rendering)
+			{
+				periodicRenderingTimer.reset();
+				restore_rendering_masks = TRUE;
+				gPipeline.pushRenderTypeMask();
+				gPipeline.pushRenderDebugFeatureMask();
+				gPipeline.setAllRenderTypes();
+				gPipeline.setAllRenderDebugFeatures();
+			}
+			else
+			{
+				restore_rendering_masks = FALSE;
+			}
+			// </FS:Ansariel> MaxFPS Viewer-Chui merge error
+
 			pingMainloopTimeout("Main:MiscNativeWindowEvents");
 
 			if (gViewerWindow)
@@ -1865,6 +1912,10 @@ bool LLAppViewer::mainLoop()
 				}
 
 			}
+			
+// [FS:CR] Run any LeapMotion devices
+			if (gestureController)
+				gestureController->stepFrame();
 
 			pingMainloopTimeout("Main:Sleep");
 			
@@ -1875,11 +1926,20 @@ bool LLAppViewer::mainLoop()
 				LLFastTimer t2(FTM_SLEEP);
 				
 				// yield some time to the os based on command line option
-				if(mYieldTime >= 0)
+				// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+				//if(mYieldTime >= 0)
+				//{
+				//	LLFastTimer t(FTM_YIELD);
+				//	ms_sleep(mYieldTime);
+				//}
+				//S32 yield_time = gSavedSettings.getS32("YieldTime");
+				static LLCachedControl<S32> yield_time(gSavedSettings, "YieldTime");
+				if(yield_time >= 0)
 				{
 					LLFastTimer t(FTM_YIELD);
-					ms_sleep(mYieldTime);
+					ms_sleep(yield_time);
 				}
+				// </FS:Ansariel> MaxFPS Viewer-Chui merge error
 
 				// yield cooperatively when not running as foreground window
 				if (   (gViewerWindow && !gViewerWindow->getWindow()->getVisible())
@@ -1990,6 +2050,33 @@ bool LLAppViewer::mainLoop()
 				{
 					gFrameStalls++;
 				}
+
+				// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+				// Limit FPS
+				//F32 max_fps = gSavedSettings.getF32("MaxFPS");
+				static LLCachedControl<F32> max_fps(gSavedSettings, "MaxFPS");
+				// Only limit FPS when we are actually rendering something.  Otherwise
+				// logins, logouts and teleports take much longer to complete.
+				// <FS:Ansariel> FIRE-11804: Expose MaxFPS
+				//if (max_fps > F_APPROXIMATELY_ZERO && 
+				static LLCachedControl<bool> fsLimitFramerate(gSavedSettings, "FSLimitFramerate");
+				if (fsLimitFramerate && max_fps > F_APPROXIMATELY_ZERO && 
+				// </FS:Ansariel>
+					LLStartUp::getStartupState() == STATE_STARTED &&
+					!gTeleportDisplay &&
+					!logoutRequestSent())
+				{
+					// Sleep a while to limit frame rate.
+					F32 min_frame_time = 1.f / max_fps;
+					S32 milliseconds_to_sleep = llclamp((S32)((min_frame_time - frameTimer.getElapsedTimeF64()) * 1000.f), 0, 1000);
+					if (milliseconds_to_sleep > 0)
+					{
+						LLFastTimer t(FTM_YIELD);
+						ms_sleep(milliseconds_to_sleep);
+					}
+				}
+				// </FS:Ansariel> MaxFPS Viewer-Chui merge error
+
 				frameTimer.reset();
 
 				resumeMainloopTimeout();
@@ -2073,6 +2160,8 @@ bool LLAppViewer::cleanup()
 	nd::allocstats::tearDown();
 	nd::mallocstats::tearDown();
 	// </FS:ND>
+
+	LLLeapMotionController::getInstance()->cleanup(); // <FS:ND/> shutdown leap support
 
 	//ditch LLVOAvatarSelf instance
 	gAgentAvatarp = NULL;
@@ -2831,13 +2920,13 @@ bool LLAppViewer::loadSettingsFromDirectory(const std::string& location_key,
 			}
 			// </FS:Ansariel>
 
-			llinfos << "Attempting to load settings for the group " << file.name()
-			    << " - from location " << location_key << llendl;
+			LL_INFOS("Settings") << "Attempting to load settings for the group " << file.name()
+			    << " - from location " << location_key << LL_ENDL;
 
 			LLControlGroup* settings_group = LLControlGroup::getInstance(file.name);
 			if(!settings_group)
 			{
-				llwarns << "No matching settings group for name " << file.name() << llendl;
+				LL_WARNS("Settings") << "No matching settings group for name " << file.name() << LL_ENDL;
 				continue;
 			}
 
@@ -2866,7 +2955,7 @@ bool LLAppViewer::loadSettingsFromDirectory(const std::string& location_key,
 
 			if(settings_group->loadFromFile(full_settings_path, set_defaults, file.persistent))
 			{	// success!
-				llinfos << "Loaded settings file " << full_settings_path << llendl;
+				LL_INFOS("Settings") << "Loaded settings file " << full_settings_path << LL_ENDL;
 			}
 			else
 			{	// failed to load
@@ -2880,7 +2969,7 @@ bool LLAppViewer::loadSettingsFromDirectory(const std::string& location_key,
 					// only complain if we actually have a filename at this point
 					if (!full_settings_path.empty())
 					{
-						llinfos << "Cannot load " << full_settings_path << " - No settings found." << llendl;
+						LL_INFOS("Settings") << "Cannot load " << full_settings_path << " - No settings found." << LL_ENDL;
 					}
 				}
 			}
@@ -2969,6 +3058,17 @@ bool LLAppViewer::initConfiguration()
 		OSMessageBox(msg.str(),LLStringUtil::null,OSMB_OK);
 		return false;
 	}
+	
+	//<FS:Techwolf Lupindo>
+	// load defaults overide here. Can not use settings_files.xml as path is different then above loading of defaults.
+	std::string fsdata_defaults = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "fsdata_defaults.xml");
+	std::string fsdata_global = "Global";
+	LLControlGroup* settings_group = LLControlGroup::getInstance(fsdata_global);
+	if(settings_group && settings_group->loadFromFile(fsdata_defaults, set_defaults))
+	{
+		llinfos << "Loaded settings file " << fsdata_defaults << llendl;
+	}
+	//</FS:Techwolf Lupindo>
 
 	initStrings(); // setup paths for LLTrans based on settings files only
 	// - set procedural settings
@@ -3046,8 +3146,8 @@ bool LLAppViewer::initConfiguration()
 			LLFile::remove(user_settings_filename);
 		}
 
-		llinfos	<< "Using command line specified settings filename: " 
-			<< user_settings_filename << llendl;
+		LL_INFOS("Settings")	<< "Using command line specified settings filename: " 
+			<< user_settings_filename << LL_ENDL;
 	}
 	else
 	{
@@ -3105,8 +3205,8 @@ bool LLAppViewer::initConfiguration()
 	{
 		std::string session_settings_filename = clp.getOption("sessionsettings")[0];		
 		gSavedSettings.setString("SessionSettingsFile", session_settings_filename);
-		llinfos	<< "Using session settings filename: " 
-			<< session_settings_filename << llendl;
+		LL_INFOS("Settings")	<< "Using session settings filename: " 
+			<< session_settings_filename << LL_ENDL;
 	}
 	loadSettingsFromDirectory("Session",true); // AO The session file turns into the new defaults
 
@@ -3114,7 +3214,9 @@ bool LLAppViewer::initConfiguration()
 	{
 		std::string user_session_settings_filename = clp.getOption("usersessionsettings")[0];		
 		gSavedSettings.setString("UserSessionSettingsFile", user_session_settings_filename);
-		llinfos << "Using user session settings filename: " << user_session_settings_filename << llendl;
+		LL_INFOS("Settings") << "Using user session settings filename: " 
+			<< user_session_settings_filename << LL_ENDL;
+
 	}
 
 	
@@ -3208,9 +3310,13 @@ bool LLAppViewer::initConfiguration()
         }
     }
 
+    if  (clp.hasOption("logevents")) {
+	LLViewerEventRecorder::instance().setEventLoggingOn();
+    }
+
 	std::string CmdLineChannel(gSavedSettings.getString("CmdLineChannel"));
 	if(! CmdLineChannel.empty())
-	{
+    {
 		LLVersionInfo::resetChannel(CmdLineChannel);
 	}
 
@@ -3222,16 +3328,16 @@ bool LLAppViewer::initConfiguration()
 		LLFastTimer::sLog = TRUE;
 		LLFastTimer::sLogName = std::string("performance");		
 	}
-
+	
 	std::string test_name(gSavedSettings.getString("LogMetrics"));
 	if (! test_name.empty())
-	{
-		LLFastTimer::sMetricLog = TRUE ;
+ 	{
+ 		LLFastTimer::sMetricLog = TRUE ;
 		// '--logmetrics' is specified with a named test metric argument so the data gathering is done only on that test
 		// In the absence of argument, every metric would be gathered (makes for a rather slow run and hard to decipher report...)
 		llinfos << "'--logmetrics' argument : " << test_name << llendl;
-		LLFastTimer::sLogName = test_name;
- 	}
+			LLFastTimer::sLogName = test_name;
+		}
 
 	if (clp.hasOption("graphicslevel"))
 	{
@@ -3240,14 +3346,14 @@ bool LLAppViewer::initConfiguration()
 		// that value for validity.
 		U32 graphicslevel = gSavedSettings.getU32("RenderQualityPerformance");
 		if (LLFeatureManager::instance().isValidGraphicsLevel(graphicslevel))
-		{
+        {
 			// graphicslevel is valid: save it and engage it later. Capture
 			// the requested value separately from the settings variable
 			// because, if this is the first run, LLViewerWindow's constructor
 			// will call LLFeatureManager::applyRecommendedSettings(), which
 			// overwrites this settings variable!
 			mForceGraphicsLevel = graphicslevel;
-		}
+        }
 	}
 
 	LLFastTimerView::sAnalyzePerformance = gSavedSettings.getBOOL("AnalyzePerformance");
@@ -3278,6 +3384,7 @@ bool LLAppViewer::initConfiguration()
     // What can happen is that someone can use IE (or potentially 
     // other browsers) and do the rough equivalent of command 
     // injection and steal passwords. Phoenix. SL-55321
+	LLSLURL start_slurl;
 
 	// The gridmanager doesn't know the grids yet, only prepare
 	// parsing the slurls, actually done when the grids are fetched 
@@ -3285,19 +3392,23 @@ bool LLAppViewer::initConfiguration()
 	// but rather it belongs into the gridmanager)
 	std::string CmdLineLoginLocation(gSavedSettings.getString("CmdLineLoginLocation"));
 	if(! CmdLineLoginLocation.empty())
-	{
-		LLSLURL start_slurl(CmdLineLoginLocation);
-		LLStartUp::setStartSLURL(start_slurl);
-		if(start_slurl.getType() == LLSLURL::LOCATION) 
-		{  
-			LLGridManager::getInstance()->setGridChoice(start_slurl.getGrid());
-		}
-	}
+    {
+		start_slurl = CmdLineLoginLocation;
+		// <FS:Ansariel> FIRE-11586: Restore grid manager workaround (grid is still empty here!)
+		//LLStartUp::setStartSLURL(start_slurl);
+		//if(start_slurl.getType() == LLSLURL::LOCATION) 
+		//{  
+		//	LLGridManager::getInstance()->setGridChoice(start_slurl.getGrid());
+  //  }
+		LLStartUp::setStartSLURLString(CmdLineLoginLocation);
+		// </FS:Ansariel>
+    }
 
-//-TT Hacking to save the skin and theme for future use.
+	// <FS:TT> Hacking to save the skin and theme for future use.
 	mCurrentSkin = gSavedSettings.getString("SkinCurrent");
 	mCurrentSkinTheme = gSavedSettings.getString("SkinCurrentTheme");
-//-TT
+	// </FS:TT>
+
 	const LLControlVariable* skinfolder = gSavedSettings.getControl("SkinCurrent");
 	if(skinfolder && LLStringUtil::null != skinfolder->getValue().asString())
 	{	
@@ -3327,7 +3438,8 @@ bool LLAppViewer::initConfiguration()
 		}
 	}
 
-    mYieldTime = gSavedSettings.getS32("YieldTime");
+	// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+    //mYieldTime = gSavedSettings.getS32("YieldTime");
 
 	// Read skin/branding settings if specified.
 	//if (! gDirUtilp->getSkinDir().empty() )
@@ -3384,39 +3496,17 @@ bool LLAppViewer::initConfiguration()
 	// it relies on checking a marker file which will not work when running
 	// out of different directories
 
-	// <Ansariel> Since the start SLURL is set in LLStartup because of the
-	//            grid manager, we don't get a valid SLURL here. So we have
-	//            to create a new temporary SLURL to be able to hand off
-	//            SLURLs to already running viewers when opened in a web browser.
-	//if (LLStartUp::getStartSLURL().isValid() &&
-	//	(gSavedSettings.getBOOL("SLURLPassToOtherInstance")))
-	//{
-	//	if (sendURLToOtherInstance(LLStartUp::getStartSLURL().getSLURLString()))
-	//	{
-	//		// successfully handed off URL to existing instance, exit
-	//		return false;
-	//	}
-	//}
-	if ((clp.hasOption("url") || clp.hasOption("slurl")) &&
-		LLSLURL(LLStartUp::getStartSLURLString()).isValid() &&
-		gSavedSettings.getBOOL("SLURLPassToOtherInstance") &&
-		sendURLToOtherInstance(LLStartUp::getStartSLURLString()))
+	if (start_slurl.isValid() &&
+		(gSavedSettings.getBOOL("SLURLPassToOtherInstance")))
 	{
-		// successfully handed off URL to existing instance, exit
-		return false;
-	}
-	// </Ansariel>
-
-	// If automatic login from command line with --login switch
-	// init StartSLURL location. In interactive login, LLPanelLogin
-	// will take care of it.
-	if ((clp.hasOption("login") || clp.hasOption("autologin")) && !clp.hasOption("url") && !clp.hasOption("slurl"))
-	{
-// <FS:AW crash on startup>
-// also here LLSLURLs are not available at this point of startup
-//LLStartUp::setStartSLURL(LLSLURL(gSavedSettings.getString("LoginLocation")));
-		LLStartUp::setStartSLURLString(gSavedSettings.getString("LoginLocation"));
-// </FS:AW crash on startup>
+		// <FS:Ansariel> FIRE-11586: Temporary fix until grid manager has been reworked
+		//if (sendURLToOtherInstance(start_slurl.getSLURLString()))
+		if (sendURLToOtherInstance(CmdLineLoginLocation))
+		// </FS:Ansariel>
+		{
+			// successfully handed off URL to existing instance, exit
+			return false;
+		}
 	}
 
 	//
@@ -3456,7 +3546,7 @@ bool LLAppViewer::initConfiguration()
 		LL_DEBUGS("AppInit")<<"set start from NextLoginLocation: "<<nextLoginLocation<<LL_ENDL;
 		LLStartUp::setStartSLURL(LLSLURL(nextLoginLocation));
 	}
-	else if ((clp.hasOption("login") || clp.hasOption("autologin"))
+	else if (   (   clp.hasOption("login") || clp.hasOption("autologin"))
 			 && gSavedSettings.getString("CmdLineLoginLocation").empty())
 	{
 		// If automatic login from command line with --login switch
@@ -3897,7 +3987,7 @@ bool LLAppViewer::initWindow()
 		LLFeatureManager::getInstance()->setGraphicsLevel(*mForceGraphicsLevel, false);
 		gSavedSettings.setU32("RenderQualityPerformance", *mForceGraphicsLevel);
 	}
-
+			
 	// Set this flag in case we crash while initializing GL
 	gSavedSettings.setBOOL("RenderInitError", TRUE);
 	gSavedSettings.saveToFile( gSavedSettings.getString("ClientSettingsFile"), TRUE );
@@ -4296,6 +4386,8 @@ void LLAppViewer::recordMarkerVersion(LLAPRFile& marker_file)
 
 	// record the viewer version in the marker file
 	marker_file.write(marker_version.data(), marker_version.length());
+
+	marker_file.flush(); // <FS:ND/> Make sure filesystem reflects what we wrote.
 }
 
 bool LLAppViewer::markerIsSameVersion(const std::string& marker_name) const
@@ -4363,6 +4455,7 @@ void LLAppViewer::processMarkerFiles()
 			{
 				LL_WARNS_ONCE("MarkerFile") << "Locking exec marker failed." << LL_ENDL;
 				mSecondInstance = true; // lost a race? be conservative
+				mMarkerFile.close(); // <FS:ND/> Cannot lock the file and take ownership. Don't keep it open
 			}
 			else
 			{
@@ -4575,10 +4668,12 @@ void LLAppViewer::requestQuit()
 	}
 	
 	// Try to send last batch of avatar rez metrics.
-	if (!gDisconnected && isAgentAvatarValid())
-	{
-		gAgentAvatarp->updateAvatarRezMetrics(true); // force a last packet to be sent.
-	}
+	// <FS:Ansariel> LL merge error
+	//if (!gDisconnected && isAgentAvatarValid())
+	//{
+	//	gAgentAvatarp->updateAvatarRezMetrics(true); // force a last packet to be sent.
+	//}
+	// </FS:Ansariel>
 	
 	LLHUDEffectSpiral *effectp = (LLHUDEffectSpiral*)LLHUDManager::getInstance()->createViewerEffect(LLHUDObject::LL_HUD_EFFECT_POINT, TRUE);
 	effectp->setPositionGlobal(gAgent.getPositionGlobal());
@@ -5305,19 +5400,16 @@ void LLAppViewer::idle()
 		}
 	}
 
-	// AO: setting to quit after N seconds of being AFK. Note: Server will time us out after 30m regardless
+	// <FS:AO> setting to quit after N seconds of being AFK. Note: Server will time us out after 30m regardless
 	static LLCachedControl<F32> quitAfterSecondsOfAFK(gSavedSettings, "QuitAfterSecondsOfAFK");
 	F32 qas_afk = (F32)quitAfterSecondsOfAFK;
-	if ((qas_afk > 0.f) && (gAgent.getAFK()))
+	if (!mQuitRequested && qas_afk > 0.f && gAgent.getAFK() && gAwayTimer.getElapsedTimeF32() > qas_afk)
 	{
-		// idle time is more than setting
-		if (gAwayTimer.getElapsedTimeF32() > qas_afk )
-		{
-			// go ahead and just quit gracefully
-			llinfos << "Logout, QuitAfterSecondsAFK expired." << llendl;
-                        LLAppViewer::instance()->requestQuit();
-		}
+		// go ahead and just quit gracefully
+		llinfos << "Logout, QuitAfterSecondsAFK expired." << llendl;
+		LLAppViewer::instance()->requestQuit();
 	}
+	// </FS:AO>
 
 	// Must wait until both have avatar object and mute list, so poll
 	// here.
@@ -5634,6 +5726,14 @@ void LLAppViewer::idle()
 	{
 		gAgentPilot.moveCamera();
 	}
+// <FS:Zi> Leap Motion flycam
+#ifdef USE_LEAPMOTION
+	else if(gestureController && gestureController->getOverrideCamera())
+	{
+		gestureController->moveFlycam();
+	}
+#endif //USE_LEAPMOTION
+// </FS:Zi>
 	else if (LLViewerJoystick::getInstance()->getOverrideCamera())
 	{ 
 		LLViewerJoystick::getInstance()->moveFlycam();
@@ -5724,6 +5824,14 @@ void LLAppViewer::idleShutdown()
 		saved_teleport_history = true;
 		LLTeleportHistory::getInstance()->dump();
 		LLLocationHistory::getInstance()->save(); // *TODO: find a better place for doing this
+		return;
+	}
+
+	static bool saved_snapshot = false;
+	if (!saved_snapshot)
+	{
+		saved_snapshot = true;
+		saveFinalSnapshot();
 		return;
 	}
 
@@ -6038,11 +6146,6 @@ void LLAppViewer::disconnectViewer()
 
 	// close inventory interface, close all windows
 	LLFloaterInventory::cleanup();
-
-// [SL:KB] - Patch: Appearance-Misc | Checked: 2013-02-12 (Catznip-3.4)
-	// Destroying all objects below will trigger attachment detaching code and attempt to remove the COF links for them
-	LLAppearanceMgr::instance().setAttachmentInvLinkEnable(false);
-// [/SL:KB]
 
 // [SL:KB] - Patch: Appearance-Misc | Checked: 2013-02-12 (Catznip-3.4)
 	// Destroying all objects below will trigger attachment detaching code and attempt to remove the COF links for them

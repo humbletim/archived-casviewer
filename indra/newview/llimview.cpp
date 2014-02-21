@@ -82,6 +82,7 @@
 #include "exogroupmutelist.h"
 #include "fsconsoleutils.h"
 #include "fscommon.h"
+#include "fsfloaternearbychat.h"
 #ifdef OPENSIM
 #include "llviewernetwork.h"
 #endif // OPENSIM
@@ -123,6 +124,12 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg);
 
 void process_dnd_im(const LLSD& notification)
 {
+	// <FS:Ansariel> [FS communication UI] CHUI will call this after returning
+	//               from DnD mode to highlight missed IMs in their
+	//               conversations floater; we don't need this as our IM tabs
+	//               will already be highlighted.
+	return;
+	// </FS:Ansariel> [FS communication UI]
     LLSD data = notification["substitutions"];
     LLUUID sessionID = data["SESSION_ID"].asUUID();
 	LLUUID fromID = data["FROM_ID"].asUUID();
@@ -146,10 +153,10 @@ void process_dnd_im(const LLSD& notification)
             fromID, 
             false, 
             false); //will need slight refactor to retrieve whether offline message or not (assume online for now)
-	}
+		}
 
-	//notify_of_message(data, true); <FS:TM> 3.6.4 check this, Do we need this? LL removed a sectionabove we comented out and added this
-}
+	notify_of_message(data, true);
+    }
 
 
 
@@ -168,7 +175,10 @@ static void on_avatar_name_cache_toast(const LLUUID& agent_id,
 	args["SESSION_TYPE"] = msg["session_type"];
 	// <FS:Ansariel> [FS communication UI]
 	//LLNotificationsUtil::add("IMToast", args, args, boost::bind(&LLFloaterIMContainer::showConversation, LLFloaterIMContainer::getInstance(), msg["session_id"].asUUID()));
-	LLNotificationsUtil::add("IMToast", args, LLSD(), boost::bind(&FSFloaterIM::show, msg["session_id"].asUUID()));
+	if (gSavedSettings.getS32("NotificationToastLifeTime") > 0 || gSavedSettings.getS32("ToastFadingTime") > 0) // Ansa: only create toast if it should be visible at all
+	{
+		LLNotificationsUtil::add("IMToast", args, LLSD(), boost::bind(&FSFloaterIM::show, msg["session_id"].asUUID()));
+	}
 	// </FS:Ansariel> [FS communication UI]
 }
 
@@ -176,22 +186,22 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 {
 	// [CHUI Merge] Commented out for now. Need to see if/how we can/want to wire it up
 #if 0
-	std::string user_preferences;
+    std::string user_preferences;
 	LLUUID participant_id = msg[is_dnd_msg ? "FROM_ID" : "from_id"].asUUID();
 	LLUUID session_id = msg[is_dnd_msg ? "SESSION_ID" : "session_id"].asUUID();
-	LLIMModel::LLIMSession* session = LLIMModel::instance().findIMSession(session_id);
+    LLIMModel::LLIMSession* session = LLIMModel::instance().findIMSession(session_id);
 
-	// do not show notification which goes from agent
-	if (gAgent.getID() == participant_id)
-	{
-		return;
-	}
+    // do not show notification which goes from agent
+    if (gAgent.getID() == participant_id)
+    {
+        return;
+    }
 
-	// determine state of conversations floater
-	enum {CLOSED, NOT_ON_TOP, ON_TOP, ON_TOP_AND_ITEM_IS_SELECTED} conversations_floater_status;
+    // determine state of conversations floater
+    enum {CLOSED, NOT_ON_TOP, ON_TOP, ON_TOP_AND_ITEM_IS_SELECTED} conversations_floater_status;
 
 
-	LLFloaterIMContainer* im_box = LLFloaterReg::getTypedInstance<LLFloaterIMContainer>("im_container");
+    LLFloaterIMContainer* im_box = LLFloaterReg::getTypedInstance<LLFloaterIMContainer>("im_container");
 	LLFloaterIMSessionTab* session_floater = LLFloaterIMSessionTab::getConversation(session_id);
 	bool store_dnd_message = false; // flag storage of a dnd message
 	bool is_session_focused = session_floater->isTornOff() && session_floater->hasFocus();
@@ -200,23 +210,23 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 		conversations_floater_status = CLOSED;
 	}
 	else if (!im_box->hasFocus() &&
-		!(session_floater && LLFloater::isVisible(session_floater)
-		&& !session_floater->isMinimized() && session_floater->hasFocus()))
+			    !(session_floater && LLFloater::isVisible(session_floater)
+	            && !session_floater->isMinimized() && session_floater->hasFocus()))
 	{
 		conversations_floater_status = NOT_ON_TOP;
 	}
 	else if (im_box->getSelectedSession() != session_id)
 	{
 		conversations_floater_status = ON_TOP;
-	}
+    }
 	else
 	{
 		conversations_floater_status = ON_TOP_AND_ITEM_IS_SELECTED;
 	}
 
-	//  determine user prefs for this session
-	if (session_id.isNull())
-	{
+    //  determine user prefs for this session
+    if (session_id.isNull())
+    {
 		if (msg["source_type"].asInteger() == CHAT_SOURCE_OBJECT)
 		{
 			user_preferences = gSavedSettings.getString("NotificationObjectIMOptions");
@@ -227,50 +237,50 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 		}
 		else
 		{
-			user_preferences = gSavedSettings.getString("NotificationNearbyChatOptions");
+    	user_preferences = gSavedSettings.getString("NotificationNearbyChatOptions");
 			if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundNearbyChatIM") == TRUE))
 			{
 				make_ui_sound("UISndNewIncomingIMSession");
-			}
+    }
 		}
 	}
-	else if(session->isP2PSessionType())
-	{
-		if (LLAvatarTracker::instance().isBuddy(participant_id))
-		{
-			user_preferences = gSavedSettings.getString("NotificationFriendIMOptions");
+    else if(session->isP2PSessionType())
+    {
+        if (LLAvatarTracker::instance().isBuddy(participant_id))
+        {
+        	user_preferences = gSavedSettings.getString("NotificationFriendIMOptions");
 			if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundFriendIM") == TRUE))
 			{
 				make_ui_sound("UISndNewIncomingIMSession");
 			}
-		}
-		else
-		{
-			user_preferences = gSavedSettings.getString("NotificationNonFriendIMOptions");
+        }
+        else
+        {
+        	user_preferences = gSavedSettings.getString("NotificationNonFriendIMOptions");
 			if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundNonFriendIM") == TRUE))
 			{
 				make_ui_sound("UISndNewIncomingIMSession");
-			}
-		}
+        }
+    }
 	}
-	else if(session->isAdHocSessionType())
-	{
-		user_preferences = gSavedSettings.getString("NotificationConferenceIMOptions");
+    else if(session->isAdHocSessionType())
+    {
+    	user_preferences = gSavedSettings.getString("NotificationConferenceIMOptions");
 		if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundConferenceIM") == TRUE))
 		{
 			make_ui_sound("UISndNewIncomingIMSession");
-		}
+    }
 	}
-	else if(session->isGroupSessionType())
-	{
-		user_preferences = gSavedSettings.getString("NotificationGroupChatOptions");
+    else if(session->isGroupSessionType())
+    {
+    	user_preferences = gSavedSettings.getString("NotificationGroupChatOptions");
 		if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundGroupChatIM") == TRUE))
 		{
 			make_ui_sound("UISndNewIncomingIMSession");
 		}
-	}
+    }
 
-	// actions:
+    // actions:
 
     // 0. nothing - exit
     if (("noaction" == user_preferences ||
@@ -308,23 +318,23 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 				}
 			}
 		}
-		else
-		{
+        else
+        {
 			store_dnd_message = true;
-		}
+	        }
 
-	}
+    }
 
-	// 2. Flash line item
-	if ("openconversations" == user_preferences
-		|| ON_TOP == conversations_floater_status
-		|| ("toast" == user_preferences && ON_TOP != conversations_floater_status)
+    // 2. Flash line item
+    if ("openconversations" == user_preferences
+    		|| ON_TOP == conversations_floater_status
+    		|| ("toast" == user_preferences && ON_TOP != conversations_floater_status)
 		|| ("flash" == user_preferences && (CLOSED == conversations_floater_status
 				 	 	 	 	 	 	|| NOT_ON_TOP == conversations_floater_status))
 		|| is_dnd_msg)
-	{
-		if(!LLMuteList::getInstance()->isMuted(participant_id))
-		{
+    {
+    	if(!LLMuteList::getInstance()->isMuted(participant_id))
+    	{
 			if(gAgent.isDoNotDisturb())
 			{
 				store_dnd_message = true;
@@ -339,43 +349,43 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 				}
 				else
 				{
-					im_box->flashConversationItemWidget(session_id, true);
-				}
-			}
+    		im_box->flashConversationItemWidget(session_id, true);
+    	}
+    }
 		}
 	}
 
-	// 3. Flash FUI button
-	if (("toast" == user_preferences || "flash" == user_preferences) &&
-		(CLOSED == conversations_floater_status
+    // 3. Flash FUI button
+    if (("toast" == user_preferences || "flash" == user_preferences) &&
+    		(CLOSED == conversations_floater_status
 		|| NOT_ON_TOP == conversations_floater_status)
 		&& !is_session_focused
 		&& !is_dnd_msg) //prevent flashing FUI button because the conversation floater will have already opened
 	{
 		if(!LLMuteList::getInstance()->isMuted(participant_id))
-		{
+    {
 			if(!gAgent.isDoNotDisturb())
-			{
+    	{
 				gToolBarView->flashCommand(LLCommandId("chat"), true, im_box->isMinimized());
-			}
+    	}
 			else
 			{
 				store_dnd_message = true;
 			}
-		}
+    }
 	}
 
-	// 4. Toast
-	if ((("toast" == user_preferences) &&
+    // 4. Toast
+    if ((("toast" == user_preferences) &&
 		(ON_TOP_AND_ITEM_IS_SELECTED != conversations_floater_status) &&
 		(!session_floater->isTornOff() || !LLFloater::isVisible(session_floater)))
-		|| !session_floater->isMessagePaneExpanded())
+    		    || !session_floater->isMessagePaneExpanded())
 
-	{
-		//Show IM toasts (upper right toasts)
-		// Skip toasting for system messages and for nearby chat
-		if(session_id.notNull() && participant_id.notNull())
-		{
+    {
+        //Show IM toasts (upper right toasts)
+        // Skip toasting for system messages and for nearby chat
+        if(session_id.notNull() && participant_id.notNull())
+        {
 			if(!is_dnd_msg)
 			{
 				if(gAgent.isDoNotDisturb())
@@ -384,10 +394,10 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 				}
 				else
 				{
-					LLAvatarNameCache::get(participant_id, boost::bind(&on_avatar_name_cache_toast, _1, _2, msg));
-				}
-			}
-		}
+            LLAvatarNameCache::get(participant_id, boost::bind(&on_avatar_name_cache_toast, _1, _2, msg));
+        }
+    }
+}
 	}
 	if (store_dnd_message)
 	{
@@ -406,15 +416,21 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 	LLUUID participant_id = msg["from_id"].asUUID();
 	LLUUID session_id = msg["session_id"].asUUID();
 
-	// Ansa: CHUI routes nearby chat through here with session id = null uuid!
-	if (session_id.isNull())
+	// do not show toast in busy mode or it goes from agent
+	if (gAgent.isDoNotDisturb() || gAgent.getID() == participant_id)
 	{
 		return;
 	}
 
-	// do not show toast in busy mode or it goes from agent
-	if (gAgent.isDoNotDisturb() || gAgent.getID() == participant_id)
+	// Ansa: CHUI routes nearby chat through here with session id = null uuid!
+	if (session_id.isNull())
 	{
+		FSFloaterIMContainer* im_container = FSFloaterIMContainer::getInstance();
+		if (!im_container->getVisible() && im_container->hasFloater(FSFloaterNearbyChat::getInstance())
+			&& gSavedSettings.getBOOL("FSNotifyNearbyChatFlash"))
+		{
+			gToolBarView->flashCommand(LLCommandId("chat"), true, FSFloaterIMContainer::getInstance()->isMinimized());
+		}
 		return;
 	}
 
@@ -425,7 +441,20 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 	}
 	// </FS:Ansariel> Don't toast if the message is an announcement
 
-	// <FS:Ansariel> (Group-)IMs in chat console
+	// Skip toasting for system messages
+	if (participant_id.isNull())
+	{
+		return;
+	}
+
+	FSFloaterIMContainer* im_container = FSFloaterIMContainer::getInstance();
+	if (!im_container->getVisible() && im_container->hasFloater(FSFloaterIM::getInstance(session_id))
+		&& gSavedSettings.getBOOL("FSNotifyIMFlash"))
+	{
+		gToolBarView->flashCommand(LLCommandId("chat"), true, FSFloaterIMContainer::getInstance()->isMinimized());
+	}
+
+		// <FS:Ansariel> (Group-)IMs in chat console
 	if (FSConsoleUtils::ProcessInstantMessage(session_id, participant_id, msg["message"].asString()))
 	{
 		return;
@@ -435,12 +464,6 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 	// check whether incoming IM belongs to an active session or not
 	if (LLIMModel::getInstance()->getActiveSessionID().notNull()
 			&& LLIMModel::getInstance()->getActiveSessionID() == session_id)
-	{
-		return;
-	}
-
-	// Skip toasting for system messages
-	if (participant_id.isNull())
 	{
 		return;
 	}
@@ -2202,11 +2225,11 @@ LLDockControl::DocAt LLCallDialog::getDockControlPos(const std::string& toolbarB
 	
 	switch (toolbar_loc)
 	{
-		case LLToolBarView::TOOLBAR_LEFT:
+		case LLToolBarEnums::TOOLBAR_LEFT:
 			doc_at = LLDockControl::RIGHT;
 			break;
 			
-		case LLToolBarView::TOOLBAR_RIGHT:
+		case LLToolBarEnums::TOOLBAR_RIGHT:
 			doc_at = LLDockControl::LEFT;
 			break;
 	}
@@ -2925,13 +2948,20 @@ void LLIMMgr::addMessage(
 		skip_message &= !(other_participant_id == gAgentID);	// You are your best friend... Don't skip yourself
 	}
 
+	bool new_session = !hasSession(new_session_id);
+
 	// <FS:PP> Configurable IM sounds
 	static LLCachedControl<U32> PlayModeUISndNewIncomingIMSession(gSavedSettings, "PlayModeUISndNewIncomingIMSession");
 	static LLCachedControl<U32> PlayModeUISndNewIncomingGroupIMSession(gSavedSettings, "PlayModeUISndNewIncomingGroupIMSession");
+	static LLCachedControl<U32> PlayModeUISndNewIncomingConfIMSession(gSavedSettings, "PlayModeUISndNewIncomingConfIMSession");
 	BOOL do_not_disturb = gAgent.isDoNotDisturb();
+	BOOL is_group_chat = FALSE;
+	if (!new_session && dialog != IM_NOTHING_SPECIAL)
+	{
+		is_group_chat = gAgent.isInGroup(new_session_id);
+	}
 	// </FS:PP> Configurable IM sounds
 
-	bool new_session = !hasSession(new_session_id);
 	if (new_session)
 	{
 		LLAvatarName av_name;
@@ -3004,22 +3034,36 @@ void LLIMMgr::addMessage(
 	// <FS:PP> Configurable IM sounds
 		// //Play sound for new conversations
 		// if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundNewConversation") == TRUE))
+
+		if (dialog != IM_NOTHING_SPECIAL)
+		{
+			is_group_chat = gAgent.isInGroup(new_session_id);
+		}
+
 		if(!do_not_disturb && PlayModeUISndNewIncomingIMSession != 0 && dialog == IM_NOTHING_SPECIAL)
 		{
 			make_ui_sound("UISndNewIncomingIMSession");
 		}
-		else if(!do_not_disturb && PlayModeUISndNewIncomingGroupIMSession != 0 && dialog != IM_NOTHING_SPECIAL)
+		else if(!do_not_disturb && PlayModeUISndNewIncomingGroupIMSession != 0 && dialog != IM_NOTHING_SPECIAL && is_group_chat)
 		{
 			make_ui_sound("UISndNewIncomingGroupIMSession");
+		}
+		else if(!do_not_disturb && PlayModeUISndNewIncomingConfIMSession != 0 && dialog != IM_NOTHING_SPECIAL && !is_group_chat)
+		{
+			make_ui_sound("UISndNewIncomingConfIMSession");
 		}
 	}
 	else if(!do_not_disturb && PlayModeUISndNewIncomingIMSession == 2 && dialog == IM_NOTHING_SPECIAL)
 	{
 		make_ui_sound("UISndNewIncomingIMSession");
 	}
-	else if(!do_not_disturb && PlayModeUISndNewIncomingGroupIMSession == 2 && dialog != IM_NOTHING_SPECIAL)
+	else if(!do_not_disturb && PlayModeUISndNewIncomingGroupIMSession == 2 && dialog != IM_NOTHING_SPECIAL && is_group_chat)
 	{
 		make_ui_sound("UISndNewIncomingGroupIMSession");
+	}
+	else if(!do_not_disturb && PlayModeUISndNewIncomingConfIMSession == 2 && dialog != IM_NOTHING_SPECIAL && !is_group_chat)
+	{
+		make_ui_sound("UISndNewIncomingConfIMSession");
 	// </FS:PP>
 	}
 	// <FS:WoLf> IM Sounds only for sessions not in focus
@@ -3034,7 +3078,7 @@ void LLIMMgr::addMessage(
 			make_ui_sound("UISndNewIncomingIMSession");
 		}
 	}
-	else if(!do_not_disturb && PlayModeUISndNewIncomingGroupIMSession == 3 && dialog != IM_NOTHING_SPECIAL)
+	else if(!do_not_disturb && PlayModeUISndNewIncomingGroupIMSession == 3 && dialog != IM_NOTHING_SPECIAL && is_group_chat)
 	{
 		// <FS:Ansariel> [FS communication UI]
 		//LLIMFloater* im_floater = LLIMFloater::findInstance(session_id);
@@ -3043,6 +3087,17 @@ void LLIMMgr::addMessage(
 		if (im_floater && !im_floater->hasFocus())
 		{
 			make_ui_sound("UISndNewIncomingGroupIMSession");
+		}
+	}
+	else if(!do_not_disturb && PlayModeUISndNewIncomingConfIMSession == 3 && dialog != IM_NOTHING_SPECIAL && !is_group_chat)
+	{
+		// <FS:Ansariel> [FS communication UI]
+		//LLIMFloater* im_floater = LLIMFloater::findInstance(session_id);
+		FSFloaterIM* im_floater = FSFloaterIM::findInstance(session_id);
+		// </FS:Ansariel> [FS communication UI]
+		if (im_floater && !im_floater->hasFocus())
+		{
+			make_ui_sound("UISndNewIncomingConfIMSession");
 		}
 	}
 	// </FS:WoLf>
@@ -3757,7 +3812,7 @@ void LLIMMgr::processIMTypingCore(const LLIMInfo* im_info, BOOL typing)
 		args["[NAME]"] = im_info->mName;
 		
 		BOOL is_muted = LLMuteList::getInstance()->isMuted(im_info->mFromID, im_info->mName, LLMute::flagTextChat);
-		BOOL is_friend = (LLAvatarTracker::instance().getBuddyInfo(im_info->mFromID) == NULL) ? false : true;
+		bool is_friend = (LLAvatarTracker::instance().getBuddyInfo(im_info->mFromID) == NULL) ? false : true;
 		static LLCachedControl<bool> VoiceCallsFriendsOnly(gSavedSettings, "VoiceCallsFriendsOnly");
 
 		if(!is_muted && ( (VoiceCallsFriendsOnly && is_friend) || !VoiceCallsFriendsOnly ))
@@ -3830,7 +3885,7 @@ void LLIMMgr::processIMTypingCore(const LLIMInfo* im_info, BOOL typing)
 
 			gIMMgr->addMessage(
 				session_id,
-				im_info->mFromID,
+				gAgentID,
 				LLStringUtil::null, // Pass null value so no name gets prepended
 				LLTrans::getString("IM_autoresponse_sent"),
 				false,
@@ -4063,7 +4118,7 @@ public:
 			}
 // [/RLVa:KB]
 
-			// Mute group chat port from Phoenix
+			// <FS> Mute group chat port from Phoenix
 			BOOL FSMuteAllGroups = gSavedSettings.getBOOL("FSMuteAllGroups");
 			BOOL FSMuteGroupWhenNoticesDisabled = gSavedSettings.getBOOL("FSMuteGroupWhenNoticesDisabled");
 			LLGroupData group_data;
@@ -4101,7 +4156,13 @@ public:
 					return;
 				}
 			}
-			// END: Mute group chat port from Phoenix
+			// <FS:Ansariel> Groupdata debug
+			else
+			{
+				LL_INFOS("Agent_GroupData") << "GROUPDEBUG: Group chat mute: No agent group data for group " << session_id.asString() << LL_ENDL;
+			}
+			// </FS:Ansariel>
+			// </FS> Mute group chat port from Phoenix
 
 			// standard message, not from system
 			std::string saved;

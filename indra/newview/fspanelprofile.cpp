@@ -292,6 +292,7 @@ BOOL FSPanelProfileSecondLife::postBuild()
 	registrar.add("Profile.CopyNameToClipboard",	boost::bind(&FSPanelProfileSecondLife::onCopyToClipboard, this));
 	registrar.add("Profile.CopyURI",				boost::bind(&FSPanelProfileSecondLife::onCopyURI, this));
 	registrar.add("Profile.CopyKey",				boost::bind(&FSPanelProfileSecondLife::onCopyKey, this));
+	registrar.add("Profile.Report",					boost::bind(&FSPanelProfileSecondLife::onReport, this));
 
 	mAddFriendButton->setCommitCallback(boost::bind(&FSPanelProfileSecondLife::onAddFriendButtonClick, this));
 	mIMButton->setCommitCallback(boost::bind(&FSPanelProfileSecondLife::onIMButtonClick, this));
@@ -676,7 +677,7 @@ void FSPanelProfileSecondLife::onCopyToClipboard()
 
 void FSPanelProfileSecondLife::onCopyURI()
 {
-	std::string name = "secondlife:///app/agent/" + getAvatarId().asString() + "/about";
+	std::string name = LLSLURL("agent", getAvatarId(), "about").getSLURLString();
 	LLClipboard::instance().copyToClipboard(utf8str_to_wstring(name), 0, name.size() );
 }
 
@@ -688,6 +689,11 @@ void FSPanelProfileSecondLife::onCopyKey()
 void FSPanelProfileSecondLife::onGroupInvite()
 {
 	LLAvatarActions::inviteToGroup(getAvatarId());
+}
+
+void FSPanelProfileSecondLife::onReport()
+{
+	LLAvatarActions::report(getAvatarId());
 }
 
 // virtual, called by LLAvatarTracker
@@ -1235,6 +1241,8 @@ FSPanelPick::FSPanelPick()
  , mRequestedId(LLUUID::null)
  , mLocationChanged(false)
  , mNewPick(false)
+ , mCurrentPickDescription("")
+ , mIsEditing(false)
 {
 }
 
@@ -1336,10 +1344,21 @@ BOOL FSPanelPick::postBuild()
 	mPickName->setEnabled( FALSE );
 
 	mPickDescription->setKeystrokeCallback(boost::bind(&FSPanelPick::onPickChanged, this, _1));
+	mPickDescription->setFocusReceivedCallback(boost::bind(&FSPanelPick::onDescriptionFocusReceived, this));
 
 	getChild<LLUICtrl>("pick_location")->setEnabled(FALSE);
 
 	return TRUE;
+}
+
+void FSPanelPick::onDescriptionFocusReceived()
+{
+	if (!mIsEditing && getSelfProfile())
+	{
+		mIsEditing = true;
+		mPickDescription->setParseHTML(false);
+		setPickDesc(mCurrentPickDescription);
+	}
 }
 
 void FSPanelPick::processProperties(void* data, EAvatarProcessorType type)
@@ -1356,6 +1375,8 @@ void FSPanelPick::processProperties(void* data, EAvatarProcessorType type)
 		return;
 	}
 
+	mIsEditing = false;
+	mPickDescription->setParseHTML(true);
 	mParcelId = pick_info->parcel_id;
 	setSnapshotId(pick_info->snapshot_id);
 	if (!getSelfProfile() || getEmbedded())
@@ -1365,6 +1386,7 @@ void FSPanelPick::processProperties(void* data, EAvatarProcessorType type)
 	setPickName(pick_info->name);
 	setPickDesc(pick_info->desc);
 	setPosGlobal(pick_info->pos_global);
+	mCurrentPickDescription = pick_info->desc;
 
 	// Send remote parcel info request to get parcel name and sim (region) name.
 	sendParcelInfoRequest();

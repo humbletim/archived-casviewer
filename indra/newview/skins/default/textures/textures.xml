@@ -153,6 +153,7 @@ with the same filename but different name
   <texture name="Command_Preferences_Icon"  file_name="toolbar_icons/preferences.png"  preload="true" />
   <texture name="Command_Profile_Icon"      file_name="toolbar_icons/profile.png"      preload="true" />
   <texture name="Command_Search_Icon"       file_name="toolbar_icons/search.png"       preload="true" />
+  <texture name="Command_Social_Icon"       file_name="toolbar_icons/facebook.png"     preload="true" />
   <texture name="Command_Snapshot_Icon"     file_name="toolbar_icons/snapshot.png"     preload="true" />
   <texture name="Command_Speak_Icon"        file_name="toolbar_icons/speak.png"        preload="true" />
   <texture name="Command_View_Icon"         file_name="toolbar_icons/view.png"         preload="true" />
@@ -205,6 +206,8 @@ with the same filename but different name
   <texture name="ExternalBrowser_Over" file_name="icons/ExternalBrowser_Over.png" preload="false" />
   <texture name="ExternalBrowser_Press" file_name="icons/ExternalBrowser_Press.png" preload="false" />
   <texture name="Edit_Wrench" file_name="icons/Edit_Wrench.png" preload="false" />
+
+  <texture name="Facebook_Icon" file_name="icons/Facebook.png" preload="false" />
 
   <texture name="Favorite_Star_Active" file_name="navbar/Favorite_Star_Active.png" preload="false" />
   <texture name="Favorite_Star_Off" file_name="navbar/Favorite_Star_Off.png" preload="false" />
@@ -374,6 +377,8 @@ with the same filename but different name
 
   <texture name="Locked_Icon" file_name="icons/Locked_Icon.png" preload="false" />
 
+  <texture name="Map_Placeholder_Icon" file_name="icons/map_placeholder.png" preload="true" />
+    
   <texture name="MarketplaceBtn_Off" file_name="widgets/MarketplaceBtn_Off.png" preload="true" scale.left="30" scale.top="19" scale.right="35" scale.bottom="4" />
   <texture name="MarketplaceBtn_Selected" file_name="widgets/MarketplaceBtn_Selected.png" preload="true" scale.left="30" scale.top="19" scale.right="35" scale.bottom="4" />
 
@@ -640,6 +645,7 @@ with the same filename but different name
   <texture name="Snapshot_Email" file_name="snapshot_email.png" preload="false" />
   <texture name="Snapshot_Inventory" file_name="toolbar_icons/inventory.png" preload="false" />
   <texture name="Snapshot_Profile" file_name="toolbar_icons/profile.png" preload="false" />
+  <texture name="Snapshot_Facebook" file_name="toolbar_icons/facebook.png" preload="false" />
   <!-- <exodus> -->
   <texture name="Snapshot_Exodus_Flickr" file_name="snapshot_flickr.png" preload="false" />
   <!-- </exodus> -->
@@ -716,6 +722,10 @@ with the same filename but different name
   <texture name="Toolbar_Right_Selected" file_name="containers/Toolbar_Right_Selected.png" preload="false" scale.left="1" scale.bottom="4" scale.top="24" scale.right="26" />
   <texture name="Toolbar_Right_Flash" file_name="containers/Toolbar_Right_Flash.png" preload="false" scale.left="1" scale.bottom="4" scale.top="24" scale.right="26" />
 
+  <texture name="Toolbar_Left_IM_Unselected" file_name="containers/Toolbar_Left_IM_Unselected.png" preload="false" scale.left="5" scale.bottom="4" scale.top="24" scale.right="30"  />
+  <texture name="Toolbar_Middle_IM_Unselected" file_name="containers/Toolbar_Middle_IM_Unselected.png"  preload="false" scale.left="1" scale.bottom="2" scale.top="24" scale.right="30"  />
+  <texture name="Toolbar_Right_IM_Unselected" file_name="containers/Toolbar_Right_IM_Unselected.png" preload="false" scale.left="1" scale.bottom="4" scale.top="24" scale.right="26" />
+
   <texture name="Tooltip" file_name="widgets/Tooltip.png" preload="true" scale.left="2" scale.top="16" scale.right="100" scale.bottom="3" />
 
   <texture name="TrashItem_Disabled" file_name="icons/TrashItem_Disabled.png" preload="true" />
@@ -745,6 +755,7 @@ with the same filename but different name
   <texture name="Command_Snapshot_2_Disk_Icon" file_name="toolbar_icons/snapshot_to_disk.png" preload="true" />
   <texture name="radar" file_name="toolbar_icons/radar.png" preload="true" />
   <texture name="move_lock" file_name="toolbar_icons/movelock.png" preload="true" />
+  <texture name="block_list" file_name="toolbar_icons/blocklist.png" preload="true" />
   <texture name="display3d" file_name="toolbar_icons/display3d.png" preload="true" />  <!-- <CV:David> -->
   
   <texture name="Unread_Chiclet" file_name="bottomtray/Unread_Chiclet.png" preload="false" />
@@ -905,6 +916,7 @@ with the same filename but different name
 <texture name="call_icon_24x24" file_name="icons/call_icon_24x24.png" preload="false" />
 <texture name="call_end_icon_24x24" file_name="icons/call_end_icon_24x24.png" preload="false" />
 <texture name="teleport_icon_24x24" file_name="icons/genie_icon_24x24.png" preload="false" />
+<texture name="teleport_menu" file_name="icons/teleport_menu.png" preload="false" />
 <texture name="friends_icon_24x24" file_name="icons/Friends_Icon_24x24.png" preload="false" />
 <texture name="gift_icon_24x24" file_name="icons/gift_icon_24x24.png" preload="false" />
 <texture name="avatar_in_region" file_name="green_dot.tga" preload="false" />
@@ -963,4 +975,9 @@ with the same filename but different name
 <texture name="Payment_Info_Used" file_name="legacy/payment_info_used.tga" preload="false" />
 	
 <texture name="Edit_Flip_X" file_name="icons/Edit_Flip_X.png" preload="false" />
+
+<texture name="AddItem_Menu" file_name="icons/AddItem_Menu.png" preload="false" />
+<texture name="TrashItem_Menu" file_name="icons/TrashItem_Menu.png" preload="false" />
+
+<texture name="Active_Voice_Tab" file_name="legacy/active_voice_tab.tga" preload="false" />
 </textures>

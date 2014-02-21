@@ -332,9 +332,15 @@ void LLPanelLogin::addFavoritesToStartLocation()
 	// Load favorites into the combo.
 	std::string user_defined_name = getChild<LLComboBox>("username_combo")->getSimple();
 // <FS:CR> FIRE-10122 - User@grid stored_favorites.xml
-	//std::string canonical_user_name = canonicalize_username(user_defined_name);
+	std::string canonical_user_name = canonicalize_username(user_defined_name);
+	U32 resident_pos = canonical_user_name.find("Resident");
+	if (resident_pos > 0)
+	{
+		canonical_user_name = canonical_user_name.substr(0, resident_pos - 1);
+	}
 	std::string current_grid = getChild<LLComboBox>("server_combo")->getSimple();
-	std::string current_user = canonicalize_username(user_defined_name) + " @ " + current_grid;
+	std::string current_user = canonical_user_name + " @ " + current_grid;
+	LL_DEBUGS("Favorites") << "Current user: \"" << current_user << "\"" << LL_ENDL;
 // </FS:CR>
 	std::string filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "stored_favorites.xml");
 	LLSD fav_llsd;
@@ -929,7 +935,7 @@ void LLPanelLogin::onClickConnect(void *)
 		// The start location SLURL has already been sent to LLStartUp::setStartSLURL
 
 		std::string username = sInstance->getChild<LLUICtrl>("username_combo")->getValue().asString();
-		gSavedSettings.setLLSD("UserLoginInfo", credentialName()); // <FS:CR>
+		gSavedSettings.setString("UserLoginInfo", credentialName()); // <FS:CR>
 
 // <FS:CR> Block release
 		LLSD blocked = FSData::instance().allowedLogin();
@@ -1201,7 +1207,7 @@ void LLPanelLogin::addUsersToCombo(BOOL show_server)
 	std::string current_creds=credentialName();
 	if(current_creds.find("@") < 1)
 	{
-		current_creds = gSavedSettings.getLLSD("UserLoginInfo").asString();
+		current_creds = gSavedSettings.getString("UserLoginInfo");
 	}
 	
 	std::vector<std::string> logins = gSecAPIHandler->listCredentials();
@@ -1265,7 +1271,7 @@ void LLPanelLogin::onClickRemove(void*)
 	{
 		LLComboBox* combo = sInstance->getChild<LLComboBox>("username_combo");
 		std::string credName = combo->getValue().asString();
-		if ( credName == gSavedSettings.getLLSD("UserLoginInfo").asString() )
+		if (credName == gSavedSettings.getString("UserLoginInfo"))
 			gSavedSettings.getControl("UserLoginInfo")->resetToDefault();
 		LLPointer<LLCredential> credential = gSecAPIHandler->loadCredential(credName);
 		gSecAPIHandler->deleteCredential(credential);

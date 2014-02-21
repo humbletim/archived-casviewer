@@ -392,14 +392,6 @@ BOOL LLTaskInvFVBridge::isItemRenameable() const
 	}
 // [/RLVa:KB]
 
-// [RLVa:KB] - Checked: 2010-09-28 (RLVa-1.2.1f) | Modified: RLVa-1.0.5a
-//	LLViewerObject* object = gObjectList.findObject(mPanel->getTaskUUID());
-	if ( (rlv_handler_t::isEnabled()) && (object) && (gRlvAttachmentLocks.isLockedAttachment(object->getRootEdit())) )
-	{
-		return FALSE;
-	}
-// [/RLVa:KB]
-
 	if(gAgent.isGodlike()) return TRUE;
 //	LLViewerObject* object = gObjectList.findObject(mPanel->getTaskUUID());
 	if(object)
@@ -2153,3 +2145,25 @@ void LLPanelObjectInventory::clearItemIDs()
 	mItemMap.clear();
 }
 
+// <FS:Ansariel> Fix broken return and delete key in task inventory
+BOOL LLPanelObjectInventory::handleKeyHere(KEY key, MASK mask)
+{
+	BOOL handled = FALSE;
+	switch (key)
+	{
+	case KEY_RETURN:
+		if (mask == MASK_NONE)
+		{
+			LLPanelObjectInventory::doToSelected(LLSD("task_open"));
+			handled = TRUE;
+		}
+		break;
+	case KEY_DELETE:
+	case KEY_BACKSPACE:
+		LLPanelObjectInventory::doToSelected(LLSD("delete"));
+		handled = TRUE;
+		break;
+	}
+	return handled;
+}
+// </FS:Ansariel> Fix broken return and delete key in task inventory

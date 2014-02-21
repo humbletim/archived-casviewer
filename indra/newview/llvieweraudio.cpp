@@ -46,6 +46,8 @@
 
 #include "llstreamingaudio.h"
 
+#include "llvoavatarself.h"
+
 /////////////////////////////////////////////////////////
 
 LLViewerAudio::LLViewerAudio() :
@@ -397,7 +399,6 @@ void init_audio()
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectDelete")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectRezIn")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndObjectRezOut")));
-		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndRegionRestart")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndSnapshot")));
 		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndStartAutopilot")));
 		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndStartFollowpilot")));
@@ -409,7 +410,9 @@ void init_audio()
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndTyping")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndWindowClose")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndWindowOpen")));
-		// ## Zi: Pie menu
+		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndRestart")));
+		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndRestartOpenSim"))); // <FS:Ansariel> Preload OpenSim restart sound
+		// <FS:Zi> Pie menu
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuAppear")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuHide")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight0")));
@@ -420,7 +423,7 @@ void init_audio()
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight5")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight6")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndPieMenuSliceHighlight7")));
-		// ## Zi: Pie menu
+		// </FS:Zi> Pie menu
 	}
 
 	audio_update_volume(true);
@@ -656,7 +659,10 @@ void audio_update_wind(bool force_update)
 		}
 
 		// mute wind when not flying
-		if (gAgent.getFlying())
+		// <FS:Ansarriel> FIRE-12819: Disable wind sounds while under water
+		//if (gAgent.getFlying())
+		if (gAgent.getFlying() && isAgentAvatarValid() && !gAgentAvatarp->mBelowWater)
+		// </FS:Ansariel>
 		{
 			// volume increases by volume_delta, up to no more than max_wind_volume
 			gAudiop->mMaxWindGain = llmin(gAudiop->mMaxWindGain + volume_delta, max_wind_volume);

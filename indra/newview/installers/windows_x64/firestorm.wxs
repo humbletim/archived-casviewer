@@ -4,9 +4,22 @@
    Name="Firestorm SecondLife and OpenSim viewer"
    Language="1033" Version="$(var.MAJOR).$(var.MINOR).$(var.HGCHANGE)" Manufacturer="Phoenix Viewer Project"
    UpgradeCode="3FCFE6FD-1A6F-40f8-8683-CDBFE16CF653">
-  <Package InstallerVersion="200" Compressed="yes" Platform="x64"/>
 
+  <Package InstallerVersion="200" Compressed="yes" Platform="x64"/>
+  <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." MigrateFeatures="no"/>
+  <Icon Id="firestorm.ico" SourceFile="..\..\..\indra\newview\installers\windows\firestorm_icon.ico"/>
+  <Property Id="MSIFASTINSTALL" Value="1"/>
+  <Property Id="ARPSIZE" Value="204800"/>
+  <Property Id="ARPURLINFOABOUT" Value="http://www.firestormviewer.org"/>
+  <Property Id="ARPURLUPDATEINFO" Value="http://www.firestormviewer.org/downloads/"/>
+  <Property Id="ARPHELPLINK" Value="http://www.firestormviewer.org/support/"/>
+  <Property Id="ARPPRODUCTICON" Value="firestorm.ico"/>
   <Media Id="1" Cabinet="firestorm.cab" EmbedCab="yes" CompressionLevel="high"/>
+
+  <!-- OS list: http://msdn.microsoft.com/library/aa370556.aspx - WinXP_x64 is based on Windows Server 2003 -->
+  <Condition Message="Firestorm viewer in 64 bit version is only supported by Windows XP Professional x64 SP2, or newer. Installation canceled.">
+    <![CDATA[Installed OR (VersionNT64 > 502) OR (VersionNT64 = 502 AND ServicePackLevel >= 2)]]>
+  </Condition>
 
   <Directory Id="TARGETDIR" Name="SourceDir">
    <Directory Id="ProgramMenuFolder">
@@ -24,6 +37,7 @@
       <File Source="$(var.BUILDDIR)/libcollada14dom22.dll" />
       <File Source="$(var.BUILDDIR)/fmodex64.dll" />
       <File Source="$(var.BUILDDIR)/glod.dll" />
+      <File Source="$(var.BUILDDIR)/Leap.dll" />
       <File Source="$(var.BUILDDIR)/libapr-1.dll" />
       <File Source="$(var.BUILDDIR)/libapriconv-1.dll" />
       <File Source="$(var.BUILDDIR)/libaprutil-1.dll" />

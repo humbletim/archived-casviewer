@@ -202,6 +202,8 @@
 #include "llagentui.h"
 #include "llwearablelist.h"
 
+#include "llviewereventrecorder.h"
+
 #include "llnotifications.h"
 #include "llnotificationsutil.h"
 #include "llnotificationmanager.h"
@@ -230,6 +232,10 @@
 
 #include "utilitybar.h"		// <FS:Zi> Support for the classic V1 style buttons in some skins
 #include "exopostprocess.h"	// <FS:Ansariel> Exodus Vignette
+#include "llnetmap.h"
+#include "lggcontactsets.h"
+
+#include "llleapmotioncontroller.h"
 
 //
 // Globals
@@ -332,7 +338,7 @@ public:
 
 	void update()
 	{
-		static LLCachedControl<bool> log_texture_traffic(gSavedSettings,"LogTextureNetworkTraffic") ;
+		static LLCachedControl<bool> log_texture_traffic(gSavedSettings,"LogTextureNetworkTraffic", false) ;
 
 		std::string wind_vel_text;
 		std::string wind_vector_text;
@@ -769,7 +775,12 @@ public:
 		// </FS:LO>
 
 		// only display these messages if we are actually rendering beacons at this moment
-		if (LLPipeline::getRenderBeacons(NULL) /*&& LLFloaterReg::instanceVisible("beacons")*/) // <FS:LO> Always show the beacon text regardless if the floater is visible
+		// <FS:LO> Always show the beacon text regardless if the floater is visible
+		// <FS:Ansa> ...and if we want to see it
+		//if (LLPipeline::getRenderBeacons(NULL) && LLFloaterReg::instanceVisible("beacons"))
+		static LLCachedControl<bool> fsRenderBeaconText(gSavedSettings, "FSRenderBeaconText");
+		if (LLPipeline::getRenderBeacons(NULL) && fsRenderBeaconText)
+		// </FS:Ansa>
 		{
 			if (LLPipeline::getRenderMOAPBeacons(NULL))
 			{
@@ -891,7 +902,13 @@ public:
 		
 		// <FS:ND> Report amount of failed texture buffer allocations if any.
 		if( LLImageBase::getAllocationErrors() )
-			addText( xpos, ypos, llformat( "# textures discarded due to insufficent memory %ld", LLImageBase::getAllocationErrors() ) );
+			addText( xpos, ypos, llformat( "# textures discarded due to insufficient memory %ld", LLImageBase::getAllocationErrors() ) );
+		// </FS:ND>
+
+		// <FS:ND> Add some fancy leap debug text
+		std::string strLeapDebug( LLLeapMotionController::getInstance()->getDebugString() );
+		if( strLeapDebug.size() )
+			addText( xpos, ypos, strLeapDebug );
 		// </FS:ND>
 	}
 
@@ -1030,27 +1047,18 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 			{
 				llinfos << buttonname << " Mouse " << buttonstatestr << " handled by captor " << mouse_captor->getName() << llendl;
 			}
-			return mouse_captor->handleAnyMouseClick(local_x, local_y, mask, clicktype, down);
-		}
 
-		// Topmost view gets a chance before the hierarchy
-		//LLUICtrl* top_ctrl = gFocusMgr.getTopCtrl();
-		//if (top_ctrl)
-		//{
-		//	S32 local_x, local_y;
-		//	top_ctrl->screenPointToLocal( x, y, &local_x, &local_y );
-		//		if (top_ctrl->pointInView(local_x, local_y))
-		//		{
-		//			return top_ctrl->handleAnyMouseClick(local_x, local_y, mask, clicktype, down)	;
-		//		}
-		//		else
-		//		{
-		//		if (down)
-		//		{
-		//			gFocusMgr.setTopCtrl(NULL);
-		//		}
-		//	}
-		//}
+			BOOL r = mouse_captor->handleAnyMouseClick(local_x, local_y, mask, clicktype, down); 
+			if (r) {
+
+				lldebugs << "LLViewerWindow::handleAnyMouseClick viewer with mousecaptor calling updatemouseeventinfo - local_x|global x  "<< local_x << " " << x  << "local/global y " << local_y << " " << y << llendl;
+
+				LLViewerEventRecorder::instance().setMouseGlobalCoords(x,y);
+				LLViewerEventRecorder::instance().logMouseEvent(std::string(buttonstatestr),std::string(buttonname)); 
+
+			}
+			return r;
+		}
 
 		// Mark the click as handled and return if we aren't within the root view to avoid spurious bugs
 		if( !mRootView->pointInView(x, y) )
@@ -1058,27 +1066,44 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 			return TRUE;
 		}
 		// Give the UI views a chance to process the click
-		if( mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) )
+
+		BOOL r= mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) ;
+		if (r) 
 		{
+
+			lldebugs << "LLViewerWindow::handleAnyMouseClick calling updatemouseeventinfo - global x  "<< " " << x	<< "global y " << y	 << "buttonstate: " << buttonstatestr << " buttonname " << buttonname << llendl;
+
+			LLViewerEventRecorder::instance().setMouseGlobalCoords(x,y);
+
+			// Clear local coords - this was a click on root window so these are not needed
+			// By not including them, this allows the test skeleton generation tool to be smarter when generating code
+			// the code generator can be smarter because when local coords are present it can try the xui path with local coords
+			// and fallback to global coordinates only if needed. 
+			// The drawback to this approach is sometimes a valid xui path will appear to work fine, but NOT interact with the UI element
+			// (VITA support not implemented yet or not visible to VITA due to widget further up xui path not being visible to VITA)
+			// For this reason it's best to provide hints where possible here by leaving out local coordinates
+			LLViewerEventRecorder::instance().setMouseLocalCoords(-1,-1);
+			LLViewerEventRecorder::instance().logMouseEvent(buttonstatestr,buttonname); 
+
 			if (LLView::sDebugMouseHandling)
 			{
-				llinfos << buttonname << " Mouse " << buttonstatestr << " " << LLView::sMouseHandlerMessage << llendl;
-			}
+				llinfos << buttonname << " Mouse " << buttonstatestr << " " << LLViewerEventRecorder::instance().get_xui()	<< llendl;
+			} 
 			return TRUE;
-		}
-		else if (LLView::sDebugMouseHandling)
-		{
-			llinfos << buttonname << " Mouse " << buttonstatestr << " not handled by view" << llendl;
-		}
+		} else if (LLView::sDebugMouseHandling)
+			{
+				llinfos << buttonname << " Mouse " << buttonstatestr << " not handled by view" << llendl;
+			}
 	}
 
 	// Do not allow tool manager to handle mouseclicks if we have disconnected	
 	if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
 	{
+		LLViewerEventRecorder::instance().clear_xui(); 
 		return TRUE;
 	}
-	
 
+	
 	// If we got this far on a down-click, it wasn't handled.
 	// Up-clicks, though, are always handled as far as the OS is concerned.
 	BOOL default_rtn = !down;
@@ -1468,7 +1493,8 @@ BOOL LLViewerWindow::handleTranslatedKeyUp(KEY key,  MASK mask)
 void LLViewerWindow::handleScanKey(KEY key, BOOL key_down, BOOL key_up, BOOL key_level)
 {
 	LLViewerJoystick::getInstance()->setCameraNeedsUpdate(true);
-	return gViewerKeyboard.scanKey(key, key_down, key_up, key_level);
+	gViewerKeyboard.scanKey(key, key_down, key_up, key_level);
+	return; // Be clear this function returns nothing
 }
 
 
@@ -2000,8 +2026,25 @@ void LLViewerWindow::initBase()
 
 	// Constrain floaters to inside the menu and status bar regions.
 	gFloaterView = main_view->getChild<LLFloaterView>("Floater View");
+	for (S32 i = 0; i < LLToolBarEnums::TOOLBAR_COUNT; ++i)
+	{
+		LLToolBar * toolbarp = gToolBarView->getToolbar((LLToolBarEnums::EToolBarLocation)i);
+		if (toolbarp)
+		{
+			toolbarp->getCenterLayoutPanel()->setReshapeCallback(boost::bind(&LLFloaterView::setToolbarRect, gFloaterView, _1, _2));
+		}
+	}
 	gFloaterView->setFloaterSnapView(main_view->getChild<LLView>("floater_snap_region")->getHandle());
 	gSnapshotFloaterView = main_view->getChild<LLSnapshotFloaterView>("Snapshot Floater View");
+
+	// <FS:Ansariel> Prevent floaters being dragged under main chat bar
+	LLLayoutPanel* chatbar_panel = dynamic_cast<LLLayoutPanel*>(gToolBarView->getChildView("default_chat_bar")->getParent());
+	if (chatbar_panel)
+	{
+		chatbar_panel->setReshapeCallback(boost::bind(&LLFloaterView::setMainChatbarRect, gFloaterView, _1, _2));
+		gFloaterView->setMainChatbarRect(chatbar_panel, chatbar_panel->getRect());
+	}
+	// </FS:Ansariel>
 
 	// optionally forward warnings to chat console/chat floater
 	// for qa runs and dev builds
@@ -2706,6 +2749,104 @@ void LLViewerWindow::draw()
 
 		// Draw tool specific overlay on world
 		LLToolMgr::getInstance()->getCurrentTool()->draw();
+
+		// <exodus> Draw HUD stuff.
+		bool inMouselook = gAgentCamera.cameraMouselook();
+		static LLCachedControl<bool> fsMouselookCombatFeatures(gSavedSettings, "FSMouselookCombatFeatures", true);
+		if (inMouselook && fsMouselookCombatFeatures)
+		{
+			S32 windowWidth = gViewerWindow->getWorldViewRectScaled().getWidth();
+			S32 windowHeight = gViewerWindow->getWorldViewRectScaled().getHeight();
+
+			static const std::string unknown_agent = LLTrans::getString("Mouselook_Unknown_Avatar");
+			static LLUIColor map_avatar_color = LLUIColorTable::instance().getColor("MapAvatarColor", LLColor4::white);
+			static LLCachedControl<F32> renderIFFRange(gSavedSettings, "ExodusMouselookIFFRange", 380.f);
+			static LLCachedControl<bool> renderIFF(gSavedSettings, "ExodusMouselookIFF", true);
+			static LLUICachedControl<F32> userPresetX("ExodusMouselookTextOffsetX", 0.f);
+			static LLUICachedControl<F32> userPresetY("ExodusMouselookTextOffsetY", -150.f);
+			static LLUICachedControl<U32> userPresetHAlign("ExodusMouselookTextHAlign", 2);
+
+			LLVector3d myPosition = gAgentCamera.getCameraPositionGlobal();
+			LLQuaternion myRotation = LLViewerCamera::getInstance()->getQuaternion();
+
+			myRotation.set(-myRotation.mQ[VX], -myRotation.mQ[VY], -myRotation.mQ[VZ], myRotation.mQ[VW]);
+
+			uuid_vec_t avatars;
+			std::vector<LLVector3d> positions;
+			LLWorld::getInstance()->getAvatars(&avatars, &positions, gAgent.getPositionGlobal(), renderIFFRange);
+	
+			bool crosshairRendered = false;
+
+			S32 length = avatars.size();
+			if (length)
+			{
+				for (S32 i = 0; i < length; i++)
+				{
+					LLUUID& targetKey = avatars[i];
+					if (targetKey == gAgentID)
+					{
+						continue;
+					}
+
+					LLVector3d targetPosition = positions[i];
+					if (targetPosition.isNull())
+					{
+						continue;
+					}
+
+					LLColor4 targetColor = map_avatar_color.get();
+					targetColor = LGGContactSets::getInstance()->colorize(targetKey, targetColor, LGG_CS_MINIMAP);
+
+					//color based on contact sets prefs
+					if (LGGContactSets::getInstance()->hasFriendColorThatShouldShow(targetKey, LGG_CS_MINIMAP))
+					{
+						targetColor = LGGContactSets::getInstance()->getFriendColor(targetKey);
+					}
+
+					LLColor4 mark_color;
+					if (LLNetMap::getAvatarMarkColor(targetKey, mark_color))
+					{
+						targetColor = mark_color;
+					}
+
+					if (renderIFF)
+					{
+						LLTracker::instance()->drawMarker(targetPosition, targetColor);
+					}
+
+					if (inMouselook && !crosshairRendered && !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+					{
+						LLVector3d magicVector = (targetPosition - myPosition) * myRotation;
+						magicVector.setVec(-magicVector.mdV[VY], magicVector.mdV[VZ], magicVector.mdV[VX]);
+
+						if (magicVector.mdV[VX] > -0.75 && magicVector.mdV[VX] < 0.75 && magicVector.mdV[VZ] > 0.0 && magicVector.mdV[VY] > -1.5 && magicVector.mdV[VY] < 1.5) // Do not fuck with these, cheater. :(
+						{
+							LLAvatarName avatarName;
+							std::string targetName = unknown_agent;
+							if (LLAvatarNameCache::get(targetKey, &avatarName))
+							{
+								targetName = avatarName.getCompleteName();
+							}
+
+							LLFontGL::getFontSansSerifBold()->renderUTF8(
+								llformat("%s, %.2fm", targetName.c_str(), (targetPosition - myPosition).magVec()),
+								0, (windowWidth / 2.f) + userPresetX, (windowHeight / 2.f) + userPresetY, targetColor,
+								(LLFontGL::HAlign)((S32)userPresetHAlign), LLFontGL::TOP, LLFontGL::BOLD, LLFontGL::DROP_SHADOW_SOFT
+							);
+
+							crosshairRendered = true;
+						}
+					}
+
+					if (!renderIFF && inMouselook && crosshairRendered)
+					{
+						break;
+					}
+				}
+			}
+		}
+		// </exodus>
+
         // Only show Mouselookinstructions if FSShowMouselookInstruction is TRUE
 		static LLCachedControl<bool> fsShowMouselookInstructions(gSavedSettings, "FSShowMouselookInstructions");
 		// <CV:David>
@@ -2799,6 +2940,8 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 		||(gLoginMenuBarView && gLoginMenuBarView->handleKey(key, mask, TRUE))
 		||(gMenuHolder && gMenuHolder->handleKey(key, mask, TRUE)))
 	{
+		lldebugs << "LLviewerWindow::handleKey handle nav keys for nav" << llendl;
+		LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 		return TRUE;
 	}
 
@@ -2813,12 +2956,14 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 			&& keyboard_focus 
 			&& keyboard_focus->handleKey(key,mask,FALSE))
 		{
+			LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 			return TRUE;
 		}
 
 		if ((gMenuBarView && gMenuBarView->handleAcceleratorKey(key, mask))
 			||(gLoginMenuBarView && gLoginMenuBarView->handleAcceleratorKey(key, mask)))
 		{
+			LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 			return TRUE;
 		}
 	}
@@ -2828,6 +2973,7 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 	// if nothing has focus, go to first or last UI element as appropriate
 	if (key == KEY_TAB && (mask & MASK_CONTROL || gFocusMgr.getKeyboardFocus() == NULL))
 	{
+		llwarns << "LLviewerWindow::handleKey give floaters first chance at tab key " << llendl;
 		if (gMenuHolder) gMenuHolder->hideMenus();
 
 		// if CTRL-tabbing (and not just TAB with no focus), go into window cycle mode
@@ -2842,11 +2988,13 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 		{
 			mRootView->focusNextRoot();
 		}
+		LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 		return TRUE;
 	}
 	// hidden edit menu for cut/copy/paste
 	if (gEditMenu && gEditMenu->handleAcceleratorKey(key, mask))
 	{
+		LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 		return TRUE;
 	}
 
@@ -2915,18 +3063,27 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 
 		if (keyboard_focus->handleKey(key, mask, FALSE))
 		{
+
+			lldebugs << "LLviewerWindow::handleKey - in 'traverse up' - no loops seen... just called keyboard_focus->handleKey an it returned true" << llendl;
+			LLViewerEventRecorder::instance().logKeyEvent(key,mask); 
 			return TRUE;
+		} else {
+			lldebugs << "LLviewerWindow::handleKey - in 'traverse up' - no loops seen... just called keyboard_focus->handleKey an it returned FALSE" << llendl;
 		}
 	}
 
 	if( LLToolMgr::getInstance()->getCurrentTool()->handleKey(key, mask) )
 	{
+		lldebugs << "LLviewerWindow::handleKey toolbar handling?" << llendl;
+		LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 		return TRUE;
 	}
 
 	// Try for a new-format gesture
 	if (LLGestureMgr::instance().triggerGesture(key, mask))
 	{
+		lldebugs << "LLviewerWindow::handleKey new gesture feature" << llendl;
+		LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 		return TRUE;
 	}
 
@@ -2934,6 +3091,8 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 	// don't pass it down to the menus.
 	if (gGestureList.trigger(key, mask))
 	{
+		lldebugs << "LLviewerWindow::handleKey check gesture trigger" << llendl;
+		LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 		return TRUE;
 	}
 
@@ -2993,7 +3152,7 @@ BOOL LLViewerWindow::handleUnicodeChar(llwchar uni_char, MASK mask)
 	// HACK: Numeric keypad <enter> on Mac is Unicode 3
 	// HACK: Control-M on Windows is Unicode 13
 	if ((uni_char == 13 && mask != MASK_CONTROL)
-		|| (uni_char == 3 && mask == MASK_NONE))
+	    || (uni_char == 3 && mask == MASK_NONE) )
 	{
 		if (mask != MASK_ALT)
 		{
@@ -3016,14 +3175,7 @@ BOOL LLViewerWindow::handleUnicodeChar(llwchar uni_char, MASK mask)
 			return TRUE;
 		}
 
-		//// Topmost view gets a chance before the hierarchy
-		//LLUICtrl* top_ctrl = gFocusMgr.getTopCtrl();
-		//if (top_ctrl && top_ctrl->handleUnicodeChar( uni_char, FALSE ) )
-		//{
-		//	return TRUE;
-		//}
-
-		return TRUE;
+        return TRUE;
 	}
 
 	return FALSE;
@@ -3032,8 +3184,6 @@ BOOL LLViewerWindow::handleUnicodeChar(llwchar uni_char, MASK mask)
 
 void LLViewerWindow::handleScrollWheel(S32 clicks)
 {
-	LLView::sMouseHandlerMessage.clear();
-
 	LLUI::resetMouseIdleTimer();
 	
 	LLMouseHandler* mouse_captor = gFocusMgr.getMouseCapture();
@@ -5689,13 +5839,13 @@ LLRect LLViewerWindow::getChatConsoleRect()
 		}// </FS:KC> Tie console to legacy snap edge when possible
 		else
 		{
-			LLToolBar* toolbar_left = gToolBarView->getToolBar(LLToolBarView::TOOLBAR_LEFT);
+			LLToolBar* toolbar_left = gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_LEFT);
 			if (toolbar_left && toolbar_left->hasButtons())
 			{
 				console_rect.mLeft += toolbar_left->getRect().getWidth();
 			}
 
-			LLToolBar* toolbar_right = gToolBarView->getToolBar(LLToolBarView::TOOLBAR_RIGHT);
+			LLToolBar* toolbar_right = gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_RIGHT);
 			LLRect toolbar_right_screen_rect;
 			toolbar_right->localRectToScreen(toolbar_right->getRect(), &toolbar_right_screen_rect);
 			if (toolbar_right && toolbar_right->hasButtons() && console_rect.mRight >= toolbar_right_screen_rect.mLeft)

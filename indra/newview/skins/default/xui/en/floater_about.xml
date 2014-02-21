@@ -277,7 +277,7 @@ Additional code generously contributed to Firestorm by:
                  top_pad="4"
                  width="420"
                  wrap="true">
-Albatroz Hird, Alexie Birman, Andromeda Rage, Armin Weatherwax, Casper Warden, Chalice Yao, Cron Stardust, Damian Zhaoying, Dawa Gurbux, Felyza Wishbringer, f0rbidden, Fractured Crystal, Geenz Spad, Hitomi Tiponi, Inusaito Sayori, Katharine Berry, Kittin Ninetails, Kool Koolhoven, Lance Corrimal, Latif Khalifa, Magne Metaverse LLC, Magus Freston, Manami Hokkigai, MartinRJ Fayray, McCabe Maxstead, Melancholy Lemon, Miguael Liamano, Mimika Oh, Mister Acacia, Mysty Saunders, Nagi Michinaga, Name Short, nhede Core, NiranV Dean, Nogardrevlis Lectar, paperwork, Peyton Menges, programmtest, Qwerty Venom, Revolution Smythe, Sahkolihaa Contepomi, sal Kaligawa, Satomi Ahn, Sei Lisa, Shin Wasp, Shyotl Kuhr, Sione Lomu, Skills Hak, StarlightShining, Sunset Faulkes, Thickbrick Sleaford, Vaalith Jinn, Whirly Fizzle, Zwagoth Klaar and others.
+Albatroz Hird, Alexie Birman, Andromeda Rage, Armin Weatherwax, Casper Warden, Chalice Yao, Cron Stardust, Damian Zhaoying, Dan Threebeards, Dawa Gurbux, Drake Arconis, Felyza Wishbringer, f0rbidden, Fractured Crystal, Geenz Spad, Hitomi Tiponi, Inusaito Sayori, Katharine Berry, Kittin Ninetails, Kool Koolhoven, Lance Corrimal, Latif Khalifa, Magne Metaverse LLC, Magus Freston, Manami Hokkigai, MartinRJ Fayray, McCabe Maxstead, Melancholy Lemon, Miguael Liamano, Mimika Oh, Mister Acacia, Mysty Saunders, Nagi Michinaga, Name Short, nhede Core, NiranV Dean, Nogardrevlis Lectar, paperwork, Peyton Menges, programmtest, Qwerty Venom, Revolution Smythe, Sahkolihaa Contepomi, sal Kaligawa, Satomi Ahn, Sei Lisa, Shin Wasp, Shyotl Kuhr, Sione Lomu, Skills Hak, StarlightShining, Sunset Faulkes, Thickbrick Sleaford, Vaalith Jinn, Whirly Fizzle, Zwagoth Klaar and others.
                 </text>
                 <text
                  follows="top|left"
@@ -448,6 +448,7 @@ GL Copyright (C) 1999-2004 Brian Paul.
 GLOD Copyright (C) 2003-04 Jonathan Cohen, Nat Duca, Chris Niski, Johns Hopkins University and David Luebke, Brenden Schubert, University of Virginia.
 google-perftools Copyright (c) 2005, Google Inc.
 Havok.com(TM) Copyright (C) 1999-2001, Telekinesys Research Limited.
+HACD Copyright (C) 2011, Khaled Mamou (kmamou@gmail.com)
 jpeg2000 Copyright (C) 2001, David Taubman, The University of New South Wales (UNSW)
 jpeglib Copyright (C) 1991-1998, Thomas G. Lane.
 LIBOVR Copyright (c) 2013 Oculus VR, Inc. 

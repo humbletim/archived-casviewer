@@ -55,6 +55,10 @@
 #include "llpreviewnotecard.h"
 #include "llpreviewscript.h"
 // [/SL:KB]
+#include "llpreviewanim.h"
+#include "llpreviewgesture.h"
+#include "llpreviewsound.h"
+#include "llpreviewtexture.h"
 
 // Constants
 
@@ -97,6 +101,9 @@ void LLPreview::setObjectID(const LLUUID& object_id)
 	{
 		loadAsset();
 	}
+
+	// <FS:Ansariel> FIRE-10899: Multi previews from object inventory misses tab titles
+	refreshFromItem();
 }
 
 void LLPreview::setItem( LLInventoryItem* item )
@@ -106,6 +113,9 @@ void LLPreview::setItem( LLInventoryItem* item )
 	{
 		loadAsset();
 	}
+
+	// <FS:Ansariel> FIRE-10899: Multi previews from object inventory misses tab titles
+	refreshFromItem();
 }
 
 const LLInventoryItem *LLPreview::getItem() const
@@ -355,6 +365,16 @@ void LLPreview::onOpen(const LLSD& key)
 	{
 		loadAsset();
 	}
+
+	// <FS:Ansariel> Multi preview layout fix; Anim, gesture and sound previews can't be resized
+	if (getHost() &&
+		(dynamic_cast<LLPreviewAnim*>(this) ||
+		dynamic_cast<LLPreviewGesture*>(this) ||
+		dynamic_cast<LLPreviewSound*>(this)))
+	{
+		getHost()->setCanResize(FALSE);
+	}
+	// </FS:Ansariel>
 }
 
 void LLPreview::setAuxItem( const LLInventoryItem* item )
@@ -459,7 +479,10 @@ LLMultiPreview::LLMultiPreview()
 {
 	// start with a rect in the top-left corner ; will get resized
 	LLRect rect;
-	rect.setLeftTopAndSize(0, gViewerWindow->getWindowHeightScaled(), 200, 400);
+	// <FS:Ansariel> Multi preview layout fix
+	//rect.setLeftTopAndSize(0, gViewerWindow->getWindowHeightScaled(), 200, 400);
+	rect.setLeftTopAndSize(0, gViewerWindow->getWindowHeightScaled(), 10, 10);
+	// </FS:Ansariel>
 	setRect(rect);
 
 	LLFloater* last_floater = LLFloaterReg::getLastFloaterInGroup("preview");
@@ -470,7 +493,8 @@ LLMultiPreview::LLMultiPreview()
 	setTitle(LLTrans::getString("MultiPreviewTitle"));
 	buildTabContainer();
 	setCanResize(TRUE);
-	mAutoResize = FALSE;
+	// <FS:Ansariel> Multi preview layout fix
+	//mAutoResize = FALSE;
 }
 
 void LLMultiPreview::onOpen(const LLSD& key)
@@ -483,6 +507,9 @@ void LLMultiPreview::onOpen(const LLSD& key)
 		frontmost_preview->loadAsset();
 	}
 	LLMultiFloater::onOpen(key);
+
+	// <FS:Ansariel> Multi preview layout fix
+	center();
 }
 
 
@@ -511,6 +538,14 @@ void LLMultiPreview::tabOpen(LLFloater* opened_floater, bool from_click)
 	{
 		opened_preview->loadAsset();
 	}
+
+	// <FS:Ansariel> Update preview dimensions for multi texture preview upon tab change
+	LLPreviewTexture* texture_preview = dynamic_cast<LLPreviewTexture*>(opened_floater);
+	if (texture_preview)
+	{
+		texture_preview->setUpdateDimensions(TRUE);
+	}
+	// </FS:Ansariel>
 
 // [SL:KB] - Patch: UI-FloaterSearchReplace | Checked: 2010-11-05 (Catznip-2.3.0a) | Added: Catznip-2.3.0a
 	LLFloaterSearchReplace* pSearchFloater = LLFloaterReg::getTypedInstance<LLFloaterSearchReplace>("search_replace");

@@ -447,6 +447,19 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename, 
 			L"PNG Images (*.png)\0*.png\0" \
 			L"\0";
 		break;
+	case FFSAVE_TGAPNG:
+		if (filename.empty())
+		{
+			wcsncpy( mFilesW,L"untitled.png", FILENAME_BUFFER_SIZE);	/*Flawfinder: ignore*/
+			//PNG by default
+		}
+		mOFN.lpstrDefExt = L"png";
+		mOFN.lpstrFilter =
+			L"PNG Images (*.png)\0*.png\0" \
+			L"Targa Images (*.tga)\0*.tga\0" \
+			L"\0";
+		break;
+		
 	case FFSAVE_JPEG:
 		if (filename.empty())
 		{
@@ -537,6 +550,8 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename, 
 		mOFN.lpstrDefExt = L"txt";
 		mOFN.lpstrFilter = L"LSL Files (*.lsl)\0*.lsl\0" L"\0";
 		break;
+			
+// <Firestorm>
 	case FFSAVE_BEAM:
 		if (filename.empty())
 		{
@@ -546,8 +561,7 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename, 
 		mOFN.lpstrFilter =
 			L"XML File (*.xml)\0*.xml\0" \
 			L"\0";
-		break; 
-// <FS:CR> Export filter
+		break;
 	case FFSAVE_EXPORT:
 		if (filename.empty())
 		{
@@ -556,7 +570,17 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename, 
 		mOFN.lpstrDefExt = L"oxp";
 		mOFN.lpstrFilter = L"OXP Backup Files (*.oxp)\0*.oxp\0" L"\0";
 		break;
-// </FS:CR>
+	case FFSAVE_CSV:
+		if (filename.empty())
+		{
+			wcsncpy( mFilesW, L"untitled.csv", FILENAME_BUFFER_SIZE);
+		}
+		mOFN.lpstrDefExt = L".csv";
+		mOFN.lpstrFilter =
+		L"Comma seperated values (*.csv)\0*.csv\0" \
+		L"\0";
+		break;
+// </Firestorm>
 	default:
 		return FALSE;
 	}
@@ -611,10 +635,11 @@ std::vector<std::string>* LLFilePicker::navOpenFilterProc(ELoadFilter filter) //
             allowedv->push_back("lsl");
             allowedv->push_back("dic");
             allowedv->push_back("xcu");
-			// <FS:CR> Import filter
-			allowedv->push_back("oxp");
+            allowedv->push_back("xml");
+            // <FS:CR> Import filter
+            allowedv->push_back("oxp");
             //allowedv->push_back("hpa");
-			// </FS:CR>
+            // </FS:CR>
         case FFLOAD_IMAGE:
             allowedv->push_back("jpg");
             allowedv->push_back("jpeg");
@@ -631,6 +656,7 @@ std::vector<std::string>* LLFilePicker::navOpenFilterProc(ELoadFilter filter) //
             allowedv->push_back("bvh");
             allowedv->push_back("anim");
             break;
+	case FFLOAD_MODEL:
         case FFLOAD_COLLADA:
             allowedv->push_back("dae");
             break;
@@ -648,6 +674,9 @@ std::vector<std::string>* LLFilePicker::navOpenFilterProc(ELoadFilter filter) //
         case FFLOAD_DICTIONARY:
             allowedv->push_back("dic");
             allowedv->push_back("xcu");
+            break;
+	case FFLOAD_XML:
+            allowedv->push_back("xml");
             break;
         case FFLOAD_DIRECTORY:
             break;
@@ -704,13 +733,16 @@ bool	LLFilePicker::doNavSaveDialog(ESaveFilter filter, const std::string& filena
 			creator = "TVOD";
 			extension = "wav";
 			break;
-		
 		case FFSAVE_TGA:
 			type = "TPIC";
 			creator = "prvw";
 			extension = "tga";
 			break;
-		
+		case FFSAVE_TGAPNG:
+			type = "PNG";
+			creator = "prvw";
+			extension = "png";
+			break;
 		case FFSAVE_BMP:
 			type = "BMPf";
 			creator = "prvw";
@@ -773,7 +805,19 @@ bool	LLFilePicker::doNavSaveDialog(ESaveFilter filter, const std::string& filena
 			creator = "\?\?\?\?";
 			extension = "dae";
 			break;
+		// <FS:CR> CSV Filter
+		case FFSAVE_CSV:
+			type = "CSV ";
+			creator = "\?\?\?\?";
+			extension = "csv";
+			break;
 		// </FS:CR>
+		case FFSAVE_BEAM:
+		case FFSAVE_XML:
+			type = "XML ";
+			creator = "\?\?\?\?";
+			extension = "xml";
+			break;
 		case FFSAVE_ALL:
 		default:
 			type = "\?\?\?\?";
@@ -1028,6 +1072,22 @@ void LLFilePicker::chooser_responder(GtkWidget *widget, gint response, gpointer 
 		g_slist_free (file_list);
 	}
 
+	// let's save the extension of the last added file(considering current filter)
+	GtkFileFilter *gfilter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(widget));
+	if(gfilter)
+	{
+		std::string filter = gtk_file_filter_get_name(gfilter);
+
+		if(filter == LLTrans::getString("png_image_files"))
+		{
+			picker->mCurrentExtension = ".png";
+		}
+		else if(filter == LLTrans::getString("targa_image_files"))
+		{
+			picker->mCurrentExtension = ".tga";
+		}
+	}
+
 	// set the default path for this usage context.
 	const char* cur_folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(widget));
 	if (cur_folder != NULL)
@@ -1211,7 +1271,25 @@ static std::string add_import_filter_to_gtkchooser(GtkWindow *picker)
 	return filtername;
 }
 // </FS:CR>
-								
+
+static std::string add_save_texture_filter_to_gtkchooser(GtkWindow *picker)
+{
+	GtkFileFilter *gfilter_tga = gtk_file_filter_new();
+	GtkFileFilter *gfilter_png = gtk_file_filter_new();
+
+	gtk_file_filter_add_pattern(gfilter_tga, "*.tga");
+	gtk_file_filter_add_mime_type(gfilter_png, "image/png");
+	std::string caption = LLTrans::getString("save_texture_image_files") + " (*.tga; *.png)";
+	gtk_file_filter_set_name(gfilter_tga, LLTrans::getString("targa_image_files").c_str());
+	gtk_file_filter_set_name(gfilter_png, LLTrans::getString("png_image_files").c_str());
+
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(picker),
+					gfilter_png);
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(picker),
+					gfilter_tga);
+	return caption;
+}
+
 BOOL LLFilePicker::getSaveFile( ESaveFilter filter, const std::string& filename, bool blocking )
 {
 	BOOL rtn = FALSE;
@@ -1248,6 +1326,15 @@ BOOL LLFilePicker::getSaveFile( ESaveFilter filter, const std::string& filename,
 			caption += add_simple_mime_filter_to_gtkchooser
 				(picker, "image/bmp", LLTrans::getString("bitmap_image_files") + " (*.bmp)");
 			suggest_ext = ".bmp";
+			break;
+		case FFSAVE_PNG:
+			caption += add_simple_mime_filter_to_gtkchooser
+				(picker, "image/png", LLTrans::getString("png_image_files") + " (*.png)");
+			suggest_ext = ".png";
+			break;
+		case FFSAVE_TGAPNG:
+			caption += add_save_texture_filter_to_gtkchooser(picker);
+			suggest_ext = ".png";
 			break;
 		case FFSAVE_AVI:
 			caption += add_simple_mime_filter_to_gtkchooser
@@ -1289,6 +1376,10 @@ BOOL LLFilePicker::getSaveFile( ESaveFilter filter, const std::string& filename,
 			caption += add_simple_pattern_filter_to_gtkchooser
 				(picker, "*.dae", LLTrans::getString("collada_files") + " (*.dae)");
 			break;
+		// [FS:CR] FIRE-12276
+		case FFSAVE_CSV:
+			caption += add_simple_pattern_filter_to_gtkchooser
+				(picker, "*.csv", LLTrans::getString("csv_files") + " (*.csv)");
 // </FS:CR>
 		default:;
 			break;
@@ -1311,9 +1402,17 @@ BOOL LLFilePicker::getSaveFile( ESaveFilter filter, const std::string& filename,
 		}
 
 		gtk_widget_show_all(GTK_WIDGET(picker));
+
 		gtk_main();
 
 		rtn = (getFileCount() == 1);
+
+		if(rtn && filter == FFSAVE_TGAPNG)
+		{
+			std::string selected_file = mFiles.back();
+			mFiles.pop_back();
+			mFiles.push_back(selected_file + mCurrentExtension);
+		}
 	}
 
 	gViewerWindow->getWindow()->afterDialog();

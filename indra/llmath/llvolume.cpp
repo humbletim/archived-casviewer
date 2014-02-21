@@ -183,7 +183,8 @@ void calc_tangent_from_triangle(
 
 	F32 rd = s1*t2-s2*t1;
 
-	float r = ((rd*rd) > FLT_EPSILON) ? 1.0F / rd : 1024.f; //some made up large ratio for division by zero
+	float r = ((rd*rd) > FLT_EPSILON) ? (1.0f / rd)
+											    : ((rd > 0.0f) ? 1024.f : -1024.f); //some made up large ratio for division by zero
 
 	llassert(llfinite(r));
 	llassert(!llisnan(r));
@@ -6799,7 +6800,7 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 	return TRUE;
 }
 
-//adapted from Lengyel, Eric. “Computing Tangent Space Basis Vectors for an Arbitrary Mesh”. Terathon Software 3D Graphics Library, 2001. http://www.terathon.com/code/tangent.html
+//adapted from Lengyel, Eric. "Computing Tangent Space Basis Vectors for an Arbitrary Mesh". Terathon Software 3D Graphics Library, 2001. http://www.terathon.com/code/tangent.html
 void CalculateTangentArray(U32 vertexCount, const LLVector4a *vertex, const LLVector4a *normal,
         const LLVector2 *texcoord, U32 triangleCount, const U16* index_array, LLVector4a *tangent)
 {
@@ -6842,7 +6843,8 @@ void CalculateTangentArray(U32 vertexCount, const LLVector4a *vertex, const LLVe
         
 		F32 rd = s1*t2-s2*t1;
 
-		float r = ((rd*rd) > FLT_EPSILON) ? 1.0F / rd : 1024.f; //some made up large ratio for division by zero
+		float r = ((rd*rd) > FLT_EPSILON) ? (1.0f / rd)
+													 : ((rd > 0.0f) ? 1024.f : -1024.f); //some made up large ratio for division by zero
 
 		llassert(llfinite(r));
 		llassert(!llisnan(r));

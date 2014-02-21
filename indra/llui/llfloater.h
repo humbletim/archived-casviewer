@@ -32,6 +32,7 @@
 #define LL_FLOATER_H
 
 #include "llpanel.h"
+#include "lltoolbar.h"
 #include "lluuid.h"
 //#include "llnotificationsutil.h"
 #include <set>
@@ -291,6 +292,7 @@ public:
 	S32				getHeaderHeight() const { return mHeaderHeight; }
 
 	virtual BOOL	handleMouseDown(S32 x, S32 y, MASK mask);
+	virtual BOOL	handleMouseUp(S32 x, S32 y, MASK mask);
 	virtual BOOL	handleRightMouseDown(S32 x, S32 y, MASK mask);
 	virtual BOOL	handleDoubleClick(S32 x, S32 y, MASK mask);
 	virtual BOOL	handleMiddleMouseDown(S32 x, S32 y, MASK mask);
@@ -391,7 +393,7 @@ protected:
 
 	void			destroy(); // Don't call this directly.  You probably want to call closeFloater()
 
-	virtual	void	onClickCloseBtn();
+	virtual	void	onClickCloseBtn(bool app_quitting = false);
 
 	virtual void	updateTitleButtons();
 
@@ -517,6 +519,8 @@ private:
 // LLFloaterView
 // Parent of all floating panels
 
+const S32 FLOATER_MIN_VISIBLE_PIXELS = 16;
+
 class LLFloaterView : public LLUICtrl
 {
 public:
@@ -582,10 +586,16 @@ public:
 	void setSnapOffsetLeft(S32 offset) { mSnapOffsetLeft = offset; }
 	// </FS:KC> Fix for bad edge snapping
 
+	void setToolbarRect(LLToolBarEnums::EToolBarLocation tb, const LLRect& toolbar_rect);
+
+	// <FS:Ansariel> Prevent floaters being dragged under main chat bar
+	void setMainChatbarRect(LLLayoutPanel* panel, const LLRect& chatbar_rect);
+
 private:
 	void hiddenFloaterClosed(LLFloater* floater);
 
 	LLRect				mLastSnapRect;
+	LLRect				mToolbarRects[LLToolBarEnums::TOOLBAR_COUNT];
 	LLHandle<LLView>	mSnapView;
 	BOOL			mFocusCycleMode;
 	S32				mSnapOffsetBottom;
@@ -596,6 +606,9 @@ private:
 	typedef std::vector<std::pair<LLHandle<LLFloater>, boost::signals2::connection> > hidden_floaters_t;
 	hidden_floaters_t mHiddenFloaters;
 	LLFloater *		mFrontChild;
+
+	// <FS:Ansariel> Prevent floaters being dragged under main chat bar
+	LLRect			mMainChatbarRect;
 };
 
 //

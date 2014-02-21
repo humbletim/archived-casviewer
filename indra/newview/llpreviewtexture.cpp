@@ -38,6 +38,7 @@
 #include "llfilepicker.h"
 #include "llfloaterreg.h"
 #include "llimagetga.h"
+#include "llimagepng.h"
 #include "llinventory.h"
 #include "llnotificationsutil.h"
 #include "llresmgr.h"
@@ -80,7 +81,12 @@ LLPreviewTexture::LLPreviewTexture(const LLSD& key)
 	  mImage(NULL),
 	  mImageOldBoostLevel(LLGLTexture::BOOST_NONE),
 	  mShowingButtons(false),
-	  mDisplayNameCallback(false)
+	  mDisplayNameCallback(false),
+	  mAvatarNameCallbackConnection(),
+	  // <FS:Ansariel> Performance improvement
+	  mCurrentImageWidth(0),
+	  mCurrentImageHeight(0)
+	  // </FS:Ansariel>
 {
 	updateImageID();
 	if (key.has("save_as"))
@@ -99,6 +105,13 @@ LLPreviewTexture::LLPreviewTexture(const LLSD& key)
 
 LLPreviewTexture::~LLPreviewTexture()
 {
+	// <FS:Ansariel> Handle avatar name callback
+	if (mAvatarNameCallbackConnection.connected())
+	{
+		mAvatarNameCallbackConnection.disconnect();
+	}
+	// </FS:Ansariel>
+
 	LLLoadedCallbackEntry::cleanUpCallbackList(&mCallbackTextureList) ;
 
 	if( mLoadingFullImage )
@@ -173,6 +186,9 @@ BOOL LLPreviewTexture::postBuild()
 		getChild<LLLineEditor>("uuid")->setEnabled(FALSE);
 	}
 	// </FS:Ansariel>
+
+	// <FS:Ansariel> Performance improvement
+	mDimensionsCtrl = getChild<LLUICtrl>("dimensions");
 
 	return LLPreview::postBuild();
 }
@@ -480,14 +496,34 @@ void LLPreviewTexture::onFileLoadedForSaveTGA(BOOL success,
 
 	if( self && final && success )
 	{
+		// <FS:Ansariel> Undo MAINT-2897 and use our own texture format selection
+		//const U32 ext_length = 3;
+		//std::string extension = self->mSaveFileName.substr( self->mSaveFileName.length() - ext_length);
+
+		//// We only support saving in PNG or TGA format
+		//LLPointer<LLImageFormatted> image;
+		//if(extension == "png")
+		//{
+		//	image = new LLImagePNG;
+		//}
+		//else if(extension == "tga")
+		//{
+		//	image = new LLImageTGA;
+		//}
+
+		//if( image && !image->encode( src, 0 ) )
 		LLPointer<LLImageTGA> image_tga = new LLImageTGA;
 		if( !image_tga->encode( src ) )
+		// </FS:Ansariel>
 		{
 			LLSD args;
 			args["FILE"] = self->mSaveFileName;
 			LLNotificationsUtil::add("CannotEncodeFile", args);
 		}
+		// <FS:Ansariel> Undo MAINT-2897 and use our own texture format selection
+		//else if( image && !image->save( self->mSaveFileName ) )
 		else if( !image_tga->save( self->mSaveFileName ) )
+		// </FS:Ansariel>
 		{
 			LLSD args;
 			args["FILE"] = self->mSaveFileName;
@@ -577,15 +613,27 @@ void LLPreviewTexture::updateDimensions()
 	}
 	
 	// Update the width/height display every time
-	getChild<LLUICtrl>("dimensions")->setTextArg("[WIDTH]",  llformat("%d", mImage->getFullWidth()));
-	getChild<LLUICtrl>("dimensions")->setTextArg("[HEIGHT]", llformat("%d", mImage->getFullHeight()));
+	// <FS:Ansariel> Performance improvement
+	//getChild<LLUICtrl>("dimensions")->setTextArg("[WIDTH]",  llformat("%d", mImage->getFullWidth()));
+	//getChild<LLUICtrl>("dimensions")->setTextArg("[HEIGHT]", llformat("%d", mImage->getFullHeight()));
+	if (mCurrentImageWidth != mImage->getFullWidth())
+	{
+		mDimensionsCtrl->setTextArg("[WIDTH]", llformat("%d", mImage->getFullWidth()));
+		mCurrentImageWidth = mImage->getFullWidth();
+	}
+	if (mCurrentImageHeight != mImage->getFullHeight())
+	{
+		mDimensionsCtrl->setTextArg("[HEIGHT]", llformat("%d", mImage->getFullHeight()));
+		mCurrentImageHeight = mImage->getFullHeight();
+	}
+	// </FS:Ansariel>
 
 	// Reshape the floater only when required
 	if (mUpdateDimensions)
 	{
 		mUpdateDimensions = FALSE;
 		
-		// <Ansariel>: Show image at full resolution if possible
+		// <FS:Ansariel>: Show image at full resolution if possible
 		//reshape floater
 		//reshape(getRect().getWidth(), getRect().getHeight());
 
@@ -638,7 +686,11 @@ void LLPreviewTexture::updateDimensions()
 					{
 						mDisplayNameCallback = true;
 						mUploaderDateTime.setArg("[UPLOADER]", LLTrans::getString("AvatarNameWaiting"));
-						LLAvatarNameCache::get(id, boost::bind(&LLPreviewTexture::callbackLoadName, this, _1, _2));
+						if (mAvatarNameCallbackConnection.connected())
+						{
+							mAvatarNameCallbackConnection.disconnect();
+						}
+						mAvatarNameCallbackConnection = LLAvatarNameCache::get(id, boost::bind(&LLPreviewTexture::callbackLoadName, this, _1, _2));
 					}
 				}
 				getChild<LLTextEditor>("uploader_date_time")->setText(mUploaderDateTime.getString());
@@ -686,7 +738,11 @@ void LLPreviewTexture::updateDimensions()
 					{
 						mDisplayNameCallback = true;
 						getChild<LLLineEditor>("uploader")->setText(LLTrans::getString("AvatarNameWaiting"));
-						LLAvatarNameCache::get(id, boost::bind(&LLPreviewTexture::callbackLoadName, this, _1, _2));
+						if (mAvatarNameCallbackConnection.connected())
+						{
+							mAvatarNameCallbackConnection.disconnect();
+						}
+						mAvatarNameCallbackConnection = LLAvatarNameCache::get(id, boost::bind(&LLPreviewTexture::callbackLoadName, this, _1, _2));
 					}
 				}
 			}
@@ -739,16 +795,17 @@ void LLPreviewTexture::updateDimensions()
 		floater_target_height = llmax(floater_target_height, getMinHeight());
 
 		// Resize floater
-		if (getHost())
+		LLMultiFloater* host = getHost();
+		if (host)
 		{
-			getHost()->growToFit(floater_target_width, floater_target_height);
+			S32 old_height = host->getRect().getHeight();
+			host->reshape(getMinWidth(), getMinHeight());
+			host->translate(0, old_height - getMinHeight());
+			host->growToFit(floater_target_width, floater_target_height);
 		}
-		else
-		{
-			reshape(floater_target_width, floater_target_height);
-			gFloaterView->adjustToFitScreen(this, FALSE);
-		}
-		// </Ansariel>: Show image at full resolution if possible
+		reshape(floater_target_width, floater_target_height);
+		gFloaterView->adjustToFitScreen(this, FALSE);
+		// </FS:Ansariel>: Show image at full resolution if possible
 
 		LLRect dim_rect(getChildView("dimensions")->getRect());
 		LLRect aspect_label_rect(getChildView("aspect_ratio")->getRect());
@@ -769,6 +826,11 @@ void LLPreviewTexture::updateDimensions()
 // <FS:Techwolf Lupindo> texture comment metadata reader
 void LLPreviewTexture::callbackLoadName(const LLUUID& agent_id, const LLAvatarName& av_name)
 {
+	if (mAvatarNameCallbackConnection.connected())
+	{
+		mAvatarNameCallbackConnection.disconnect();
+	}
+
 	if (findChild<LLTextEditor>("uploader_date_time"))
 	{
 		mUploaderDateTime.setArg("[UPLOADER]", av_name.getCompleteName());

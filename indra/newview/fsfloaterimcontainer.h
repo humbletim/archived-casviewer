@@ -50,6 +50,7 @@ public:
 	/*virtual*/ BOOL postBuild();
 	/*virtual*/ void onOpen(const LLSD& key);
 	void onCloseFloater(LLUUID& id);
+	/*virtual*/ void draw();
 	
 	/*virtual*/ void addFloater(LLFloater* floaterp, 
 								BOOL select_added_floater, 
@@ -57,11 +58,9 @@ public:
 // [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-12-11 (Catznip-3.2.0d) | Added: Catznip-3.2.0d
 	/*virtual*/ void removeFloater(LLFloater* floaterp);
 // [/SL:KB]
-
-	static LLFloater* getCurrentVoiceFloater();
+	bool hasFloater(LLFloater* floaterp);
 
 	static FSFloaterIMContainer* findInstance();
-
 	static FSFloaterIMContainer* getInstance();
 
 	virtual void setMinimized(BOOL b);
@@ -77,6 +76,23 @@ public:
 	static void reloadEmptyFloaters();
 
 private:
+	enum eVoiceState
+	{
+		VOICE_STATE_NONE,
+		VOICE_STATE_UNKNOWN,
+		VOICE_STATE_CONNECTED,
+		VOICE_STATE_NOT_CONNECTED,
+		VOICE_STATE_ERROR
+	};
+
+	LLFloater*	getCurrentVoiceFloater();
+	void		onVoiceStateIndicatorChanged(const LLSD& data);
+
+	LLFloater*	mActiveVoiceFloater;
+	LLTimer		mActiveVoiceUpdateTimer;
+	eVoiceState	mCurrentVoiceState;
+	bool		mForceVoiceStateUpdate;
+
 	typedef std::map<LLUUID,LLFloater*> avatarID_panel_map_t;
 	avatarID_panel_map_t mSessions;
 	boost::signals2::connection mNewMessageConnection;

@@ -233,15 +233,57 @@ private:
 	LLVector3		mHomePosRegion;
 
 	//--------------------------------------------------------------------
-	// Region
+	// Parcel
 	//--------------------------------------------------------------------
 public:
+	void changeParcels(); // called by LLViewerParcelMgr when we cross a parcel boundary
+	
+	// Register a boost callback to be called when the agent changes parcels
+	typedef boost::function<void()> parcel_changed_callback_t;
+	boost::signals2::connection     addParcelChangedCallback(parcel_changed_callback_t);
+
+private:
+	typedef boost::signals2::signal<void()> parcel_changed_signal_t;
+	parcel_changed_signal_t		mParcelChangedSignal;
+
+	//--------------------------------------------------------------------
+	// Region
+	//--------------------------------------------------------------------
+  public:
 	void			setRegion(LLViewerRegion *regionp);
 	LLViewerRegion	*getRegion() const;
 	LLHost			getRegionHost() const;
 	BOOL			inPrelude();
-private:
+
+	// <FS:Ansariel> Aurora sim windlight refresh
+	void changeRegion();
+
+	/**
+	 * Register a boost callback to be called when the agent changes regions
+	 * Note that if you need to access a capability for the region, you may need to wait
+	 * for the capabilities to be received, since in some cases your region changed
+	 * callback will be called before the capabilities have been received.  Your callback
+	 * may need to look something like:
+	 *
+	 * 	 LLViewerRegion* region = gAgent.getRegion();
+	 * 	 if (region->capabilitiesReceived())
+	 * 	 {
+	 *       useCapability(region);
+	 * 	 }
+	 * 	 else // Need to handle via callback after caps arrive.
+	 * 	 {
+	 *       region->setCapabilitiesReceivedCallback(boost::bind(&useCapability,region,_1));
+	 *       // you may or may not want to remove that callback
+	 * 	 }
+	 */
+	typedef boost::signals2::signal<void()> region_changed_signal_t;
+
+	boost::signals2::connection     addRegionChangedCallback(const region_changed_signal_t::slot_type& cb);
+	void                            removeRegionChangedCallback(boost::signals2::connection callback);
+
+  private:
 	LLViewerRegion	*mRegionp;
+	region_changed_signal_t		            mRegionChangedSignal;
 
 	//--------------------------------------------------------------------
 	// History
@@ -502,7 +544,10 @@ private:
 	// Animations
 	//--------------------------------------------------------------------
 public:
-	void            stopCurrentAnimations();
+	// <FS:Ansariel> FIRE-12148: Pose stand breaks XPOSE animations
+	//void            stopCurrentAnimations();
+	void            stopCurrentAnimations(bool force_keep_script_perms = false);
+	// </FS:Ansariel>
 	void			requestStopMotion(LLMotion* motion);
 	void			onAnimStop(const LLUUID& id);
 	void			sendAnimationRequests(LLDynamicArray<LLUUID> &anim_ids, EAnimRequest request);
@@ -725,9 +770,10 @@ private:
 public:
 	bool			canEditParcel() const { return mCanEditParcel; }
 private:
+	static void     setCanEditParcel();
 	bool			mCanEditParcel;
 
-	static void parcelChangedCallback();
+
 
 /********************************************************************************
  **                                                                            **

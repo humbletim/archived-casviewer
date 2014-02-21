@@ -74,6 +74,16 @@ if(WINDOWS)
       endif( NOT ND_BUILD64BIT_ARCH )
     endif (FMODEX)
 
+    if (LEAPMOTION)
+      if( NOT ND_BUILD64BIT_ARCH )
+        set(debug_files ${debug_files} x86/Leapd.dll)
+        set(release_files ${release_files} x86/Leap.dll)
+      else( NOT ND_BUILD64BIT_ARCH )
+        set(debug_files ${debug_files} x64/Leapd.dll)
+        set(release_files ${release_files} x64/Leap.dll)
+      endif( NOT ND_BUILD64BIT_ARCH )
+    endif (LEAPMOTION)
+
 # <FS:ND> Copy pdb files for symbol generation too
    if( NOT ND_BUILD64BIT_ARCH )
      set(debug_files ${debug_files} ssleay32.pdb libeay32.pdb apr-1.pdb aprutil-1.pdb growl.pdb growl++.pdb )
@@ -235,7 +245,8 @@ elseif(DARWIN)
         libhunspell-1.3.0.dylib
         # libexception_handler.dylib
         libcollada14dom.dylib
-        #libgrowl.dylib # *TODO - test/fix/get mac growl working
+		libgrowl.dylib
+        libgrowl++.dylib
        )
 
     # <FS:ND> We only ever need google breakpad when crash reporting is used
@@ -247,6 +258,10 @@ elseif(DARWIN)
       set(debug_files ${debug_files} libfmodexL.dylib)
       set(release_files ${release_files} libfmodex.dylib)
     endif (FMODEX)
+
+    if (LEAPMOTION)
+      set(release_files ${release_files} libLeap.dylib)
+    endif (LEAPMOTION)
 
 elseif(LINUX)
     # linux is weird, multiple side by side configurations aren't supported
@@ -320,6 +335,14 @@ elseif(LINUX)
     if (FMODEX)
       set(release_file ${release_files} "libfmodex.so")
     endif (FMODEX)
+
+    if (LEAPMOTION)
+      if( NOT ND_BUILD64BIT_ARCH )
+        set(release_files ${release_files} x86/libLeap.so)
+      else( NOT ND_BUILD64BIT_ARCH )
+        set(release_files ${release_files} x64/libLeap.so)
+      endif( NOT ND_BUILD64BIT_ARCH )
+    endif (LEAPMOTION)
 
 else(WINDOWS)
     message(STATUS "WARNING: unrecognized platform for staging 3rd party libs, skipping...")

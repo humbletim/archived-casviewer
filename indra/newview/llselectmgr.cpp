@@ -96,6 +96,7 @@
 #include "llviewershadermgr.h"
 #include "llpanelface.h"
 // [RLVa:KB] - Checked: 2011-05-22 (RLVa-1.3.1a)
+#include "rlvactions.h"
 #include "rlvhandler.h"
 // [/RLVa:KB]
 // <FS:CR> Aurora Sim
@@ -675,7 +676,7 @@ bool LLSelectMgr::enableLinkObjects()
 		}
 	}
 // [RLVa:KB] - Checked: 2011-03-19 (RLVa-1.3.0f) | Modified: RLVa-0.2.0g
-	if ( (new_value) && ((rlv_handler_t::isEnabled()) && (!gRlvHandler.canStand())) )
+	if ( (new_value) && ((rlv_handler_t::isEnabled()) && (!RlvActions::canStand())) )
 	{
 		// Allow only if the avie isn't sitting on any of the selected objects
 		LLObjectSelectionHandle hSel = LLSelectMgr::getInstance()->getSelection();
@@ -697,7 +698,7 @@ bool LLSelectMgr::enableUnlinkObjects()
 		!first_editable_object->isAttachment() && !first_editable_object->isPermanentEnforced() &&
 		((root_object == NULL) || !root_object->isPermanentEnforced());
 // [RLVa:KB] - Checked: 2011-03-19 (RLVa-1.3.0f) | Modified: RLVa-0.2.0g
-	if ( (new_value) && ((rlv_handler_t::isEnabled()) && (!gRlvHandler.canStand())) )
+	if ( (new_value) && ((rlv_handler_t::isEnabled()) && (!RlvActions::canStand())) )
 	{
 		// Allow only if the avie isn't sitting on any of the selected objects
 		LLObjectSelectionHandle hSel = LLSelectMgr::getInstance()->getSelection();
@@ -6332,8 +6333,8 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 	LLGLSLShader* shader = LLGLSLShader::sCurBoundShaderPtr;
 
 	if (shader)
-	{ //switch to "solid color" program for SH-2690 -- works around driver bug causing bad triangles when rendering silhouettes
-		gSolidColorProgram.bind();
+	{ //use UI program for selection highlights (texture color modulated by vertex color)
+		gUIProgram.bind();
 	}
 
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -6388,10 +6389,11 @@ void LLSelectNode::renderOneSilhouette(const LLColor4 &color)
 			gGL.setAlphaRejectSettings(LLRender::CF_DEFAULT);
 			gGL.begin(LLRender::LINES);
 			{
+				gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.4f);
+
 				for(S32 i = 0; i < mSilhouetteVertices.size(); i += 2)
 				{
 					u_coord += u_divisor * LLSelectMgr::sHighlightUScale;
-					gGL.color4f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE], 0.4f);
 					gGL.texCoord2f( u_coord, v_coord );
 					gGL.vertex3fv( mSilhouetteVertices[i].mV);
 					u_coord += u_divisor * LLSelectMgr::sHighlightUScale;

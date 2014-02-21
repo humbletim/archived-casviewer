@@ -6,6 +6,11 @@
 ## prior to 2.8, the add_custom_target commands used in setting the version did not work correctly
 cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
+# [FS:CR] Shut up Cmake 2.8.12+ by using the old policy.
+if(${CMAKE_VERSION} VERSION_GREATER 2.8.12 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.12)
+  cmake_policy(SET CMP0022 OLD)
+endif()
+
 set(ROOT_PROJECT_NAME "SecondLife" CACHE STRING
     "The root project/makefile/solution name. Defaults to SecondLife.")
 project(${ROOT_PROJECT_NAME})
@@ -92,10 +97,11 @@ endif( NOT ( WINDOWS AND ND_BUILD64BIT_ARCH ) )
 add_subdirectory(${LIBS_OPEN_PREFIX}teapot)
 # </FS:AW opensim currency support>
 
-# llplugin testbed code (is this the right way to include it?)
-if (LL_TESTS AND NOT LINUX)
-  add_subdirectory(${VIEWER_PREFIX}test_apps/llplugintest)
-endif (LL_TESTS AND NOT LINUX)
+  # llplugin testbed code (is this the right way to include it?)
+  if (LL_TESTS AND NOT LINUX)
+    add_subdirectory(${VIEWER_PREFIX}test_apps/llplugintest)
+    add_subdirectory(${VIEWER_PREFIX}test_apps/llfbconnecttest)
+  endif (LL_TESTS AND NOT LINUX)
 
 if (LINUX)
   add_subdirectory(${VIEWER_PREFIX}linux_crash_logger)

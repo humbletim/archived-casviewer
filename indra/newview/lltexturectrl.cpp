@@ -844,7 +844,7 @@ void LLFloaterTexturePicker::onSelectionChange(const std::deque<LLFolderViewItem
 			// <FS:Ansariel> FIRE-8298: Apply now checkbox has no effect
 			setCanApply(true, true);
 			// </FS:Ansariel>
-			mImageAssetID = itemp->getAssetUUID();
+			setImageID(itemp->getAssetUUID());
 			mViewModel->setDirty(); // *TODO: shouldn't we be using setValue() here?
 			if (user_action && mCanPreview)
 			{
@@ -1479,7 +1479,10 @@ BOOL LLTextureCtrl::handleDragAndDrop(S32 x, S32 y, MASK mask,
 	LLInventoryItem* item = (LLInventoryItem*)cargo_data; 
 	bool is_mesh = cargo_type == DAD_MESH;
 
-	if (getEnabled() &&
+	// <FS:Ansariel> FIRE-10125: Texture picker allows dragging of textures while in preview mode
+	//if (getEnabled() &&
+	if (getEnabled() && !mPreviewMode &&
+	// </FS:Ansariel>
 		((cargo_type == DAD_TEXTURE) || is_mesh) &&
 		 allowDrop(item))
 	{

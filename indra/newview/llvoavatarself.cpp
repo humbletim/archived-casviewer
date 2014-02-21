@@ -354,12 +354,6 @@ BOOL LLVOAvatarSelf::buildMenus()
 	params.name(params.label);
 	gAttachBodyPartPieMenus[7] = LLUICtrlFactory::create<LLContextMenu> (params);
 
-	gDetachBodyPartPieMenus[8] = NULL; // HUD attachment spots
-
-	params.label(LLTrans::getString("BodyPartsOther"));
-	params.name(params.label);
-	gAttachBodyPartPieMenus[9] = LLUICtrlFactory::create<LLContextMenu> (params);
-
 	gDetachBodyPartPieMenus[0] = NULL;
 
 	params.label(LLTrans::getString("BodyPartsRightArm"));
@@ -387,12 +381,6 @@ BOOL LLVOAvatarSelf::buildMenus()
 	params.label(LLTrans::getString("BodyPartsRightLeg"));
 	params.name(params.label);
 	gDetachBodyPartPieMenus[7] = LLUICtrlFactory::create<LLContextMenu> (params);
-
-	gDetachBodyPartPieMenus[8] = NULL; // HUD attachment spots
-
-	params.label(LLTrans::getString("BodyPartsOther"));
-	params.name(params.label);
-	gDetachBodyPartPieMenus[9] = LLUICtrlFactory::create<LLContextMenu> (params);
 
 // ## Zi: Pie menu
 	//-------------------------------------------------------------------------
@@ -428,9 +416,6 @@ BOOL LLVOAvatarSelf::buildMenus()
 	pieParams.name(pieParams.label);
 	gPieAttachBodyPartMenus[7] = LLUICtrlFactory::create<PieMenu> (pieParams);
 
-	gPieAttachBodyPartMenus[8] = NULL; // HUD attachment spots
-	gPieAttachBodyPartMenus[9] = NULL; // New attachment spots, will be moved to "Torso"
-
 	gPieDetachBodyPartMenus[0] = NULL;
 
 	pieParams.label(LLTrans::getString("BodyPartsRightArm"));
@@ -458,22 +443,14 @@ BOOL LLVOAvatarSelf::buildMenus()
 	pieParams.label(LLTrans::getString("BodyPartsRightLeg"));
 	pieParams.name(pieParams.label);
 	gPieDetachBodyPartMenus[7] = LLUICtrlFactory::create<PieMenu> (pieParams);
-
-	gPieDetachBodyPartMenus[8] = NULL; // HUD attachment spots
-	gPieDetachBodyPartMenus[9] = NULL; // Other attachment spots, will be moved to "Torso"
 // ## Zi: Pie menu
 
-	for (S32 i = 0; i < 10; i++)
+	for (S32 i = 0; i < 8; i++)
 	{
-		// skip HUD attachment spots (needed for Neck and Avatar Center group above 8) -Zi
-		if(i==8)
-			continue;
-
 		if (gAttachBodyPartPieMenus[i])
 		{
 			gAttachPieMenu->appendContextSubMenu( gAttachBodyPartPieMenus[i] );
-			if(gPieAttachBodyPartMenus[i])
-				gPieAttachMenu->appendContextSubMenu( gPieAttachBodyPartMenus[i] ); // ## Zi: Pie menu
+			gPieAttachMenu->appendContextSubMenu( gPieAttachBodyPartMenus[i] ); // ## Zi: Pie menu
 		}
 		else
 		{
@@ -528,8 +505,7 @@ BOOL LLVOAvatarSelf::buildMenus()
 		if (gDetachBodyPartPieMenus[i])
 		{
 			gDetachPieMenu->appendContextSubMenu( gDetachBodyPartPieMenus[i] );
-			if(gPieDetachBodyPartMenus[i])
-				gPieDetachMenu->appendContextSubMenu( gPieDetachBodyPartMenus[i] );	// ## Zi: Pie menu
+			gPieDetachMenu->appendContextSubMenu( gPieDetachBodyPartMenus[i] );	// ## Zi: Pie menu
 		}
 		else
 		{
@@ -693,12 +669,8 @@ BOOL LLVOAvatarSelf::buildMenus()
 		}
 	}
 
-	for (S32 group = 0; group < 10; group++)
+	for (S32 group = 0; group < 8; group++)
 	{
-		// skip HUD attachment spots (needed for Neck and Avatar Center group above 8) -Zi
-		if(group==8)
-			continue;
-
 		// skip over groups that don't have sub menus
 		if (!gAttachBodyPartPieMenus[group] || !gDetachBodyPartPieMenus[group])
 		{
@@ -706,7 +678,6 @@ BOOL LLVOAvatarSelf::buildMenus()
 		}
 
 		std::multimap<S32, S32> attachment_pie_menu_map;		// ## Zi: Pie menu
-		std::multimap<S32, S32> attachment_linear_menu_map;
 		// gather up all attachment points assigned to this group, and throw into map sorted by pie slice number
 		for (attachment_map_t::iterator iter = mAttachmentPoints.begin(); 
 			 iter != mAttachmentPoints.end();
@@ -717,28 +688,22 @@ BOOL LLVOAvatarSelf::buildMenus()
 			{
 				// use multimap to provide a partial order off of the pie slice key
 				S32 pie_index = attachment->getPieSlice();
-				attachment_linear_menu_map.insert(std::make_pair(pie_index, iter->first));
-			}
-
-			// ## Zi: Pie menu
-			// bad hack to add the new "Neck" and "Avatar Center" points in group 9 to
-			// "Torso" (group 6). There was no room anywhere else that would have made
-			// sense. Going forward we will probably have to have a static XML file for
-			// the pie menu.
-			if(attachment->getGroup() == group || (group==6 && attachment->getGroup()==9))
-			{
-				// use multimap to provide a partial order off of the pie slice key
-				S32 pie_index = attachment->getPieSlice();
 				attachment_pie_menu_map.insert(std::make_pair(pie_index, iter->first));
 			}
-			// ## Zi: Pie menu
 		}
 
-		// add in requested order to linear menu, inserting separators as necessary
-		for (std::multimap<S32, S32>::iterator attach_it = attachment_linear_menu_map.begin();
-			 attach_it != attachment_linear_menu_map.end(); ++attach_it)
+		// add in requested order to pie menu, inserting separators as necessary
+		for (std::multimap<S32, S32>::iterator attach_it = attachment_pie_menu_map.begin();
+			 attach_it != attachment_pie_menu_map.end(); ++attach_it)
 		{
 			S32 attach_index = attach_it->second;
+
+			// <FS:Ansariel> Skip bridge attachment spot
+			if (attach_index == 127)
+			{
+				continue;
+			}
+			// </FS:Ansariel>
 
 			LLViewerJointAttachment* attachment = get_if_there(mAttachmentPoints, attach_index, (LLViewerJointAttachment*)NULL);
 			if (attachment)
@@ -761,32 +726,8 @@ BOOL LLVOAvatarSelf::buildMenus()
 				item_params.on_enable.parameter = attach_index;
 				item = LLUICtrlFactory::create<LLMenuItemCallGL>(item_params);
 				gDetachBodyPartPieMenus[group]->addChild(item);
-			}
-		}
 
-		// ## Zi: Pie menu
-		// we need a second loop here because the pie menu might have a different number of slices than the linear menu
-
-		// we don't have anything above 8 in the pie, the new group 9 is remapped to 6
-		if(group>8)
-			continue;
-
-		// add in requested order to pie menu, inserting separators as necessary
-		for (std::multimap<S32, S32>::iterator pie_attach_it = attachment_pie_menu_map.begin();
-			 pie_attach_it != attachment_pie_menu_map.end(); ++pie_attach_it)
-		{
-			S32 attach_index = pie_attach_it->second;
-
-			LLViewerJointAttachment* attachment = get_if_there(mAttachmentPoints, attach_index, (LLViewerJointAttachment*)NULL);
-			if (attachment)
-			{
-				attach_index = pie_attach_it->second;
-
-				// Hide the bridge attachment point from the pie menu.
-				// Doesn't make so much sense to have it and it frees up a slice for the neck and avatar center points.
-				if(attach_index==127)
-					continue;
-
+				// ## Zi: Pie menu
 				PieSlice::Params slice_params;
 				slice_params.name = attachment->getName();
 				slice_params.label = LLTrans::getString(attachment->getName());
@@ -804,9 +745,9 @@ BOOL LLVOAvatarSelf::buildMenus()
 				slice_params.on_enable.parameter = attach_index;
 				slice = LLUICtrlFactory::create<PieSlice>(slice_params);
 				gPieDetachBodyPartMenus[group]->addChild(slice);
+				// ## Zi: Pie menu
 			}
 		}
-		// ## Zi: Pie menu
 	}
 	return TRUE;
 }
@@ -1079,7 +1020,7 @@ void LLVOAvatarSelf::removeMissingBakedTextures()
 		if (!tex || tex->isMissingAsset())
 		{
 			LLViewerTexture *imagep = LLViewerTextureManager::getFetchedTexture(IMG_DEFAULT_AVATAR);
-			if (imagep)
+			if (imagep && imagep != tex)
 			{
 				setTEImage(te, imagep);
 				removed = TRUE;
@@ -1095,12 +1036,12 @@ void LLVOAvatarSelf::removeMissingBakedTextures()
 			layerset->setUpdatesEnabled(TRUE);
 			invalidateComposite(layerset, FALSE);
 		}
-		updateMeshTextures();
+		updateMeshTextures();	// may call back into this function
 		if (getRegion() && !getRegion()->getCentralBakeVersion())
 		{
-		requestLayerSetUploads();
+			requestLayerSetUploads();
+		}
 	}
-}
 }
 
 //virtual
@@ -1314,9 +1255,9 @@ void LLVOAvatarSelf::wearableUpdated( LLWearableType::EType type, BOOL upload_re
 	// Physics type has no associated baked textures, but change of params needs to be sent to
 	// other avatars.
 	if (type == LLWearableType::WT_PHYSICS)
-	  {
+	{
 	    gAgent.sendAgentSetAppearance();
-	  }
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2142,10 +2083,10 @@ void LLVOAvatarSelf::setLocalTexture(ETextureIndex type, LLViewerTexture* src_te
 					{
 						requestLayerSetUpdate(type);
 						if (isEditingAppearance())
-					{
-						LLVisualParamHint::requestHintUpdates();
+						{
+							LLVisualParamHint::requestHintUpdates();
+						}
 					}
-				}
 				}
 				else
 				{					
@@ -3302,7 +3243,7 @@ void LLVOAvatarSelf::onCustomizeStart(bool disable_camera_switch)
 		gAgentAvatarp->mUseLocalAppearance = true;
 
 		if (gSavedSettings.getBOOL("AppearanceCameraMovement") && !disable_camera_switch)
-{
+		{
 			gAgentCamera.changeCameraToCustomizeAvatar();
 		}
 
@@ -3435,7 +3376,7 @@ void LLVOAvatarSelf::deleteScratchTextures()
 		 namep; 
 		 namep = sScratchTexNames.getNextData() )
 	{
-		LLImageGL::deleteTextures(LLTexUnit::TT_TEXTURE, 0, -1, 1, (U32 *)namep );
+		LLImageGL::deleteTextures(1, (U32 *)namep );
 		stop_glerror();
 	}
 

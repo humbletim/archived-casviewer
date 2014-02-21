@@ -32,6 +32,7 @@ include(LLUI)
 include(LLVFS)
 include(LLWindow)
 include(LLXML)
+include(LeapMotion)
 # <FS:CR> Nope -> include(LScript)
 include(Linking)
 include(NDOF)
@@ -69,6 +70,11 @@ if(FMODEX)
   include_directories(${FMODEX_INCLUDE_DIR})
 endif(FMODEX)
 
+if(LEAPMOTION)
+  add_definitions(-DUSE_LEAPMOTION=1)
+  include_directories(${LEAP_MOTION_INCLUDE_DIR})
+endif(LEAPMOTION)
+
 include_directories(
     ${DBUSGLIB_INCLUDE_DIRS}
     ${JSONCPP_INCLUDE_DIR}
@@ -98,10 +104,10 @@ include_directories(
     ${LIBS_PREBUILD_DIR}/include/hunspell
     ${OPENAL_LIB_INCLUDE_DIRS}
     ${LIBS_PREBUILT_DIR}/include/collada/1.4
-    ${LLAPPEARANCE_INCLUDE_DIRS}
     ${GROWL_INCLUDE_DIRS}
     ${TEAPOT_INCLUDE_DIRS}# <FS:AW opensim currency support>
     ${COLLADA_INCLUDE_DIRS}
+    ${LLAPPEARANCE_INCLUDE_DIRS}
     ${OCULUS_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -115,6 +121,7 @@ include_directories(SYSTEM
 
 set(viewer_SOURCE_FILES
 # <Add FS includes below this line>
+    animationexplorer.cpp
     ao.cpp
     aoengine.cpp
     aoset.cpp
@@ -135,7 +142,9 @@ set(viewer_SOURCE_FILES
     fscontactsfloater.cpp
     fsdata.cpp
     fsexportperms.cpp
+    fsfloateraddtocontactset.cpp
     fsfloaterblocklist.cpp
+    fsfloatercontactsetconfiguration.cpp
     fsfloaterexport.cpp
     fsfloatergroup.cpp
     fsfloatergrouptitles.cpp
@@ -164,6 +173,7 @@ set(viewer_SOURCE_FILES
     fsnearbychathub.cpp
     fsnearbychatvoicemonitor.cpp
     fspanelclassified.cpp
+    fspanelcontactsets.cpp
     fspanelimcontrolpanel.cpp
     fspanelprefs.cpp
     fspanelprofile.cpp
@@ -186,7 +196,6 @@ set(viewer_SOURCE_FILES
     lggbeammaps.cpp
     lggbeamscolors.cpp
     lggcontactsets.cpp
-    lggcontactsetsfloater.cpp
     lfsimfeaturehandler.cpp
     llpanelopenregionsettings.cpp
 
@@ -282,6 +291,7 @@ set(viewer_SOURCE_FILES
     llexpandabletextbox.cpp
     llexternaleditor.cpp
     llface.cpp
+    llfacebookconnect.cpp
     llfasttimerview.cpp
     llfavoritesbar.cpp
     llfeaturemanager.cpp
@@ -357,6 +367,7 @@ set(viewer_SOURCE_FILES
     llfloaterregiondebugconsole.cpp
     llfloaterregioninfo.cpp
     llfloaterreporter.cpp
+    llfloaterregionrestarting.cpp
     llfloaterscriptdebug.cpp
     llfloaterscriptlimits.cpp
     llfloaterscriptrecover.cpp
@@ -366,6 +377,7 @@ set(viewer_SOURCE_FILES
     llfloatersettingsdebug.cpp
     llfloatersidepanelcontainer.cpp
     llfloatersnapshot.cpp
+    llfloatersocial.cpp
     llfloatersounddevices.cpp
     llfloaterspellchecksettings.cpp
     llfloatertelehub.cpp
@@ -601,6 +613,7 @@ set(viewer_SOURCE_FILES
     llsidetraypanelcontainer.cpp
     llsky.cpp
     #llslurl.cpp #<FS:AW optional opensim support>
+    llsnapshotlivepreview.cpp
     llspatialpartition.cpp
     llspeakers.cpp
     llspeakingindicatormanager.cpp
@@ -808,6 +821,7 @@ set(viewer_HEADER_FILES
     ViewerInstall.cmake
 
 # <Add FS includes below this line>
+    animationexplorer.h
     ao.h
     aoengine.h
     aoset.h
@@ -827,7 +841,9 @@ set(viewer_HEADER_FILES
     fscontactsfloater.h
     fsdata.h
     fsexportperms.h
+    fsfloateraddtocontactset.h
     fsfloaterblocklist.h
+    fsfloatercontactsetconfiguration.h
     fsfloaterexport.h
     fsfloatergroup.h
     fsfloatergrouptitles.h
@@ -856,6 +872,7 @@ set(viewer_HEADER_FILES
     fsnearbychatcontrol.h
     fsnearbychathub.h
     fsnearbychatvoicemonitor.h
+    fspanelcontactsets.h
     fspanelclassified.h
     fspanelimcontrolpanel.h
     fspanelprefs.h
@@ -881,7 +898,6 @@ set(viewer_HEADER_FILES
     lggbeammaps.h
     lggbeamscolors.h
     lggcontactsets.h
-    lggcontactsetsfloater.h
     lfsimfeaturehandler.h
 
     llaccountingcostmanager.h
@@ -977,6 +993,7 @@ set(viewer_HEADER_FILES
     llexpandabletextbox.h
     llexternaleditor.h
     llface.h
+    llfacebookconnect.h
     llfasttimerview.h
     llfavoritesbar.h
     llfeaturemanager.h
@@ -1052,6 +1069,7 @@ set(viewer_HEADER_FILES
     llfloaterregiondebugconsole.h
     llfloaterregioninfo.h
     llfloaterreporter.h
+    llfloaterregionrestarting.h
     llfloaterscriptdebug.h
     llfloaterscriptlimits.h
     llfloaterscriptrecover.h
@@ -1061,6 +1079,7 @@ set(viewer_HEADER_FILES
     llfloatersettingsdebug.h
     llfloatersidepanelcontainer.h
     llfloatersnapshot.h
+    llfloatersocial.h
     llfloatersounddevices.h
     llfloaterspellchecksettings.h
     llfloatertelehub.h
@@ -1285,6 +1304,7 @@ set(viewer_HEADER_FILES
     llsidetraypanelcontainer.h
     llsky.h
     llslurl.h
+    llsnapshotlivepreview.h
     llspatialpartition.h
     llspeakers.h
     llspeakingindicatormanager.h
@@ -1519,6 +1539,14 @@ set_source_files_properties(
 #   COMPILE_DEFINITIONS "${VIEWER_CHANNEL_VERSION_DEFINES}" # see BuildVersion.cmake
    )
 
+LIST(APPEND viewer_SOURCE_FILES llleapmotioncontroller.cpp)
+LIST(APPEND viewer_HEADER_FILES llleapmotioncontroller.h)
+
+if (LEAPMOTION)
+  LIST(APPEND viewer_SOURCE_FILES fsleaptool.cpp fsleapexampletool.cpp )
+  LIST(APPEND viewer_HEADER_FILES fsleaptool.h fsleapexampletool.h )
+endif (LEAPMOTION)
+
 if (DARWIN)
   LIST(APPEND viewer_SOURCE_FILES llappviewermacosx.cpp)
   LIST(APPEND viewer_SOURCE_FILES llfilepicker_mac.mm)
@@ -1530,14 +1558,12 @@ if (DARWIN)
 # [FS] Growl libs
   LIST(APPEND viewer_SOURCE_FILES
         growlmanager.cpp
-        growlnotifiermacosx.cpp
-        growlnotifiermacosx-objc.mm
+        growlnotifierwin.cpp
         )
 
   LIST(APPEND viewer_HEADER_FILES
          growlmanager.h
-         growlnotifiermacosx.h
-         growlnotifiermacosx-objc.h
+         growlnotifierwin.h
          )
 # [FS]
 
@@ -2046,6 +2072,13 @@ if (WINDOWS)
            ${SHARED_LIB_STAGING_DIR}/Debug/fmodexL.dll
           )
     endif (FMODEX)
+	
+    if (LEAPMOTION)
+      list(APPEND COPY_INPUT_DEPENDENCIES
+           ${SHARED_LIB_STAGING_DIR}/Release/Leap.dll
+           ${SHARED_LIB_STAGING_DIR}/Debug/Leapd.dll
+          )
+    endif (LEAPMOTION)
     
     add_custom_command(
       OUTPUT  ${CMAKE_CFG_INTDIR}/copy_touched.bat
@@ -2053,6 +2086,7 @@ if (WINDOWS)
       ARGS
         ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py
         --actions=copy
+        --arch=${ARCH}
         ${VIEWERMANIFEST_FLAGS}
         --artwork=${ARTWORK_DIR}
         --build=${CMAKE_CURRENT_BINARY_DIR}
@@ -2121,6 +2155,7 @@ if (WINDOWS)
         COMMAND ${PYTHON_EXECUTABLE}
         ARGS
           ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py
+          --arch=${ARCH}
           ${VIEWERMANIFEST_PACKAGE_FLAGS}
           --artwork=${ARTWORK_DIR}
           --build=${CMAKE_CURRENT_BINARY_DIR}
@@ -2221,6 +2256,12 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${OCULUS_LIBRARY}
     )
 	
+if (LEAPMOTION)
+    target_link_libraries(${VIEWER_BINARY_NAME}
+	${LEAP_MOTION_LIBRARY}
+	)
+endif (LEAPMOTION)
+	
 if (WINDOWS)
     target_link_libraries(${VIEWER_BINARY_NAME}
     ${GROWL_LIBRARY}
@@ -2261,7 +2302,6 @@ if (LINUX)
         --configuration=${CMAKE_CFG_INTDIR}
         --dest=${CMAKE_CURRENT_BINARY_DIR}/packaged
         --grid=${GRID}
-        --installer_name=${product}
         --source=${CMAKE_CURRENT_SOURCE_DIR}
         --touch=${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/.${product}.touched
         --viewer_flavor=${ND_VIEWER_FLAVOR}
@@ -2315,7 +2355,7 @@ if (DARWIN)
   set(MACOSX_BUNDLE_BUNDLE_NAME "CASviewer")
   set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${VIEWER_SHORT_VERSION}")
   set(MACOSX_BUNDLE_BUNDLE_VERSION "${VIEWER_SHORT_VERSION}${VIEWER_MACOSX_PHASE}${VIEWER_REVISION}")
-  set(MACOSX_BUNDLE_COPYRIGHT "Copyright © 2013 CtrlAltStudio")
+  set(MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2013 CtrlAltStudio")
   # <CV:David> Retain Firestorm filename
   set(MACOSX_BUNDLE_NSMAIN_NIB_FILE "Firestorm.nib")
   set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")
@@ -2343,6 +2383,7 @@ if (DARWIN)
     ARGS
       ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py
       --actions=copy
+      --arch=${ARCH}
       --artwork=${ARTWORK_DIR}
       --build=${CMAKE_CURRENT_BINARY_DIR}
       --buildtype=${CMAKE_BUILD_TYPE}
@@ -2375,6 +2416,7 @@ if (DARWIN)
         COMMAND ${PYTHON_EXECUTABLE}
         ARGS
           ${CMAKE_CURRENT_SOURCE_DIR}/viewer_manifest.py
+          --arch=${ARCH}
           --artwork=${ARTWORK_DIR}
           --build=${CMAKE_CURRENT_BINARY_DIR}
           --buildtype=${CMAKE_BUILD_TYPE}
@@ -2430,7 +2472,7 @@ if (PACKAGE)
     set(VIEWER_COPY_MANIFEST copy_l_viewer_manifest)
   endif (LINUX)
 
-  if(RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING)
+  if( (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) AND NOT ND_BUILD64BIT_ARCH )
   if(CMAKE_CFG_INTDIR STREQUAL ".")
       set(LLBUILD_CONFIG ${CMAKE_BUILD_TYPE})
   else(CMAKE_CFG_INTDIR STREQUAL ".")
@@ -2454,7 +2496,7 @@ if (PACKAGE)
   add_custom_target(generate_breakpad_symbols DEPENDS "${VIEWER_SYMBOL_FILE}")
   add_dependencies(generate_breakpad_symbols "${VIEWER_BINARY_NAME}" "${VIEWER_COPY_MANIFEST}")
   add_dependencies(package generate_breakpad_symbols)
-  endif(RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING)
+  endif( (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) AND NOT ND_BUILD64BIT_ARCH )
 endif (PACKAGE)
 
 if (LL_TESTS)

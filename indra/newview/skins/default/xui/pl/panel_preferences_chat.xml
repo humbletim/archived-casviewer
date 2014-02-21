@@ -95,6 +95,8 @@
 			<spinner tool_tip="0.25-1.0, 0.25 dla silnego wygaszania, 1 dla braku wygaszania" name="FSIMChatHistoryFade"/>
 			<check_box name="FSAnnounceIncomingIM" label="Powiadamiaj o nowej IM, gdy tylko nadawca zacznie pisać"/>
 			<check_box name="FSIMChatFlashOnFriendStatusChange" label="Mrugaj kartami IM, gdy znajomi się logują/wylogowywują"/>
+			<check_box name="FSNotifyNearbyChatFlash" label="Mrugaj przyciskiem 'czat' na dolnym pasku, gdy nadchodzi wiadomość czatu lokalnego" tool_tip="Mruga przyciskiem 'czat' na dolnym pasku, gdy nadchodzi nowa wiadomość czatu lokalnego. Okno czatu lokalnego musi być zadokowane w oknie rozmów, a okno rozmów musi być zamknięte, aby przycisk mrugał."/>
+			<check_box name="FSNotifyIMFlash" label="Mrugaj przyciskiem 'czat' na dolnym pasku, gdy nadchodzi wiadomość IM" tool_tip="Mruga przyciskiem 'czat' na dolnym pasku, gdy nadchodzi nowa wiadomość IM (dotyczy też wiadomości grupowych). Okno wiadomości IM musi być zadokowane w oknie rozmów, a okno rozmów musi być zamknięte, aby przycisk mrugał. Ta opcja jest dostępna tylko w wypadku, gdy wiadomości IM są pokazywane w kartach, a nie w osobnych oknach (zobacz zakładkę &quot;Ogólne&quot;)."/>
 			<check_box name="FSReportMutedGroupChat" label="Zgłaszaj wyciszenie czatu grupowego w czacie lokalnym"/>
 			<text name="WhenPlayIMLabel">
 				Gdy nadchodzi wiadomość IM:
@@ -114,6 +116,17 @@
 				<combo_box.item label="Odtwarzaj dźwięk tylko gdy okno jest nieaktywne w tle" name="3"/>
 				<combo_box.item label="Nie odtwarzaj żadnego dźwięku powiadomienia" name="0"/>
 			</combo_box>
+			<text name="WhenPlayConfIMLabel">
+				Gdy nadchodzi wiadomość konferencji:
+			</text>
+			<combo_box name="WhenPlayConfIM">
+				<combo_box.item label="Odtwarzaj dźwięk tylko na rozpoczęciu nowej sesji IM" name="1"/>
+				<combo_box.item label="Odtwarzaj dźwięk przy każdej otrzymanej wiadomości" name="2"/>
+				<combo_box.item label="Odtwarzaj dźwięk tylko gdy okno jest nieaktywne w tle" name="3"/>
+				<combo_box.item label="Nie odtwarzaj żadnego dźwięku powiadomienia" name="0"/>
+			</combo_box>
+			<check_box name="FSGroupNoticesToIMLog" label="Pokazuj ogłoszenia grup także w czatach grupowych, a nie tylko w tostach"/>
+			<check_box name="FSBetterGroupNoticesToIMLog" label="Pokazuj również ich tematy i autorów"/>
 		</panel>
 		<panel name="ChatFirestorm">
 			<text name="chat_and_im_enhancements">
@@ -127,7 +140,8 @@
 			<check_box name="FSShowChatChannel" label="Oferuj ręczny wybór kanału w pasku czatu"/>
 			<check_box name="FSShowChatType" label="Pokaż typ czatu i przycisk wysyłania" left_delta="250"/>
 			<check_box label="Autoukrywanie głównego paska czatu" name="AutohideChatBar" tool_tip="Ukryj pasek czatu na dolnej listwie przycisków i pokazuj go jako nakładkę tylko wtedy, gdy to potrzebne."/>
-			<check_box label="Odznaczaj czat po wysłaniu wiadomości" name="CloseChatOnReturn"/>
+			<check_box label="Odznaczaj pasek czatu po wysłaniu wiadomości" name="CloseChatOnReturn"/>
+			<check_box label="Odznaczaj także historię czatu" name="FSUnfocusChatHistoryOnReturn" left_delta="285"/>
 			<check_box name="FSMarkObjects" label="Oznaczaj obiekty frazą (bez nazwy) gdy wysyłają coś na czat, by zapobiec oszustwom"/>
 			<text name="group_enhancements">
 				Czat grupowy:

@@ -24,6 +24,7 @@ um mehrere Mitglieder auszuwählen.
 			</name_list>
 			<button label="Einladen" name="member_invite"/>
 			<button label="Hinauswerfen" name="member_eject"/>
+			<button label="Liste exportieren" name="export_list"/>
 		</panel>
 		<panel label="Rollen" name="roles_sub_tab" tool_tip="Rollen">
 			<panel.string name="help_text">
@@ -119,7 +120,7 @@ Rechte in einer Gruppe. Es gibt viele verschiedene Fähigkeiten.
 			Rollen mit Fähigkeiten
 		</text>
 		<text name="action_members_label">
-			Rollen mit dieser Fähigkeit
+			Mitglieder mit dieser Fähigkeit
 		</text>
 	</panel>
 </panel>

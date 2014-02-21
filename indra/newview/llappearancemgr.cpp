@@ -1514,6 +1514,20 @@ void LLAppearanceMgr::takeOffOutfit(const LLUUID& cat_id)
 		uuids_to_remove.push_back(item->getUUID());
 	}
 	removeItemsFromAvatar(uuids_to_remove);
+
+	// <FS> Fix for FIRE-1256 by Lance Corrimal
+	// now deactivating all gestures in that folder
+	LLInventoryModel::item_array_t gest_items;
+	getDescendentsOfAssetType(cat_id, gest_items, LLAssetType::AT_GESTURE, false);
+	for (S32 i = 0; i < gest_items.count(); ++i)
+	{
+		LLViewerInventoryItem *gest_item = gest_items.get(i);
+		if ( LLGestureMgr::instance().isGestureActive( gest_item->getLinkedUUID()) )
+		{
+			LLGestureMgr::instance().deactivateGesture( gest_item->getLinkedUUID() );
+		}
+	}
+	// </FS>
 }
 
 // Create a copy of src_id + contents as a subfolder of dst_id.
@@ -3866,7 +3880,7 @@ void LLAppearanceMgr::removeItemsFromAvatar(const uuid_vec_t& ids_to_remove)
 // [RLVa:KB] - Checked: 2013-02-12 (RLVa-1.4.8)
 	bool fUpdateAppearance = false;
 	for (uuid_vec_t::const_iterator it = ids_to_remove.begin(); it != ids_to_remove.end(); ++it)
-			{
+	{
 		const LLInventoryItem* linked_item = gInventory.getLinkedItem(*it);
 		if (linked_item && (rlv_handler_t::isEnabled()) && (!rlvPredCanRemoveItem(linked_item)) )
 		{
@@ -3876,12 +3890,13 @@ void LLAppearanceMgr::removeItemsFromAvatar(const uuid_vec_t& ids_to_remove)
 		fUpdateAppearance = true;
 		const LLUUID& linked_item_id = gInventory.getLinkedItemID(*it);
 		removeCOFItemLinks(linked_item_id);
-			}
+		addDoomedTempAttachment(linked_item_id);
+	}
 
 	if (fUpdateAppearance)
 	{
 		updateAppearanceFromCOF();
-	}
+}
 // [/RLVa:KB]
 //	for (uuid_vec_t::const_iterator it = ids_to_remove.begin(); it != ids_to_remove.end(); ++it)
 //	{
@@ -3903,9 +3918,38 @@ void LLAppearanceMgr::removeItemFromAvatar(const LLUUID& id_to_remove)
 	}
 // [/RLVA:KB]
 	LLUUID linked_item_id = gInventory.getLinkedItemID(id_to_remove);
+
 	removeCOFItemLinks(linked_item_id);
+	addDoomedTempAttachment(linked_item_id);
 	updateAppearanceFromCOF();
 }
+
+
+// Adds the given item ID to mDoomedTempAttachmentIDs iff it's a temp attachment
+void LLAppearanceMgr::addDoomedTempAttachment(const LLUUID& id_to_remove)
+{
+	LLViewerObject * attachmentp = gAgentAvatarp->findAttachmentByID(id_to_remove);
+	if (attachmentp &&
+		attachmentp->isTempAttachment())
+	{	// If this is a temp attachment and we want to remove it, record the ID 
+		// so it will be deleted when attachments are synced up with COF
+		mDoomedTempAttachmentIDs.insert(id_to_remove);
+		//llinfos << "Will remove temp attachment id " << id_to_remove << llendl;
+	}
+}
+
+// Find AND REMOVES the given UUID from mDoomedTempAttachmentIDs
+bool LLAppearanceMgr::shouldRemoveTempAttachment(const LLUUID& item_id)
+{
+	doomed_temp_attachments_t::iterator iter = mDoomedTempAttachmentIDs.find(item_id);
+	if (iter != mDoomedTempAttachmentIDs.end())
+	{
+		mDoomedTempAttachmentIDs.erase(iter);
+		return true;
+	}
+	return false;
+}
+
 
 bool LLAppearanceMgr::moveWearable(LLViewerInventoryItem* item, bool closer_to_body)
 {

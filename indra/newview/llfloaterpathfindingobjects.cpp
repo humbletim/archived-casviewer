@@ -41,7 +41,6 @@
 #include "llavatarnamecache.h"
 #include "llbutton.h"
 #include "llcheckboxctrl.h"
-#include "llenvmanager.h"
 #include "llfloater.h"
 #include "llfontgl.h"
 #include "llnotifications.h"
@@ -85,7 +84,7 @@ void LLFloaterPathfindingObjects::onOpen(const LLSD &pKey)
 
 	if (!mRegionBoundaryCrossingSlot.connected())
 	{
-		mRegionBoundaryCrossingSlot = LLEnvManagerNew::getInstance()->setRegionChangeCallback(boost::bind(&LLFloaterPathfindingObjects::onRegionBoundaryCrossed, this));
+		mRegionBoundaryCrossingSlot = gAgent.addRegionChangedCallback(boost::bind(&LLFloaterPathfindingObjects::onRegionBoundaryCrossed, this));
 	}
 
 	if (!mGodLevelChangeSlot.connected())
@@ -407,7 +406,9 @@ void LLFloaterPathfindingObjects::addObjectToScrollList(const LLPathfindingObjec
 
 	if (pObjectPtr->hasOwner() && !pObjectPtr->hasOwnerName())
 	{
-		mMissingNameObjectsScrollListItems.insert(std::make_pair<std::string, LLScrollListItem *>(pObjectPtr->getUUID().asString(), scrollListItem));
+		// <FS:TM> C++11 compile fix
+		//mMissingNameObjectsScrollListItems.insert(std::make_pair<std::string, LLScrollListItem *>(pObjectPtr->getUUID().asString(), scrollListItem));
+		mMissingNameObjectsScrollListItems.insert(std::pair<std::string, LLScrollListItem *>(pObjectPtr->getUUID().asString(), scrollListItem));
 		pObjectPtr->registerOwnerNameListener(boost::bind(&LLFloaterPathfindingObjects::handleObjectNameResponse, this, _1));
 	}
 }

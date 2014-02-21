@@ -115,6 +115,7 @@ public:
 
 	void callbackLoadFullName(const LLUUID& id, const std::string& full_name);
 	void processObjectProperties(LLMessageSystem* msg);
+	void updateObjectCosts(const LLUUID& object_id, F32 object_cost, F32 link_cost, F32 physics_cost, F32 link_physics_cost);
 	static void idle(void *user_data);
 
 	void checkRegion();
@@ -160,6 +161,9 @@ public:
 	void setColumnDistance(bool b) { mColumnDistance = b; }
 	void setColumnName(bool b) { mColumnName = b; }
 	void setColumnDescription(bool b) { mColumnDescription = b; }
+	void setColumnPrice(bool b) { mColumnPrice = b; }
+	void setColumnLandImpact(bool b) { mColumnLandImpact = b; }
+	void setColumnPrimCount(bool b) { mColumnPrimCount = b; }
 	void setColumnOwner(bool b) { mColumnOwner = b; }
 	void setColumnGroup(bool b) { mColumnGroup = b; }
 	void setColumnCreator(bool b) { mColumnCreator = b; }
@@ -225,7 +229,6 @@ private:
 	bool mBeacons;
 	LLColor4 mBeaconColor;
 	LLColor4 mBeaconTextColor;
-	S32 mBeaconLineWidth;
 	
 	bool mExcludeAttachment;
 	bool mExcludeTemporary;
@@ -254,6 +257,9 @@ private:
 	bool mColumnDistance;
 	bool mColumnName;
 	bool mColumnDescription;
+	bool mColumnPrice;
+	bool mColumnLandImpact;
+	bool mColumnPrimCount;
 	bool mColumnOwner;
 	bool mColumnGroup;
 	bool mColumnCreator;
@@ -303,6 +309,8 @@ private:
 	LLContextMenu* mPopupMenu;
 	bool onContextMenuItemClick(const LLSD& userdata);
 	bool onContextMenuItemEnable(const LLSD& userdata);
+
+	F32 getBBoxAspectRatio(const LLBBox& bbox, const LLVector3& normal, F32* height, F32* width, F32* depth);
 
 	LLVector3d mAgentLastPosition;
 

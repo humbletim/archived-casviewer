@@ -99,25 +99,16 @@
 #include "stringize.h"
 #include "boost/foreach.hpp"
 
-//-TT Client LSL Bridge
+// Firestorm includes
 #include "fslslbridge.h"
-//-TT
-#include "fsscriptlibrary.h"	// <FS:CR>
+#include "fsscriptlibrary.h"
 #include "kcwlinterface.h"
-// [RLVa:KB] - Checked: 2011-11-04 (RLVa-1.4.4a)
+#include "rlvactions.h"
 #include "rlvhandler.h"
 #include "rlvhelper.h"
 #include "rlvui.h"
-// [/RLVa:KB]
-
-
-// NaCl - Antispam Registry
+#include "utilitybar.h"
 #include "NACLantispam.h"
-// NaCl End
-
-#include "utilitybar.h"		// <FS:Zi> show/hide utility bar in mouselook
-
-#include "boost/foreach.hpp" // <FS:LO> for boost::foreach
 
 using namespace LLAvatarAppearanceDefines;
 
@@ -287,11 +278,9 @@ bool handleSlowMotionAnimation(const LLSD& newvalue)
 	return true;
 }
 
-// static
-void LLAgent::parcelChangedCallback()
+void LLAgent::setCanEditParcel() // called via mParcelChangedSignal
 {
 	bool can_edit = LLToolMgr::getInstance()->canEdit();
-
 	gAgent.mCanEditParcel = can_edit;
 }
 
@@ -465,6 +454,8 @@ LLAgent::LLAgent() :
 
 	mListener.reset(new LLAgentListener(*this));
 
+	addParcelChangedCallback(&setCanEditParcel);
+
 	mMoveTimer.stop();
 }
 
@@ -518,8 +509,6 @@ void LLAgent::init()
 	selectAutorespond(gSavedPerAccountSettings.getBOOL("FSAutorespondMode"));
 	selectAutorespondNonFriends(gSavedPerAccountSettings.getBOOL("FSAutorespondNonFriendsMode"));
 	selectRejectTeleportOffers(gSavedPerAccountSettings.getBOOL("FSRejectTeleportOffersMode")); // <FS:PP> FIRE-1245: Option to block/reject teleport offers
-
-	LLViewerParcelMgr::getInstance()->addAgentParcelChangedCallback(boost::bind(&LLAgent::parcelChangedCallback));
 
 	if (!mTeleportFinishedSlot.connected())
 	{
@@ -1086,7 +1075,7 @@ void LLAgent::standUp()
 //	setControlFlags(AGENT_CONTROL_STAND_UP);
 // [RLVa:KB] - Checked: 2010-03-07 (RLVa-1.2.0c) | Added: RLVa-1.2.0a
 	// RELEASE-RLVa: [SL-2.0.0] Check this function's callers since usually they require explicit blocking
-	if ( (!rlv_handler_t::isEnabled()) || (gRlvHandler.canStand()) )
+	if ( (!rlv_handler_t::isEnabled()) || (RlvActions::canStand()) )
 	{
 		setControlFlags(AGENT_CONTROL_STAND_UP);
 	}
@@ -1117,22 +1106,33 @@ void LLAgent::handleServerBakeRegionTransition(const LLUUID& region_id)
 	}
 }
 
+void LLAgent::changeParcels()
+{
+	LL_DEBUGS("AgentLocation") << "Calling ParcelChanged callbacks" << LL_ENDL;
+	// Notify anything that wants to know about parcel changes
+	mParcelChangedSignal();
+}
+
+boost::signals2::connection LLAgent::addParcelChangedCallback(parcel_changed_callback_t cb)
+{
+	return mParcelChangedSignal.connect(cb);
+}
+
 //-----------------------------------------------------------------------------
 // setRegion()
 //-----------------------------------------------------------------------------
 void LLAgent::setRegion(LLViewerRegion *regionp)
 {
-	bool teleport = true;
-
+	bool notifyRegionChange;
+	
 	llassert(regionp);
 	if (mRegionp != regionp)
 	{
-		// std::string host_name;
-		// host_name = regionp->getHost().getHostName();
-
+		notifyRegionChange = true;
+		
 		std::string ip = regionp->getHost().getString();
-		llinfos << "Moving agent into region: " << regionp->getName()
-				<< " located at " << ip << llendl;
+		LL_INFOS("AgentLocation") << "Moving agent into region: " << regionp->getName()
+				<< " located at " << ip << LL_ENDL;
 		if (mRegionp)
 		{
 			// NaCl - Antispam Registry clear anti-spam queues when changing regions
@@ -1164,9 +1164,6 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 			{
 				gSky.mVOGroundp->setRegion(regionp);
 			}
-
-			// Notify windlight managers
-			teleport = (gAgent.getTeleportState() != LLAgent::TELEPORT_NONE);
 		}
 		else
 		{
@@ -1188,7 +1185,13 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 		// Pass new region along to metrics components that care about this level of detail.
 		LLAppViewer::metricsUpdateRegion(regionp->getHandle());
 	}
+	else
+	{
+		notifyRegionChange = false;
+	}
 	mRegionp = regionp;
+
+	// TODO - most of what follows probably should be moved into callbacks
 
 	// Pass the region host to LLUrlEntryParcel to resolve parcel name
 	// with a server request.
@@ -1211,15 +1214,6 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 	LLFloaterMove::sUpdateMovementStatus();
 // [/RLVa:KB]
 
-	if (teleport)
-	{
-		LLEnvManagerNew::instance().onTeleport();
-	}
-	else
-	{
-		LLEnvManagerNew::instance().onRegionCrossing();
-	}
-
 	// If the newly entered region is using server bakes, and our
 	// current appearance is non-baked, request appearance update from
 	// server.
@@ -1231,6 +1225,12 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 	{
 		// Need to handle via callback after caps arrive.
 		mRegionp->setCapabilitiesReceivedCallback(boost::bind(&LLAgent::handleServerBakeRegionTransition,this,_1));
+	}
+
+	if (notifyRegionChange)
+	{
+		LL_DEBUGS("AgentLocation") << "Calling RegionChanged callbacks" << LL_ENDL;
+		mRegionChangedSignal();
 	}
 }
 
@@ -1255,6 +1255,23 @@ LLHost LLAgent::getRegionHost() const
 		return LLHost::invalid;
 	}
 }
+
+boost::signals2::connection LLAgent::addRegionChangedCallback(const region_changed_signal_t::slot_type& cb)
+{
+	return mRegionChangedSignal.connect(cb);
+}
+
+void LLAgent::removeRegionChangedCallback(boost::signals2::connection callback)
+{
+	mRegionChangedSignal.disconnect(callback);
+}
+
+// <FS:Ansariel> Aurora sim windlight refresh
+void LLAgent::changeRegion()
+{
+	mRegionChangedSignal();
+}
+// </FS:Ansariel>
 
 //-----------------------------------------------------------------------------
 // inPrelude()
@@ -1381,10 +1398,18 @@ const LLVector3d &LLAgent::getPositionGlobal() const
 //-----------------------------------------------------------------------------
 const LLVector3 &LLAgent::getPositionAgent()
 {
-	if (isAgentAvatarValid() && !gAgentAvatarp->mDrawable.isNull())
+	if (isAgentAvatarValid())
+	{
+		if(gAgentAvatarp->mDrawable.isNull())
+		{
+			mFrameAgent.setOrigin(gAgentAvatarp->getPositionAgent());
+		}
+		else
 	{
 		mFrameAgent.setOrigin(gAgentAvatarp->getRenderPosition());	
 	}
+	}
+
 
 	return mFrameAgent.getOrigin();
 }
@@ -1432,7 +1457,7 @@ void LLAgent::sitDown()
 //	setControlFlags(AGENT_CONTROL_SIT_ON_GROUND);
 // [RLVa:KB] - Checked: 2010-08-28 (RLVa-1.2.1a) | Added: RLVa-1.2.1a
 	// RELEASE-RLVa: [SL-2.0.0] Check this function's callers since usually they require explicit blocking
-	if ( (!rlv_handler_t::isEnabled()) || ((gRlvHandler.canStand()) && (!gRlvHandler.hasBehaviour(RLV_BHVR_SIT))) )
+	if ( (!rlv_handler_t::isEnabled()) || ((RlvActions::canStand()) && (!gRlvHandler.hasBehaviour(RLV_BHVR_SIT))) )
 	{
 		setControlFlags(AGENT_CONTROL_SIT_ON_GROUND);
 	}
@@ -3524,6 +3549,10 @@ BOOL LLAgent::setUserGroupFlags(const LLUUID& group_id, BOOL accept_notices, BOO
 			msg->nextBlock("NewData");
 			msg->addBOOL("ListInProfile", list_in_profile);
 			sendReliableMessage();
+
+			// <FS:Ansariel> Mark groups hidden in profile
+			gAgent.fireEvent(new LLOldEvents::LLValueChangedEvent(&gAgent, LLSD().with("group_id", group_id).with("visible", list_in_profile)), "");
+
 			return TRUE;
 		}
 	}
@@ -3661,7 +3690,7 @@ void LLAgent::sendRevokePermissions(const LLUUID & target, U32 permissions)
 
 		msg->nextBlockFast(_PREHASH_Data);
 		msg->addUUIDFast(_PREHASH_ObjectID, target);		// Must be in the region
-		msg->addS32Fast(_PREHASH_ObjectPermissions, (S32) permissions);
+		msg->addU32Fast(_PREHASH_ObjectPermissions, (U32) permissions);
 
 		sendReliableMessage();
 	}
@@ -3987,6 +4016,12 @@ void LLAgent::processAgentGroupDataUpdate(LLMessageSystem *msg, void **)
 		llwarns << "processAgentGroupDataUpdate for agent other than me" << llendl;
 		return;
 	}	
+	// <FS:Ansariel> Groupdata debug
+	else
+	{
+		LL_INFOS("Agent_GroupData") << "GROUPDEBUG: Executing deprecated processAgentGroupDataUpdate" << LL_ENDL;
+	}
+	// </FS:Ansariel>
 	
 	S32 count = msg->getNumberOfBlocksFast(_PREHASH_GroupData);
 	LLGroupData group;
@@ -4039,6 +4074,12 @@ class LLAgentGroupDataUpdateViewerNode : public LLHTTPNode
 			llwarns << "processAgentGroupDataUpdate for agent other than me" << llendl;
 			return;
 		}	
+		// <FS:Ansariel> Groupdata debug
+		else
+		{
+			LL_INFOS("Agent_GroupData") << "GROUPDEBUG: Executing processAgentGroupDataUpdate" << LL_ENDL;
+		}
+		// </FS:Ansariel>
 
 		LLSD group_data = body["GroupData"];
 
@@ -4853,7 +4894,7 @@ void LLAgent::teleportViaLocationLookAt(const LLVector3d& pos_global)
 // [RLVa:KB] - Checked: 2010-10-07 (RLVa-1.2.1f) | Added: RLVa-1.2.1f
 	// RELEASE-RLVa: [SL-2.2.0] Make sure this isn't used for anything except double-click teleporting
 	if ( (rlv_handler_t::isEnabled()) && (!RlvUtil::isForceTp()) && 
-		 ((gRlvHandler.hasBehaviour(RLV_BHVR_SITTP)) || (!gRlvHandler.canStand())) )
+		 ((gRlvHandler.hasBehaviour(RLV_BHVR_SITTP)) || (!RlvActions::canStand())) )
 	{
 		RlvUtil::notifyBlocked(RLV_STRING_BLOCKED_TELEPORT);
 		return;
@@ -4922,7 +4963,10 @@ void LLAgent::setTeleportState(ETeleportState state)
 	}
 }
 
-void LLAgent::stopCurrentAnimations()
+// <FS:Ansariel> FIRE-12148: Pose stand breaks XPOSE animations
+//void LLAgent::stopCurrentAnimations()
+void LLAgent::stopCurrentAnimations(bool force_keep_script_perms /*= false*/)
+// </FS:Ansariel>
 {
 	// This function stops all current overriding animations on this
 	// avatar, propagating this change back to the server.
@@ -4958,6 +5002,9 @@ void LLAgent::stopCurrentAnimations()
 
 		// Revoke all animation permissions
 		if (mRegionp &&
+			// <FS:Ansariel> FIRE-12148: Pose stand breaks XPOSE animations
+			!force_keep_script_perms &&
+			// </FS:Ansariel>
 			gSavedSettings.getBOOL("RevokePermsOnStopAnimation"))
 		{
 			U32 permissions = LSCRIPTRunTimePermissionBits[SCRIPT_PERMISSION_TRIGGER_ANIMATION] | LSCRIPTRunTimePermissionBits[SCRIPT_PERMISSION_OVERRIDE_ANIMATIONS];

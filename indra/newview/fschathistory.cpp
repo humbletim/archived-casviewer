@@ -62,19 +62,15 @@
 #include "llstring.h"
 #include "llurlaction.h"
 #include "llviewercontrol.h"
-// [RLVa:KB] - Checked: 2010-04-22 (RLVa-1.2.0f)
-#include "rlvcommon.h"
-// [/RLVa:KB]
-
-// llviewernetwork.h : SJ: Needed to find the grid we are running on
 #include "llviewernetwork.h"
 
-// <FS_Zi> FIRE-8602: Typing in chat history focuses chat input line
+#include "fscommon.h"
+#include "llchatentry.h"
 #include "llfocusmgr.h"
 #include "llkeyboard.h"
-#include "llchatentry.h"
-// </FS:Zi>
 #include "llpanelblockedlist.h"
+#include "rlvcommon.h"
+#include "rlvhandler.h"
 
 static LLDefaultChildRegistry::Register<FSChatHistory> r("fs_chat_history");
 
@@ -202,21 +198,119 @@ public:
 		{
 			LLAvatarActions::startIM(getAvatarId());
 		}
+		else if (level == "teleport_to")
+		{
+			LLUrlAction::executeSLURL(LLSLURL("firestorm", getAvatarId(), "teleportto").getSLURLString());
+		}
+		else if (level == "teleport")
+		{
+			LLAvatarActions::offerTeleport(getAvatarId());
+		}
+		else if (level == "request_teleport")
+		{
+			LLAvatarActions::teleportRequest(getAvatarId());
+		}
+		else if (level == "voice_call")
+		{
+			LLAvatarActions::startCall(getAvatarId());
+		}
+		else if (level == "chat_history")
+		{
+			LLAvatarActions::viewChatHistory(getAvatarId());
+		}
 		else if (level == "add")
 		{
 			LLAvatarActions::requestFriendshipDialog(getAvatarId(), mFrom);
 		}
+		else if (level == "add_set")
+		{
+			LLAvatarActions::addToContactSet(getAvatarId());
+		}
 		else if (level == "remove")
 		{
 			LLAvatarActions::removeFriendDialog(getAvatarId());
+		}
+		else if (level == "invite_to_group")
+		{
+			LLAvatarActions::inviteToGroup(getAvatarId());
+		}
+		else if (level == "zoom_in")
+		{
+			handle_zoom_to_object(getAvatarId());
+		}
+		else if (level == "map")
+		{
+			LLAvatarActions::showOnMap(getAvatarId());
+		}
+		else if (level == "track")
+		{
+			LLUrlAction::executeSLURL(LLSLURL("firestorm", getAvatarId(), "track").getSLURLString());
+		}
+		else if (level == "share")
+		{
+			LLAvatarActions::share(getAvatarId());
+		}
+		else if (level == "pay")
+		{
+			LLAvatarActions::pay(getAvatarId());
+		}
+		else if (level == "copy_name")
+		{
+			LLUrlAction::copyLabelToClipboard(LLSLURL("agent", getAvatarId(), "inspect").getSLURLString());
+		}
+		else if (level == "copy_url")
+		{
+			LLUrlAction::copyURLToClipboard(LLSLURL("agent", getAvatarId(), "about").getSLURLString());
+		}
+		else if(level == "block_unblock")
+		{
+			mute(getAvatarId(), LLMute::flagVoiceChat);
+		}
+		else if(level == "mute_unmute")
+		{
+			mute(getAvatarId(), LLMute::flagTextChat);
+		}
+	}
+
+	bool onAvatarIconContextMenuItemChecked(const LLSD& userdata)
+	{
+		std::string level = userdata.asString();
+
+		if (level == "is_blocked")
+		{
+			return LLMuteList::getInstance()->isMuted(getAvatarId(), LLMute::flagVoiceChat);
+		}
+		if (level == "is_muted")
+		{
+			return LLMuteList::getInstance()->isMuted(getAvatarId(), LLMute::flagTextChat);
+		}
+		return false;
+	}
+
+	void mute(const LLUUID& participant_id, U32 flags)
+	{
+		BOOL is_muted = LLMuteList::getInstance()->isMuted(participant_id, flags);
+		std::string name;
+		gCacheName->getFullName(participant_id, name);
+		LLMute mute(participant_id, name, LLMute::AGENT);
+
+		if (!is_muted)
+		{
+			LLMuteList::getInstance()->add(mute, flags);
+		}
+		else
+		{
+			LLMuteList::getInstance()->remove(mute, flags);
 		}
 	}
 
 	BOOL postBuild()
 	{
 		LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
+		LLUICtrl::EnableCallbackRegistry::ScopedRegistrar registrar_enable;
 
 		registrar.add("AvatarIcon.Action", boost::bind(&FSChatHistoryHeader::onAvatarIconContextMenuItemClicked, this, _2));
+		registrar_enable.add("AvatarIcon.Check", boost::bind(&FSChatHistoryHeader::onAvatarIconContextMenuItemChecked, this, _2));
 		registrar.add("ObjectIcon.Action", boost::bind(&FSChatHistoryHeader::onObjectIconContextMenuItemClicked, this, _2));
 
 		LLMenuGL* menu = LLUICtrlFactory::getInstance()->createFromFile<LLMenuGL>("menu_avatar_icon.xml", gMenuHolder, LLViewerMenuHolderGL::child_registry_t::instance());
@@ -547,13 +641,37 @@ protected:
 				menu->setItemEnabled("Add Friend", false);
 				menu->setItemEnabled("Send IM", false);
 				menu->setItemEnabled("Remove Friend", false);
+				menu->setItemEnabled("Offer Teleport",false);
+				menu->setItemEnabled("Request Teleport",false);
+				menu->setItemEnabled("Teleport to",false);
+				menu->setItemEnabled("Voice Call", false);
+				menu->setItemEnabled("Add Contact Set", false);
+				menu->setItemEnabled("Invite Group", false);
+				menu->setItemEnabled("Zoom In", false);
+				menu->setItemEnabled("track", false);
+				menu->setItemEnabled("Share", false);
+				menu->setItemEnabled("Pay", false);
+				menu->setItemEnabled("Block Unblock", false);
+				menu->setItemEnabled("Mute Text", false);
 			}
-
-			if (mSessionID == LLIMMgr::computeSessionID(IM_NOTHING_SPECIAL, mAvatarID))
+			else
 			{
-				menu->setItemVisible("Send IM", false);
+				if (mSessionID == LLIMMgr::computeSessionID(IM_NOTHING_SPECIAL, mAvatarID))
+				{
+					menu->setItemVisible("Send IM", false);
+				}
+				menu->setItemEnabled("Teleport to", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_TELEPORT_TO));
+				menu->setItemEnabled("Offer Teleport", LLAvatarActions::canOfferTeleport(mAvatarID));
+				menu->setItemEnabled("Request Teleport", LLAvatarActions::canOfferTeleport(mAvatarID));
+				menu->setItemEnabled("Voice Call", LLAvatarActions::canCall());
+				menu->setItemEnabled("Zoom In", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_ZOOM_IN));
+				menu->setItemEnabled("track", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_TRACK_AVATAR));
+				menu->setItemEnabled("Block Unblock", LLAvatarActions::canBlock(mAvatarID));
+				menu->setItemEnabled("Mute Text", LLAvatarActions::canBlock(mAvatarID));
 			}
 
+			menu->setItemEnabled("Chat History", LLLogChat::isTranscriptExist(mAvatarID));
+			menu->setItemEnabled("Map", (LLAvatarTracker::instance().isBuddyOnline(mAvatarID) && is_agent_mappable(mAvatarID)) || gAgent.isGodlike() );
 			menu->buildDrawLabels();
 			menu->updateParent(LLMenuGL::sMenuContainer);
 			LLMenuGL::showPopup(this, menu, x, y);
@@ -1043,6 +1161,7 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 					//appendText(std::string(link_params.link_href) + delimiter,
 					//		prependNewLineState, link_params);
 					appendText(std::string(name_params.link_href), prependNewLineState, name_params);
+					prependNewLineState = false;
 					appendText(delimiter, prependNewLineState, body_message_params);
 					// </FS:Ansariel>
 					prependNewLineState = false;
@@ -1189,7 +1308,8 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 		}
 
 		appendText(message, prependNewLineState, body_message_params);	// <FS:Zi> FIRE-8600: TAB out of chat history
-		prependNewLineState = false;
+		// Uncomment this if we never need to append to the end of a message. [FS:CR]
+		//prependNewLineState = false;
 	}
 
 	blockUndo();	// <FS:Zi> FIRE-8600: TAB out of chat history

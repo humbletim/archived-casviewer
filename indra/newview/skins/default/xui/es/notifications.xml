@@ -1804,6 +1804,16 @@ Se ha establecido un alias para este residente que reemplazará a [NEW_NAME]
 			<button name="Cancel" text="Cancelar"/>
 		</form>
 	</notification>
+	<notification name="TeleportRequestPrompt">
+		Solicita teleporte a [NAME] con el siguiente mensaje
+		<form name="form">
+			<input name="message" type="text">
+
+			</input>
+			<button name="OK" text="Aceptar"/>
+			<button name="Cancel" text="Cancelar"/>
+		</form>
+	</notification>
 	<notification name="TooManyTeleportOffers">
 		Has intentado hacer [OFFERS] ofertas de teleporte,
 excediendo el límite de [LIMIT].
@@ -2672,6 +2682,9 @@ Inténtalo seleccionando un trozo más pequeño de terreno.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2950,6 +2963,16 @@ No obstante, el contenido de esta región solo es accesible para los adultos.
 	</notification>
 	<notification name="TeleportOfferSent">
 		Teleporte ofrecido a [TO_NAME]
+	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] está solicitando ser teleportado a tu posición.
+[MESSAGE]
+
+¿Ofrecer teleporte?
+		<form name="form">
+			<button name="Yes" text="Sí"/>
+			<button name="No" text="No"/>
+		</form>
 	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
@@ -4187,13 +4210,13 @@ el servidor está lleno.
 		La selección no contiene suficientes parcelas alquiladas para unirlas.
 	</notification>
 	<notification name="CantDivideLandMultipleParcelsSelected">
-		No se puede dividir el terreno.\nHay varias parcelas seleccionadas.\nPrueba a seleccionar un terreno más pequeño.
+		No se puede dividir el terreno. Hay varias parcelas seleccionadas. Prueba a seleccionar un terreno más pequeño.
 	</notification>
 	<notification name="CantDivideLandCantFindParcel">
-		No se puede dividir el terreno.\nNo se encuentra la parcela.\nAvísanos con Ayuda -&gt; Notificar fallo...
+		No se puede dividir el terreno. No se encuentra la parcela. Avísanos con Ayuda -&gt; Notificar fallo...
 	</notification>
 	<notification name="CantDivideLandWholeParcelSelected">
-		No se puede dividir el terreno. Está seleccionada la parcela completa.\nPrueba a seleccionar un terreno más pequeño.
+		No se puede dividir el terreno. Está seleccionada la parcela completa. Prueba a seleccionar un terreno más pequeño.
 	</notification>
 	<notification name="LandHasBeenDivided">
 		El terreno se ha dividido.

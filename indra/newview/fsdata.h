@@ -46,7 +46,6 @@ public:
 	void processResponder(const LLSD& content, const std::string& url, bool save_to_file, const LLDate& last_modified);
 	void addAgents();
 
-	LLSD resolveClientTag(LLUUID id);
 	LLSD resolveClientTag(LLUUID id, bool new_system, LLColor4 new_system_color);
 	
 	enum flags_t
@@ -100,10 +99,14 @@ private:
 	LLSD mLegacyClientList;
 	
 	std::string mFSdataFilename;
+	std::string mFSdataDefaultsFilename;
+	std::string mFSdataDefaultsUrl;
 	std::string mAgentsFilename;
 	std::string mAssestsFilename;
 	std::string mClientTagsFilename;
 	
+	std::string mBaseURL;
+	std::string mFSDataURL;
 	std::string mAgentsURL;
 	std::string mAssetsURL;
 	

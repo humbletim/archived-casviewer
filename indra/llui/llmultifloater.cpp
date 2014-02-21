@@ -37,6 +37,9 @@
 // LLMultiFloater
 //
 
+// <FS> Update torn off status and add title bar
+static const std::string IM_CONTAINER = "floater_im_box";
+
 LLMultiFloater::LLMultiFloater(const LLSD& key, const LLFloater::Params& params)
 	: LLFloater(key),
 	  mTabContainer(NULL),
@@ -57,8 +60,7 @@ void LLMultiFloater::buildTabContainer()
 	p.rect(LLRect(LLPANEL_BORDER_WIDTH, getRect().getHeight() - floater_header_size, getRect().getWidth() - LLPANEL_BORDER_WIDTH, 0));
 	p.tab_position(mTabPos);
 	p.follows.flags(FOLLOWS_ALL);
-	// <FS> Update torn off status and add title bar
-	//p.commit_callback.function(boost::bind(&LLMultiFloater::onTabSelected, this));
+	p.commit_callback.function(boost::bind(&LLMultiFloater::onTabSelected, this));
 
 	mTabContainer = LLUICtrlFactory::create<LLTabContainer>(p);
 	addChild(mTabContainer);
@@ -193,10 +195,13 @@ void LLMultiFloater::addFloater(LLFloater* floaterp, BOOL select_added_floater, 
     floater_data.mSaveRect = floaterp->mSaveRect;
 
 	// <FS> Update torn off status and add title bar
-	floaterp->getDragHandle()->setTitleVisible(FALSE);
-	LLRect rect = floaterp->getRect();
-	rect.mTop -= floaterp->getHeaderHeight();
-	floaterp->setRect(rect);
+	if (getName() == IM_CONTAINER)
+	{
+		floaterp->getDragHandle()->setTitleVisible(FALSE);
+		LLRect rect = floaterp->getRect();
+		rect.mTop -= floaterp->getHeaderHeight();
+		floaterp->setRect(rect);
+	}
 	// </FS>
 
 	// remove minimize and close buttons
@@ -252,7 +257,7 @@ void LLMultiFloater::updateFloaterTitle(LLFloater* floaterp)
 		// <FS:TS> If the tab we're updating is the current tab, then 
 		// update the overall title too, since we're showing it
 		// exclusively now.
-		if (floaterp == mTabContainer->getCurrentPanel())
+		if (getName() == IM_CONTAINER && floaterp == mTabContainer->getCurrentPanel())
 		{
 			mDragHandle->setTitle(mTitle.getString() + " - " + floaterp->getTitle());
 		}
@@ -306,10 +311,13 @@ void LLMultiFloater::removeFloater(LLFloater* floaterp)
 		return;
 
 	// <FS> Update torn off status and add title bar
-	floaterp->getDragHandle()->setTitleVisible(TRUE);
-	LLRect rect = floaterp->getRect();
-	rect.mTop += floaterp->getHeaderHeight();
-	floaterp->setRect(rect);
+	if (getName() == IM_CONTAINER)
+	{
+		floaterp->getDragHandle()->setTitleVisible(TRUE);
+		LLRect rect = floaterp->getRect();
+		rect.mTop += floaterp->getHeaderHeight();
+		floaterp->setRect(rect);
+	}
 	// </FS>
 
 	floater_data_map_t::iterator found_data_it = mFloaterDataMap.find(floaterp->getHandle());
@@ -462,7 +470,11 @@ void LLMultiFloater::onTabSelected()
 	{
 		tabOpen(floaterp, true);
 		// <FS> Update torn off status and add title bar
-		mDragHandle->setTitle(mTitle.getString() + " - " + floaterp->getTitle());
+		if (getName() == IM_CONTAINER)
+		{
+			mDragHandle->setTitle(mTitle.getString() + " - " + floaterp->getTitle());
+		}
+		// </FS>
 	}
 }
 

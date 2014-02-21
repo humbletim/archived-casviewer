@@ -955,7 +955,7 @@ bool idle_startup()
 			{                                                  
 				LL_DEBUGS("AppInit") << "loading credentials from gLoginHandler" << LL_ENDL;
 				display_startup();
-				gUserCredential = gSecAPIHandler->loadCredential(gSavedSettings.getLLSD("UserLoginInfo").asString());
+				gUserCredential = gSecAPIHandler->loadCredential(gSavedSettings.getString("UserLoginInfo"));
 				display_startup();
 			}     
 			// Make sure the process dialog doesn't hide things
@@ -2006,6 +2006,11 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		LLStatusBar::sendMoneyBalanceRequest();
 
 		display_startup();
+
+		// request all group information
+		LL_INFOS("Agent_GroupData") << "GROUPDEBUG: Requesting Agent Data during startup" << LL_ENDL;
+		gAgent.sendAgentDataUpdateRequest();
+		display_startup();
 		// </FS:Ansariel>
 
 		display_startup();
@@ -2098,6 +2103,8 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 			LLAvatarTracker::instance().addBuddyList(list);
 			display_startup();
  		}
+		
+		LGGContactSets::getInstance()->loadFromDisk();	// [FS:CR] Load contact sets
 
 		bool show_hud = false;
 		LLSD tutorial_setting = response["tutorial_setting"];
@@ -2180,11 +2187,11 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		//LLStatusBar::sendMoneyBalanceRequest();
 
 		//display_startup();
+		//// request all group information
+		//llinfos << "Requesting Agent Data" << llendl;
+		//gAgent.sendAgentDataUpdateRequest();
+		//display_startup();
 		// </FS:Ansariel>
-		// request all group information
-		llinfos << "Requesting Agent Data" << llendl;
-		gAgent.sendAgentDataUpdateRequest();
-		display_startup();
 
 		// Create the inventory views
 		llinfos << "Creating Inventory Views" << llendl;
@@ -2423,12 +2430,25 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		display_startup();
 		
 		// <FS:CR> Load dynamic script library from xml
-		gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_lsl.xml"));
+		if (!gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "scriptlibrary_lsl.xml")))
+		{
+			gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_lsl.xml"));
+		}
 #ifdef OPENSIM
 		if (LLGridManager::getInstance()->isInOpenSim())
-			gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_ossl.xml"));
+		{
+			if (!gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "scriptlibrary_ossl.xml")))
+			{
+				gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_ossl.xml"));
+			}
+		}
 		if (LLGridManager::getInstance()->isInAuroraSim())
-			gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_aa.xml"));
+		{
+			if (!gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "scriptlibrary_aa.xml")))
+			{
+				gScriptLibrary.loadLibrary(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "scriptlibrary_aa.xml"));
+			}
+		}
 #endif // OPENSIM
 		display_startup();
 		// </FS:CR>
@@ -2558,8 +2578,7 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 #ifdef OPENSIM // <FS:AW optional opensim support/>
 		if (LLGridManager::getInstance()->isInOpenSim()  && !LLGridManager::getInstance()->isInAuroraSim())
 		{
-			LLControlVariable* use_bridge = gSavedSettings.getControl("UseLSLBridge");
-			use_bridge->setValue(LLSD(FALSE), FALSE);
+			gSavedSettings.setBOOL("UseLSLBridge", FALSE);
 		}
 #endif // OPENSIM // <FS:AW optional opensim support/>
 // </FS:AW Disable LSL bridge on opensim>
@@ -2853,7 +2872,10 @@ void register_viewer_callbacks(LLMessageSystem* msg)
 	//msg->setHandlerFuncFast(_PREHASH_ObjectProperties,			LLSelectMgr::processObjectProperties, NULL);
 	msg->setHandlerFuncFast(_PREHASH_ObjectProperties,			process_object_properties, NULL);
 	// </FS:Techwolf Lupindo> area search
-	msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	LLSelectMgr::processObjectPropertiesFamily, NULL);
+	// <FS:Ansariel> Anti spam
+	//msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	LLSelectMgr::processObjectPropertiesFamily, NULL);
+	msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	process_object_properties_family, NULL);
+	// </FS:Ansariel>
 	msg->setHandlerFunc("ForceObjectSelect", LLSelectMgr::processForceObjectSelect);
 
 	msg->setHandlerFuncFast(_PREHASH_MoneyBalanceReply,		process_money_balance_reply,	NULL);

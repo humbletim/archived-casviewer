@@ -175,20 +175,19 @@ void ll_nvapi_init(NvDRSSessionHandle hSession)
 			nvapi_error(status);
 			return;
 		}
+
+        // (5) Now we apply (or save) our changes to the system
+        status = NvAPI_DRS_SaveSettings(hSession);
+        if (status != NVAPI_OK) 
+        {
+            nvapi_error(status);
+            return;
+        }
 	}
 	else if (status != NVAPI_OK)
 	{
 		nvapi_error(status);
 		return;
-	}
-
-	
-
-	// (5) Now we apply (or save) our changes to the system
-	status = NvAPI_DRS_SaveSettings(hSession);
-	if (status != NVAPI_OK) 
-	{
-		nvapi_error(status);
 	}
 }
 
@@ -597,6 +596,15 @@ bool LLAppViewerWin32::initHardwareTest()
 
 	if (gGLManager.mVRAM == 0)
 	{
+		// <FS:Ansariel> FIRE-12671: Force VRAM if DirectX detection is broken
+		S32 forced_video_memory;
+		if ((forced_video_memory = gSavedSettings.getS32("FSForcedVideoMemory")) > 0)
+		{
+			LL_INFOS("AppInit") << "Forcing VRAM to " << forced_video_memory << " MB" << LL_ENDL;
+			gGLManager.mVRAM = forced_video_memory;
+		}
+		else
+		// </FS:Ansariel>
 		gGLManager.mVRAM = gDXHardware.getVRAM();
 	}
 

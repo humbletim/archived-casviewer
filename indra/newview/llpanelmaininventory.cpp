@@ -62,6 +62,9 @@
 #include "llviewernetwork.h"
 // </FS:AW opensim currency support>
 
+// <FS:Ansariel> FIRE-12808: Don't save filters during settings restore
+bool LLPanelMainInventory::sSaveFilters = true;
+
 const std::string FILTERS_FILENAME("filters.xml");
 
 static LLRegisterPanelClassWrapper<LLPanelMainInventory> t_inventory("panel_main_inventory");
@@ -219,8 +222,8 @@ BOOL LLPanelMainInventory::postBuild()
 		worn_items_panel->setWorn(TRUE);
 		worn_items_panel->setSortOrder(gSavedSettings.getU32(LLInventoryPanel::DEFAULT_SORT_ORDER));
 		worn_items_panel->setShowFolderState(LLInventoryFilter::SHOW_NON_EMPTY_FOLDERS);
-		//worn_items_panel->getFilter().markDefault();
 		worn_items_panel->getFilter().setFilterObjectTypes(0xffffffff - (0x1 << LLInventoryType::IT_GESTURE));
+		worn_items_panel->getFilter().markDefault();
 
 		// <FS:ND> Do not go all crazy and recurse through the whole inventory
 		//		worn_items_panel->openAllFolders();
@@ -248,30 +251,30 @@ BOOL LLPanelMainInventory::postBuild()
 
 		// Load the persistent "Recent Items" settings.
 		// Note that the "All Items" settings do not persist.
+		// <FS:ND> bring back worn items panel.
+		//if(recent_items_panel)
+		//{
+		//	if(savedFilterState.has(recent_items_panel->getFilter().getName()))
+		//	{
+		//		LLSD recent_items = savedFilterState.get(
+		//			recent_items_panel->getFilter().getName());
+		//		LLInventoryFilter::Params p;
+		//		LLParamSDParser parser;
+		//		parser.readSD(recent_items, p);
+		//		recent_items_panel->getFilter().fromParams(p);
+		//	}
+		//}
+
 		if(recent_items_panel)
 		{
-			if(savedFilterState.has(recent_items_panel->getFilter().getName()))
+			if(savedFilterState.has(recent_items_panel->getName()))
 			{
 				LLSD recent_items = savedFilterState.get(
-					recent_items_panel->getFilter().getName());
-				LLInventoryFilter::Params p;
+					recent_items_panel->getName());
+				LLInventoryPanel::InventoryState p;
 				LLParamSDParser parser;
 				parser.readSD(recent_items, p);
-				recent_items_panel->getFilter().fromParams(p);
-			}
-		}
-
-		// <FS:ND> bring back worn items panel.
-		if(worn_items_panel)
-		{
-			if(savedFilterState.has(worn_items_panel->getFilter().getName()))
-			{
-				LLSD worn_items = savedFilterState.get(
-					worn_items_panel->getFilter().getName());
-				LLInventoryFilter::Params p;
-				LLParamSDParser parser;
-				parser.readSD(worn_items, p);
-				recent_items_panel->getFilter().fromParams(p);
+				recent_items_panel->getFilter().fromParams(p.filter);
 			}
 		}
 		// </FS:ND>
@@ -356,30 +359,24 @@ LLPanelMainInventory::~LLPanelMainInventory( void )
 		}
 	}
 
-	LLInventoryPanel* worn_items_panel = getChild<LLInventoryPanel>("Worn Items");
-	if (worn_items_panel)
+	// <FS:Ansariel> FIRE-12808: Don't save filters during settings restore
+	if (sSaveFilters)
 	{
-		LLSD filterState;
-		LLInventoryPanel::InventoryState p;
-		worn_items_panel->getFilter().toParams(p.filter);
-		worn_items_panel->getRootViewModel().getSorter().toParams(p.sort);
-		if (p.validateBlock(false))
-		{
-			LLParamSDParser().writeSD(filterState, p);
-			filterRoot[worn_items_panel->getName()] = filterState;
-		}
-	}
-
-
+	// </FS:Ansariel>
 	std::ostringstream filterSaveName;
 	filterSaveName << gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, FILTERS_FILENAME);
 	llofstream filtersFile(filterSaveName.str());
 	if(!LLSDSerialize::toPrettyXML(filterRoot, filtersFile))
 	{
-		llwarns << "Could not write to filters save file " << filterSaveName << llendl;
+		// <FS:TM> VS2013 compile fix
+		//llwarns << "Could not write to filters save file " << filterSaveName << llendl;
+		llwarns << "Could not write to filters save file " << filterSaveName.str() << llendl;
 	}
 	else
 		filtersFile.close();
+	// <FS:Ansariel> FIRE-12808: Don't save filters during settings restore
+	}
+	// </FS:Ansariel>
 
 	gInventory.removeObserver(this);
 	delete mSavedFolderState;
@@ -550,7 +547,17 @@ void LLPanelMainInventory::onClearSearch()
 	if (mActivePanel)
 	{
 		mActivePanel->setFilterSubString(LLStringUtil::null);
-		mActivePanel->setFilterTypes(0xffffffffffffffffULL);
+		// <FS:Ansariel>
+		//mActivePanel->setFilterTypes(0xffffffffffffffffULL);
+		if (mActivePanel->getName() == "Worn Items")
+		{
+			mActivePanel->setFilterTypes(0xffffffff - (0x1 << LLInventoryType::IT_GESTURE));
+		}
+		else
+		{
+			mActivePanel->setFilterTypes(0xffffffffffffffffULL);
+		}
+		// </FS:Ansariel>
 
 		// ## Zi: Filter Links Menu
 		// We don't do this anymore, we have a menu option for it now. -Zi
@@ -831,6 +838,13 @@ void LLPanelMainInventory::changed(U32)
 	updateItemcountText();
 }
 
+void LLPanelMainInventory::setFocusFilterEditor()
+{
+	if(mFilterEditor)
+	{
+		mFilterEditor->setFocus(true);
+	}
+}
 
 // virtual
 void LLPanelMainInventory::draw()
@@ -869,13 +883,16 @@ void LLPanelMainInventory::draw()
 
 void LLPanelMainInventory::updateItemcountText()
 {
-	// *TODO: Calling setlocale() on each frame may be inefficient.
-	//LLLocale locale(LLStringUtil::getLocale());
-	std::string item_count_string;
-	LLResMgr::getInstance()->getIntegerString(item_count_string, gInventory.getItemCount());
+	if(mItemCount != gInventory.getItemCount())
+	{
+		mItemCount = gInventory.getItemCount();
+		mItemCountString = "";
+		LLLocale locale(LLLocale::USER_LOCALE);
+		LLResMgr::getInstance()->getIntegerString(mItemCountString, mItemCount);
+	}
 
 	LLStringUtil::format_map_t string_args;
-	string_args["[ITEM_COUNT]"] = item_count_string;
+	string_args["[ITEM_COUNT]"] = mItemCountString;
 	string_args["[FILTER]"] = getFilterText();
 
 	std::string text = "";
@@ -1345,6 +1362,10 @@ void LLPanelMainInventory::onCustomAction(const LLSD& userdata)
 	{
 		gSavedSettings.setBOOL("FSDoubleClickAddInventoryObjects",!gSavedSettings.getBOOL("FSDoubleClickAddInventoryObjects"));
 	}
+	if (command_name == "add_clothing_on_double_click")
+	{
+		gSavedSettings.setBOOL("FSDoubleClickAddInventoryClothing",!gSavedSettings.getBOOL("FSDoubleClickAddInventoryClothing"));
+	}
 	if (command_name == "show_filters")
 	{
 		toggleFindOptions();
@@ -1527,6 +1548,12 @@ BOOL LLPanelMainInventory::isActionChecked(const LLSD& userdata)
 	{
 		return gSavedSettings.getBOOL("FSDoubleClickAddInventoryObjects");
 	}
+	
+	if (command_name == "add_clothing_on_double_click")
+	{
+		return gSavedSettings.getBOOL("FSDoubleClickAddInventoryClothing");
+	}
+
 
 	return FALSE;
 }

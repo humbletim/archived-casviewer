@@ -38,7 +38,6 @@
 #include "llsecapi.h"
 
 #include "llhttpclient.h"
-// #include "llxmlnode.h"
 #include "lltrans.h"
 #include "llweb.h"
 #include "llbufferstream.h"
@@ -233,13 +232,13 @@ void LLGridManager::initSystemGrids()
 // 	addSystemGrid("None", "", "", "", DEFAULT_LOGIN_PAGE);
 //we get this now from the grid list
 /*
-	addSystemGrid(	AGNI,
+	addSystemGrid(SECOND_LIFE_MAIN_LABEL,
 			MAINGRID,
 			"agni",
 			"https://login.agni.lindenlab.com/cgi-bin/login.cgi",
 			"https://secondlife.com/helpers/",
 			 DEFAULT_LOGIN_PAGE);
-	addSystemGrid(	ADITI,
+	addSystemGrid(SECOND_LIFE_BETA_LABEL,
 			"util.aditi.lindenlab.com",
 			"aditi",
 			"https://login.aditi.lindenlab.com/cgi-bin/login.cgi",
@@ -311,39 +310,13 @@ void LLGridManager::initCmdLineGrids()
 	// load a grid from the command line.
 	// if the actual grid name is specified from the command line,
 	// set it as the 'selected' grid.
-// <FS:AW fix commandline loginuri (partial fix of FIRE-3448)>
-//	LLSD cmd_line_login_uri = gSavedSettings.getLLSD("CmdLineLoginURI");
-//	if (cmd_line_login_uri.isString() && !cmd_line_login_uri.asString().empty())
-//	{	
-//	mGrid = cmd_line_login_uri.asString();
-//	gSavedSettings.setLLSD("CmdLineLoginURI", LLSD::emptyArray());	//in case setGridChoice tries to addGrid 
-//									//and  addGrid recurses here.
-	// NOTE: This isn't fixed in llviewernetwork because it seems upstream 
-	// is going to remove the commandline loginuri soon anyway.
-
 	std::string grid;
-
-	std::string cmd_line_login_uri = gSavedSettings.getString("CmdLineLoginURI1");
- 	if (!cmd_line_login_uri.empty())
-	{
-		grid = cmd_line_login_uri;
-
-		// clear in case setGridChoice tries to addGrid and addGrid recurses here;
-		// however this only happens refetching all grid infos.
-		gSavedSettings.setString("CmdLineLoginURI1",std::string());
-		LL_DEBUGS("GridManager") << "Setting grid from --loginuri " << grid << LL_ENDL;
-//</FS:AW fix commandline loginuri (partial fix of FIRE-3448)-->
-		setGridChoice(grid);
-		return;
-	}
 
 	std::string cmd_line_grid = gSavedSettings.getString("CmdLineGridChoice");
 	if(!cmd_line_grid.empty())
 	{
-
 		// try to find the grid assuming the command line parameter is
 		// the case-insensitive 'label' of the grid.  ie 'Agni'
-		gSavedSettings.setString("CmdLineGridChoice",std::string());
 		grid = getGridByGridNick(cmd_line_grid);
 
 		if(grid.empty())
@@ -973,7 +946,7 @@ void LLGridManager::addGrid(GridEntry* grid_entry,  AddState state)
 void LLGridManager::addSystemGrid(const std::string& label,
 					  const std::string& name,
 					  const std::string& nick,
-					  const std::string& login,
+					  const std::string& login_uri,
 					  const std::string& helper,
 					  const std::string& login_page )
 {
@@ -985,9 +958,9 @@ void LLGridManager::addSystemGrid(const std::string& label,
 	grid_entry->grid[GRID_NICK_VALUE] = nick;
 	grid_entry->grid[GRID_HELPER_URI_VALUE] = helper;
 	grid_entry->grid[GRID_LOGIN_URI_VALUE] = LLSD::emptyArray();
-	grid_entry->grid[GRID_LOGIN_URI_VALUE].append(login);
+	grid_entry->grid[GRID_LOGIN_URI_VALUE].append(login_uri);
 	grid_entry->grid[GRID_LOGIN_PAGE_VALUE] = login_page;
-	grid_entry->grid[GRID_IS_SYSTEM_GRID_VALUE] = TRUE;
+	grid_entry->grid[GRID_IS_SYSTEM_GRID_VALUE] = true;
 	grid_entry->grid[GRID_LOGIN_IDENTIFIER_TYPES] = LLSD::emptyArray();
 	grid_entry->grid[GRID_LOGIN_IDENTIFIER_TYPES].append(CRED_IDENTIFIER_TYPE_AGENT);
 	

@@ -166,7 +166,7 @@ if (LINUX)
       OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   #<FS:ND> Gentoo defines _FORTIFY_SOURCE by default
-  if (NOT ${GXX_VERSION} MATCHES "Gentoo 4.7.*")
+  if (NOT ${GXX_VERSION} MATCHES "Gentoo 4.[78].*")
   #</FS:ND>
 
   if (${GXX_VERSION} STREQUAL ${CXX_VERSION})
@@ -178,7 +178,7 @@ if (LINUX)
   endif (${GXX_VERSION} STREQUAL ${CXX_VERSION})
 
   #<FS:ND> Gentoo defines _FORTIFY_SOURCE by default
-  endif (NOT ${GXX_VERSION} MATCHES "Gentoo 4.7.*")
+  endif (NOT ${GXX_VERSION} MATCHES "Gentoo 4.[78].*")
   #</FS:ND>
 
   # Let's actually get a numerical version of gxx's version
@@ -212,6 +212,13 @@ if (LINUX)
     set(CMAKE_CXX_FLAGS "-Wno-attributes ${CMAKE_CXX_FLAGS}")
   endif (${CXX_VERSION_NUMBER} GREATER 470)
   #</FS:ND>
+  #<FS:ND> Disable unsed local typedef warnings for GCC >= 4.8. It causes a lot of warning/errors in boost.
+  if(${CXX_VERSION_NUMBER} GREATER 480)
+    set(CMAKE_CXX_FLAGS "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
+  endif (${CXX_VERSION_NUMBER} GREATER 480)
+  #</FS:ND>
+
+
 
   # End of hacks.
 
@@ -244,6 +251,15 @@ if (LINUX)
     # linking can be very memory-hungry, especially the final viewer link
     set(CMAKE_CXX_LINK_FLAGS "-Wl,--no-keep-memory")
   endif (NOT STANDALONE)
+
+  # <FS:TS> Enable AVX optimizations if requested and at least GCC 4.6.
+  if (USE_AVX_OPTIMIZATION)
+    if (NOT (${CXX_VERSION_NUMBER} LESS 460))
+      add_definitions(-mavx)
+    else (NOT (${CXX_VERSION_NUMBER} LESS 460))
+      error ("AVX optimizations require at least version 4.6.0 of GCC.")
+    endif (NOT (${CXX_VERSION_NUMBER} LESS 460))
+  endif (USE_AVX_OPTIMIZATION)
 
   set(CMAKE_CXX_FLAGS_DEBUG "-fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
   set(CMAKE_CXX_FLAGS_RELEASE "-O2 ${CMAKE_CXX_FLAGS_RELEASE}")
@@ -306,6 +322,10 @@ if (LINUX OR DARWIN)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m64")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
   endif (WORD_SIZE EQUAL 32)
+
+  if (ND_BUILD64BIT_ARCH)
+   add_definitions(-DND_BUILD64BIT_ARCH)
+  endif (ND_BUILD64BIT_ARCH)
 endif (LINUX OR DARWIN)
 
 
@@ -318,8 +338,9 @@ if (STANDALONE)
 
 else (STANDALONE)
   set(${ARCH}_linux_INCLUDES
-      ELFIO
       atk-1.0
+      cairo
+      freetype
       glib-2.0
       gstreamer-0.10
       gtk-2.0

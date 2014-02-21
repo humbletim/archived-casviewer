@@ -274,6 +274,24 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="TestingDisconnect">
 		Nastąpiło rozłączenie testowania klienta
 	</string>
+	<string name="SocialFacebookConnecting">
+		Łączenie z Facebookiem...
+	</string>
+	<string name="SocialFacebookPosting">
+		Wysyłanie...
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		Rozłączanie z Facebookiem...
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		Problem z łączeniem z Facebookiem
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		Problem z wysyłaniem na Facebooka
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		Problem z rozłączaniem z Facebookiem
+	</string>
 	<string name="TooltipPerson">
 		Osoba
 	</string>
@@ -637,7 +655,7 @@ Spróbuj zalogować się ponownie za minutę.
 		mesz
 	</string>
 	<string name="AvatarEditingAppearance">
-		(Edycja Wyglądu)
+		(Edycja wyglądu)
 	</string>
 	<string name="AvatarAway">
 		Śpi
@@ -868,7 +886,7 @@ Spróbuj zalogować się ponownie za minutę.
 		Mapa Świata jest niedostępna
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] m² [PRICE]L$
+		[AREA] m² [PRICE]L$ ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Miejsce nie zostało odnalezione.
@@ -1047,6 +1065,12 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="bitmap_image_files">
 		Obrazy bitmap
 	</string>
+	<string name="png_image_files">
+		Obrazy PNG
+	</string>
+	<string name="save_texture_image_files">
+		Obrazy Targa lub PNG
+	</string>
 	<string name="avi_movie_file">
 		Pliki filmowe AVI
 	</string>
@@ -1079,6 +1103,9 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="collada_files">
 		Modele COLLADA
+	</string>
+	<string name="csv_files">
+		Wartości oddzielone przecinkami
 	</string>
 	<string name="shape">
 		Kształt
@@ -1284,9 +1311,6 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="BodyPartsRightLeg">
 		Prawa noga
 	</string>
-	<string name="BodyPartsOther">
-		Inne
-	</string>
 	<string name="GraphicsQualityLow">
 		Niska
 	</string>
@@ -1397,7 +1421,7 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="Textures" value=" Tekstury,"/>
 	<string name="Snapshots" value=" Zdjęcia,"/>
 	<string name="No Filters" value="Nie "/>
-	<string name="Since Logoff" value=" - od wylogowania się"/>
+	<string name="Since Logoff" value=" - od wylogowania"/>
 	<string name="InvFolder My Inventory">
 		Moja Szafa
 	</string>
@@ -1498,7 +1522,7 @@ Spróbuj zalogować się ponownie za minutę.
 		Brak założonych dodatków
 	</string>
 	<string name="Attachments remain">
-		Dodatki ([COUNT] wolnych slotów)
+		Dodatki ([COUNT] wolnych)
 	</string>
 	<string name="Buy">
 		Kup
@@ -4089,6 +4113,9 @@ Jeżeli nadal otrzymujesz ten komunikat, skontaktuj się z [SUPPORT_SITE].
 	<string name="share_alert">
 		Przeciągaj tutaj rzeczy z Szafy
 	</string>
+	<string name="facebook_post_success">
+		Wysłałeś/aś post na Facebooka.
+	</string>
 	<string name="no_session_message">
 		(Sesja IM wygasła)
 	</string>
@@ -4136,11 +4163,11 @@ Jeżeli nadal otrzymujesz ten komunikat, skontaktuj się z [SUPPORT_SITE].
 	</string>
 	<string name="message">
 		Wiadomość wysłana do [RECIPIENT] jest ciągle przetwarzana.
-    Jeśli nie pojawi się w ciągu kilku minut może to oznaczać, że została pominięta przez serwer.
+Jeśli nie pojawi się w ciągu kilku minut może to oznaczać, że została pominięta przez serwer.
 	</string>
 	<string name="message_session_event">
 		Wiadomość wysłana do [RECIPIENT] jest ciągle przetwarzana.
-    Jeśli nie pojawi się w ciągu kilku minut może to oznaczać, że została pominięta przez serwer.
+Jeśli nie pojawi się w ciągu kilku minut może to oznaczać, że została pominięta przez serwer.
 	</string>
 	<string name="mute">
 		Błąd podczas moderacji.
@@ -4432,7 +4459,6 @@ Raport o Nadużyciu
 	<string name="texture_load_dimensions_error">
 		Nie można załadować obrazów większych niż [WIDTH]*[HEIGHT]
 	</string>
-	<string name="words_separator" value=", "/>
 	<string name="server_is_down">
 		Pomimo naszych najlepszych starań wystąpił niespodziewany problem.
 
@@ -4636,6 +4662,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="Command_Snapshot_Label">
 		Zdjęcie
 	</string>
+	<string name="Command_Social_Label">
+		Facebook
+	</string>
 	<string name="Command_Speak_Label">
 		Głos
 	</string>
@@ -4673,7 +4702,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Latanie
 	</string>
 	<string name="Command_Groundsit_Label">
-		Siądź na ziemi
+		Usiądź na ziemi
 	</string>
 	<string name="Command_Sound_Explorer_Label">
 		Eksploruj dźwięki
@@ -4713,6 +4742,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="Command_Move_Lock_Label">
 		Unieruchom
+	</string>
+	<string name="Command_Blocklist_Label">
+		Zablokowani
 	</string>
 	<string name="Command_AboutLand_Tooltip">
 		Informacje o miejscu, które odwiedzasz
@@ -4782,6 +4814,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Zrób zdjęcie (CTRL+SHIFT+S)
+	</string>
+	<string name="Command_Social_Tooltip">
+		Wyślij post na Facebooka
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Rozmawiaj z ludźmi w pobliżu używając mikrofonu
@@ -4857,6 +4892,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="Command_Move_Lock_Tooltip">
 		Blokuje Twojego awatara na obecnej pozycji
+	</string>
+	<string name="Command_Blocklist_Tooltip">
+		Otwiera listę zablokowanych/wyciszonych
 	</string>
 	<string name="Toolbar_Bottom_Tooltip">
 		obecnie na Twoim dolnym pasku
@@ -5007,6 +5045,12 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="MediaFilterSharedMediaContentUrlAlwaysBlocked">
 		Współdzielone Media z URL [MEDIAURL] zawsze będą blokowane.
+	</string>
+	<string name="MediaFilterBlacklist">
+		czarnej listy
+	</string>
+	<string name="MediaFilterWhitelist">
+		białej listy
 	</string>
 	<string name="UnknownRegion">
 		(nieznany region)
@@ -5289,5 +5333,20 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="skin_defaults_starlight_navbar">
 		Pokazywanie paska nawigacyjnego zostało włączone, to domyślne zachowanie dla skórek linii StarLight.
+	</string>
+	<string name="animation_explorer_seconds_ago">
+		[SECONDS] sekund temu
+	</string>
+	<string name="animation_explorer_still_playing">
+		Ciągle odtwarzane
+	</string>
+	<string name="FriendOnlineNotification">
+		jest online.
+	</string>
+	<string name="FriendOfflineNotification">
+		jest offline.
+	</string>
+	<string name="Inbox_Folderview_New">
+		Nowe
 	</string>
 </strings>

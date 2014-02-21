@@ -461,6 +461,10 @@ Hinweis: Der Cache wird dabei gelöscht/geleert.
 		Änderungen speichern?
 		<usetemplate canceltext="Abbrechen" name="yesnocancelbuttons" notext="Nicht speichern" yestext="Speichern"/>
 	</notification>
+	<notification name="DeleteNotecard">
+		Notizkarte wirklich löschen?
+		<usetemplate name="okcancelignore" notext="Abbrechen" yestext="Ok" ignoretext="Bestätigen, wenn eine Notizkarte gelöscht wird"/>
+	</notification>
 	<notification name="GestureSaveFailedTooManySteps">
 		Speichern der Geste fehlgeschlagen.
 Die Geste besteht aus zu vielen Schritten.
@@ -1496,12 +1500,12 @@ Sie können dieses Update von http://www.secondlife.com/downloads herunterladen 
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Für Ihre [APP_NAME]-Installation wurde ein Update heruntergeladen.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informationen zu diesem Update]
+Version [VERSION] [[INFO_URL] Informationen zu diesem Update]
 		<usetemplate name="okcancelbuttons" notext="Später..." yestext="Jetzt installieren und [APP_NAME] neu starten"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Für Ihre [APP_NAME]-Installation wurde ein Update heruntergeladen.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informationen zu diesem Update]
+Version [VERSION] [[INFO_URL] Informationen zu diesem Update]
 		<usetemplate name="okcancelbuttons" notext="Später..." yestext="Jetzt installieren und [APP_NAME] neu starten"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1639,13 +1643,13 @@ Sender von eingehenden Instant Messages erhalten jetzt die konfigurierte automat
 	</notification>
 	<notification name="AutorespondNonFriendsModeSet">
 		Automatische Antwort für Nicht-Freunde eingeschaltet.
-		<usetemplate ignoretext="Wenn die automatische Antwort für Nicht-Freunde eingeschaltet wird." name="okignore" yestext="OK"/>
 Eingehende Instant Messages von Personen, die sich nicht auf der Freundesliste befinden, werden jetzt mit der konfigurierten automatische Nachricht beantwortet.
+		<usetemplate ignoretext="Wenn die automatische Antwort für Nicht-Freunde eingeschaltet wird." name="okignore" yestext="OK"/>
 	</notification>
 	<notification name="RejectTeleportOffersModeSet">
-		Automatisches Abweisen von Teleport-Angeboten eingeschaltet.
-Eingehende Teleport-Angeboten werden jetzt mit der konfigurierten Antwort abgewiesen. Sie erhalten hierüber keine Benachrichtigung.
-		<usetemplate ignoretext="Wenn automatisches Abweisen von Teleport-Angeboten eingeschaltet wird." name="okignore" yestext="OK"/>
+		Abweisen von Teleport-Angeboten und -Anforderungen ist eingeschaltet.
+Eingehende Teleport-Angebote und Teleport-Anforderungen werden jetzt mit der konfigurierten Antwort abgewiesen. Sie erhalten hierüber keine Benachrichtigung.
+		<usetemplate ignoretext="Wenn Abweisen von Teleport-Angeboten und -Anforderungen eingeschaltet wird." name="okignore" yestext="OK"/>
 	</notification>
 	<notification name="JoinedTooManyGroupsMember">
 		Sie haben die maximale Anzahl an Gruppen erreicht. Bitte verlassen Sie eine andere Gruppe, um dieser beitreten zu können oder lehnen Sie das Angebot ab.
@@ -1751,6 +1755,13 @@ Soll dieses entfernt werden?
 			<input name="message">
 				Triff mich in [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Abbrechen"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Teleport zu [NAME] mit folgender Nachricht anfordern:
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Abbrechen"/>
 		</form>
@@ -2157,7 +2168,7 @@ Inventarobjekt(e) verschieben?
 		<usetemplate ignoretext="Warnhinweis anzeigen, bevor ich nicht-kopierbare Artikel verschiebe, die ein geskriptetes Objekt beschädigen können" name="okcancelignore" notext="Abbrechen" yestext="OK"/>
 	</notification>
 	<notification name="ClickActionNotPayable">
-		Achtung: Die Klickaktion „Objekt bezahlen&quot; wurde eingestellt. Diese funktioniert jedoch nicht, wenn ein Skript mit einer Geldtransaktion () hinzugefügt wird.
+		Achtung: Die Klickaktion „Objekt bezahlen“ wurde eingestellt. Diese funktioniert jedoch nicht, wenn ein Skript mit einer Geldtransaktion () hinzugefügt wird.
 		<form name="form">
 			<ignore name="ignore" text="Ich habe die Aktion „Objekt bezahlen&quot; eingestellt, während ich ein Objekt gebaut habe, dass kein Geld()-Skript enthält."/>
 		</form>
@@ -2524,6 +2535,9 @@ Wählen Sie eine kleinere Landfläche.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2642,6 +2656,9 @@ Hier funktionieren nur Skripts, die dem Landeigentümer gehören.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		Die Region, die Sie besuchen möchten, enthält Inhalte, die Ihre aktuellen Einstellungen überschreiten. Sie können Ihre Einstellungen unter „Avatar“ &gt; „Einstellungen“ &gt; „Allgemein“ ändern.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		Die Region, die Sie gerade betreten möchte, fährt gerade herunter.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Sie dürfen diese Region nicht betreten.
@@ -2766,7 +2783,7 @@ Versuchen Sie es in einigen Minuten erneut.
 	<notification name="TeleportOffered">
 		[NAME_SLURL] hat Ihnen den Teleport an seinen/ihren Standort angeboten:
 
-„[MESSAGE]“
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; – [MATURITY_STR]
 		<form name="form">
 			<button name="Teleport" text="Teleportieren"/>
@@ -2776,7 +2793,7 @@ Versuchen Sie es in einigen Minuten erneut.
 	<notification name="TeleportOffered_MaturityExceeded">
 		[NAME_SLURL] hat Ihnen den Teleport an seinen/ihren Standort angeboten:
 
-„[MESSAGE]“
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; – [MATURITY_STR]
 
 Diese Region enthält [REGION_CONTENT_MATURITY]-Inhalte, doch aufgrund Ihrer aktuellen Einstellungen werden [REGION_CONTENT_MATURITY]-Inhalte nicht dargestellt. Sie können Ihre Einstellungen ändern und den Teleport fortsetzen oder Sie können den Teleport abbrechen.
@@ -2788,13 +2805,23 @@ Diese Region enthält [REGION_CONTENT_MATURITY]-Inhalte, doch aufgrund Ihrer akt
 	<notification name="TeleportOffered_MaturityBlocked">
 		[NAME_SLURL] hat Ihnen den Teleport an seinen/ihren Standort angeboten:
 
-„[MESSAGE]“
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; – [MATURITY_STR]
 
 Diese Region enthält jedoch Inhalte, die nur für Erwachsene zugänglich sind.
 	</notification>
 	<notification name="TeleportOfferSent">
 		Ein Teleportangebot wurde an [TO_NAME] geschickt
+	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] fordert einen Teleport zu Ihrer Position an.
+[MESSAGE]
+
+Teleport anbieten?
+		<form name="form">
+			<button name="Yes" text="Ja"/>
+			<button name="No" text="Nein"/>
+		</form>
 	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
@@ -2848,11 +2875,19 @@ In Ihrem Inventar wird ein Lesezeichen erstellt, damit Sie diesem Einwohner schn
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-    Diese Region wird in [MINUTES] Minuten neu gestartet.
+    Die Region „[NAME]“ wird in [MINUTES] Minuten neu gestartet.
     Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
   </notification>
 	<notification name="RegionRestartSeconds">
-    Diese Region wird in [SECONDS] Sekunden neu gestartet.
+    Die Region „[NAME]“ wird in [SECONDS] Sekunden neu gestartet.
+    Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
+  </notification>
+	<notification name="RegionRestartMinutesToast">
+    Die Region „[NAME]“ wird in [MINUTES] Minuten neu gestartet.
+    Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
+  </notification>
+	<notification name="RegionRestartSecondsToast">
+    Die Region „[NAME]“ wird in [SECONDS] Sekunden neu gestartet.
     Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
   </notification>
 	<notification name="LoadWebPage">
@@ -3583,9 +3618,9 @@ Warten Sie kurz und versuchen Sie es noch einmal.
 	<notification name="EjectComingSoon">
 		Sie nicht hier nicht mehr zugelassen und haben [EJECT_TIME] Sekunden Zeit, um zu gehen.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Sie können diese Region nicht betreten, da 
-der Server voll ist.
+	<notification name="NoEnterRegionMaybeFull">
+		Sie können die Region „[NAME]“ nicht betreten. 
+Sie ist voll oder startet in Kürze neu.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Erneutes Speichern im Inventar ist deaktiviert.
@@ -3875,6 +3910,9 @@ der Server voll ist.
 	<notification name="CantAttachNotEnoughScriptResources">
 		Nicht genügend Skriptressourcen verfügbar, um Objekt anzuhängen.
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Objekten kann nicht hinzugefügt werden, da es bereits entfernt wird.
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		Ablegen von Objekten hier nicht möglich; versuchen Sie es mit dem kostenlosen Testbereich.
 	</notification>
@@ -3966,13 +4004,13 @@ der Server voll ist.
 		Auswahl enthält nicht genügend gemietete Parzellen zum Zusammenlegen.
 	</notification>
 	<notification name="CantDivideLandMultipleParcelsSelected">
-		Land kann nicht geteilt werden.\nMehr als eine Parzelle ist ausgewählt.\nWählen Sie ein kleineres Stück Land aus.
+		Land kann nicht geteilt werden. Mehr als eine Parzelle ist ausgewählt. Wählen Sie ein kleineres Stück Land aus.
 	</notification>
 	<notification name="CantDivideLandCantFindParcel">
-		Land kann nicht geteilt werden.\nParzelle nicht auffindbar.\nMelden Sie das Problem über „Hilfe“ -&gt; „Fehler melden“...
+		Land kann nicht geteilt werden. Parzelle nicht auffindbar. Melden Sie das Problem über „Hilfe“ -&gt; „Fehler melden“...
 	</notification>
 	<notification name="CantDivideLandWholeParcelSelected">
-		Land kann nicht geteilt werden. Die gesamte Parzelle ist ausgewählt.\nWählen Sie ein kleineres Stück Land aus.
+		Land kann nicht geteilt werden. Die gesamte Parzelle ist ausgewählt. Wählen Sie ein kleineres Stück Land aus.
 	</notification>
 	<notification name="LandHasBeenDivided">
 		Land wurde geteilt.
@@ -4099,6 +4137,9 @@ der Server voll ist.
 	</notification>
 	<notification name="LargePrimAgentIntersect">
 		Große Prims, die sich mit anderen Spielern überschneiden, können nicht erstellt werden.  Bitte erneut versuchen, wenn sich die anderen Spieler bewegt haben.
+	</notification>
+	<notification name="RLVChangeStrings">
+		Änderungen werden erst nach einem Neustart von [APP_NAME] aktiv.
 	</notification>
 	<notification name="PreferenceChatClearLog">
 		Dadurch werden die Protokolle vorheriger Unterhaltungen und alle Backups dieser Datei gelöscht.
@@ -4626,7 +4667,7 @@ Das Wiederherstellen von Einstellungen erfordert einen Neustart des Viewers. Sol
 		<usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="Wiederherstellen und beenden"/>
 	</notification>
 
-	<notification name="SettingsRestoreNeedsLogout">
+	<notification name="RestoreFinished">
 Wiederherstellen abgeschlossen! Bitte den Viewer neu starten!
 		<usetemplate name="okbutton" yestext="Beenden"/>
 	</notification>
@@ -4654,7 +4695,15 @@ Erfolgreich [COUNT] [OBJECT] importiert.
 	</notification>
 
 	<notification name="AntiSpamBlocked">
-AntiSpam: [SOURCE] wurde wegen Spam vom Typ [QUEUE] ([COUNT]) mal in [PERIOD] Sekunden blockiert.
+AntiSpam: [SOURCE] wurde wegen Spam vom Typ [QUEUE] ([COUNT] mal in [PERIOD] Sekunden) blockiert.
+	</notification>
+
+	<notification name="AntiSpamImNewLineFloodBlocked">
+AntiSpam: [SOURCE] wurde wegen senden einer Instant Message mit mehr als [COUNT] Zeilen blockiert.
+	</notification>
+
+	<notification name="AntiSpamChatNewLineFloodBlocked">
+AntiSpam: [SOURCE] wurde wegen senden einer Chatnachricht mit mehr als [COUNT] Zeilen blockiert.
 	</notification>
 
 	<notification name="MeshMaxConcurrentReqTooHigh">
@@ -4665,6 +4714,57 @@ Der Wert, der für das gleichzeitige Laden von Mesh-Objekten gesetzt wurde ([VAL
 		[MESSAGE]
 		<form name="form">
 			<ignore name="ignore" text="Eine Einstellung wurde auf den Standardwert für das gewählte Oberflächendesign zurückgesetzt."/>
+		</form>
+	</notification>
+	
+	<notification name="AddNewContactSet">
+		Neues Kontakt-Set mit folgendem Namen erstellen:
+		<form name="form">
+			<input name="message">
+				Neues Kontakt-Set
+			</input>
+			<button name="Create" text="Erstellen"/>
+			<button name="Cancel" text="Abbrechen"/>
+		</form>
+	</notification>
+	<notification name="RemoveContactSet">
+		Soll Kontakt-Set „[SET_NAME]“ wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden!
+		<usetemplate name="okcancelignore" notext="Abbrechen" yestext="Ok" ignoretext="Bestätigen, wenn ein Kontakt-Set gelöscht wird."/>
+	</notification>
+	<notification name="RemoveContactFromSet">
+		Soll [TARGET] wirklich aus Kontakt-Set „[SET_NAME]“ entfernt werden?
+		<usetemplate name="okcancelignore" notext="Abbrechen" yestext="Ok" ignoretext="Bestätigen, wenn jemand aus einem Kontakt-Set entfernt wird."/>
+	</notification>
+	<notification name="RemoveContactsFromSet">
+		Sollen wirklich diese [TARGET] Avatare aus Kontakt-Set „[SET_NAME]“ entfernt werden?
+		<usetemplate name="okcancelignore" notext="Abbrechen" yestext="Ok" ignoretext="Bestätigen, wenn mehrere Avatare aus einem Kontakt-Set entfernt werden."/>
+	</notification>
+	<notification name="AddToContactSetSingleSuccess">
+		[NAME] wurde zu Kontakt-Set „[SET]“ hinzugefügt.
+	</notification>
+	<notification name="AddToContactSetMultipleSuccess">
+		[COUNT] Avatare wurden zu Kontakt-Set „[SET]“ hinzugefügt.
+	</notification>
+	<notification name="SetAvatarPseudonym">
+		Alias für [NAME] eingeben:
+		<form name="form">
+			<button name="Create" text="Erstellen"/>
+			<button name="Cancel" text="Abbrechen"/>
+		</form>
+	</notification>
+
+	<notification name="ShapeImportGenericFail">
+		Es gab ein Problem beim importieren von [FILENAME]. Siehe Log-Datei für weitergehende Details.
+	</notification>
+	<notification name="ShapeImportVersionFail">
+		Import der Avatarform fehlgeschlagen. Sind Sie sicher, dass [FILENAME] eine korrekte Avatar-Datei ist?
+	</notification>
+
+	<notification name="AddToMediaList">
+		Domänennamen zum Hinzufügen zur [LIST] eingeben:
+		<form name="form">
+			<button name="Add" text="Hinzufügen"/>
+			<button name="Cancel" text="Abbrechen"/>
 		</form>
 	</notification>
 </notifications>

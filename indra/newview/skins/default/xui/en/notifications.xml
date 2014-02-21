@@ -1170,6 +1170,19 @@ Save Changes?
 
   <notification
    icon="alertmodal.tga"
+   name="DeleteNotecard"
+   type="alertmodal">
+Are you sure you want to delete this notecard?
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm notecard deletion"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Ok"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="GestureSaveFailedTooManySteps"
    type="alertmodal">
 Gesture save failed.
@@ -3607,7 +3620,7 @@ or you can install it now.
    name="DownloadBackgroundTip"
    type="notify">
 We have downloaded an update to your [APP_NAME] installation.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Information about this update]
+Version [VERSION] [[INFO_URL] Information about this update]
     <tag>confirm</tag>
     <usetemplate
      name="okcancelbuttons"
@@ -3620,7 +3633,7 @@ Version [VERSION] [[RELEASE_NOTES_FULL_URL] Information about this update]
  name="DownloadBackgroundDialog"
  type="alertmodal">
 We have downloaded an update to your [APP_NAME] installation.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Information about this update]
+    Version [VERSION] [[INFO_URL] Information about this update]
     <tag>confirm</tag>
     <usetemplate
      name="okcancelbuttons"
@@ -3994,10 +4007,10 @@ Incoming instant messages from anyone who is not your friend will now be answere
    icon="alert.tga"
    name="RejectTeleportOffersModeSet"
    type="alert">
-Reject all incoming teleport offers mode is on.
-Incoming teleport offers from anyone will now be rejected with your configured autoresponse. You will not be notified because of that fact.
+Reject all incoming teleport offers and requests mode is on.
+Incoming teleport offers and requests from anyone will now be rejected with your configured autoresponse. You will not be notified because of that fact.
     <usetemplate
-     ignoretext="I change my status to reject all teleport offers mode"
+     ignoretext="I change my status to reject all teleport offers and requests mode"
      name="okignore"
      yestext="OK"/>
   </notification>
@@ -4251,6 +4264,27 @@ Join me in [REGION]
     </form>
   </notification>
 
+  <notification
+   icon="alertmodal.tga"
+   name="TeleportRequestPrompt"
+   type="alertmodal">
+Request a teleport to [NAME] with the following message
+    <tag>confirm</tag>
+    <form name="form">
+      <input name="message" type="text">
+
+      </input>
+      <button
+       default="true"
+       index="0"
+       name="OK"
+       text="OK"/>
+      <button
+       index="1"
+       name="Cancel"
+       text="Cancel"/>
+    </form>
+  </notification>
   <notification
    icon="alertmodal.tga"
    name="TooManyTeleportOffers"
@@ -6484,6 +6518,13 @@ Please select at least one type of content to search (General, Moderate, or Adul
 [MESSAGE]
   </notification>
 
+ <notification
+  icon="notify.tga"
+  name="FacebookConnect"
+  type="notifytip">
+[MESSAGE]
+ </notification>
+    
   <notification
    icon="notify.tga"
    name="PaymentReceived"
@@ -6780,12 +6821,21 @@ You can only claim public land that is in the same region as you.
   <notification
    icon="notify.tga"
    name="RegionTPAccessBlocked"
-   persist="true"
+   persist="false"
    type="notify">
    <tag>fail</tag>
     The region you're trying to visit contains content exceeding your current preferences.  You can change your preferences using Avatar &gt; Preferences &gt; General.
   </notification>
 
+  <notification
+	icon="notify.tga"
+   name="RegionAboutToShutdown"
+   persist="false"
+   type="notify">
+    <tag>fail</tag>
+    The region you're trying to enter is about to shut down.
+  </notification>
+  
   <notification
 	icon="notify.tga"
 	name="URBannedFromRegion"
@@ -7129,7 +7179,7 @@ Joining this group costs a fee and the invitation cannot be accepted because of 
    sound="UISndTeleportOffer">
 [NAME_SLURL] has offered to teleport you to their location:
 
-“[MESSAGE]”
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
     <tag>confirm</tag>
     <form name="form">
@@ -7152,7 +7202,7 @@ Joining this group costs a fee and the invitation cannot be accepted because of 
    type="offer">
 [NAME_SLURL] has offered to teleport you to their location:
 
-“[MESSAGE]”
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 
 This region contains [REGION_CONTENT_MATURITY] content, but your current preferences are set to exclude [REGION_CONTENT_MATURITY] content.  We can change your preferences and continue with the teleport, or you can cancel this teleport.
@@ -7177,7 +7227,7 @@ This region contains [REGION_CONTENT_MATURITY] content, but your current prefere
    type="notifytip">
 [NAME_SLURL] has offered to teleport you to their location:
 
-“[MESSAGE]”
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 
 However, this region contains content accessible to adults only.
@@ -7194,6 +7244,27 @@ However, this region contains content accessible to adults only.
 	Teleport offer sent to [TO_NAME]
   </notification>
 
+  <notification
+   icon="notify.tga"
+   name="TeleportRequest"
+   log_to_im="true"
+   type="offer">
+[NAME_SLURL] is requesting to be teleported to your location.
+[MESSAGE]
+
+Offer a teleport?
+    <tag>confirm</tag>
+    <form name="form">
+      <button
+       index="0"
+       name="Yes"
+       text="Yes"/>
+      <button
+       index="1"
+       name="No"
+       text="No"/>
+    </form>
+  </notification>
 
   <notification
    icon="notify.tga"
@@ -7243,7 +7314,6 @@ However, this region contains content accessible to adults only.
    icon="notify.tga"
    name="FriendshipOffered"
    log_to_im="true"   
-   show_toast="false"   
    type="notify">
     <tag>friendship</tag>
 	You have offered friendship to [TO_NAME]
@@ -7294,7 +7364,6 @@ However, this region contains content accessible to adults only.
    icon="notify.tga"
    name="FriendshipAcceptedByMe"
    log_to_im="true"   
-   show_toast="false"
    type="notify">
     <tag>friendship</tag>
 Friendship offer accepted.
@@ -7304,7 +7373,6 @@ Friendship offer accepted.
    icon="notify.tga"
    name="FriendshipDeclinedByMe"
    log_to_im="true"   
-   show_toast="false"   
    type="notify">
     <tag>friendship</tag>
 Friendship offer declined.
@@ -7332,18 +7400,38 @@ This will add a bookmark in your inventory so you can quickly IM this resident.
   <notification
    icon="notify.tga"
    name="RegionRestartMinutes"
+   show_toast="false"
    priority="high"
    type="notify">
-This region will restart in [MINUTES] minutes.
+The region "[NAME]" will restart in [MINUTES] minutes.
 If you stay in this region when it shuts down, you will be logged out.
   </notification>
 
   <notification
    icon="notify.tga"
    name="RegionRestartSeconds"
+   show_toast="false"
    priority="high"
    type="notify">
-This region will restart in [SECONDS] seconds.
+The region "[NAME]" will restart in [SECONDS] seconds.
+If you stay in this region when it shuts down, you will be logged out.
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="RegionRestartMinutesToast"
+   priority="high"
+   type="notify">
+The region "[NAME]" will restart in [MINUTES] minutes.
+If you stay in this region when it shuts down, you will be logged out.
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="RegionRestartSecondsToast"
+   priority="high"
+   type="notify">
+The region "[NAME]" will restart in [SECONDS] seconds.
 If you stay in this region when it shuts down, you will be logged out.
   </notification>
 
@@ -9798,11 +9886,11 @@ You are no longer allowed here and have [EJECT_TIME] seconds to leave.
 
   <notification
    icon="alertmodal.tga"
-   name="NoEnterServerFull"
+   name="NoEnterRegionMaybeFull"
    type="notify">
    <tag>fail</tag>
-You can't enter this region because 
-the server is full.
+You can't enter region "[NAME]".
+It may be full or restarting soon.
   </notification>
 
   <notification
@@ -10568,6 +10656,14 @@ Not enough script resources available to attach object!
 
   <notification
    icon="alertmodal.tga"
+   name="CantAttachObjectBeingRemoved"
+   type="notify">
+    <tag>fail</tag>
+    Cannot attach object because it is already being removed.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="CantDropItemTrialUser"
    type="notify">
    <tag>fail</tag>
@@ -10819,7 +10915,7 @@ Not enough leased parcels in selection to join.
    name="CantDivideLandMultipleParcelsSelected"
    type="notify">
    <tag>fail</tag>
-Can't divide land.\nThere is more than one parcel selected.\nTry selecting a smaller piece of land.
+Can't divide land. There is more than one parcel selected. Try selecting a smaller piece of land.
   </notification>
 
   <notification
@@ -10827,7 +10923,7 @@ Can't divide land.\nThere is more than one parcel selected.\nTry selecting a sma
    name="CantDivideLandCantFindParcel"
    type="notify">
    <tag>fail</tag>
-Can't divide land.\nCan't find the parcel.\nPlease report with Help -> Report Bug...
+Can't divide land. Can't find the parcel. Please report with Help -> Report Bug...
   </notification>
 
   <notification
@@ -10835,7 +10931,7 @@ Can't divide land.\nCan't find the parcel.\nPlease report with Help -> Report Bu
    name="CantDivideLandWholeParcelSelected"
    type="notify">
    <tag>fail</tag>
-Can't divide land. Whole parcel is selected.\nTry selecting a smaller piece of land.
+Can't divide land. Whole parcel is selected. Try selecting a smaller piece of land.
   </notification>
 
   <notification
@@ -11172,6 +11268,13 @@ An internal error prevented us from properly updating your viewer.  The L$ balan
    type="notify">
    <tag>fail</tag>
 Cannot create large prims that intersect other players.  Please re-try when other players have moved.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="RLVChangeStrings"
+   type="alertmodal">
+Changes won't take effect until after you restart [APP_NAME].
   </notification>
   
   <notification
@@ -11512,9 +11615,25 @@ Export failed unexpectedly. Please see the log for details.
     <notification
       icon="notifytip.tga"
       name="AntiSpamBlocked"
-      log_to_chat="false"
+      log_to_chat="true"
       type="notifytip">
 AntiSpam: Blocked [SOURCE] for spamming a [QUEUE] ([COUNT]) times in [PERIOD] seconds.
+    </notification>
+
+    <notification
+      icon="notifytip.tga"
+      name="AntiSpamImNewLineFloodBlocked"
+      log_to_chat="true"
+      type="notifytip">
+AntiSpam: Blocked [SOURCE] for sending an instant message with more than [COUNT] lines.
+    </notification>
+
+    <notification
+      icon="notifytip.tga"
+      name="AntiSpamChatNewLineFloodBlocked"
+      log_to_chat="true"
+      type="notifytip">
+AntiSpam: Blocked [SOURCE] for sending a chat message with more than [COUNT] lines.
     </notification>
 
     <notification
@@ -11538,4 +11657,142 @@ The value you set for the number of concurrent requests to load mesh objects, [V
     </form>
   </notification>
   <!-- <FS:Zi> Notification template for changed settings when selecting certain skins -->
+
+  <notification
+   icon="alertmodal.tga"
+   name="AddNewContactSet"
+   type="alertmodal">
+    <tag>contact set</tag>
+Create new contact set with the name:
+    <tag>confirm</tag>
+    <form name="form">
+      <input name="message" type="text" default="true">
+      New Contact Set
+      </input>
+      <button
+       default="true"
+       index="0"
+       name="Create"
+       text="Create"/>
+      <button
+       index="1"
+       name="Cancel"
+       text="Cancel"/>
+    </form>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="RemoveContactSet"
+   type="alertmodal">
+Are you sure you want to remove [SET_NAME]? You won&apos;t be able to restore it.
+    <tag>contact set</tag>
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm before removing a contact set"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Ok"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="RemoveContactFromSet"
+   type="alertmodal">
+Are you sure you want to remove [TARGET] from [SET_NAME]?
+    <tag>contact set</tag>
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm before removing someone from a contact set"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Ok"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="RemoveContactsFromSet"
+   type="alertmodal">
+Are you sure you want to remove these [TARGET] avatars from [SET_NAME]?
+    <tag>contact set</tag>
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm before removing multiple avatars from a contact set"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Ok"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="AddToContactSetSingleSuccess"
+   type="notify">
+    <tag>contact set</tag>
+[NAME] was added to [SET].
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="AddToContactSetMultipleSuccess"
+   type="notify">
+    <tag>contact set</tag>
+[COUNT] avatars were added to [SET].
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SetAvatarPseudonym"
+   type="alertmodal">
+    <tag>contact set</tag>
+Enter an alias for [AVATAR]:
+    <tag>confirm</tag>
+    <form name="form">
+      <input name="message" type="text" default="true" />
+      <button
+       default="true"
+       index="0"
+       name="Create"
+       text="Create"/>
+      <button
+       index="1"
+       name="Cancel"
+       text="Cancel"/>
+    </form>
+  </notification>
+
+  <notification
+   icon="notifytip.tga"
+   name="ShapeImportGenericFail"
+   type="notifytip">
+    <tag>fail</tag>
+There was a problem importing [FILENAME]. Please see the log for more details.
+  </notification>
+  <notification
+   icon="notifytip.tga"
+   name="ShapeImportVersionFail"
+   type="notifytip">
+    <tag>fail</tag>
+Shape import failed. Are you sure [FILENAME] is an avatar file?
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="AddToMediaList"
+   type="alertmodal">
+Enter a domain name to be added to the [LIST]:
+    <tag>confirm</tag>
+    <form name="form">
+      <input name="url" type="text" default="true" />
+      <button
+       default="true"
+       index="0"
+       name="Add"
+       text="Add"/>
+      <button
+       index="1"
+       name="Cancel"
+       text="Cancel"/>
+    </form>
+  </notification>
+
 </notifications>

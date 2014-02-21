@@ -36,11 +36,12 @@
 #include "llspinctrl.h"
 #include "lltrans.h"
 // <FS:CR>
-#include "llviewercontrol.h"
 #include "llavataractions.h"
-#include "llviewerwindow.h"
-#include "llwindow.h"
 #include "llconversationlog.h"
+#include "llfloatersearchreplace.h"
+#include "llviewerwindow.h"
+#include "llviewercontrol.h"
+#include "llwindow.h"
 // </FS:CR>
 
 const std::string LL_FCP_COMPLETE_NAME("complete_name");
@@ -54,7 +55,8 @@ LLFloaterConversationPreview::LLFloaterConversationPreview(const LLSD& session_i
 	mPageSize(gSavedSettings.getS32("ConversationHistoryPageSize")),
 	mAccountName(session_id[LL_FCP_ACCOUNT_NAME]),
 	mCompleteName(session_id[LL_FCP_COMPLETE_NAME]),
-	mMutex(NULL)
+	mMutex(NULL),
+	mShowHistory(false)
 {
 }
 
@@ -67,6 +69,7 @@ BOOL LLFloaterConversationPreview::postBuild()
 	LLLoadHistoryThread::setLoadEndSignal(boost::bind(&LLFloaterConversationPreview::setPages, this, _1, _2));
 	
 	childSetAction("open_external_btn", boost::bind(&LLFloaterConversationPreview::onBtnOpenExternal, this));	//<FS:CR> Open chat history externally
+	childSetAction("search_btn", boost::bind(&LLFloaterConversationPreview::onClickSearch, this));	// [FS:CR] FIRE-6545
 
 	const LLConversation* conv = LLConversationLog::instance().getConversation(mSessionID);
 	std::string name;
@@ -107,7 +110,6 @@ BOOL LLFloaterConversationPreview::postBuild()
 	mPageSpinner->setMinValue(1);
 	mPageSpinner->set(1);
 	mPageSpinner->setEnabled(false);
-	mChatHistoryLoaded = false;
 	LLLogChat::startChatHistoryThread(file, load_params);
 	return LLFloater::postBuild();
 }
@@ -127,33 +129,29 @@ void LLFloaterConversationPreview::setPages(std::list<LLSD>& messages,const std:
 
 		std::string total_page_num = llformat("/ %d", mCurrentPage+1);
 		getChild<LLTextBox>("page_num_label")->setValue(total_page_num);
-		mChatHistoryLoaded = true;
+		mShowHistory = true;
 	}
 }
 
 void LLFloaterConversationPreview::draw()
 {
-	if(mChatHistoryLoaded)
+	if(mShowHistory)
 	{
 		showHistory();
-		mChatHistoryLoaded = false;
+		mShowHistory = false;
 	}
 	LLFloater::draw();
 }
 
 void LLFloaterConversationPreview::onOpen(const LLSD& key)
 {
-	if(mChatHistoryLoaded)
-	{
-		showHistory();
-	}
+	mShowHistory = true;
 }
 
 void LLFloaterConversationPreview::showHistory()
 {
-	// additional protection to avoid changes of mMessages in setPages()
+	// additional protection to avoid changes of mMessages in setPages
 	LLMutexLock lock(&mMutex);
-
 	if (!mMessages.size() || mCurrentPage * mPageSize >= mMessages.size())
 	{
 		return;
@@ -221,16 +219,23 @@ void LLFloaterConversationPreview::showHistory()
 void LLFloaterConversationPreview::onMoreHistoryBtnClick()
 {
 	mCurrentPage = (int)(mPageSpinner->getValueF32());
-	if (--mCurrentPage < 0)
+	if (!mCurrentPage)
 	{
 		return;
 	}
 
-	showHistory();
+	mCurrentPage--;
+	mShowHistory = true;
 }
 
 // <FS:CR> Open chat history externally
-void (LLFloaterConversationPreview::onBtnOpenExternal())
+void LLFloaterConversationPreview::onBtnOpenExternal()
 {
 	gViewerWindow->getWindow()->openFile(LLLogChat::makeLogFileName(mChatHistoryFileName));
+}
+
+// [FS:CR] FIRE-6545
+void LLFloaterConversationPreview::onClickSearch()
+{
+	LLFloaterSearchReplace::show(mChatHistory);
 }

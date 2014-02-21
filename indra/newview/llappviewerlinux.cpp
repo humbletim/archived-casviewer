@@ -125,7 +125,10 @@ bool LLAppViewerLinux::init()
 	// before any mutexes are held, *and* some of our third-party
 	// libraries likes to use glib functions; in short, do this here
 	// really early in app startup!
+
+#if ( !defined(GLIB_MAJOR_VERSION) && !defined(GLIB_MINOR_VERSION) ) || ( GLIB_MAJOR_VERSION < 2 ) || ( GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 32 )
 	if (!g_thread_supported ()) g_thread_init (NULL);
+#endif
 	
 	return LLAppViewer::init();
 }
@@ -264,7 +267,9 @@ bool LLAppViewerLinux::initSLURLHandler()
 		return false; // failed
 	}
 
+#if ( !defined(GLIB_MAJOR_VERSION) && !defined(GLIB_MINOR_VERSION) ) || ( GLIB_MAJOR_VERSION < 2 ) || ( GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 35 )
 	g_type_init();
+#endif
 
 	//ViewerAppAPI *api_server = (ViewerAppAPI*)
 	g_object_new(viewerappapi_get_type(), NULL);
@@ -284,7 +289,9 @@ bool LLAppViewerLinux::sendURLToOtherInstance(const std::string& url)
 	DBusGConnection *bus;
 	GError *error = NULL;
 
+#if ( !defined(GLIB_MAJOR_VERSION) && !defined(GLIB_MINOR_VERSION) ) || ( GLIB_MAJOR_VERSION < 2 ) || ( GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 35 )
 	g_type_init();
+#endif
 	
 	bus = lldbus_g_bus_get (DBUS_BUS_SESSION, &error);
 	if (bus)

@@ -309,6 +309,14 @@ private:
 
 	// <FS:Ansariel> Only enable Growl checkboxes if Growl is usable
 	void onEnableGrowlChanged();
+	// <FS:Ansariel> Flash chat toolbar button notification
+	void onChatWindowChanged();
+	// <FS:Ansariel> Exodus' mouselook combat feature
+	void updateMouselookCombatFeatures();
+
+	// <FS:Ansariel> Minimap pick radius transparency
+	void updateMapPickRadiusTransparency(const LLSD& value);
+	F32 mOriginalMapPickRadiusTransparency;
 
 	typedef std::map<std::string, LLColor4> string_color_map_t;
 	string_color_map_t mSavedColors;
@@ -390,10 +398,10 @@ protected:
 	void onClickBackupSettings();
 	void onClickRestoreSettings();
 	
-	void doSelect(BOOL all);		// calls applySelection for each list
-	void applySelection(LLScrollListCtrl* control,BOOL all);		// selects or deselects all items in a scroll list
-	void doRestoreSettings(const LLSD& notification,const LLSD& response);	// callback for restore dialog
-	void onQuitConfirmed(const LLSD& notification,const LLSD& response);	// callback for finished restore dialog
+	void doSelect(BOOL all);												// calls applySelection for each list
+	void applySelection(LLScrollListCtrl* control, BOOL all);				// selects or deselects all items in a scroll list
+	void doRestoreSettings(const LLSD& notification, const LLSD& response);	// callback for restore dialog
+	void onQuitConfirmed(const LLSD& notification, const LLSD& response);	// callback for finished restore dialog
 	// </FS:Zi>
 };
 

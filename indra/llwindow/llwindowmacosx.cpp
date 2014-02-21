@@ -339,7 +339,16 @@ void callMouseExit()
 
 void callWindowFocus()
 {
-	gWindowImplementation->getCallbacks()->handleFocus(gWindowImplementation);
+   if ( gWindowImplementation && gWindowImplementation->getCallbacks() )
+	{
+		gWindowImplementation->getCallbacks()->handleFocus (gWindowImplementation);
+	}
+	else
+	{
+		LL_WARNS("COCOA") << "Window Implementation or callbacks not yet initialized." << LL_ENDL;
+	}
+
+
 }
 
 void callWindowUnfocus()
@@ -1310,6 +1319,8 @@ void LLWindowMacOSX::setupFailure(const std::string& text, const std::string& ca
 	OSMessageBox(text, caption, type);
 }
 
+			// Note on event recording - QUIT is a known special case and we are choosing NOT to record it for the record and playback feature 
+			// it is handled at a very low-level
 const char* cursorIDToName(int id)
 {
 	BOOL use_legacy_cursors = gSavedSettings.getBOOL("UseLegacyCursors");
@@ -1616,12 +1627,14 @@ void LLSplashScreenMacOSX::showImpl()
 
 void LLSplashScreenMacOSX::updateImpl(const std::string& mesg)
 {
+#if 0 // [FS:CR] This isn't used for anything at all...
 	if(mWindow != NULL)
 	{
 		CFStringRef string = NULL;
 
 		string = CFStringCreateWithCString(NULL, mesg.c_str(), kCFStringEncodingUTF8);
 	}
+#endif // [FS:CR]
 }
 
 

@@ -1,6 +1,6 @@
 # -*- cmake -*-
 #
-# Definitions of variables used throughout the build
+# Definitions of variables used throughout the Second Life build
 # process.
 #
 # Platform variables:
@@ -124,10 +124,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if (INSTALL_PROPRIETARY)
     # Only turn on headless if we can find osmesa libraries.
     include(FindPkgConfig)
-    pkg_check_modules(OSMESA osmesa)
-    if (OSMESA_FOUND)
-      set(BUILD_HEADLESS ON CACHE BOOL "Build headless libraries.")
-    endif (OSMESA_FOUND)
+    #pkg_check_modules(OSMESA osmesa)
+    #if (OSMESA_FOUND)
+    #  set(BUILD_HEADLESS ON CACHE BOOL "Build headless libraries.")
+    #endif (OSMESA_FOUND)
   endif (INSTALL_PROPRIETARY)
 
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -172,8 +172,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_ARCHITECTURES i386)
   endif (NOT CMAKE_OSX_ARCHITECTURES)
 
-  # *TODO: x86_64 support?
+# [FS:CR] Can't build ppc since forever.
+#  if (CMAKE_OSX_ARCHITECTURES MATCHES "i386" AND CMAKE_OSX_ARCHITECTURES MATCHES "ppc")
+#   set(ARCH universal)
+#  else (CMAKE_OSX_ARCHITECTURES MATCHES "i386" AND CMAKE_OSX_ARCHITECTURES MATCHES "ppc")
+#   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc")
+#     set(ARCH ppc)
+#   else (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc")
+#     set(ARCH i386)
+#   endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc")
+#  endif (CMAKE_OSX_ARCHITECTURES MATCHES "i386" AND CMAKE_OSX_ARCHITECTURES MATCHES "ppc")
 
+  if (CMAKE_OSX_ARCHITECTURES MATCHES "ppc")
+    error("Can't build on PowerPC. You need an upgrade.")
+  endif (CMAKE_OSX_ARCHITECTURES MATCHES "ppc")
+
+# *TODO: Universal Build
+  set(ARCH i386)
+# [/FS:CR]
   set(LL_ARCH ${ARCH}_darwin)
   set(LL_ARCH_DIR universal-darwin)
   set(WORD_SIZE 32)

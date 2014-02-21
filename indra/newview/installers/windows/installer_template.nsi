@@ -74,16 +74,8 @@ LangString LanguageCode ${LANG_RUSSIAN}  "ru"
 LangString LanguageCode ${LANG_TURKISH}  "tr"
 LangString LanguageCode ${LANG_TRADCHINESE}  "zh"
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Tweak for different servers/builds (this placeholder is replaced by viewer_manifest.py)
-;; For example:
-;; !define INSTFLAGS "%(flags)s"
-;; !define INSTNAME   "Firestorm%(grid_caps)s"
-;; !define SHORTCUT   "Firestorm (%(grid_caps)s)"
-;; !define URLNAME   "secondlife%(grid)s"
-;; !define UNINSTALL_SETTINGS 1
-
-%%GRID_VARS%%
+;; this placeholder is replaced by viewer_manifest.py
+%%INST_VARS%%
 
 Name ${INSTNAME}
 
@@ -121,7 +113,6 @@ Page instfiles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Var INSTPROG
 Var INSTEXE
-Var INSTFLAGS
 Var INSTSHORTCUT
 Var COMMANDLINE         ; command line passed to this installer, set in .onInit
 Var SHORTCUT_LANG_PARAM ; "--set InstallLanguage de", passes language to viewer
@@ -162,7 +153,7 @@ label_ask_launch:
         
 label_launch:
 	# Assumes SetOutPath $INSTDIR
-	Exec '"$INSTDIR\$INSTEXE" $INSTFLAGS $SHORTCUT_LANG_PARAM'
+	Exec '"$INSTDIR\$INSTEXE" $SHORTCUT_LANG_PARAM'
 label_no_launch:
 	Pop $R0
 FunctionEnd
@@ -191,14 +182,12 @@ FunctionEnd
 ; </FS:Ansariel>
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Make sure we are not on a verion of windows older than XP SP2
+; Make sure we are not on a verion of windows older than Vista except for 32bit XP SP3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Function CheckWindowsVersion
-  ${IfNot} ${AtLeastWin2000}
+  ${IfNot} ${AtLeastWinVista}
   ${OrIf} ${IsWinXP}
-  ${AndIfNot} ${AtLeastServicePack} 1
-  ${OrIf} ${IsWin2003}
-  ${AndIfNot} ${AtLeastServicePack} 1
+  ${AndIfNot} ${IsServicePack} 3
     MessageBox MB_OK $(CheckWindowsVersionMB)
     Quit
   ${EndIf}
@@ -208,11 +197,7 @@ FunctionEnd
 ;Recommend Upgrading Service Pack
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Function CheckWindowsServPack
-  ${If} ${IsWinXP}
-  ${AndIfNot} ${IsServicePack} 3
-  ${OrIf} ${IsWin2003}
-  ${AndIfNot} ${IsServicePack} 2
-  ${OrIf} ${IsWinVista}
+  ${If} ${IsWinVista}
   ${AndIfNot} ${IsServicePack} 2
   ${OrIf} ${IsWin2008}
   ${AndIfNot} ${IsServicePack} 2
@@ -348,6 +333,26 @@ Function CheckNetworkConnection
     Pop $1
     Pop $0
     Return
+FunctionEnd
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Function CheckOldExeName
+; Viewer versions < 3.6.12 used the name 'SecondLife.exe'
+; If that name is found in the install folder, delete it to invalidate any
+; old shortcuts to it that may be in non-standard locations, so that the user
+; does not end up running the old version (potentially getting caught in an 
+; infinite update loop). See MAINT-3575
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+Function CheckOldExeName
+  ; <FS:Ansariel> We don't need that
+  Return
+
+  IfFileExists "$INSTDIR\SecondLife.exe" CHECKOLDEXE_FOUND CHECKOLDEXE_DONE
+
+CHECKOLDEXE_FOUND:
+  Delete "$INSTDIR\SecondLife.exe"
+CHECKOLDEXE_DONE:
 FunctionEnd
 
 
@@ -734,6 +739,9 @@ Delete "$INSTDIR\*.glsl"
 Delete "$INSTDIR\motions\*.lla"
 Delete "$INSTDIR\trial\*.html"
 Delete "$INSTDIR\newview.exe"
+Delete "$INSTDIR\SecondLife.exe"
+;; MAINT-3099 workaround - prevent these log files, if present, from causing a user alert
+Delete "$INSTDIR\VivoxVoiceService-*.log"
 ;; Remove entire help directory
 Delete "$INSTDIR\help\Advanced\*"
 RMDir  "$INSTDIR\help\Advanced"
@@ -772,7 +780,6 @@ ShowUninstDetails show
 Section Uninstall
 
 ; Start with some default values.
-StrCpy $INSTFLAGS ""
 StrCpy $INSTPROG "${INSTNAME}"
 StrCpy $INSTEXE "${INSTEXE}"
 StrCpy $INSTSHORTCUT "${SHORTCUT}"
@@ -819,7 +826,7 @@ SectionEnd 				; end of uninstall section
 ;;  entry to the language ID selector below
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Function .onInit
-Call CheckWindowsVersion		; Don't install if on Windows XP SP1 or older (do to XP x64 only having SP2 and no SP3)
+Call CheckWindowsVersion		;Check the version of windows we are installing on
     Push $0
     ${GetParameters} $COMMANDLINE              ; get our command line
 
@@ -891,7 +898,6 @@ Section ""						; (default section)
 SetShellVarContext all			; install for all users (if you change this, change it in the uninstall as well)
 
 ; Start with some default values.
-StrCpy $INSTFLAGS "${INSTFLAGS}"
 StrCpy $INSTPROG "${INSTNAME}"
 StrCpy $INSTEXE "${INSTEXE}"
 StrCpy $INSTSHORTCUT "${SHORTCUT}"
@@ -902,6 +908,7 @@ Call CheckIfAlreadyCurrent		; Make sure that we haven't already installed this v
 Call CloseSecondLife			; Make sure we're not running
 Call CheckNetworkConnection		; ping secondlife.com
 Call CheckWillUninstallV2		; See if a V2 install exists and will be removed.
+Call CheckOldExeName                    ; Clean up a previous version of the exe
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 StrCmp $DO_UNINSTALL_V2 "" PRESERVE_DONE
@@ -941,7 +948,7 @@ StrCmp $NO_STARTMENU "true" label_skip_start_menu
 CreateDirectory	"$SMPROGRAMS\$INSTSHORTCUT"
 SetOutPath "$INSTDIR"
 CreateShortCut	"$SMPROGRAMS\$INSTSHORTCUT\$INSTSHORTCUT.lnk" \
-				"$INSTDIR\$INSTEXE" "$INSTFLAGS $SHORTCUT_LANG_PARAM"
+				"$INSTDIR\$INSTEXE" "$SHORTCUT_LANG_PARAM"
 
 
 WriteINIStr		"$SMPROGRAMS\$INSTSHORTCUT\SL Create Account.url" \
@@ -964,9 +971,9 @@ label_skip_start_menu:
 ; Other shortcuts
 SetOutPath "$INSTDIR"
 CreateShortCut "$DESKTOP\$INSTSHORTCUT.lnk" \
-        "$INSTDIR\$INSTEXE" "$INSTFLAGS $SHORTCUT_LANG_PARAM"
+        "$INSTDIR\$INSTEXE" "$SHORTCUT_LANG_PARAM"
 CreateShortCut "$INSTDIR\$INSTSHORTCUT.lnk" \
-        "$INSTDIR\$INSTEXE" "$INSTFLAGS $SHORTCUT_LANG_PARAM"
+        "$INSTDIR\$INSTEXE" "$SHORTCUT_LANG_PARAM"
 CreateShortCut "$INSTDIR\Uninstall $INSTSHORTCUT.lnk" \
 				'"$INSTDIR\uninst.exe"' ''
 
@@ -975,7 +982,6 @@ CreateShortCut "$INSTDIR\Uninstall $INSTSHORTCUT.lnk" \
 ; Write registry
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "" "$INSTDIR"
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Version" "${VERSION_LONG}"
-WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Flags" "$INSTFLAGS"
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Shortcut" "$INSTSHORTCUT"
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\CtrlAltStudio Viewer\$INSTPROG" "Exe" "$INSTEXE"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "DisplayName" "$INSTPROG (remove only)"
@@ -987,7 +993,7 @@ WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninst
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "HelpLink" "http://ctrlaltstudio.com/viewer"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "DisplayIcon" '"$INSTDIR\$INSTEXE"'
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "DisplayVersion" "${VERSION_LONG}"
-WriteRegDWORD HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "EstimatedSize" "0x0002D400" ; 181 MB
+WriteRegDWORD HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\$INSTPROG" "EstimatedSize" "0x00030C00" ; 195 MB
 ; </FS:Ansariel>
 
 ; <FS:ND> BUG-2707 Disable SEHOP for installed viewer.
@@ -1000,19 +1006,19 @@ WriteRegStr HKEY_CLASSES_ROOT "${URLNAME}" "URL Protocol" ""
 WriteRegStr HKEY_CLASSES_ROOT "${URLNAME}\DefaultIcon" "" '"$INSTDIR\$INSTEXE"'
 ;; URL param must be last item passed to viewer, it ignores subsequent params
 ;; to avoid parameter injection attacks.
-WriteRegExpandStr HKEY_CLASSES_ROOT "${URLNAME}\shell\open\command" "" '"$INSTDIR\$INSTEXE" $INSTFLAGS -url "%1"'
+WriteRegExpandStr HKEY_CLASSES_ROOT "${URLNAME}\shell\open\command" "" '"$INSTDIR\$INSTEXE" -url "%1"'
 WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info"(default)" "URL:Second Life"
 WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info" "URL Protocol" ""
 WriteRegStr HKEY_CLASSES_ROOT "x-grid-location-info\DefaultIcon" "" '"$INSTDIR\$INSTEXE"'
 ;; URL param must be last item passed to viewer, it ignores subsequent params
 ;; to avoid parameter injection attacks.
-WriteRegExpandStr HKEY_CLASSES_ROOT "x-grid-location-info\shell\open\command" "" '"$INSTDIR\$INSTEXE" $INSTFLAGS -url "%1"'
+WriteRegExpandStr HKEY_CLASSES_ROOT "x-grid-location-info\shell\open\command" "" '"$INSTDIR\$INSTEXE" -url "%1"'
 
 ; <FS:CR> Register hop:// protocol registry info
 WriteRegStr HKEY_CLASSES_ROOT "hop" "(default)" "URL:Second Life"
 WriteRegStr HKEY_CLASSES_ROOT "hop" "URL Protocol" ""
 WriteRegStr HKEY_CLASSES_ROOT "hop\DefaultIcon" "" '"$INSTDIR\$INSTEXE"'
-WriteRegExpandStr HKEY_CLASSES_ROOT "hop\shell\open\command" "" '"$INSTDIR\$INSTEXE" $INSTFLAGS -url "%1"'
+WriteRegExpandStr HKEY_CLASSES_ROOT "hop\shell\open\command" "" '"$INSTDIR\$INSTEXE" -url "%1"'
 ; </FS:CR>
 
 ; write out uninstaller

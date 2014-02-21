@@ -1,4 +1,6 @@
-/* Copyright (c) 2010
+/**
+ * @file fslslpreproc.cpp
+ * Copyright (c) 2010
  *
  * Modular Systems All rights reserved.
  *
@@ -565,8 +567,24 @@ public:
 			usefulctx.remove_macro_definition(macro, true);
 			def = llformat("%s=\"%s\"",macro.c_str(),filename.c_str());
 			usefulctx.add_macro_definition(def,false);
-		}//else wave did something really fucked up
+		}//else wave did something really wrong
 	}
+
+	template <typename ContextT, typename ExceptionT>
+	void throw_exception(ContextT const& ctx, ExceptionT const& e)
+	{
+		std::string err;
+		err = "warning: last line of file ends without a newline";
+		if( !err.compare( e.description())){
+			err = "Ignoring warning: ";
+			err += e.description();
+			llwarns << err << llendl;
+		}
+		else{
+			boost::throw_exception(e);
+		}
+	}
+
 private:
 	FSLSLPreprocessor* mProc;
 	std::stack<std::string> mAssetStack;
@@ -637,7 +655,7 @@ void FSLSLPreprocessor::FSProcCacheCallback(LLVFS *vfs, const LLUUID& iuuid, LLA
 				}
 				else
 				{
-					lldebugs << "something fucked" << llendl;
+					lldebugs << "something went wrong" << llendl;
 				}
 			}
 			else self->mCore->mErrorList->setCommentText(std::string("Error: script named '") + name + "' isn't safe to copy to the filesystem. This include will fail.");

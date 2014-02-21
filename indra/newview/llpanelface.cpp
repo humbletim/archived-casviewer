@@ -1136,7 +1136,10 @@ void LLPanelFace::updateUI()
 			mCtrlBumpyScaleU->setTentative(LLSD(norm_scale_tentative));
 			
 			// <FS:CR> FIRE-11407 - Materials alignment
-			getChildView("checkbox maps sync")->setEnabled(editable && (specmap_id.notNull() || normmap_id.notNull()));
+			// <FS:TS> FIRE-11911 - Synchronize materials doens't work with planar textures
+			//   Disable the checkbox if planar textures are in use
+			getChildView("checkbox maps sync")->setEnabled(editable && (specmap_id.notNull() || normmap_id.notNull()) && !align_planar);
+			// </FS:TS> FIRE-11911
 			// </FS:CR>
 		}
 
@@ -2637,6 +2640,14 @@ void LLPanelFace::onClickMapsSync(LLUICtrl* ctrl, void *userdata)
 //static
 void LLPanelFace::alignMaterialsProperties(LLPanelFace* self)
 {
+	// <FS:TS> FIRE-11911: Synchronize materials doesn't work with planar textures
+	//  Don't even try to do the alignment if we wind up here and planar is enabled.
+	if ((bool)self->childGetValue("checkbox planar align").asBoolean())
+	{
+		return;
+	}
+	// </FS:TS> FIRE-11911
+
 	//LLPanelFace *self = (LLPanelFace*) userdata;
 	llassert_always(self);
 	
@@ -2645,6 +2656,18 @@ void LLPanelFace::alignMaterialsProperties(LLPanelFace* self)
 	F32 tex_offset_u =	self->getCurrentTextureOffsetU();
 	F32 tex_offset_v =	self->getCurrentTextureOffsetV();
 	F32 tex_rot =		self->getCurrentTextureRot();
+
+	//<FS:TS> FIRE-12275: Material offset not working correctly
+	//  Since the server cannot store negative offsets for materials
+	//  textures, we normalize them to equivalent positive values here.
+	tex_offset_u = (tex_offset_u < 0.0) ? 1.0+tex_offset_u : tex_offset_u;
+	tex_offset_v = (tex_offset_v < 0.0) ? 1.0+tex_offset_v : tex_offset_v;
+	//</FS:TS> FIRE-12275
+
+	//<FS:TS> FIRE-12831: Negative rotations revert to zero
+	//  The same goes for rotations as for offsets.
+	tex_rot = (tex_rot < 0.0) ? 360.0+tex_rot : tex_rot;
+	//</FS:TS> FIRE-12831
 
 	self->childSetValue("shinyScaleU",	tex_scale_u);
 	self->childSetValue("shinyScaleV",	tex_scale_v);

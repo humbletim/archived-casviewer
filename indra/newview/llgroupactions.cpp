@@ -217,7 +217,10 @@ LLFetchLeaveGroupData* gFetchLeaveGroupData = NULL;
 // static
 void LLGroupActions::search()
 {
-	LLFloaterReg::showInstance("search", LLSD().with("category", "groups"));
+	// <FS:Ansariel> Open groups search panel instead of invoking presumed failed websearch
+	//LLFloaterReg::showInstance("search", LLSD().with("category", "groups"));
+	LLFloaterReg::showInstance("search", LLSD().with("tab", "groups"));
+	// </FS:Ansariel>
 }
 
 // static
@@ -322,15 +325,12 @@ bool LLGroupActions::onJoinGroup(const LLSD& notification, const LLSD& response)
 void LLGroupActions::leave(const LLUUID& group_id)
 {
 //	if (group_id.isNull())
-//	{
-//		return;
-//	}
 // [RLVa:KB] - Checked: 2011-03-28 (RLVa-1.4.1a) | Added: RLVa-1.3.0f
 	if ( (group_id.isNull()) || ((gAgent.getGroupID() == group_id) && (gRlvHandler.hasBehaviour(RLV_BHVR_SETGROUP))) )
+// [/RLVa:KB]
 	{
 		return;
 	}
-// [/RLVa:KB]
 
 	LLGroupData group_data;
 	if (gAgent.getGroupData(group_id, group_data))
@@ -575,6 +575,15 @@ void LLGroupActions::closeGroup(const LLUUID& group_id)
 LLUUID LLGroupActions::startIM(const LLUUID& group_id)
 {
 	if (group_id.isNull()) return LLUUID::null;
+
+// [RLVa:KB] - Checked: 2013-05-09 (RLVa-1.4.9)
+	if ( (!RlvActions::canStartIM(group_id)) && (!RlvActions::hasOpenGroupSession(group_id)) )
+	{
+		make_ui_sound("UISndInvalidOp");
+		RlvUtil::notifyBlocked(RLV_STRING_BLOCKED_STARTIM, LLSD().with("RECIPIENT", LLSLURL("group", group_id, "about").getSLURLString()));
+		return LLUUID::null;
+	}
+// [/RLVa:KB]
 
 // [RLVa:KB] - Checked: 2013-05-09 (RLVa-1.4.9)
 	if ( (!RlvActions::canStartIM(group_id)) && (!RlvActions::hasOpenGroupSession(group_id)) )

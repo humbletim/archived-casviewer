@@ -54,6 +54,7 @@ private:
 	void onMoreHistoryBtnClick();
 	void showHistory();
 	void onBtnOpenExternal();	// <FS:CR> Open chat history externally
+	void onClickSearch();	// [FS:CR] FIRE-6545
 
 	LLMutex			mMutex;
 	LLSpinCtrl*		mPageSpinner;
@@ -69,7 +70,7 @@ private:
 	std::string		mAccountName;
 	std::string		mCompleteName;
 	std::string     mChatHistoryFileName;
-	bool			mChatHistoryLoaded;
+	bool			mShowHistory;
 };
 
 #endif /* LLFLOATERCONVERSATIONPREVIEW_H_ */

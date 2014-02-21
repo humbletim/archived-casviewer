@@ -46,6 +46,7 @@
 #include "llmutelist.h"
 #include "llnotificationmanager.h"
 #include "lltracker.h"
+#include "lltrans.h"
 #include "llviewercontrol.h"		// for gSavedSettings
 #include "llviewermenu.h"			// for gMenuHolder
 #include "llvoavatar.h"
@@ -900,19 +901,15 @@ void FSRadar::updateTracking()
 
 void FSRadar::zoomAvatar(const LLUUID& avatar_id, const std::string& name)
 {
-	FSRadarEntry* entry = getEntry(avatar_id);
-	if (entry)
+	if (LLAvatarActions::canZoomIn(avatar_id))
 	{
-		if (entry->mRange <= gSavedSettings.getF32("RenderFarClip"))
-		{
-			handle_zoom_to_object(avatar_id, entry->mGlobalPos);
-		}
-		else
-		{
-			LLStringUtil::format_map_t args;
-			args["AVATARNAME"] = name.c_str();
-			reportToNearbyChat(LLTrans::getString("camera_no_focus", args));
-		}
+		LLAvatarActions::zoomIn(avatar_id);
+	}
+	else
+	{
+		LLStringUtil::format_map_t args;
+		args["AVATARNAME"] = name.c_str();
+		reportToNearbyChat(LLTrans::getString("camera_no_focus", args));
 	}
 }
 

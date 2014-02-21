@@ -398,9 +398,7 @@ void LLDrawPoolAlpha::renderAlpha(U32 mask, S32 pass)
 			// </FS:LO>
 
 
-			bool draw_glow_for_this_partition = mVertexShaderLevel > 0 && // no shaders = no glow.
-				// All particle systems seem to come off the wire with texture entries which claim that they glow.  This is probably a bug in the data.  Suppress.
-				!is_particle_or_hud_particle;
+			bool draw_glow_for_this_partition = mVertexShaderLevel > 0; // no shaders = no glow.
 
 			static LLFastTimer::DeclareTimer FTM_RENDER_ALPHA_GROUP_LOOP("Alpha Group");
 			LLFastTimer t(FTM_RENDER_ALPHA_GROUP_LOOP);
@@ -607,7 +605,11 @@ void LLDrawPoolAlpha::renderAlpha(U32 mask, S32 pass)
 				// If this alpha mesh has glow, then draw it a second time to add the destination-alpha (=glow).  Interleaving these state-changing calls could be expensive, but glow must be drawn Z-sorted with alpha.
 				if (current_shader && 
 					draw_glow_for_this_partition &&
-					params.mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_EMISSIVE))
+					// <FS:Ansariel> Re-add particle rendering optimization
+					//params.mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_EMISSIVE))
+					params.mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_EMISSIVE) &&
+					(!params.mParticle || params.mHasGlow))
+					// </FS:Ansariel>
 				{
 					// install glow-accumulating blend mode
 					gGL.blendFunc(LLRender::BF_ZERO, LLRender::BF_ONE, // don't touch color

@@ -57,6 +57,23 @@ Looking for people to hang out with? Try the [secondlife:///app/worldmap World M
     <string
      name="AltMiniMapToolTipMsg"
      value="[REGION] (Double-click to teleport, shift-drag to pan)"/>
+    <panel.string
+     name="empty_list">
+    This contact set is empty.
+    </panel.string>
+    <panel.string
+     name="no_sets">
+    No sets
+    </panel.string>
+    <panel.string
+     name="all_sets">
+    All sets
+    </panel.string>
+    <panel.string
+     name="pseudonyms">
+    Aliases
+    </panel.string>
+
     <tab_container
      bottom="-10"
      follows="all"
@@ -389,6 +406,24 @@ Looking for people to hang out with? Try the [secondlife:///app/worldmap World M
                          show_permissions_granted="true"
                          width="317" />
                 </panel>
+                <panel
+                 layout="topleft"
+                 height="385"
+                 width="317"
+                 name="tab_suggested_friends"
+                 title="Possible friends">
+                        <avatar_list
+                         ignore_online_status="true"
+                         allow_select="true"
+                         follows="all"
+                         height="383"
+                         layout="topleft"
+                         left="0"
+                         name="suggested_friends"
+                         show_permissions_granted="true"
+                         top="0"
+                         width="307" />
+                </panel>
             </tab_container>
             <text
              follows="all"
@@ -503,14 +538,15 @@ Looking for people to hang out with? Try the [secondlife:///app/worldmap World M
             <text
                 type="string"
                 length="1"
-                follows="all"
+                follows="left|top|right"
                 height="14"
                 layout="topleft"
                 right="-10"
                 top_pad="4"
                 left="3"
+                use_ellipses="true"
                 name="groupcount">
-              You belong to [COUNT] groups, and can join [REMAINING] more.
+              You belong to [COUNT] groups ([REMAINING] remaining).
             </text>
             <group_list
              allow_select="true" 
@@ -659,5 +695,33 @@ Looking for people to hang out with? Try the [secondlife:///app/worldmap World M
            top="0"
            right="-1" />
         </panel>
+
+<!-- ============================== CONTACT SETS tab ======================= -->
+
+        <panel
+         background_opaque="false"
+         background_visible="false"
+         follows="all"
+         height="383"
+         label="Contact Sets"
+         layout="topleft"
+         left="0"
+         help_topic="people_contact_sets_tab"
+         name="contact_sets_panel"
+         right="-1"
+         top="0">
+            <panel
+             height="383"
+             name="panel_people_contacts_sidetray"
+             filename="panel_people_contact_sets.xml"
+             follows="all"
+             label="Contact Sets"
+             layout="topleft"
+             left="0"
+             font="SansSerifBold"
+             top="0"
+             right="-1" />
+        </panel>
+
     </tab_container>
 </panel>

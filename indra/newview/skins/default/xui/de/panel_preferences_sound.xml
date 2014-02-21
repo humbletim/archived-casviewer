@@ -71,6 +71,7 @@
 		<check_box label="Avatarlippen beim Sprechen bewegen" name="enable_lip_sync"/>
 		<check_box label="Zeige Voice-Indikator über Avataren" name="FSShowVoiceVisualizer" tool_tip="Wenn diese Option aktiviert ist, wird der Voice-Indicator (weißer Punkt) über Avataren angezeigt."/>
 		<check_box label="Zeige Voice-Indikator und Lippenbewegungen in P2P- und Gruppenchats" name="Show_Voice_Visualizers_In_Calls" tool_tip="Wenn diese Option aktiviert ist, werden der Voice-Indicator und Lippen Bewegungen auch im P2P- sowie im Gruppenchat angezeigt."/>
+		<check_box label="Zeige Voice-Kanal-Status auf Gesprächs-Reitern" name="FSShowConversationVoiceStateIndicator" tool_tip="Zeigt den Status des aktuellen Voice-Kanals auf den Reitern im Gespräche-Fenster"/>
 		<check_box label="Automatisch alle eingehenden Gruppenanrufe abweisen" name="VoiceCallsRejectGroup"/>
 		<check_box label="Automatisch alle eingehenden Konferenzanrufe abweisen" name="VoiceCallsRejectAdHoc"/>
 		<check_box label="Automatisch alle eingehenden Privatanrufe abweisen" name="VoiceCallsRejectP2P"/>
@@ -153,13 +154,6 @@ Der jeweilige Standardwert wird im Hovertip des UUID-Feldes angezeigt.
 		<button label="S" name="Def_UISndHealthReductionM" tool_tip="Auf Standardwert zurücksetzen."/>
 		<check_box label="Abspielen" name="PlayModeUISndHealthReductionM"/>
 
-		<text tool_tip="UUID des Klangs bei einer ungültigen Aktion." name="textFSInvalidOp">
-			Ungültige Aktion:
-		</text>
-		<button label="V" name="Prev_UISndInvalidOp" tool_tip="Vorschau zu diesem Sound."/>
-		<button label="S" name="Def_UISndInvalidOp" tool_tip="Auf Standardwert zurücksetzen."/>
-		<check_box label="Abspielen" name="PlayModeUISndInvalidOp"/>
-
 		<text tool_tip="UUID des Klangs bei Geldausgang." name="textFSMoneyChangeDown">
 			Geldausgang:
 		</text>
@@ -192,6 +186,18 @@ Der jeweilige Standardwert wird im Hovertip des UUID-Feldes angezeigt.
 		<button label="V" name="Prev_UISndNewIncomingGroupIMSession" tool_tip="Vorschau zu diesem Sound."/>
 		<button label="S" name="Def_UISndNewIncomingGroupIMSession" tool_tip="Auf Standardwert zurücksetzen."/>
 		<combo_box name="PlayModeUISndNewIncomingGroupIMSession">
+			<combo_box.item label="Bei neuer Nachr." name="1"/>
+			<combo_box.item label="Bei jeder Nachr." name="2"/>
+			<combo_box.item label="Wenn kein Fokus" name="3"/>
+			<combo_box.item label="Stummschalten" name="0"/>
+		</combo_box>
+
+		<text tool_tip="UUID des Klangs bei eingehenden Gruppenchats. Diese Einstellung ist gekoppelt mit Chat &gt; Benachrichtigungen &gt; 'Beim Eintreffen von AdHoc-Messages:'." name="textFSNewConferenceIncomingIMSession">
+			AdHoc-Messages:
+		</text>
+		<button label="V" name="Prev_UISndNewIncomingConfIMSession" tool_tip="Vorschau zu diesem Sound."/>
+		<button label="S" name="Def_UISndNewIncomingConfIMSession" tool_tip="Auf Standardwert zurücksetzen."/>
+		<combo_box name="PlayModeUISndNewIncomingConfIMSession">
 			<combo_box.item label="Bei neuer Nachr." name="1"/>
 			<combo_box.item label="Bei jeder Nachr." name="2"/>
 			<combo_box.item label="Wenn kein Fokus" name="3"/>
@@ -347,12 +353,12 @@ Der jeweilige Standardwert wird im Hovertip des UUID-Feldes angezeigt.
 		<button label="S" name="Def_UISndWindowOpen" tool_tip="Auf Standardwert zurücksetzen."/>
 		<check_box label="Abspielen" name="PlayModeUISndWindowOpen"/>
 
-		<text tool_tip="UUID des Klangs bei der Warnung vor einem Neustart der Region." name="textFSRegionRestart">
-			Warnung Regionsneustart:
+		<text tool_tip="UUID des Klangs für Schritte. Erfordert Neustart" name="textFSFootsteps">
+			Schritte:
 		</text>
-		<button label="V" name="Prev_UISndRegionRestart" tool_tip="Vorschau zu diesem Sound."/>
-		<button label="S" name="Def_UISndRegionRestart" tool_tip="Auf Standardwert zurücksetzen."/>
-		<check_box label="Abspielen" name="PlayModeUISndRegionRestart"/>
+		<button label="V" name="Prev_UISndFootsteps" tool_tip="Vorschau zu diesem Sound."/>
+		<button label="S" name="Def_UISndFootsteps" tool_tip="Auf Standardwert zurücksetzen."/>
+		<check_box label="Abspielen" name="PlayModeUISndFootsteps"/>
 
 		<text tool_tip="UUID des Klangs beim Einloggen eines Freundes." name="textFSFriendOnline">
 			Einloggen Freund:
@@ -404,13 +410,6 @@ Der jeweilige Standardwert wird im Hovertip des UUID-Feldes angezeigt.
 		<button label="S" name="Def_UISndIncomingVoiceCall" tool_tip="Auf Standardwert zurücksetzen."/>
 		<check_box label="Abspielen" name="PlayModeUISndIncomingVoiceCall"/>
 
-		<text tool_tip="UUID des Klangs für Schritte. Erfordert Neustart" name="textFSFootsteps">
-			Schritte:
-		</text>
-		<button label="V" name="Prev_UISndFootsteps" tool_tip="Vorschau zu diesem Sound."/>
-		<button label="S" name="Def_UISndFootsteps" tool_tip="Auf Standardwert zurücksetzen."/>
-		<check_box label="Abspielen" name="PlayModeUISndFootsteps"/>
-
 		<text tool_tip="UUID des Klangs für Gruppeneinladungen." name="textFSGroupInvitation">
 			Gruppeneinladungen:
 		</text>
@@ -424,6 +423,27 @@ Der jeweilige Standardwert wird im Hovertip des UUID-Feldes angezeigt.
 		<button label="V" name="Prev_UISndGroupNotice" tool_tip="Vorschau zu diesem Sound."/>
 		<button label="S" name="Def_UISndGroupNotice" tool_tip="Auf Standardwert zurücksetzen."/>
 		<check_box label="Abspielen" name="PlayModeUISndGroupNotice"/>
+
+		<text tool_tip="UUID des Klangs bei einer ungültigen Aktion." name="textFSInvalidOp">
+			Ungültige Aktion:
+		</text>
+		<button label="V" name="Prev_UISndInvalidOp" tool_tip="Vorschau zu diesem Sound."/>
+		<button label="S" name="Def_UISndInvalidOp" tool_tip="Auf Standardwert zurücksetzen."/>
+		<check_box label="Abspielen" name="PlayModeUISndInvalidOp"/>
+
+		<text tool_tip="UUID des Klangs bei der Warnung vor einem Neustart der Region." name="textFSRestart">
+			Regionsneustart:
+		</text>
+		<button label="V" name="Prev_UISndRestart" tool_tip="Vorschau zu diesem Sound."/>
+		<button label="S" name="Def_UISndRestart" tool_tip="Auf Standardwert zurücksetzen."/>
+		<check_box label="Abspielen" name="PlayModeUISndRestart"/>
+		
+		<text tool_tip="UUID des Klangs bei der Warnung vor einem Neustart der Region (OpenSim)." name="textFSRestartOpenSim">
+			Regionsneustart (OpenSim):
+		</text>
+		<button label="V" name="Prev_UISndRestartOpenSim" tool_tip="Vorschau zu diesem Sound."/>
+		<button label="S" name="Def_UISndRestartOpenSim" tool_tip="Auf Standardwert zurücksetzen."/>
+		<check_box label="Abspielen" name="PlayModeUISndRestartOpenSim"/>
     </panel>
 	
 	</tab_container>

@@ -99,6 +99,8 @@
 			<spinner tool_tip="0.25-1.0, 0.25 für maximales Ausblenden für 1 für kein Ausblenden" name="FSIMChatHistoryFade"/>
 			<check_box name="FSAnnounceIncomingIM" label="Eingehende Instant Messages ankünden sobald Sender zu schreiben beginnt"/>
 			<check_box name="FSIMChatFlashOnFriendStatusChange" label="Blinkende IM-Reiter, wenn Freunde sich an- oder abmelden"/>
+			<check_box name="FSNotifyNearbyChatFlash" label="Blinkender Chat-Toolbar-Button, wenn neuer Chat in der Nähe eintrifft" tool_tip="Der Chat-Button in der Toolbar blinkt, wenn ein neuer Chat in der Nähe eintrifft. Das Fenster vom Chat in der Nähe muss im Gespräche-Fenster eingedockt sein und das Gespräche-Fenster darf nicht sichtbar sein, damit der Button blinkt."/>
+			<check_box name="FSNotifyIMFlash" label="Blinkender Chat-Toolbar-Button, wenn eine neue (Gruppen-)IM eintrifft" tool_tip="Der Chat-Button in der Toolbar blinkt, wenn eine neue Instand Message oder ein neuer Gruppenchat eintrifft. Das entsprechende Fenster muss im Gespräche-Fenster eingedockt sein und das Gespräche-Fenster darf nicht sichtbar sein, damit der Button blinkt. Diese Option ist nur verfügbar, wenn (Gruppen-)IM-Fenster als Registerkarten und nicht als separate Fenster angezeigt werden (siehe Reiter „Allgemein“)."/>
 			<check_box name="FSReportMutedGroupChat" label="Stummgeschalteten Gruppenchat im lokalen Chat melden"/>
 			<text name="WhenPlayIMLabel" width="205">
 				Beim Eintreffen von Instant Messages:
@@ -118,6 +120,17 @@
 				<combo_box.item label="Klang nur abspielen, wenn nicht im Fokus" name="3"/>
 				<combo_box.item label="Keinen Klang abspielen" name="0"/>
 			</combo_box>
+			<text name="WhenPlayConfIMLabel" width="205">
+				Beim Eintreffen von AdHoc-Messages:
+			</text>
+			<combo_box name="WhenPlayConfIM" width="265">
+				<combo_box.item label="Klang nur bei neuer Sitzung abspielen" name="1"/>
+				<combo_box.item label="Klang bei jeder Nachricht abspielen" name="2"/>
+				<combo_box.item label="Klang nur abspielen, wenn nicht im Fokus" name="3"/>
+				<combo_box.item label="Keinen Klang abspielen" name="0"/>
+			</combo_box>
+			<check_box name="FSGroupNoticesToIMLog" label="Gruppenmitteilungen im Gruppenchat zusätzlich zum Toast anzeigen"/>
+			<check_box name="FSBetterGroupNoticesToIMLog" label="Betreff und Autor ebenfalls anzeigen"/>
 		</panel>
 		
 		<!-- Chat: Firestorm -->
@@ -136,6 +149,7 @@
 			<check_box name="FSShowChatType" label="Chat-Typ/Sende-Button anzeigen" left_delta="260"/>
 			<check_box label="Haupteingabezeile für Chat automatisch verstecken" name="AutohideChatBar" tool_tip="Eingabezeile in der unteren Buttonleiste automatisch verstecken und nur zur Eingabe anzeigen"/>
 			<check_box label="Chatleiste nach Senden deaktivieren" name="CloseChatOnReturn"/>
+			<check_box label="Chatverlauf ebenfalls deaktivieren" name="FSUnfocusChatHistoryOnReturn" left_delta="260"/>
 			<check_box name="FSMarkObjects" label="Objektename als (namenlos) anzeigen um Vortäuschungen zu unterbinden"/>
 
 			<!-- Groups -->

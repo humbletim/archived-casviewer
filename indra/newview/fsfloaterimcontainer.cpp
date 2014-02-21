@@ -41,12 +41,18 @@
 #include "llfloater.h"
 #include "llviewercontrol.h"
 #include "fsfloaterim.h"
+#include "llvoiceclient.h"
+
+static const F32 VOICE_STATUS_UPDATE_INTERVAL = 1.0f;
 
 //
 // FSFloaterIMContainer
 //
 FSFloaterIMContainer::FSFloaterIMContainer(const LLSD& seed)
-:	LLMultiFloater(seed)
+:	LLMultiFloater(seed),
+	mActiveVoiceFloater(NULL),
+	mCurrentVoiceState(VOICE_STATE_NONE),
+	mForceVoiceStateUpdate(false)
 {
 	mAutoResize = FALSE;
 	LLTransientFloaterMgr::getInstance()->addControlView(LLTransientFloaterMgr::IM, this);
@@ -77,6 +83,12 @@ BOOL FSFloaterIMContainer::postBuild()
 	mNewMessageConnection = LLIMModel::instance().mNewMsgSignal.connect(boost::bind(&FSFloaterIMContainer::onNewMessageReceived, this, _1));
 	// Do not call base postBuild to not connect to mCloseSignal to not close all floaters via Close button
 	// mTabContainer will be initialized in LLMultiFloater::addChild()
+
+	mActiveVoiceUpdateTimer.setTimerExpirySec(VOICE_STATUS_UPDATE_INTERVAL);
+	mActiveVoiceUpdateTimer.start();
+
+	gSavedSettings.getControl("FSShowConversationVoiceStateIndicator")->getSignal()->connect(boost::bind(&FSFloaterIMContainer::onVoiceStateIndicatorChanged, this, _2));
+
 	return TRUE;
 }
 
@@ -139,6 +151,9 @@ void FSFloaterIMContainer::addFloater(LLFloater* floaterp,
 		openFloater(floaterp->getKey());
 		return;
 	}
+
+	// Need to force an update on the voice state because torn off floater might get re-attached
+	mForceVoiceStateUpdate = true;
 	
 	if (floaterp->getName() == "imcontacts" || floaterp->getName() == "nearby_chat")
 	{
@@ -254,6 +269,18 @@ void FSFloaterIMContainer::removeFloater(LLFloater* floaterp)
 }
 // [/SL:KB]
 
+bool FSFloaterIMContainer::hasFloater(LLFloater* floaterp)
+{
+	for (S32 i = 0; i < mTabContainer->getTabCount(); ++i)
+	{
+		if (dynamic_cast<LLFloater*>(mTabContainer->getPanelByIndex(i)) == floaterp)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void FSFloaterIMContainer::onCloseFloater(LLUUID& id)
 {
 	mSessions.erase(id);
@@ -344,6 +371,112 @@ void FSFloaterIMContainer::reloadEmptyFloaters()
 	{
 		nearby_chat->reloadMessages(true);
 	}
+}
+
+void FSFloaterIMContainer::onVoiceStateIndicatorChanged(const LLSD& data)
+{
+	if (!data.asBoolean())
+	{
+		if (mActiveVoiceFloater)
+		{
+			mTabContainer->setTabImage(mActiveVoiceFloater, "");
+			mActiveVoiceFloater = NULL;
+		}
+		mCurrentVoiceState = VOICE_STATE_NONE;
+	}
+}
+
+// virtual
+void FSFloaterIMContainer::draw()
+{
+	static LLCachedControl<bool> fsShowConversationVoiceStateIndicator(gSavedSettings, "FSShowConversationVoiceStateIndicator");
+	if (fsShowConversationVoiceStateIndicator && (mActiveVoiceUpdateTimer.hasExpired() || mForceVoiceStateUpdate))
+	{
+		LLFloater* current_voice_floater = getCurrentVoiceFloater();
+		if (mActiveVoiceFloater != current_voice_floater)
+		{
+			if (mActiveVoiceFloater)
+			{
+				mTabContainer->setTabImage(mActiveVoiceFloater, "");
+				mCurrentVoiceState = VOICE_STATE_NONE;
+			}
+		}
+
+		if (current_voice_floater)
+		{
+			static LLUIColor voice_connected_color = LLUIColorTable::instance().getColor("VoiceConnectedColor", LLColor4::green);
+			static LLUIColor voice_error_color = LLUIColorTable::instance().getColor("VoiceErrorColor", LLColor4::red);
+			static LLUIColor voice_not_connected_color = LLUIColorTable::instance().getColor("VoiceNotConnectedColor", LLColor4::yellow);
+
+			eVoiceState voice_state = VOICE_STATE_UNKNOWN;
+			LLVoiceChannel* voice_channel = LLVoiceChannel::getCurrentVoiceChannel();
+			if (voice_channel)
+			{
+				if (voice_channel->isActive())
+				{
+					voice_state = VOICE_STATE_CONNECTED;
+				}
+				else if (voice_channel->getState() == LLVoiceChannel::STATE_ERROR)
+				{
+					voice_state = VOICE_STATE_ERROR;
+				}
+				else
+				{
+					voice_state = VOICE_STATE_NOT_CONNECTED;
+				}
+			}
+
+			if (voice_state != mCurrentVoiceState || mForceVoiceStateUpdate)
+			{
+				LLColor4 icon_color;
+				switch (voice_state)
+				{
+					case VOICE_STATE_CONNECTED:
+						icon_color = voice_connected_color.get();
+						break;
+					case VOICE_STATE_ERROR:
+						icon_color = voice_error_color.get();
+						break;
+					case VOICE_STATE_NOT_CONNECTED:
+						icon_color = voice_not_connected_color.get();
+						break;
+					default:
+						icon_color = LLColor4::white;
+						break;
+				}
+				mTabContainer->setTabImage(current_voice_floater, "Active_Voice_Tab", LLFontGL::RIGHT, icon_color, icon_color);
+				mCurrentVoiceState = voice_state;
+			}
+		}
+		mForceVoiceStateUpdate = false;
+		mActiveVoiceFloater = current_voice_floater;
+		mActiveVoiceUpdateTimer.setTimerExpirySec(VOICE_STATUS_UPDATE_INTERVAL);
+	}
+
+	LLMultiFloater::draw();
+}
+
+LLFloater* FSFloaterIMContainer::getCurrentVoiceFloater()
+{
+	if (!LLVoiceClient::instance().voiceEnabled())
+	{
+		return NULL;
+	}
+
+	if (LLVoiceChannelProximal::getInstance() == LLVoiceChannel::getCurrentVoiceChannel())
+	{
+		return FSFloaterNearbyChat::getInstance();
+	}
+
+	for (S32 i = 0; i < mTabContainer->getTabCount(); ++i)
+	{
+		FSFloaterIM* im_floater = dynamic_cast<FSFloaterIM*>(mTabContainer->getPanelByIndex(i));
+		if (im_floater && im_floater->getVoiceChannel() == LLVoiceChannel::getCurrentVoiceChannel())
+		{
+			return im_floater;
+		}
+	}
+	return NULL;
 }
 
 // EOF

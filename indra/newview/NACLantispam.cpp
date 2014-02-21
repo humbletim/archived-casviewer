@@ -3,11 +3,18 @@
 #include "NACLantispam.h"
 
 #include "llagent.h"
+#include "llmutelist.h"
 #include "llnotificationsutil.h"
+#include "llslurl.h"
 #include "llviewercontrol.h"
 #include "llviewerobjectlist.h"
+#include "llviewerregion.h"
+#include "llworld.h"
 #include "sound_ids.h"
 #include <time.h>
+#include <boost/regex.hpp>
+
+const static boost::regex NEWLINES("\\n{1}");
 
 // NACLAntiSpamQueueEntry
 
@@ -86,6 +93,19 @@ U32 NACLAntiSpamQueue::getTime()
 U32 NACLAntiSpamQueue::getAmount()
 {
 	return mQueueAmount;
+}
+
+NACLAntiSpamQueueEntry* NACLAntiSpamQueue::getEntry(const LLUUID& source)
+{
+	spam_queue_entry_map_t::iterator found = mEntries.find(source);
+	if (found != mEntries.end())
+	{
+		return found->second;
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 void NACLAntiSpamQueue::clearEntries()
@@ -323,7 +343,7 @@ void NACLAntiSpamRegistry::blockGlobalEntry(const LLUUID& source)
 	mGlobalEntries[source]->setBlocked();
 }
 
-bool NACLAntiSpamRegistry::checkQueue(EAntispamQueue queue, const LLUUID& source, U32 multiplier, bool silent)
+bool NACLAntiSpamRegistry::checkQueue(EAntispamQueue queue, const LLUUID& source, EAntispamSource sourcetype, U32 multiplier)
 // returns TRUE if blocked, FALSE otherwise
 {
 	// skip all checks if we're we've been administratively turned off
@@ -371,14 +391,48 @@ bool NACLAntiSpamRegistry::checkQueue(EAntispamQueue queue, const LLUUID& source
 	
 	if (result == 1) // newly blocked, result == 1
 	{
-		if (!silent)
+		if (!LLMuteList::getInstance()->isMuted(source))
 		{
-			LLSD args;
-			args["SOURCE"] = source.asString();
-			args["QUEUE"] = getQueueName(queue);
-			args["COUNT"] = llformat("%d", multiplier * mQueues[queue]->getAmount());
-			args["PERIOD"] = llformat("%d", mQueues[queue]->getTime());
-			LLNotificationsUtil::add("AntiSpamBlocked", args);
+			AntispamObjectData data;
+			data.mName = source.asString();
+			data.mQueue = queue;
+			data.mCount = multiplier * mQueues[queue]->getAmount();
+			data.mPeriod = mQueues[queue]->getTime();
+			data.mNotificationId = "AntiSpamBlocked";
+
+			if (sourcetype == ANTISPAM_SOURCE_OBJECT)
+			{
+				bool sent = false;
+
+				for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin();
+					iter != LLWorld::getInstance()->getRegionList().end(); ++iter)
+				{
+					LLViewerRegion* region = *iter;
+					if (gMessageSystem && region && region->isAlive())
+					{
+						gMessageSystem->newMessage(_PREHASH_RequestObjectPropertiesFamily);
+						gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+						gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgentID);
+						gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+						gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+						gMessageSystem->addU32Fast(_PREHASH_RequestFlags, 0);
+						gMessageSystem->addUUIDFast(_PREHASH_ObjectID, source);
+						gMessageSystem->sendReliable(region->getHost());
+						sent = true;
+					}
+				}
+
+				if (sent)
+				{
+					mObjectData[source] = data;
+				}
+			}
+			else if (sourcetype == ANTISPAM_SOURCE_AGENT)
+			{
+				LLUUID request_id;
+				request_id.generate();
+				mAvatarNameCallbackConnections[request_id] = LLAvatarNameCache::get(source, boost::bind(&NACLAntiSpamRegistry::onAvatarNameCallback, this, _1, _2, data, request_id));
+			}
 		}
 		LL_INFOS("AntiSpam") << "Blocked " << source.asString() << " for spamming a " << getQueueName(queue) << " (" << multiplier * mQueues[queue]->getAmount() << ") times in " << mQueues[queue]->getTime() << " seconds." << LL_ENDL;
 		return true;
@@ -386,6 +440,71 @@ bool NACLAntiSpamRegistry::checkQueue(EAntispamQueue queue, const LLUUID& source
 
 	// fallback, should not get here
 	return false;
+}
+
+bool NACLAntiSpamRegistry::checkNewlineFlood(EAntispamQueue queue, const LLUUID& source, const std::string& message)
+{
+	if (!isBlockedOnQueue(ANTISPAM_QUEUE_IM, source))
+	{
+		static LLCachedControl<U32> _NACL_AntiSpamNewlines(gSavedSettings, "_NACL_AntiSpamNewlines");
+		boost::sregex_iterator iter(message.begin(), message.end(), NEWLINES);
+		if ((std::abs(std::distance(iter, boost::sregex_iterator())) > _NACL_AntiSpamNewlines))
+		{
+			blockOnQueue(ANTISPAM_QUEUE_IM, source);
+			if (!LLMuteList::getInstance()->isMuted(source))
+			{
+				LL_INFOS("AntiSpam") << "[antispam] blocked owner due to too many newlines: " << source << LL_ENDL;
+
+				AntispamObjectData data;
+				data.mName = source.asString();
+				data.mQueue = queue;
+				data.mCount = _NACL_AntiSpamNewlines();
+				data.mPeriod = 0;
+				data.mNotificationId = (queue == ANTISPAM_QUEUE_IM ? "AntiSpamImNewLineFloodBlocked" : "AntiSpamChatNewLineFloodBlocked");
+
+				LLUUID request_id;
+				request_id.generate();
+				mAvatarNameCallbackConnections[request_id] = LLAvatarNameCache::get(source, boost::bind(&NACLAntiSpamRegistry::onAvatarNameCallback, this, _1, _2, data, request_id));
+			}
+			return true;
+		}
+		return false;
+	}
+	return false;
+}
+
+bool NACLAntiSpamRegistry::isBlockedOnQueue(EAntispamQueue queue, const LLUUID& source)
+{
+	// skip all checks if we're we've been administratively turned off
+	static LLCachedControl<bool> useAntiSpam(gSavedSettings, "UseAntiSpam");
+	if (!useAntiSpam)
+	{
+		return false;
+	}
+
+	if (mGlobalQueue)
+	{
+		spam_queue_entry_map_t::iterator found = mGlobalEntries.find(source);
+		if (found != mGlobalEntries.end())
+		{
+			return (found->second->getBlocked());
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (queue >= ANTISPAM_QUEUE_MAX || mQueues[queue] == NULL)
+		{
+			LL_ERRS("AntiSpam") << "CODE BUG: Attempting to use a antispam queue that was not created or was outside of the reasonable range of queues. Queue: " << getQueueName(queue) << llendl;
+			return false;
+		}
+
+		NACLAntiSpamQueueEntry* entry = mQueues[queue]->getEntry(source);
+		return (entry && entry->getBlocked());
+	}
 }
 
 // Global queue
@@ -425,6 +544,16 @@ void NACLAntiSpamRegistry::clearAllQueues()
 
 void NACLAntiSpamRegistry::purgeAllQueues()
 {
+	std::map<LLUUID, LLAvatarNameCache::callback_connection_t>::iterator it = mAvatarNameCallbackConnections.begin();
+	for (; it != mAvatarNameCallbackConnections.end(); ++it)
+	{
+		if (it->second.connected())
+		{
+			it->second.disconnect();
+		}
+	}
+	mAvatarNameCallbackConnections.clear();
+
 	if (mGlobalQueue)
 	{
 		purgeGlobalEntries();
@@ -439,6 +568,7 @@ void NACLAntiSpamRegistry::purgeAllQueues()
 			}
 		}
 	}
+	mObjectData.clear();
 	LL_INFOS("AntiSpam") << "AntiSpam Queues Purged" << LL_ENDL;
 }
 
@@ -505,4 +635,57 @@ void NACLAntiSpamRegistry::purgeGlobalEntries()
 bool NACLAntiSpamRegistry::isCollisionSound(const LLUUID& sound_id)
 {
 	return (mCollisionSounds.find(sound_id) != mCollisionSounds.end());
+}
+
+void NACLAntiSpamRegistry::processObjectPropertiesFamily(LLMessageSystem* msg)
+{
+	static LLCachedControl<bool> useAntiSpam(gSavedSettings, "UseAntiSpam");
+	if (!useAntiSpam)
+	{
+		return;
+	}
+
+	LLUUID id;
+	LLUUID owner_id;
+	std::string name;
+	msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_ObjectID, id);
+	msg->getUUIDFast(_PREHASH_ObjectData, _PREHASH_OwnerID, owner_id);
+	msg->getStringFast(_PREHASH_ObjectData, _PREHASH_Name, name);
+
+	std::map<LLUUID, AntispamObjectData>::iterator found = mObjectData.find(id);
+	if (found != mObjectData.end())
+	{
+		AntispamObjectData data = found->second;
+
+		data.mName = LLSLURL("objectim", id, "").getSLURLString() + "?name=" + LLURI::escape(name) + "&owner=" + owner_id.asString();
+		notify(data);
+
+		mObjectData.erase(found);
+	}
+}
+
+void NACLAntiSpamRegistry::onAvatarNameCallback(const LLUUID& av_id, const LLAvatarName& av_name, AntispamObjectData data, const LLUUID& request_id)
+{
+	std::map<LLUUID, LLAvatarNameCache::callback_connection_t>::iterator found = mAvatarNameCallbackConnections.find(request_id);
+	if (found != mAvatarNameCallbackConnections.end())
+	{
+		if (found->second.connected())
+		{
+			found->second.disconnect();
+		}
+		mAvatarNameCallbackConnections.erase(found);
+	}
+
+	data.mName = LLSLURL("agent", av_id, "inspect").getSLURLString();
+	notify(data);
+}
+
+void NACLAntiSpamRegistry::notify(AntispamObjectData data)
+{
+	LLSD args;
+	args["SOURCE"] = data.mName;
+	args["QUEUE"] = getQueueName(data.mQueue);
+	args["COUNT"] = llformat("%d", data.mCount);
+	args["PERIOD"] = llformat("%d", data.mPeriod);
+	LLNotificationsUtil::add(data.mNotificationId, args);
 }

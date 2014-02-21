@@ -18,6 +18,9 @@
                  function="PromptShowURL"
                  name="ManageMyAccount_url"
                  parameter="WebLaunchJoinNow,http://secondlife.com/account/" />
+                <menu_item_call.on_visible
+                 function="GridCheck"
+                 parameter="secondlife"/>
         </menu_item_call>
         
         <menu_item_call
@@ -26,6 +29,9 @@
             <menu_item_call.on_click
              function="Floater.Show"
              parameter="outbox" />
+            <menu_item_call.on_visible
+             function="GridCheck"
+             parameter="secondlife"/>
         </menu_item_call>
 
         <menu_item_call
@@ -69,7 +75,17 @@
          function="Floater.Show"
          parameter="picks" />
         </menu_item_call>
-        
+         <menu_item_call
+        label="Post to Facebook..."
+        name="PostToFacebook">
+        <menu_item_call.on_click
+          function="Floater.Toggle"
+          parameter="social"/>
+        <menu_item_call.on_visible
+          function="GridCheck"
+          parameter="secondlife"/>
+      </menu_item_call>      
+      <menu_item_separator/>
         <menu_item_call
          label="Appearance"
          name="ChangeOutfit">
@@ -237,12 +253,20 @@
          label="Avatar Health"
          name="avhealth"
          tear_off="true">
-   	        <menu_item_call
-	         label="Stop Avatar Animations"
-	         name="Stop Animating My Avatar">
-	            <menu_item_call.on_click
-	             function="Tools.StopAllAnimations" />
-	        </menu_item_call>
+            <menu_item_call
+             label="Stop Avatar Animations"
+             name="Stop Animating My Avatar">
+                <menu_item_call.on_click
+                 function="Tools.StopAllAnimations"
+                 parameter="stop"/>
+            </menu_item_call>
+            <menu_item_call
+             label="Stop Avatar Animations &amp; Revoke Permissions"
+             name="Stop Animating My Avatar With Revoke">
+                <menu_item_call.on_click
+                 function="Tools.StopAllAnimations"
+                 parameter="stoprevoke"/>
+            </menu_item_call>
             <menu_item_call
                 label="Undeform Avatar"
                 name="undeform_avatar">
@@ -483,7 +507,7 @@
         
             <menu_item_separator/>
                 <menu_item_check
-             label="Automatically reject teleport offers"
+             label="Reject teleport offers and requests"
              name="Automatically reject teleport offers">
                 <menu_item_check.on_check
                  function="World.GetRejectTeleportOffers"/>
@@ -514,17 +538,14 @@
              function="Floater.Toggle"
              parameter="imcontacts" />
             </menu_item_check>
-      <menu_item_check
+        <menu_item_call
          label="Contact Sets"
          name="Contact Sets"
          shortcut="control|alt|shift|C">
-        <menu_item_check.on_check
-         function="Floater.Visible"
-         parameter="contactsets" />
-        <menu_item_check.on_click
-         function="Floater.Toggle"
-         parameter="contactsets" />
-      </menu_item_check>
+            <menu_item_call.on_click
+             function="SideTray.PanelPeopleTab"
+             parameter="contact_sets_panel" />
+        </menu_item_call>
         <menu_item_call
          label="Groups"
          name="My Groups"
@@ -1183,6 +1204,13 @@
         <menu_item_call.on_click
           function="Floater.Toggle"
           parameter="sound_explorer" />
+      </menu_item_call>
+      <menu_item_call
+        label="Animation Explorer"
+        name="Animation Explorer">
+        <menu_item_call.on_click
+          function="Floater.Toggle"
+          parameter="animation_explorer" />
       </menu_item_call>
       <menu_item_call
         label="Asset Blacklist"
@@ -1846,19 +1874,25 @@
     	<menu_item_call
              label="SL Marketplace"
              name="SL Marketplace">
-             <menu_item_call.on_click
+            <menu_item_call.on_click
              function="PromptShowURL"
              name="Xstreet_url"
              parameter="WebLaunchExternalTarget,https://marketplace.secondlife.com/" />
+            <menu_item_call.on_visible
+             function="GridCheck"
+             parameter="secondlife"/>
        </menu_item_call>
        <menu_item_call
              label="L$ Market Data"
              name="LindenXchange">
-             <menu_item_call.on_click
+            <menu_item_call.on_click
              function="PromptShowURL"
              name="lindenxchange_url"
              parameter="WebLaunchExternalTarget,https://secondlife.com/my/lindex/market.php" />
-       </menu_item_call>  
+            <menu_item_call.on_visible
+             function="GridCheck"
+             parameter="secondlife"/>
+       </menu_item_call>
     	<menu_item_call
              label="Script Library"
              name="Script Library">
@@ -1963,11 +1997,14 @@
         <menu_item_call
          label="Join Firestorm Support Group"
          name="firestorm_support_group">
-             <menu_item_call.on_click
+            <menu_item_call.on_click
              function="Advanced.WebBrowserTest"
              parameter="http://wiki.phoenixviewer.com/firestorm_support_groups_join" />
+            <menu_item_call.on_visible
+             function="GridCheck"
+             parameter="secondlife" />
         </menu_item_call>
-		
+
 <!--       <menu_item_call
          label="Second Life Help"
          name="Second Life Help">
@@ -1999,20 +2036,12 @@
              parameter="hud" />
         </menu_item_call>
 		<menu_item_separator/>
-		
-		<menu_item_call
-             label="User’s guide"
-             name="User’s guide">
-             <menu_item_call.on_click
-                 function="Advanced.ShowURL"
-                 parameter="http://community.secondlife.com/t5/English-Knowledge-Base/Second-Life-User-s-Guide/ta-p/1244857"/>
-        </menu_item_call>
         <menu_item_call
              label="Knowledge Base"
              name="Knowledge Base">
              <menu_item_call.on_click
                  function="Advanced.ShowURL"
-                 parameter="http://community.secondlife.com/t5/tkb/communitypage"/>
+            parameter="http://community.secondlife.com/t5/English-Knowledge-Base/Second-Life-User-s-Guide/ta-p/1244857"/>
         </menu_item_call>
         <menu_item_call
              label="Wiki"
@@ -2283,6 +2312,16 @@
       	<menu_item_check.on_click
       	 function="Floater.Toggle"
       	 parameter="rlv_behaviours" />
+      </menu_item_check>
+      <menu_item_check
+       label="Strings..."
+       name="Strings">
+        <menu_item_check.on_check
+         function="Floater.Visible"
+         parameter="rlv_strings" />
+        <menu_item_check.on_click
+         function="Floater.Toggle"
+         parameter="rlv_strings" />
       </menu_item_check>
     </menu>
 
@@ -2996,13 +3035,14 @@
         </menu_item_check>
 
         <menu_item_check
-           label="RestrainedLove API (RLVa)"
+           label="RestrainedLove API"
            name="RLV API">
               <menu_item_check.on_check
                function="RLV.CheckEnabled" />
               <menu_item_check.on_click
                function="RLV.ToggleEnabled" />
         </menu_item_check>
+
         <menu_item_call
          label="Show Debug Settings"
          shortcut="control|alt|shift|S"
@@ -3614,6 +3654,16 @@
            parameter="collision skeleton" />
         </menu_item_check>
         <menu_item_check
+         label="Joints"
+         name="Joints">
+          <menu_item_check.on_check
+           function="Advanced.CheckInfoDisplay"
+           parameter="joints" />
+          <menu_item_check.on_click
+           function="Advanced.ToggleInfoDisplay"
+           parameter="joints" />
+        </menu_item_check>
+        <menu_item_check
          label="Raycast"
          name="Raycast">
           <menu_item_check.on_check
@@ -4000,6 +4050,34 @@
          label="Recorder"
          name="Recorder"
          tear_off="true">
+            <menu_item_call visible="false"
+             label="Start event recording"
+             name="Start event recording">
+	      <menu_item_call.on_visible
+		 function="displayViewerEventRecorderMenuItems" />
+                <menu_item_call.on_click
+                 function="Advanced.EventRecorder"
+                 parameter="start recording" />
+            </menu_item_call>
+            <menu_item_call visible="false"
+             label="Stop event recording"
+             name="Stop event recording">
+	      <menu_item_call.on_visible
+		 function="displayViewerEventRecorderMenuItems" />
+                <menu_item_call.on_click
+                 function="Advanced.EventRecorder"
+                 parameter="stop recording" />
+            </menu_item_call>
+            <menu_item_call visible="false"
+             label="Playback event recording"
+             name="Playback event recording">
+	      <menu_item_call.on_visible
+		 function="displayViewerEventRecorderMenuItems" />
+                <menu_item_call.on_click
+                 function="Advanced.EventRecorder"
+                 parameter="start playback" />
+            </menu_item_call>
+
             <menu_item_call
              label="Start Playback"
              name="Start Playback">
@@ -4096,6 +4174,13 @@
             <menu_item_call.on_click
              function="Advanced.WebContentTest"
              parameter="http://google.com"/>
+          </menu_item_call>
+          <menu_item_call
+           label="FB Connect Test"
+           name="FB Connect Test">
+            <menu_item_call.on_click
+             function="Advanced.WebContentTest"
+             parameter="https://cryptic-ridge-1632.herokuapp.com/"/>
           </menu_item_call>
           <menu_item_call
              label="Dump SelectMgr"
@@ -4272,6 +4357,13 @@
                  function="ToggleControl"
                  parameter="DebugViews" />
             </menu_item_check>
+            <menu_item_call
+             label="XUI Preview Tool"
+             name="UI Preview Tool">
+                <menu_item_call.on_click
+                 function="Floater.Toggle"
+                 parameter="ui_preview" />
+            </menu_item_call>
           <menu_item_call
            label="Send Test IMs"
            name="Send Test IMs">

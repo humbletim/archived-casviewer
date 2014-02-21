@@ -485,7 +485,7 @@ void LLFloaterWorldMap::reshape( S32 width, S32 height, BOOL called_from_parent 
 void LLFloaterWorldMap::draw()
 {
 	// <FS:Ansariel> Performance improvement
-	static LLUICtrl* avatar_icon = getChild<LLUICtrl>("avatar_icon");
+	static LLUICtrl* avatar_icon = getChild<LLUICtrl>("friends_icon");  // <FS:Ansariel> Used to be avatar_icon
 	static LLUICtrl* landmark_icon = getChild<LLUICtrl>("landmark_icon");
 	static LLUICtrl* location_icon = getChild<LLUICtrl>("location_icon");
 	static LLView* teleport_btn = getChildView("Teleport");
@@ -496,7 +496,6 @@ void LLFloaterWorldMap::draw()
 	static LLUICtrl* zoom_slider = getChild<LLUICtrl>("zoom slider");
 	static LLView* people_chk = getChildView("people_chk");
 	static LLView* infohub_chk = getChildView("infohub_chk");
-	static LLView* telehub_chk = getChildView("telehub_chk");
 	static LLView* land_for_sale_chk = getChildView("land_for_sale_chk");
 	static LLView* event_chk = getChildView("event_chk");
 	static LLView* events_mature_chk = getChildView("events_mature_chk");
@@ -632,14 +631,13 @@ void LLFloaterWorldMap::draw()
 	// <FS:Ansariel> Performance improvement
 	//getChildView("people_chk")->setEnabled(enable);
 	//getChildView("infohub_chk")->setEnabled(enable);
-	//getChildView("telehub_chk")->setEnabled(enable);
+	//getChildView("telehub_chk")->setEnabled(enable); // <FS:Ansariel> Does not exist as of 12-02-2014!
 	//getChildView("land_for_sale_chk")->setEnabled(enable);
 	//getChildView("event_chk")->setEnabled(enable);
 	//getChildView("events_mature_chk")->setEnabled(enable);
 	//getChildView("events_adult_chk")->setEnabled(enable);
 	people_chk->setEnabled(enable);
 	infohub_chk->setEnabled(enable);
-	telehub_chk->setEnabled(enable);
 	land_for_sale_chk->setEnabled(enable);
 	event_chk->setEnabled(enable);
 	events_mature_chk->setEnabled(enable);
@@ -828,8 +826,8 @@ void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 	if (!sim_info)
 	{
 		// We haven't found a region for that point yet, leave the tracking to the world map
-		LLWorldMap::getInstance()->setTracking(pos_global);
 		LLTracker::stopTracking(NULL);
+		LLWorldMap::getInstance()->setTracking(pos_global);
 		S32 world_x = S32(pos_global.mdV[0] / 256);
 		S32 world_y = S32(pos_global.mdV[1] / 256);
 		LLWorldMapMessage::getInstance()->sendMapBlockRequest(world_x, world_y, world_x, world_y, true);
@@ -844,9 +842,9 @@ void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 	{
 		// Down region. Show the blue circle of death!
 		// i.e. let the world map that this and tell it it's invalid
+		LLTracker::stopTracking(NULL);
 		LLWorldMap::getInstance()->setTracking(pos_global);
 		LLWorldMap::getInstance()->setTrackingInvalid();
-		LLTracker::stopTracking(NULL);
 		setDefaultBtn("");
 		
 		// clicked on a down region - turn off coord display
@@ -872,11 +870,11 @@ void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 	
 	std::string tooltip("");
 	mTrackedStatus = LLTracker::TRACKING_LOCATION;
+	LLWorldMap::getInstance()->cancelTracking();		// The floater is taking over the tracking
 // [RLVa:KB] - Checked: 2012-02-08 (RLVa-1.4.5) | Added: RLVa-1.4.5
 	LLTracker::trackLocation(pos_global, (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC)) ? full_name : RlvStrings::getString(RLV_STRING_HIDDEN).c_str(), tooltip);
 // [/RLVa:KB]
 //	LLTracker::trackLocation(pos_global, full_name, tooltip);
-	LLWorldMap::getInstance()->cancelTracking();		// The floater is taking over the tracking
 
 	// <FS:Ansariel> Parcel details on map
 	if (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC))

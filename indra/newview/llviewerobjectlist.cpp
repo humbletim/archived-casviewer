@@ -81,6 +81,8 @@
 #include "fscommon.h"
 #include "llfloaterreg.h"
 
+#include "fsareasearch.h" // <FS:Cron> Added to provide the ability to update the impact costs in area search. </FS:Cron>
+
 extern F32 gMinObjectDistance;
 extern BOOL gAnimateTextures;
 
@@ -783,6 +785,15 @@ public:
 				F32 link_physics_cost = content[iter->asString()]["linked_set_physics_cost"].asReal();
 
 				gObjectList.updateObjectCost(object_id, object_cost, link_cost, physics_cost, link_physics_cost);
+
+				// <FS:Cron> area search
+				// Update area search to have current information.
+				FSAreaSearch* area_search_floater = LLFloaterReg::findTypedInstance<FSAreaSearch>("area_search");
+				if( area_search_floater )
+				{
+					area_search_floater->updateObjectCosts(object_id, object_cost, link_cost, physics_cost, link_physics_cost);
+				}
+				// </FS:Cron> area search
 			}
 			else
 			{
@@ -1016,21 +1027,17 @@ void LLViewerObjectList::update(LLAgent &agent, LLWorld &world)
 			objectp = *idle_iter;
 			llassert(objectp->isActive());
 			objectp->idleUpdate(agent, world, frame_time);
-
-			}
+		}
 
 		//update flexible objects
 		LLVolumeImplFlexible::updateClass();
 
 		//update animated textures
-		// <FS:Ansariel> FIRE-10557 / BUG-2814 / MAINT-2773: Disable texture animation doesn't work
-		//LLViewerTextureAnim::updateClass();
 		if (gAnimateTextures)
 		{
 			LLViewerTextureAnim::updateClass();
 		}
-		// </FS:Ansariel>
-			}
+	}
 
 
 

@@ -55,7 +55,10 @@
 #include "llnotificationsutil.h"
 #include "fswsassetblacklist.h"
 #include "llworld.h"
-
+#include "lltrans.h"	// getString()
+#include "llagentcamera.h" // gAgentCamera
+#include "llviewerjoystick.h" // For disabling/re-enabling when requested to look at an object.
+#include "llmoveview.h" // For LLPanelStandStopFlying::clearStandStopFlyingMode
 
 // max number of objects that can be (de-)selected in a single packet.
 const S32 MAX_OBJECTS_PER_PACKET = 255;
@@ -118,6 +121,9 @@ FSAreaSearch::FSAreaSearch(const LLSD& key) :
 	mColumnDistance(true),
 	mColumnName(true),
 	mColumnDescription(true),
+	mColumnPrice(true),
+	mColumnLandImpact(true),
+	mColumnPrimCount(true),
 	mColumnOwner(true),
 	mColumnGroup(true),
 	mColumnCreator(true),
@@ -172,7 +178,6 @@ BOOL FSAreaSearch::postBuild()
 	// TODO: add area search settings to the color.xml file
 	mBeaconColor = LLUIColorTable::getInstance()->getColor("PathfindingLinksetBeaconColor");
 	mBeaconTextColor = LLUIColorTable::getInstance()->getColor("PathfindingDefaultBeaconTextColor");
-	mBeaconLineWidth = gSavedSettings.getS32("DebugBeaconLineWidth");
 
 	return LLFloater::postBuild();
 }
@@ -180,6 +185,8 @@ BOOL FSAreaSearch::postBuild()
 void FSAreaSearch::draw()
 {
 	LLFloater::draw();
+	
+	static LLCachedControl<S32> beacon_line_width(gSavedSettings, "DebugBeaconLineWidth");
 	
 	if (mBeacons)
 	{
@@ -195,7 +202,7 @@ void FSAreaSearch::draw()
 			if (objectp)
 			{
 				const std::string &objectName = mObjectDetails[item->getUUID()].description;
-				gObjectList.addDebugBeacon(objectp->getPositionAgent(), objectName, mBeaconColor, mBeaconTextColor, mBeaconLineWidth);
+				gObjectList.addDebugBeacon(objectp->getPositionAgent(), objectName, mBeaconColor, mBeaconTextColor, beacon_line_width);
 			}
 		}
 	}
@@ -328,7 +335,7 @@ void FSAreaSearch::findObjects()
 	LL_DEBUGS("FSAreaSearch_spammy") << "Doing a FSAreaSearch::findObjects" << LL_ENDL;
 	
 	mLastUpdateTimer.stop(); // stop sets getElapsedTimeF32() time to zero.
-	// Pause processing of requestqueue untill done adding new requests.
+	// Pause processing of requestqueue until done adding new requests.
 	mRequestQueuePause = true;
 	checkRegion();
 	mRefresh = false;
@@ -620,7 +627,7 @@ void FSAreaSearch::requestObjectProperties(const std::vector<U32>& request_list,
 
 void FSAreaSearch::processObjectProperties(LLMessageSystem* msg)
 {
-	// This fuction is called by llviewermessage even if no floater has been created.
+	// This function is called by llviewermessage even if no floater has been created.
 	if (!(mInstance && mActive))
 	{
 	      return;
@@ -798,7 +805,7 @@ void FSAreaSearch::matchObject(FSObjectProperties& details, LLViewerObject* obje
 		return;
 	}
 	
-	if (mFilterLocked && !objectp->flagObjectPermanent())
+	if (mFilterLocked && (details.owner_mask & PERM_MOVE))
 	{
 		return;
 	}
@@ -957,6 +964,43 @@ void FSAreaSearch::matchObject(FSObjectProperties& details, LLViewerObject* obje
 		row_params.columns.add(cell_params);
 	}
 
+	if (mColumnPrice)
+	{
+		cell_params.column = "price";
+		if (details.sale_info.isForSale())
+		{
+			S32 price = details.sale_info.getSalePrice();
+			cell_params.value = price > 0 ? llformat("%s%d", "L$", details.sale_info.getSalePrice()) : LLTrans::getString("free");
+		}
+		else
+		{
+			cell_params.value = " ";
+		}
+		row_params.columns.add(cell_params);
+	}
+
+	if (mColumnLandImpact)
+	{
+		cell_params.column = "land_impact";
+		F32 cost = objectp->getLinksetCost();
+		if (cost > 0.001)
+		{
+			cell_params.value = cost;
+		}
+		else
+		{
+			cell_params.value = "...";
+		}
+		row_params.columns.add(cell_params);
+	}
+
+	if (mColumnPrimCount)
+	{
+		cell_params.column = "prim_count";
+		cell_params.value = objectp->numChildren() + 1;
+		row_params.columns.add(cell_params);
+	}
+
 	if (mColumnOwner)
 	{
 		cell_params.column = "owner";
@@ -1004,6 +1048,31 @@ void FSAreaSearch::matchObject(FSObjectProperties& details, LLViewerObject* obje
 		{
 			LLScrollListText* list_cell = (LLScrollListText*)list_row->getColumn(i);
 			list_cell->setFontStyle(font_style);
+		}
+	}
+}
+
+// <FS:Cron> Allows the object costs to be updated on-the-fly so as to bypass the problem with the data being stale when first accessed.
+void FSAreaSearch::updateObjectCosts(const LLUUID& object_id, F32 object_cost, F32 link_cost, F32 physics_cost, F32 link_physics_cost)
+{
+	// This fuction is called by LLObjectCostResponder::result even if no floater has been created.
+	if (!(mInstance && mActive))
+	{
+		return;
+	}
+	
+	LLScrollListCtrl* result_list = mPanelList->getResultList();
+	if (result_list)
+	{
+		LLScrollListItem* list_row = result_list->getItem(LLSD(object_id));
+		if (list_row)
+		{
+			LLScrollListColumn* list_column = result_list->getColumn("land_impact");
+			if (list_column)
+			{
+				LLScrollListCell* linkset_cost_cell = list_row->getColumn(list_column->mIndex);
+				linkset_cost_cell->setValue(LLSD(link_cost));
+			}
 		}
 	}
 }
@@ -1428,12 +1497,96 @@ bool FSPanelAreaSearchList::onContextMenuItemEnable(const LLSD& userdata)
 		// return true if just one item is selected.
 		return (mResultList->getNumSelected() == 1);
 	}
+	else if (parameter == "in_dd")
+	{
+		// return true if the object is within the draw distance.
+		LLUUID object_id = mResultList->getFirstSelected()->getUUID();
+		LLViewerObject* objectp = gObjectList.findObject(object_id);
+		return (objectp && dist_vec_squared(gAgent.getPositionGlobal(), objectp->getPositionGlobal()) < gAgentCamera.mDrawDistance * gAgentCamera.mDrawDistance);
+	}
+	else if (parameter == "script")
+	{
+		return (mResultList->getNumSelected() > 0 && enable_bridge_function());
+	}
 	else
 	{
 		// return true if more then one is selected, but not just one.
 		return (mResultList->getNumSelected() > 1);
 	}
 }
+
+// This function calculates the aspect ratio and the world aligned components of a selection bounding box. Direct C&P from LLViewerMediaFocus::getBBoxAspectRatio()
+F32 FSPanelAreaSearchList::getBBoxAspectRatio(const LLBBox& bbox, const LLVector3& normal, F32* height, F32* width, F32* depth)
+{
+	// Convert the selection normal and an up vector to local coordinate space of the bbox
+	LLVector3 local_normal = bbox.agentToLocalBasis(normal);
+	LLVector3 z_vec = bbox.agentToLocalBasis(LLVector3(0.0f, 0.0f, 1.0f));
+	
+	LLVector3 comp1(0.f,0.f,0.f);
+	LLVector3 comp2(0.f,0.f,0.f);
+	LLVector3 bbox_max = bbox.getExtentLocal();
+	F32 dot1 = 0.f;
+	F32 dot2 = 0.f;
+	
+	LL_DEBUGS("FSAreaSearch") << "bounding box local size = " << bbox_max << ", local_normal = " << local_normal << LL_ENDL;
+
+	// The largest component of the localized normal vector is the depth component
+	// meaning that the other two are the legs of the rectangle.
+	local_normal.abs();
+	
+	// Using temporary variables for these makes the logic a bit more readable.
+	bool XgtY = (local_normal.mV[VX] > local_normal.mV[VY]);
+	bool XgtZ = (local_normal.mV[VX] > local_normal.mV[VZ]);
+	bool YgtZ = (local_normal.mV[VY] > local_normal.mV[VZ]);
+	
+	if(XgtY && XgtZ)
+	{
+		LL_DEBUGS("FSAreaSearch") << "x component of normal is longest, using y and z" << LL_ENDL;
+		comp1.mV[VY] = bbox_max.mV[VY];
+		comp2.mV[VZ] = bbox_max.mV[VZ];
+		*depth = bbox_max.mV[VX];
+	}
+	else if(!XgtY && YgtZ)
+	{
+		LL_DEBUGS("FSAreaSearch") << "y component of normal is longest, using x and z" << LL_ENDL;
+		comp1.mV[VX] = bbox_max.mV[VX];
+		comp2.mV[VZ] = bbox_max.mV[VZ];
+		*depth = bbox_max.mV[VY];
+	}
+	else
+	{
+		LL_DEBUGS("FSAreaSearch") << "z component of normal is longest, using x and y" << LL_ENDL;
+		comp1.mV[VX] = bbox_max.mV[VX];
+		comp2.mV[VY] = bbox_max.mV[VY];
+		*depth = bbox_max.mV[VZ];
+	}
+	
+	// The height is the vector closest to vertical in the bbox coordinate space (highest dot product value)
+	dot1 = comp1 * z_vec;
+	dot2 = comp2 * z_vec;
+	if(fabs(dot1) > fabs(dot2))
+	{
+		*height = comp1.length();
+		*width = comp2.length();
+
+		LL_DEBUGS("FSAreaSearch") << "comp1 = " << comp1 << ", height = " << *height << LL_ENDL;
+		LL_DEBUGS("FSAreaSearch") << "comp2 = " << comp2 << ", width = " << *width << LL_ENDL;
+	}
+	else
+	{
+		*height = comp2.length();
+		*width = comp1.length();
+
+		LL_DEBUGS("FSAreaSearch") << "comp2 = " << comp2 << ", height = " << *height << LL_ENDL;
+		LL_DEBUGS("FSAreaSearch") << "comp1 = " << comp1 << ", width = " << *width << LL_ENDL;
+	}
+	
+	LL_DEBUGS("FSAreaSearch") << "returning " << (*width / *height) << LL_ENDL;
+
+	// Return the aspect ratio.
+	return *width / *height;
+}
+
 
 bool FSPanelAreaSearchList::onContextMenuItemClick(const LLSD& userdata)
 {
@@ -1493,6 +1646,7 @@ bool FSPanelAreaSearchList::onContextMenuItemClick(const LLSD& userdata)
 
 	case 'b': // buy
 	case 'p': // p_teleport
+	case 'q': // q_zoom
 	{
 		LLUUID object_id = mResultList->getFirstSelected()->getUUID();
 		LLViewerObject* objectp = gObjectList.findObject(object_id);
@@ -1505,6 +1659,118 @@ bool FSPanelAreaSearchList::onContextMenuItemClick(const LLSD& userdata)
 				break;
 			case 'p': // p_teleport
 				gAgent.teleportViaLocation(objectp->getPositionGlobal());
+				break;
+			case 'q': // q_zoom
+			{
+				// Disable flycam if active.  Without this, the requested look-at doesn't happen because the flycam code overrides all other camera motion.
+				bool fly_cam_status(LLViewerJoystick::getInstance()->getOverrideCamera());
+				if (fly_cam_status)
+				{
+					LLViewerJoystick::getInstance()->setOverrideCamera(false);
+					LLPanelStandStopFlying::clearStandStopFlyingMode(LLPanelStandStopFlying::SSFM_FLYCAM);
+					// *NOTE: Above may not be the proper way to disable flycam.  What I really want to do is just be able to move the camera and then leave the flycam in the the same state it was in, just moved to the new location. ~Cron
+				}
+				
+				LLViewerJoystick::getInstance()->setCameraNeedsUpdate(true); // Fixes an edge case where if the user has JUST disabled flycam themselves, the camera gets stuck waiting for input.
+				
+				gAgentCamera.setFocusOnAvatar(FALSE, ANIMATE);
+				
+				gAgentCamera.setLookAt(LOOKAT_TARGET_SELECT, objectp);
+				
+				// Place the camera looking at the object, along the line from the camera to the object,
+				//  and sufficiently far enough away for the object to fill 3/4 of the screen,
+				//  but not so close that the bbox's nearest possible vertex goes inside the near clip.
+				// Logic C&P'd from LLViewerMediaFocus::setCameraZoom() and then edited as needed
+				
+				LLBBox bbox = objectp->getBoundingBoxAgent();
+				LLVector3d center(gAgent.getPosGlobalFromAgent(bbox.getCenterAgent()));
+				F32 height;
+				F32 width;
+				F32 depth;
+				F32 angle_of_view;
+				F32 distance;
+				
+				LLVector3d target_pos(center);
+				LLVector3d camera_dir(gAgentCamera.getCameraPositionGlobal() - target_pos);
+				camera_dir.normalize();
+				
+				// We need the aspect ratio, and the 3 components of the bbox as height, width, and depth.
+				F32 aspect_ratio(getBBoxAspectRatio(bbox, LLVector3(camera_dir), &height, &width, &depth));
+				F32 camera_aspect(LLViewerCamera::getInstance()->getAspect());
+				
+				// We will normally use the side of the volume aligned with the short side of the screen (i.e. the height for 
+				// a screen in a landscape aspect ratio), however there is an edge case where the aspect ratio of the object is 
+				// more extreme than the screen.  In this case we invert the logic, using the longer component of both the object
+				// and the screen.  
+				bool invert((camera_aspect > 1.0f && aspect_ratio > camera_aspect) || (camera_aspect < 1.0f && aspect_ratio < camera_aspect));
+				
+				// To calculate the optimum viewing distance we will need the angle of the shorter side of the view rectangle.
+				// In portrait mode this is the width, and in landscape it is the height.
+				// We then calculate the distance based on the corresponding side of the object bbox (width for portrait, height for landscape)
+				// We will add half the depth of the bounding box, as the distance projection uses the center point of the bbox.
+				if(camera_aspect < 1.0f || invert)
+				{
+					angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect());
+					distance = width * 0.5 * 1.1 / tanf(angle_of_view * 0.5f);
+				}
+				else
+				{
+					angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getView());
+					distance = height * 0.5 * 1.1 / tanf(angle_of_view * 0.5f);
+				}
+				
+				distance += depth * 0.5;
+				
+				
+				// Verify that the bounding box isn't inside the near clip.  Using OBB-plane intersection to check if the
+				// near-clip plane intersects with the bounding box, and if it does, adjust the distance such that the
+				// object doesn't clip.
+				LLVector3d bbox_extents(bbox.getExtentLocal());
+				LLVector3d axis_x = LLVector3d(1, 0, 0) * bbox.getRotation();
+				LLVector3d axis_y = LLVector3d(0, 1, 0) * bbox.getRotation();
+				LLVector3d axis_z = LLVector3d(0, 0, 1) * bbox.getRotation();
+				//Normal of nearclip plane is camera_dir.
+				F32 min_near_clip_dist = bbox_extents.mdV[0] * (camera_dir * axis_x) + bbox_extents.mdV[1] * (camera_dir * axis_y) + bbox_extents.mdV[2] * (camera_dir * axis_z); // http://www.gamasutra.com/view/feature/131790/simple_intersection_tests_for_games.php?page=7
+				F32 camera_to_near_clip_dist(LLViewerCamera::getInstance()->getNear());
+				F32 min_camera_dist(min_near_clip_dist + camera_to_near_clip_dist);
+				if (distance < min_camera_dist)
+				{
+					// Camera is too close to object, some parts MIGHT clip.  Move camera away to the position where clipping barely doesn't happen.
+					distance = min_camera_dist;
+				}
+				
+				
+				LLVector3d camera_pos(target_pos + camera_dir * distance);
+				
+				if (camera_dir == LLVector3d::z_axis || camera_dir == LLVector3d::z_axis_neg)
+				{
+					// If the direction points directly up, the camera will "flip" around.
+					// We try to avoid this by adjusting the target camera position a 
+					// smidge towards current camera position
+					// *NOTE: this solution is not perfect.  All it attempts to solve is the
+					// "looking down" problem where the camera flips around when it animates
+					// to that position.  You still are not guaranteed to be looking at the
+					// object in the correct orientation.  What this solution does is it will
+					// put the camera into position keeping as best it can the current 
+					// orientation with respect to the direction wanted.  In other words, if
+					// before zoom the object appears "upside down" from the camera, after
+					/// zooming it will still be upside down, but at least it will not flip.
+					LLVector3d cur_camera_pos = LLVector3d(gAgentCamera.getCameraPositionGlobal());
+					LLVector3d delta = (cur_camera_pos - camera_pos);
+					F64 len = delta.length();
+					delta.normalize();
+					// Move 1% of the distance towards original camera location
+					camera_pos += 0.01 * len * delta;
+				}
+				
+				gAgentCamera.setCameraPosAndFocusGlobal(camera_pos, target_pos, objectp->getID());
+				
+				// *TODO: Re-enable joystick flycam if we disabled it earlier...  Have to find some form of callback as re-enabling at this point causes the camera motion to not happen. ~Cron
+				//if (fly_cam_status)
+				//{
+				//	LLViewerJoystick::getInstance()->toggleFlycam();
+				//}
+			}
 				break;
 			default:
 				break;
@@ -1880,60 +2146,96 @@ void FSPanelAreaSearchOptions::onCommitCheckboxDisplayColumn(const LLSD& userdat
 		{
 			mColumnParms[column_name] = result_list->delColumn(column_name);
 		}
-	}
 
-	// untill C++ supports variable withen a variablname, have to do this instead.
-	// used switch instead of a huge if then else if then else...
-	char c = column_name.at(0);
-	switch(c)
-	{
-	case 'd':
-	{
-		char d = column_name.at(1);
-		switch (d)
+		/// until C++ supports variable within a variable name, have to do this instead.
+		/// used switch instead of a huge if then else if then else...
+		// Please keep in alphabetical order.  Provides both optimizations and ease of updating as the list grows.
+		char c = column_name.at(0);
+		switch(c)
 		{
-		case 'i':
-		{
-			mFSAreaSearch->setColumnDistance(checkboxctrl->get());
+			case 'c':
+			{
+				mFSAreaSearch->setColumnCreator(checkboxctrl->get());
+				break;
+			}
+			case 'd':
+			{
+				char d = column_name.at(1);
+				switch (d)
+				{
+					case 'i':
+					{
+						mFSAreaSearch->setColumnDistance(checkboxctrl->get());
+						break;
+					}
+					case 'e':
+					{
+						mFSAreaSearch->setColumnDescription(checkboxctrl->get());
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
+			case 'g':
+			{
+				mFSAreaSearch->setColumnGroup(checkboxctrl->get());
+				break;
+			}
+			case 'l':
+			{
+				char d = column_name.at(2);
+				switch (d)
+				{
+					case 'n':
+					{
+						mFSAreaSearch->setColumnLandImpact(checkboxctrl->get());
+						break;
+					}
+					case 's':
+					{
+						mFSAreaSearch->setColumnLastOwner(checkboxctrl->get());
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
+			case 'n':
+			{
+				mFSAreaSearch->setColumnName(checkboxctrl->get());
+				break;
+			}
+			case 'o':
+			{
+				mFSAreaSearch->setColumnOwner(checkboxctrl->get());
+				break;
+			}
+			case 'p':
+			{
+				char d = column_name.at(3);
+				switch (d)
+				{
+					case 'c':
+					{
+						mFSAreaSearch->setColumnPrice(checkboxctrl->get());
+						break;
+					}
+					case 'm':
+					{
+						mFSAreaSearch->setColumnPrimCount(checkboxctrl->get());
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
+			default:
+				break;
 		}
-			break;
-		case 'e':
-		{
-			mFSAreaSearch->setColumnDescription(checkboxctrl->get());
-		}
-			break;
-		default:
-			break;
-		}
-	}
-		break;
-	case 'n':
-	{
-		mFSAreaSearch->setColumnName(checkboxctrl->get());
-	}
-		break;
-	case 'o':
-	{
-		mFSAreaSearch->setColumnOwner(checkboxctrl->get());
-	}
-		break;
-	case 'g':
-	{
-		mFSAreaSearch->setColumnGroup(checkboxctrl->get());
-	}
-		break;
-	case 'c':
-	{
-		mFSAreaSearch->setColumnCreator(checkboxctrl->get());
-	}
-		break;
-	case 'l':
-	{
-		mFSAreaSearch->setColumnLastOwner(checkboxctrl->get());
-	}
-		break;
-	default:
-		break;
 	}
 
 	result_list->updateLayout();

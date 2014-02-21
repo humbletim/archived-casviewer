@@ -54,6 +54,7 @@ class LLTextureFetch;
 class LLWatchdogTimeout;
 class LLUpdaterService;
 class LLViewerJoystick;
+class LLLeapMotionController;	// [FS:CR]
 
 extern LLFastTimer::DeclareTimer FTM_FRAME;
 
@@ -291,6 +292,10 @@ private:
     bool mPurgeOnExit;
 	bool mMainLoopInitialized;
 	LLViewerJoystick* joystick;
+	
+// [FS:CR]
+	LLLeapMotionController* gestureController;
+// [/FS:CR]
 
 	bool mSavedFinalSnapshot;
 	bool mSavePerAccountSettings;		// only save per account settings if login succeeded
@@ -299,7 +304,8 @@ private:
 
     bool mQuitRequested;				// User wants to quit, may have modified documents open.
     bool mLogoutRequestSent;			// Disconnect message sent to simulator, no longer safe to send messages to the sim.
-    S32 mYieldTime;
+	// <FS:Ansariel> MaxFPS Viewer-Chui merge error
+    //S32 mYieldTime;
 	struct SettingsFiles* mSettingsLocationList;
 
 	LLWatchdogTimeout* mMainloopTimeout;

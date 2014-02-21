@@ -21,6 +21,9 @@
 			<check_box label="Opuść widok pierwszoosobowy, gdy przeglądarka wraca na pierwszy plan" tool_tip="Opuszcza widok pierwszoosobowy, jeśli CtrlAltStudio Viewer odzyska pierwszy plan po okresie działania w tle." name="exit_mouselook_focus_on_focus"/>
 			<check_box label="Pokazuj instrukcje trybu pierwszoosobowego" name="mouselook_instructions_visible" tool_tip="Pokazuj instrukcje w trybie pierwszoosobowym"/>
 			<check_box label="Pokazuj celownik myszki" name="ShowCrosshairs" tool_tip="Pokazuj celownik myszki, gdy widok pierwszoosobowy jest włączony"/>
+			<check_box label="Włącz funkcje bojowe" name="FSMouselookCombatFeatures"/>
+			<check_box label="Pokazuj wskaźniki celów (strzałki)" name="ExodusMouselookIFF"/>
+			<slider label="Ogranicz dystans do (m):" name="ExodusMouselookIFFRange"/>
 			<text name="Mouse Sensitivity">
 				Czułość myszki w tym widoku:
 			</text>
@@ -37,6 +40,7 @@
 			<check_box label="Włącz tryb przełączania kucania" name="crouch_toggle_mode"/>
 			<check_box label="Odtwórz dźwięk podczas teleportacji" name="PlayTeleportSound"/>
 			<check_box label="Zawsze lataj po teleportacji" name="FSFlyAfterTeleport"/>
+			<check_box label="Przytrzymaj klawisz skoku lub kucania, aby zacząć lub przestać latać" name="automatic_fly"/>
 			<check_box label="Zawsze blokuj ponownie pozycję po zmianie regionu, jeśli unieruchamianie jest włączone" name="RelockMoveLockAfterRegionChange"/>
 			<text name="single_click_action_lbl">
 				Pojedynczy klik na ziemi:
@@ -81,6 +85,7 @@
 				<combo_box.item label="Otwórz mapę świata" name="1"/>
 				<combo_box.item label="Teleportuj do klikniętego punktu" name="2"/>
 			</combo_box>
+			<slider label="Rozm. okręgu zaznaczenia:" name="FSMinimapPickScale" tool_tip="Kontroluje rozmiar okręgu zaznaczenia pod kursorem na minimapie"/>
 			<text name="world_map_options_label">
 				Opcje mapy świata:
 			</text>

@@ -243,6 +243,9 @@
   <color
       name="LtBlue"
       value="0 0.5 1 1" />
+  <color
+      name="Orange"
+      value="1 .82 .46 1" />
 
   <!-- This color name makes potentially unused colors show up bright purple.
   Leave this here until all Unused? are removed below, otherwise
@@ -771,6 +774,9 @@
      reference="Red" />
 <!-- Changed Color -->
     <color
+     name="MapTrackColorUnder"
+     reference="Blue" />
+    <color
      name="MapTrackDisabledColor"
      reference="BrickBrown" />
     <color
@@ -1138,6 +1144,9 @@
 
 	<!-- Groups visible in profiles -->
 	<color
+	 name="GroupVisibleInProfile"
+	 reference="LabelTextColor" />
+	<color
 	 name="GroupHiddenInProfile"
 	 reference="EmphasisColorLight" />
 	 
@@ -1237,4 +1246,28 @@
   <color
       name="XUITooltipFileName"
       value="0.7 0.7 1 1" />
+  <color
+      name="VoiceConnectedColor"
+      reference="Green" />
+  <color
+      name="VoiceErrorColor"
+      reference="Red" />
+  <color
+      name="VoiceNotConnectedColor"
+      reference="Yellow" />
+  <color
+      name="FSChatHistoryBackground"
+      reference="Transparent" />
+  <color
+      name="ChatHeaderAlphaBackground"
+      reference="DkGray_66" />
+  <color
+      name="ChatHeaderOpaqueBackground"
+      reference="Black" />
+  <color
+      name="ScriptSelectedColor"
+      reference="EmphasisColor" />
+  <color
+      name="MapPickRadiusColor"
+      reference="MapFrustumColor" />
 </colors>

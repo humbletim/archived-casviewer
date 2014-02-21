@@ -73,10 +73,10 @@
 		<text name="UsePieMenuLabel">
 			Pie-Menü:
 		</text>
-		<slider label="Wiederholungen blinkende IM-Reiter:" name="ButtonsFlashCount"/>
-		<slider label="Blinkrate:" tool_tip="Blinkrate in Hz, mit der Reiter blinken - verwendet für IM-Benachrichtungen" name="ButtonFlashRate"/>
+		<slider label="Wiederholungen für blinkende IM-Reiter:" name="ButtonsFlashCount"/>
+		<slider label="Aufblinkdauer für IM-Reiter:" tool_tip="Legt fest, wie lange in Sekunden ein einzelnes Aufblinken eines IM-Reiter dauert - verwendet für IM-Benachrichtungen" name="ButtonFlashRate"/>
 		<text name="ButtonFlashRateText">
-			Hz
+			Sek.
 		</text>
 	</panel>
 	
@@ -130,6 +130,8 @@
 			%
 		</text>
 		<check_box label="Zeige Toasts im Vordergrund" name="FSShowToastsInFront"/>
+		<check_box label="Neue Regions-Neustart-Meldung verwenden" name="FSUseNewRegionRestartNotification"/>
+		<check_box label="Bei Regions-Neustart-Meldung Bildschirm nicht wackeln" name="FSNoScreenShakeOnRegionRestart"/>
 	</panel>
 	<!--Font-->
 	<panel label="Schrift" name="UI-font-tab">

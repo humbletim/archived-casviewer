@@ -31,6 +31,7 @@
 
 #include "llfloaterreg.h"
 #include "llnotifications.h"
+#include "lltrans.h"
 #include "llurlaction.h"
 
 #include "llagent.h"
@@ -211,6 +212,13 @@ void LLHandlerUtil::logGroupNoticeToIMGroup(
 		return;
 	}
 
+	// <FS:PP> FIRE-10940: Add option to suppress group notice text in group chat
+	if (!gSavedSettings.getBOOL("FSGroupNoticesToIMLog"))
+	{
+		return;
+	}
+	// </FS:PP>
+
 	const std::string group_name = groupData.mName;
 	const std::string sender_name = payload["sender_name"].asString();
 
@@ -345,7 +353,7 @@ void LLHandlerUtil::updateIMFLoaterMesages(const LLUUID& session_id)
 	}
 }
 
-//// static <FS:TM> CHUI Merge check this, wasn't disabled in FS, but was in RLVa
+//// static
 //void LLHandlerUtil::updateVisibleIMFLoaterMesages(const LLNotificationPtr& notification)
 //{
 //	const std::string name = LLHandlerUtil::getSubstitutionName(notification);

@@ -50,6 +50,7 @@ namespace LLPanelPeopleMenus
 
 PeopleContextMenu gPeopleContextMenu;
 NearbyPeopleContextMenu gNearbyPeopleContextMenu;
+SuggestedFriendsContextMenu gSuggestedFriendsContextMenu;
 
 //== PeopleContextMenu ===============================================================
 
@@ -80,9 +81,11 @@ LLContextMenu* PeopleContextMenu::createMenu()
 		registrar.add("Avatar.Pay",				boost::bind(&LLAvatarActions::pay,						id));
 		registrar.add("Avatar.BlockUnblock",	boost::bind(&LLAvatarActions::toggleBlock,				id));
 		registrar.add("Avatar.InviteToGroup",	boost::bind(&LLAvatarActions::inviteToGroup,			id));
+		registrar.add("Avatar.TeleportRequest",	boost::bind(&PeopleContextMenu::requestTeleport,		this));
 		registrar.add("Avatar.Calllog",			boost::bind(&LLAvatarActions::viewChatHistory,			id));
 		// <FS:Ansariel> Firestorm additions
 		registrar.add("Avatar.GroupInvite",		boost::bind(&LLAvatarActions::inviteToGroup,			id));
+		registrar.add("Avatar.AddToContactSet",	boost::bind(&PeopleContextMenu::addToContactSet,		this));	// [FS:CR]
 
 		enable_registrar.add("Avatar.EnableItem", boost::bind(&PeopleContextMenu::enableContextMenuItem, this, _2));
 		enable_registrar.add("Avatar.CheckItem",  boost::bind(&PeopleContextMenu::checkContextMenuItem,	this, _2));
@@ -102,7 +105,8 @@ LLContextMenu* PeopleContextMenu::createMenu()
 		registrar.add("Avatar.RemoveFriend",	boost::bind(&LLAvatarActions::removeFriendsDialog,		mUUIDs));
 		// registrar.add("Avatar.Share",		boost::bind(&LLAvatarActions::startIM,					mUUIDs)); // *TODO: unimplemented
 		// registrar.add("Avatar.Pay",			boost::bind(&LLAvatarActions::pay,						mUUIDs)); // *TODO: unimplemented
-		
+		registrar.add("Avatar.AddToContactSet",	boost::bind(&PeopleContextMenu::addToContactSet,		this));   // <FS:Ansariel>
+
 		enable_registrar.add("Avatar.EnableItem",	boost::bind(&PeopleContextMenu::enableContextMenuItem, this, _2));
 
 		// create the context menu from the XUI
@@ -127,12 +131,15 @@ void PeopleContextMenu::buildContextMenu(class LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("share"));
 		items.push_back(std::string("pay"));
 		items.push_back(std::string("offer_teleport"));
+
+		items.push_back(std::string("Add to Set")); // <FS:Ansariel> Contact sets
 	}
 	else 
 	{
 		items.push_back(std::string("view_profile"));
 		items.push_back(std::string("im"));
 		items.push_back(std::string("offer_teleport"));
+		items.push_back(std::string("request_teleport"));
 		items.push_back(std::string("voice_call"));
 		items.push_back(std::string("chat_history"));
 		items.push_back(std::string("separator_chat_history"));
@@ -144,6 +151,8 @@ void PeopleContextMenu::buildContextMenu(class LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("share"));
 		items.push_back(std::string("pay"));
 		items.push_back(std::string("block_unblock"));
+		
+		items.push_back(std::string("Add to Set"));	// [FS:CR] Contact sets
 	}
 
     hide_context_entries(menu, items, disabled_items);
@@ -269,12 +278,26 @@ bool PeopleContextMenu::checkContextMenuItem(const LLSD& userdata)
 	return false;
 }
 
+void PeopleContextMenu::requestTeleport()
+{
+	// boost::bind cannot recognize overloaded method LLAvatarActions::teleportRequest(),
+	// so we have to use a wrapper.
+	LLAvatarActions::teleportRequest(mUUIDs.front());
+}
+
 void PeopleContextMenu::offerTeleport()
 {
 	// boost::bind cannot recognize overloaded method LLAvatarActions::offerTeleport(),
 	// so we have to use a wrapper.
 	LLAvatarActions::offerTeleport(mUUIDs);
 }
+
+// <FS:Ansariel> Add to contact set
+void PeopleContextMenu::addToContactSet()
+{
+	LLAvatarActions::addToContactSet(mUUIDs);
+}
+// </FS:Ansariel>
 
 //== NearbyPeopleContextMenu ===============================================================
 
@@ -298,6 +321,7 @@ void NearbyPeopleContextMenu::buildContextMenu(class LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("view_profile"));
 		items.push_back(std::string("im"));
 		items.push_back(std::string("offer_teleport"));
+		items.push_back(std::string("request_teleport"));
 		items.push_back(std::string("voice_call"));
 		items.push_back(std::string("chat_history"));
 		items.push_back(std::string("separator_chat_history"));
@@ -313,6 +337,38 @@ void NearbyPeopleContextMenu::buildContextMenu(class LLMenuGL& menu, U32 flags)
 	}
 
     hide_context_entries(menu, items, disabled_items);
+}
+
+//== SuggestedFriendsContextMenu ===============================================================
+
+LLContextMenu* SuggestedFriendsContextMenu::createMenu()
+{
+	// set up the callbacks for all of the avatar menu items
+	LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
+	LLUICtrl::EnableCallbackRegistry::ScopedRegistrar enable_registrar;
+	LLContextMenu* menu;
+
+	// Set up for one person selected menu
+	const LLUUID& id = mUUIDs.front();
+	registrar.add("Avatar.Profile",			boost::bind(&LLAvatarActions::showProfile,				id));
+	registrar.add("Avatar.AddFriend",		boost::bind(&LLAvatarActions::requestFriendshipDialog,	id));
+
+	// create the context menu from the XUI
+	menu = createFromFile("menu_people_nearby.xml");
+	buildContextMenu(*menu, 0x0);
+
+	return menu;
+}
+
+void SuggestedFriendsContextMenu::buildContextMenu(class LLMenuGL& menu, U32 flags)
+{ 
+	menuentry_vec_t items;
+	menuentry_vec_t disabled_items;
+
+	items.push_back(std::string("view_profile"));
+	items.push_back(std::string("add_friend"));
+
+	hide_context_entries(menu, items, disabled_items);
 }
 
 } // namespace LLPanelPeopleMenus

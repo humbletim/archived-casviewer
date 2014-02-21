@@ -62,8 +62,8 @@ public:
 
 	virtual void	draw();
 	virtual	void	onCommit();
-	/*virtual*/ void	onFocusReceived();
-	/*virtual*/ void	onFocusLost();
+    /*virtual*/ void	onFocusReceived();
+    /*virtual*/ void	onFocusLost();
 
 	void enableSingleLineMode(bool single_line_mode);
 	boost::signals2::connection setTextExpandedCallback(const commit_signal_t::slot_type& cb);
@@ -105,6 +105,9 @@ private:
 	S32									mExpandLinesCount;
 	S32									mPrevLinesCount;
 	S32									mPrevExpandedLineCount;
+
+	// <FS:Ansariel> FIRE-12537: CTRL-UP discards current input
+	std::string							mCurrentInput;
 };
 
 #endif /* LLCHATENTRY_H_ */

@@ -37,6 +37,7 @@
 /* boost: will not compile unless equivalent is undef'd, beware. */
 #include "fix_macros.h"
 #include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
 
 #include "llappviewer.h"
 #include "llagent.h"
@@ -53,10 +54,7 @@
 #include "llviewernetwork.h"
 #include "llxorcipher.h"
 
-const std::string FSDATA_URL = "http://phoenixviewer.com/app/fsdatatest/data.xml";
-const std::string AGENTS_URL = "http://phoenixviewer.com/app/fsdatatest/agents.xml";
 const std::string LEGACY_CLIENT_LIST_URL = "http://phoenixviewer.com/app/client_tags/client_list_v2.xml";
-const std::string ASSETS_URL = "http://phoenixviewer.com/app/fsdatatest/assets.xml";
 const LLUUID MAGIC_ID("3c115e51-04f4-523c-9fa6-98aff1034730");
 const F32 HTTP_TIMEOUT = 30.f;
 
@@ -78,7 +76,15 @@ public:
 
 	void result(const LLSD& content)
 	{
-		FSData::getInstance()->processResponder(content, mURL, true, mLastModified);
+		// check for parse failure that can happen with [200] OK result.
+		if (mDeserializeError)
+		{
+			FSData::getInstance()->processResponder(content, mURL, false, mLastModified);
+		}
+		else
+		{
+			FSData::getInstance()->processResponder(content, mURL, true, mLastModified);
+		}
 	}
 	
 	void errorWithContent(U32 status, const std::string& reason, const LLSD& content)
@@ -101,6 +107,86 @@ private:
 	LLDate mLastModified;
 };
 
+class FSDownloaderScript : public LLHTTPClient::Responder
+{
+	LOG_CLASS(FSDownloaderScript);
+public:
+	FSDownloaderScript(std::string filename, std::string url) :
+		mFilename(filename),
+		mURL(url)
+	{}
+
+	void completedRaw(
+		U32 status,
+		const std::string& reason,
+		const LLChannelDescriptors& channels,
+		const LLIOPipe::buffer_ptr_t& buffer)
+	{
+		if (!isGoodStatus(status))
+		{
+			if (status == 304)
+			{
+				LL_INFOS("fsdata") << "Got [304] not modified for " << mURL << LL_ENDL;
+			}
+			else
+			{
+				LL_WARNS("fsdata") << "Error fetching " << mURL << " Status: [" << status << "]" << LL_ENDL;
+			}
+			return;
+		}
+
+		S32 data_size = buffer->countAfter(channels.in(), NULL);
+		if (data_size <= 0)
+		{
+			LL_WARNS("fsdata") << "Recieved zero data for " << mURL << LL_ENDL;
+			return;
+		}
+
+		U8* data = NULL;
+		data = new U8[data_size];
+		buffer->readAfter(channels.in(), NULL, data, data_size);
+
+		// basic check for valid data received
+		LLXMLNodePtr xml_root;
+		if ( (!LLXMLNode::parseBuffer(data, data_size, xml_root, NULL)) || (xml_root.isNull()) || (!xml_root->hasName("script_library")) )
+		{
+			LL_WARNS("fsdata") << "Could not read the script library data from "<< mURL << LL_ENDL;
+			delete[] data;
+			data = NULL;
+			return;
+		}
+		
+		LLAPRFile outfile ;
+		outfile.open(mFilename, LL_APR_WB);
+		if (!outfile.getFileHandle())
+		{
+			LL_WARNS("fsdata") << "Unable to open file for writing: " << mFilename << LL_ENDL;
+		}
+		else
+		{
+			LL_INFOS("fsdata") << "Saving " << mFilename << LL_ENDL;
+			outfile.write(data, data_size);
+			outfile.close() ;
+		}
+		delete[] data;
+		data = NULL;
+	}
+
+	void completedHeader(U32 status, const std::string& reason, const LLSD& content)
+	{
+		LL_DEBUGS("fsdata") << "Status: [" << status << "]: " << "last-modified: " << content["last-modified"].asString() << LL_ENDL; //  Wed, 21 Mar 2012 17:41:14 GMT
+		if (content.has("last-modified"))
+		{
+			mLastModified.secondsSinceEpoch(FSCommon::secondsSinceEpochFromString("%a, %d %b %Y %H:%M:%S %ZP", content["last-modified"].asString()));
+		}
+		LL_DEBUGS("fsdata") << "Converted to: " << mLastModified.asString() << " and RFC1123: " << mLastModified.asRFC1123() << LL_ENDL;
+	}
+
+private:
+	std::string mURL;
+	std::string mFilename;
+	LLDate mLastModified;
+};
 
 FSData::FSData() :
 	mLegacySearch(true),
@@ -109,11 +195,14 @@ FSData::FSData() :
 {
 	mHeaders.insert("User-Agent", LLViewerMedia::getCurrentUserAgent());
 	mHeaders.insert("viewer-version", LLVersionInfo::getChannelAndVersionFS());
+	
+	mBaseURL = gSavedSettings.getBOOL("FSdataQAtest") ? "http://phoenixviewer.com/app/fsdatatest" : "http://phoenixviewer.com/app/fsdata";
+	mFSDataURL = mBaseURL + "/" + "data.xml";
 }
 
 void FSData::processResponder(const LLSD& content, const std::string& url, bool save_to_file, const LLDate& last_modified)
 {
-	if (url == FSDATA_URL)
+	if (url == mFSDataURL)
 	{
 		if (!save_to_file)
 		{
@@ -191,6 +280,17 @@ void FSData::processResponder(const LLSD& content, const std::string& url, bool 
 			saveLLSD(content , mClientTagsFilename, last_modified);
 		}
 	}
+	else if (url == mFSdataDefaultsUrl)
+	{
+		if (!save_to_file)
+		{
+			// do nothing as this file is loaded during app startup.
+		}
+		else
+		{
+			saveLLSD(content , mFSdataDefaultsFilename, last_modified);
+		}
+	}
 }
 
 bool FSData::loadFromFile(LLSD& data, std::string filename)
@@ -221,6 +321,7 @@ bool FSData::loadFromFile(LLSD& data, std::string filename)
 void FSData::startDownload()
 {
 	mFSdataFilename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "fsdata.xml");
+	mFSdataDefaultsFilename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "fsdata_defaults.xml");
 	mClientTagsFilename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list_v2.xml");
 
 	// Stat the file to see if it exists and when it was last modified.
@@ -230,8 +331,36 @@ void FSData::startDownload()
 	{
 		last_modified = stat_data.st_mtime;
 	}
-	LL_INFOS("fsdata") << "Downloading data.xml from " << FSDATA_URL << " with last modifed of " << last_modified << LL_ENDL;
-	LLHTTPClient::getIfModified(FSDATA_URL, new FSDownloader(FSDATA_URL), last_modified, mHeaders, HTTP_TIMEOUT);
+	LL_INFOS("fsdata") << "Downloading data.xml from " << mFSDataURL << " with last modifed of " << last_modified << LL_ENDL;
+	LLHTTPClient::getIfModified(mFSDataURL, new FSDownloader(mFSDataURL), last_modified, mHeaders, HTTP_TIMEOUT);
+	
+	last_modified = 0;
+	if(!LLFile::stat(mFSdataDefaultsFilename, &stat_data))
+	{
+		last_modified = stat_data.st_mtime;
+	}
+	std::string filename = llformat("defaults.%s.xml", LLVersionInfo::getShortVersion().c_str());
+	mFSdataDefaultsUrl = mBaseURL + "/" + filename;
+	LL_INFOS("fsdata") << "Downloading defaults.xml from " << mFSdataDefaultsUrl << " with last modifed of " << last_modified << LL_ENDL;
+	LLHTTPClient::getIfModified(mFSdataDefaultsUrl, new FSDownloader(mFSdataDefaultsUrl), last_modified, mHeaders, HTTP_TIMEOUT);
+
+#if OPENSIM
+	std::string filenames[] = {"scriptlibrary_lsl.xml", "scriptlibrary_ossl.xml", "scriptlibrary_aa.xml"};
+#else
+	std::string filenames[] = {"scriptlibrary_lsl.xml"};
+#endif
+	BOOST_FOREACH(std::string script_name, filenames)
+	{
+		filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, script_name);
+		last_modified = 0;
+		if(!LLFile::stat(filename, &stat_data))
+		{
+			last_modified = stat_data.st_mtime;
+		}
+		std::string url = mBaseURL + "/" + script_name;
+		LL_INFOS("fsdata") << "Downloading " << script_name << " from " << url << " with last modifed of " << last_modified << LL_ENDL;
+		LLHTTPClient::getIfModified(url, new FSDownloaderScript(filename, url), last_modified, mHeaders, HTTP_TIMEOUT);
+	}
 }
 
 // call this _after_ the login screen to pick up grid data.
@@ -256,8 +385,8 @@ void FSData::downloadAgents()
 	else
 #endif
 	{
-		mAgentsURL = AGENTS_URL;
-		mAssetsURL = ASSETS_URL;
+		mAgentsURL = mBaseURL + "/" + "agents.xml";
+		mAssetsURL = mBaseURL + "/" + "assets.xml";
 	}
 	
 	if (mAgentsURL.empty())
@@ -348,7 +477,8 @@ void FSData::processData(const LLSD& fs_data)
 	processAssets(fs_data);
 
 	// FSUseLegacyClienttags: 0=Off, 1=Local Clienttags, 2=Download Clienttags
-	if(gSavedSettings.getU32("FSUseLegacyClienttags") > 1)
+	static LLCachedControl<U32> use_legacy_tags(gSavedSettings, "FSUseLegacyClienttags");
+	if(use_legacy_tags > 1)
 	{
 		time_t last_modified = 0;
 		llstat stat_data;
@@ -359,7 +489,7 @@ void FSData::processData(const LLSD& fs_data)
 		LL_INFOS("fsdata") << "Downloading client_list_v2.xml from " << LEGACY_CLIENT_LIST_URL << " with last modifed of " << last_modified << LL_ENDL;
 		LLHTTPClient::getIfModified(LEGACY_CLIENT_LIST_URL, new FSDownloader(LEGACY_CLIENT_LIST_URL), last_modified, mHeaders, HTTP_TIMEOUT);
 	}
-	else if(gSavedSettings.getU32("FSUseLegacyClienttags") > 0)
+	else if(use_legacy_tags)
 	{
 		updateClientTagsLocal();
 	}
@@ -450,12 +580,6 @@ void FSData::processClientTags(const LLSD& tags)
 	}
 }
 
-//WS: Some helper function to make the request for old tags easier (if someone needs it)
-LLSD FSData::resolveClientTag(LLUUID id)
-{
-	return resolveClientTag(id, false, LLColor4::black);
-}
-
 //WS: Create a new LLSD based on the data from the mLegacyClientList if
 LLSD FSData::resolveClientTag(LLUUID id, bool new_system, LLColor4 color)
 {	
@@ -463,119 +587,70 @@ LLSD FSData::resolveClientTag(LLUUID id, bool new_system, LLColor4 color)
 	curtag["uuid"] = id.asString();
 	curtag["id_based"] = new_system;
 	curtag["tex_color"] = color.getValue();
+	
+	static LLCachedControl<U32> client_tag_visibility(gSavedSettings, "FSClientTagsVisibility");
+	static LLCachedControl<U32> use_legacy_client_tags(gSavedSettings, "FSUseLegacyClienttags");
+	static LLCachedControl<U32> color_client_tags(gSavedSettings, "FSColorClienttags");
 	// If we don't want to display anything...return
-	if (gSavedSettings.getU32("FSClientTagsVisibility2") == 0)
+	if (!client_tag_visibility)
 	{
 		return curtag;
 	}
 
 	//WS: Do we want to use Legacy Clienttags?
-	if (gSavedSettings.getU32("FSUseLegacyClienttags") > 0)
+	if (use_legacy_client_tags)
 	{
 		if (mLegacyClientList.has(id.asString()))
 		{
-			curtag=mLegacyClientList[id.asString()];
+			curtag = mLegacyClientList[id.asString()];
 		}
 		else
-		{		
-			if (id == LLUUID("5d9581af-d615-bc16-2667-2f04f8eeefe4"))//green
+		{
+			if (id == LLUUID("f25263b7-6167-4f34-a4ef-af65213b2e39"))
 			{
-				curtag["name"]="Phoenix";
-				curtag["color"] = LLColor4::green.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
+				curtag["name"] = "Singularity";
 			}
-			else if (id == LLUUID("e35f7d40-6071-4b29-9727-5647bdafb5d5"))//white
+			else if (id == LLUUID("4b6f6b75-bf77-d1ff-0000-000000000000"))
 			{
-				curtag["name"] = "Phoenix";			
-				curtag["color"] = LLColor4::white.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
+				curtag["name"] = "Kokua";
 			}
-			else if (id == LLUUID("ae4e92fb-023d-23ba-d060-3403f953ab1a"))//pink
+			else if (id == LLUUID("b748af88-58e2-995b-cf26-9486dea8e830"))
 			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::pink.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
-			}
-			else if (id == LLUUID("e71b780e-1a57-400d-4649-959f69ec7d51"))//red
-			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::red.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
-			}
-			else if (id == LLUUID("c1c189f5-6dab-fc03-ea5a-f9f68f90b018"))//orange
-			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::orange.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
-			}
-			else if (id == LLUUID("8cf0577c-22d3-6a73-523c-15c0a90d6c27")) //purple
-			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::purple.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
-			}
-			else if (id == LLUUID("5f0e7c32-38c3-9214-01f0-fb16a5b40128"))//yellow
-			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::yellow.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
-			}
-			else if (id == LLUUID("5bb6e4a6-8e24-7c92-be2e-91419bb0ebcb"))//blue
-			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::blue.getValue();
-				curtag["alt"] = "ed63fbd0-589e-fe1d-a3d0-16905efaa96b";
-			}
-			else if (id == LLUUID("ed63fbd0-589e-fe1d-a3d0-16905efaa96b"))//default (red)
-			{
-				curtag["name"] = "Phoenix";
-				curtag["color"] = LLColor4::red.getValue();
-			}	
-			else if (id == LLUUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97"))//viewer 2.0
-			{
-				curtag["name"] = "LL Viewer";
+				curtag["name"] = "Radegast";
 			}
 			else if (id == LLUUID("cc7a030f-282f-c165-44d2-b5ee572e72bf"))
 			{
 				curtag["name"] = "Imprudence";
 			}
-			else if (id == LLUUID("54d93609-1392-2a93-255c-a9dd429ecca5"))
+			else if (id == LLUUID("7eab0700-f000-0000-0000-546561706f7"))
 			{
-				curtag["name"] = "Emergence";
+				curtag["name"] = "Teapot";
 			}
-			else if (id == LLUUID("8873757c-092a-98fb-1afd-ecd347566fcd"))
+			/// [FS:CR] Since SL Viewer can't connect to Opensim, and client tags only work on OpenSim
+			/// it doesn't make much sense to tag V3-based viewers as SL Viewer.
+			/*if (id == LLUUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97"))
 			{
-				curtag["name"] = "Ascent";
-			}
-			else if (id == LLUUID("f25263b7-6167-4f34-a4ef-af65213b2e39"))
-			{
-				curtag["name"] = "Singularity";
-			}
+				curtag["name"] = "SL Viewer";
+			}*/
 			if (curtag.has("name")) curtag["tpvd"] = true;
 		}
 	}
 	
 	
 	// Filtering starts here:
-	//WS: If the current tag has an "alt" definied and we don't want multiple colors. Resolve the alt.
-	if ((gSavedSettings.getU32("FSColorClienttags") == 1) && curtag.has("alt"))
-	{
-		curtag = resolveClientTag(curtag["alt"], new_system, color);
-	}
-
 	//WS: If we have a tag using the new system, check if we want to display it's name and/or color
 	if (new_system)
 	{
-		if (gSavedSettings.getU32("FSClientTagsVisibility2") >= 3)
+		if (client_tag_visibility >= 3)
 		{
 			U32 tag_len = strnlen((const char*)&id.mData[0], UUID_BYTES);
 			std::string clienttagname = std::string((const char*)&id.mData[0], tag_len);
 			LLStringFn::replace_ascii_controlchars(clienttagname, LL_UNKNOWN_CHAR);
 			curtag["name"] = clienttagname;
 		}
-		if (gSavedSettings.getU32("FSColorClienttags") >= 3 || curtag["tpvd"].asBoolean())
+		if (color_client_tags >= 3 || curtag["tpvd"].asBoolean())
 		{
-			if (curtag["tpvd"].asBoolean() && gSavedSettings.getU32("FSColorClienttags") < 3)
+			if (curtag["tpvd"].asBoolean() && color_client_tags < 3)
 			{
 				if (color == LLColor4::blue ||
 					color == LLColor4::yellow ||
@@ -598,14 +673,14 @@ LLSD FSData::resolveClientTag(LLUUID id, bool new_system, LLColor4 color)
 
 	//If we only want to display tpvd viewer. And "tpvd" is not available or false, then
 	// clear the data, but keep the basedata (like uuid, id_based and tex_color) for (maybe) later displaying.
-	if(gSavedSettings.getU32("FSClientTagsVisibility2") <= 1 && (!curtag.has("tpvd") || !curtag["tpvd"].asBoolean()))
+	if(client_tag_visibility <= 1 && (!curtag.has("tpvd") || !curtag["tpvd"].asBoolean()))
 	{
 		curtag.clear();
 	}
 
-	curtag["uuid"]=id.asString();
-	curtag["id_based"]=new_system;	
-	curtag["tex_color"]=color.getValue();	
+	curtag["uuid"] = id.asString();
+	curtag["id_based"] = new_system;
+	curtag["tex_color"] = color.getValue();
 
 	return curtag;
 }

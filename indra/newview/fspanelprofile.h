@@ -216,6 +216,7 @@ protected:
 	void onCopyURI();
 	void onCopyKey();
 	void onGroupInvite();
+	void onReport();
 
 	bool isGrantedToSeeOnlineStatus();
 
@@ -494,6 +495,11 @@ protected:
 
 	bool mLocationChanged;
 	bool mNewPick;
+	bool mIsEditing;
+
+	std::string mCurrentPickDescription;
+
+	void onDescriptionFocusReceived();
 };
 
 class FSPanelProfilePicks

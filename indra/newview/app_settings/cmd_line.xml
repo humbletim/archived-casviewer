@@ -177,6 +177,7 @@
       <string>UserLogFile</string>
     </map>
 
+	<!-- [FS:CR] Use UserLoginInfoCmdLine Plz -->
     <key>login</key>
     <map>
       <key>desc</key>
@@ -184,7 +185,7 @@
       <key>count</key>
       <integer>3</integer>
       <key>map-to</key>
-      <string>UserLoginInfo</string>
+      <string>UserLoginInfoCmdLine</string>
     </map>
 
     <key>loginpage</key>
@@ -446,6 +447,18 @@
       <! Special case. Mapped to settings procedurally. >
     </map>
     <! FS:Ansariel - Option to not auto-save passwords when using login option -->
+
+    <!-- FS:Ansariel FIRE-12671: Force VRAM if DirectX detection is broken -->
+    <key>forcevideomemory</key>
+    <map>
+      <key>desc</key>
+      <string>Overrides the video memory detection on Windows if a value greater 0 is passed</string>
+      <key>count</key>
+      <integer>1</integer>
+      <key>map-to</key>
+      <string>FSForcedVideoMemory</string>
+    </map>
+    <!-- FS:Ansariel -->
 
   </map>
 </llsd>

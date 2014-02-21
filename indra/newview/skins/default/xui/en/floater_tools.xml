@@ -1252,13 +1252,13 @@ even though the user gets a free copy.
              length="1"
              left="10"
              word_wrap="true"
-             top_pad="9"
+             top_pad="4"
              text_color="EmphasisColor"
-             height="16"
+             height="24"
              follows="left|top|right"
              layout="topleft"
              name="perm_modify"
-             width="264">
+             width="214">
                 You can modify this object
             </text>
             <text
@@ -1449,6 +1449,18 @@ even though the user gets a free copy.
          name="Object"
          top="16"
          width="295">
+            <panel.string name="Paste Position">
+                Paste Position
+[VALUE]
+            </panel.string>
+            <panel.string name="Paste Size">
+                Paste Size
+[VALUE]
+            </panel.string>
+            <panel.string name="Paste Rotation">
+                Paste Rotation
+[VALUE]
+            </panel.string>
             <check_box
              height="19"
              label="Locked"

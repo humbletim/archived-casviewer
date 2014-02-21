@@ -429,6 +429,7 @@ public:
 	F32			getLastSkinTime() { return mLastSkinTime; }
 	U32 		renderTransparent(BOOL first_pass);
 	void 		renderCollisionVolumes();
+	void		renderJoints();
 	static void	deleteCachedImages(bool clearAll=true);
 	static void	destroyGL();
 	static void	restoreGL();
@@ -755,6 +756,8 @@ public:
 	void				cleanupAttachedMesh( LLViewerObject* pVO );
 	static LLVOAvatar*  findAvatarFromAttachment(LLViewerObject* obj);
 	/*virtual*/ BOOL	isWearingWearableType(LLWearableType::EType type ) const;
+	LLViewerObject *	findAttachmentByID( const LLUUID & target_id ) const;
+
 //-TT Patch: ReplaceWornItemsOnly
 	LLViewerJointAttachment* getTargetAttachmentPoint(LLViewerObject* viewer_object);
 //-TT

@@ -182,7 +182,14 @@ void LLCurl::Responder::completedRaw(
 	{
 		llinfos << "Failed to deserialize LLSD. " << mURL << " [" << status << "]: " << reason << llendl;
 		content["reason"] = reason;
+	// <Techwolf Lupindo> pass parse error down code path
+		mDeserializeError = true;
 	}
+	else
+	{
+		mDeserializeError = false;
+	}
+	// </Techwolf Lupindo>
 
 	completed(status, reason, content);
 }
@@ -1773,6 +1780,7 @@ void LLCurl::cleanupClass()
 #if SAFE_SSL
 	CRYPTO_set_locking_callback(NULL);
 	for_each(sSSLMutex.begin(), sSSLMutex.end(), DeletePointer());
+	sSSLMutex.clear();
 #endif
 	
 	LL_CHECK_MEMORY

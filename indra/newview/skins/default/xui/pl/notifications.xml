@@ -408,6 +408,10 @@ Pamiętaj: Opcja ta wyczyszcza bufor danych.
 		Zapisać zmiany?
 		<usetemplate canceltext="Anuluj" name="yesnocancelbuttons" notext="Nie zapisuj" yestext="Zapisz"/>
 	</notification>
+	<notification name="DeleteNotecard">
+		Czy na pewno chcesz usunąć tą notkę?
+		<usetemplate ignoretext="Potwierdź usuwanie notki" name="okcancelignore" notext="Anuluj" yestext="OK"/>
+	</notification>
 	<notification name="GestureSaveFailedTooManySteps">
 		Nie można zapisać gestu.
 Ten gest ma zbyt wiele etapów.
@@ -471,19 +475,19 @@ Odwiedzić [_URL], aby uzyskać więcej informacji?
 		<usetemplate ignoretext="Sprzęt w moim komputerze nie jest wspierany" name="okcancelignore" notext="Nie" yestext="Tak"/>
 	</notification>
 	<notification name="IntelOldDriver">
-		Prawdopodobnie istnieje nowszy sterownik dla Twojej karty graficznej.  Aktualizacja sterowników graficznych może znacznie zwiększyć wydajność.
+		Prawdopodobnie istnieje nowszy sterownik dla Twojej karty graficznej. Aktualizacja sterowników graficznych może znacznie zwiększyć wydajność.
 
 Odwiedzić [_URL] aby sprawdzić, czy są nowsze sterowniki?
 		<usetemplate ignoretext="Moje sterowniki grafiki są przestarzałe" name="okcancelignore" notext="Nie" yestext="Tak"/>
 	</notification>
 	<notification name="AMDOldDriver">
-		Prawdopodobnie istnieje nowszy sterownik dla Twojej karty graficznej.  Aktualizacja sterowników graficznych może znacznie zwiększyć wydajność.
+		Prawdopodobnie istnieje nowszy sterownik dla Twojej karty graficznej. Aktualizacja sterowników graficznych może znacznie zwiększyć wydajność.
 
 Odwiedzić [_URL] aby sprawdzić, czy są nowsze sterowniki?
 		<usetemplate ignoretext="Moje sterowniki grafiki są przestarzałe" name="okcancelignore" notext="Nie" yestext="Tak"/>
 	</notification>
 	<notification name="NVIDIAOldDriver">
-		Prawdopodobnie istnieje nowszy sterownik dla Twojej karty graficznej.  Aktualizacja sterowników graficznych może znacznie zwiększyć wydajność.
+		Prawdopodobnie istnieje nowszy sterownik dla Twojej karty graficznej. Aktualizacja sterowników graficznych może znacznie zwiększyć wydajność.
 
 Odwiedzić [_URL] aby sprawdzić, czy są nowsze sterowniki?
 		<url name="url">
@@ -493,7 +497,7 @@ Odwiedzić [_URL] aby sprawdzić, czy są nowsze sterowniki?
 	</notification>
 	<notification name="UnknownGPU">
 		Twój system jest wyposażony w kartę graficzną, która nie jest rozpoznana przez [APP_NAME].
-Zdarza się to często w przypadku nowego sprzętu, który nie był testowany z [APP_NAME].  Prawdopodobnie wystarczy dostosowanie ustawień grafiki aby działanie było poprawne.
+Zdarza się to często w przypadku nowego sprzętu, który nie był testowany z [APP_NAME]. Prawdopodobnie wystarczy dostosowanie ustawień grafiki aby działanie było poprawne.
 (Awatar &gt; Ustawienia &gt; Grafika).
 		<form name="form">
 			<ignore name="ignore" text="Karta graficzna nie została zidentyfikowana."/>
@@ -1457,12 +1461,12 @@ lub zainstalować teraz.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Aktualizacja dla [APP_NAME] została pobrana.
-Wersja [VERSION] [[RELEASE_NOTES_FULL_URL] Informacja o tej aktualizacji]
+Wersja [VERSION] [[INFO_URL] Informacja o tej aktualizacji]
 		<usetemplate name="okcancelbuttons" notext="Później..." yestext="Instaluj teraz i restartuj [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Aktualizacja [APP_NAME] została pobrana.
-Wersja [VERSION] [[RELEASE_NOTES_FULL_URL] Informacja o aktualizacji]
+Wersja [VERSION] [[INFO_URL] Informacja o aktualizacji]
 		<usetemplate name="okcancelbuttons" notext="Później..." yestext="Instaluj teraz i restartuj [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1606,9 +1610,9 @@ Wiadomości przychodzące od osób spoza listy znajomych będą teraz otrzymywa�
 		<usetemplate ignoretext="Status zmieniony na Tryb Autoodpowiedzi dla nieznajomych" name="okignore" yestext="OK"/>
 	</notification>
 	<notification name="RejectTeleportOffersModeSet">
-		Tryb odrzucania wszystkich propozycji teleportacji jest włączony.
-Wszystkie nadchodzące propozycje teleportacji będą teraz otrzymywać skonfigurowaną wcześniej automatyczną odpowiedź. Nie będziesz dostawać żadnego powiadomienia o tym fakcie.
-		<usetemplate ignoretext="Status zmieniony na odrzucanie wszystkich propozycji teleportacji" name="okignore" yestext="OK"/>
+		Tryb odrzucania wszystkich propozycji i próśb o teleportację jest włączony.
+Wszystkie nadchodzące propozycje i prośby o teleportację będą teraz otrzymywać skonfigurowaną wcześniej automatyczną odpowiedź. Nie będziesz dostawać żadnego powiadomienia o tym fakcie.
+		<usetemplate ignoretext="Status zmieniony na odrzucanie wszystkich propozycji i próśb o teleportację" name="okignore" yestext="OK"/>
 	</notification>
 	<notification name="JoinedTooManyGroupsMember">
 		Należysz już do maksymalnej ilości grup. Opuść proszę przynajmniej jedną grupę żeby przyjąć członkostwo w tej grupie, albo odmów.
@@ -1714,6 +1718,13 @@ Czy chcesz go usunąć?
 			<input name="message">
 				Zapraszam do siebie. Region: [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Anuluj"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Poproś [NAME] o teleport z następującą wiadomością
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Anuluj"/>
 		</form>
@@ -2331,7 +2342,7 @@ URL: [MEDIAURL]
 			<button name="Deny" text="Odmów"/>
 		</form>
 	</notification>
-	<notification  name="MediaAlert2">
+	<notification name="MediaAlert2">
 		Chcesz zapamiętać swój wybór i zezwalać [LCONDITION] na media z tego źródła?
 
 Domena: [MEDIADOMAIN]
@@ -2666,6 +2677,9 @@ Nie możesz tutaj latać.
 	<notification name="RegionTPAccessBlocked">
 		Region, który próbujesz odwiedzić ma klasyfikację treści przekraczającą Twoje obecne preferencje treści. Możesz je zmienić używając Awatar &gt; Ustawienia &gt; Ogólne w pasku menu.
 	</notification>
+	<notification name="RegionAboutToShutdown">
+		Region, do którego próbujesz się dostać, właśnie się wyłącza.
+	</notification>
 	<notification name="URBannedFromRegion">
 		Zostałeś zbanowany w regionie.
 	</notification>
@@ -2785,8 +2799,8 @@ Chcesz zachować ten obiekt? Wybranie "Zablokuj" sprawi, że nie będziesz już 
 	<notification name="TeleportOffered" label="Propozycja teleportacji od [NAME_LABEL]">
 		[NAME_SLURL] proponuje Ci teleportację do siebie:
 
-+“[MESSAGE]”
-+&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
+[MESSAGE]
+&lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 		<form name="form">
 			<button name="Teleport" text="Teleportuj"/>
 			<button name="Cancel" text="Anuluj"/>
@@ -2795,7 +2809,7 @@ Chcesz zachować ten obiekt? Wybranie "Zablokuj" sprawi, że nie będziesz już 
 	<notification name="TeleportOffered_MaturityExceeded">
 		[NAME_SLURL] proponuje Ci teleportację do siebie:
 
-“[MESSAGE]”
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 
 Ten region zawiera treści [REGION_CONTENT_MATURITY], ale Twoje obecne preferencje są tak ustawione, aby odrzucać treści [REGION_CONTENT_MATURITY]. Możesz zmienić swoje preferencje i kontynuować teleport albo anulować go.
@@ -2807,13 +2821,23 @@ Ten region zawiera treści [REGION_CONTENT_MATURITY], ale Twoje obecne preferenc
 	<notification name="TeleportOffered_MaturityBlocked">
 		[NAME_SLURL] zaproponował/a Ci teleportację do siebie:
 
-“[MESSAGE]”
+[MESSAGE]
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 
 Ten region zawiera jednak treści tylko dla dorosłych.
 	</notification>
 	<notification name="TeleportOfferSent">
 		Oferta teleportacji wysłana do [TO_NAME]
+	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] prosi o teleportację do miejsca, w jakim się znajdujesz.
+[MESSAGE]
+
+Zaproponować teleport?
+		<form name="form">
+			<button name="Yes" text="Tak"/>
+			<button name="No" text="Nie"/>
+		</form>
 	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
@@ -2835,7 +2859,7 @@ Ten region zawiera jednak treści tylko dla dorosłych.
 		</form>
 	</notification>
 	<notification name="FriendshipOffered">
-		Zaoferowałeś/aś znajomość dla [TO_NAME]
+		Zaoferowałeś/aś znajomość osobie [TO_NAME]
 	</notification>
 	<notification name="OfferFriendshipNoMessage" label="Propozycja znajomości od [NAME_LABEL]">
 		[NAME_SLURL] proponuje Ci znajomość.
@@ -2867,12 +2891,20 @@ Wizytówka w Twojej Szafie umożliwi szybki kontakt IM z tym Rezydentem.
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Restart regionu za [MINUTES] min.
+		Restart regionu "[NAME]" za [MINUTES] min.
 Nastąpi wylogowanie jeżeli zostaniesz w tym regionie.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Restart regionu za [SECONDS] sek.
+		Restart regionu "[NAME]" za [SECONDS] sek.
 Nastąpi wylogowanie jeżeli zostaniesz w tym regionie.
+	</notification>
+	<notification name="RegionRestartMinutesToast">
+		Region "[NAME]" zostanie zrestartowany za [MINUTES] minut.
+Jeśli w nim zostaniesz, to symulator Cię wyloguje.
+	</notification>
+	<notification name="RegionRestartSecondsToast">
+		Region "[NAME]" zostanie zrestartowany za [SECONDS] sekund.
+Jeśli w nim zostaniesz, to symulator Cię wyloguje.
 	</notification>
 	<notification name="LoadWebPage">
 		Załadować stronę [URL] ?
@@ -3840,9 +3872,9 @@ Spróbuj ponownie za minutę.
 	<notification name="EjectComingSoon">
 		Nie masz już dłużej pozwolenia na przebywanie w tym miejscu i w ciągu [EJECT_TIME] sekund musisz je opuścić.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Nie możesz wejść do tego regionu,
-ponieważ serwer jest pełny.
+	<notification name="NoEnterRegionMaybeFull">
+		Nie możesz wejść do regionu "[NAME]",
+może być pełny lub właśnie restartuje.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Zabieranie z powrotem do Szafy zostało wyłączone.
@@ -4132,6 +4164,9 @@ ponieważ serwer jest pełny.
 	<notification name="CantAttachNotEnoughScriptResources">
 		Niewystarczające dostępne zasoby skryptowe, aby założyć obiekt!
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Nie możesz odłączyć dodatku, ponieważ jest on już odłączony.
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		Nie możesz tutaj upuszczać obiektów; spróbuj w strefie Darmowej Próby.
 	</notification>
@@ -4226,13 +4261,13 @@ ponieważ serwer jest pełny.
 		Zbyt mało dzierżawionych działek w zaznaczeniu do przyłączenia.
 	</notification>
 	<notification name="CantDivideLandMultipleParcelsSelected">
-		Nie można podzielić ziemi.\nZaznaczono więcej niż jedną działkę.\nSpróbuj zaznaczyć mniejszy obszar ziemi.
+		Nie można podzielić ziemi. Zaznaczono więcej niż jedną działkę. Spróbuj zaznaczyć mniejszy obszar ziemi.
 	</notification>
 	<notification name="CantDivideLandCantFindParcel">
-		Nie można podzielić ziemi.\nNie można znaleźć działki.\nProsimy o zgłoszenie błędu, w menu Pomoc.
+		Nie można podzielić ziemi. Nie można znaleźć działki. Prosimy o zgłoszenie błędu, w menu Pomoc.
 	</notification>
 	<notification name="CantDivideLandWholeParcelSelected">
-		Nie można podzielić ziemi. Cała działka jest zaznaczona.\nSpróbuj zaznaczyć mniejszy obszar ziemi.
+		Nie można podzielić ziemi. Cała działka jest zaznaczona. Spróbuj zaznaczyć mniejszy obszar ziemi.
 	</notification>
 	<notification name="LandHasBeenDivided">
 		Ziemia została podzielona.
@@ -4360,6 +4395,9 @@ ponieważ serwer jest pełny.
 	<notification name="LargePrimAgentIntersect">
 		Nie można utworzyć wielkich prim, które nachodzą na innych rezydentów. Spróbuj jeszcze raz, gdy przesuną się oni.
 	</notification>
+	<notification name="RLVChangeStrings">
+		Zmiany nie odniosą skutku, dopóki nie zrestartujesz [APP_NAME].
+	</notification>
 	<notification name="PreferenceChatClearLog">
 		Ta opcja usunie dzienniki poprzednich rozmów i wszelkie kopie zapasowe tego pliku.
 		<usetemplate ignoretext="Potwierdź, zanim usunę dzienniki poprzednich rozmów." name="okcancelignore" notext="Anuluj" yestext="OK"/>
@@ -4485,6 +4523,12 @@ Nie można tego cofnąć.
 	<notification name="AntiSpamBlocked">
 		Antyspam: Zablokowano [SOURCE] ze względu na spam [QUEUE] ([COUNT]) razy podczas [PERIOD] sekund.
 	</notification>
+	<notification name="AntiSpamImNewLineFloodBlocked">
+		Antyspam: Zablokowano [SOURCE] za wysłanie wiadomości IM mającej więcej niż [COUNT] linii.
+	</notification>
+	<notification name="AntiSpamChatNewLineFloodBlocked">
+		Antyspam: Zablokowano [SOURCE] za wysłanie wiadomości czatu mającej więcej niż [COUNT] linii.
+	</notification>
 	<notification name="MeshMaxConcurrentReqTooHigh">
 		Wartość ustawienia dla liczby jednoczesnych żądań ładowania obiektów meszowych określona przez Ciebie, [VALUE], jest wyższa niż dopuszczalne [MAX]. Została ona zresetowana do domyślnej, [DEFAULT].
 	</notification>
@@ -4492,6 +4536,54 @@ Nie można tego cofnąć.
 		[MESSAGE]
 		<form name="form">
 			<ignore name="ignore" text="Ustawienie w preferencjach zostało zmienione do domyślnej wartości skórki."/>
+		</form>
+	</notification>
+	<notification name="AddNewContactSet">
+		Utwórz nowy zestaw kontaktów o nazwie:
+		<form name="form">
+			<input name="message">
+				Nowy zestaw kontaktów
+			</input>
+			<button name="Create" text="Utwórz"/>
+			<button name="Cancel" text="Anuluj"/>
+		</form>
+	</notification>
+	<notification name="RemoveContactSet">
+		Na pewno chcesz usunąć [SET_NAME]? Nie będziesz mieć możliwości go przywrócić.
+		<usetemplate ignoretext="Potwierdź przed usunięciem Zestawu Kontaktów" name="okcancelignore" notext="Anuluj" yestext="Ok"/>
+	</notification>
+	<notification name="RemoveContactFromSet">
+		Na pewno chcesz usunąć [TARGET] z [SET_NAME]?
+		<usetemplate ignoretext="Potwierdź przed usunięciem kogoś z Zestawu Kontaktów" name="okcancelignore" notext="Anuluj" yestext="Ok"/>
+	</notification>
+	<notification name="RemoveContactsFromSet">
+		Na pewno chcesz usunąć [TARGET] osób z [SET_NAME]?
+		<usetemplate ignoretext="Potwierdź przed usunięciem większej ilości awatarów z Zestawu Kontaktów" name="okcancelignore" notext="Anuluj" yestext="Ok"/>
+	</notification>
+	<notification name="AddToContactSetSingleSuccess">
+		[NAME] został/a dodany/a do [SET].
+	</notification>
+	<notification name="AddToContactSetMultipleSuccess">
+		[COUNT] awatarów zostało dodanych do [SET].
+	</notification>
+	<notification name="SetAvatarPseudonym">
+		Wprowadź alias dla [AVATAR]:
+		<form name="form">
+			<button name="Create" text="Ustaw"/>
+			<button name="Cancel" text="Anuluj"/>
+		</form>
+	</notification>
+	<notification name="ShapeImportGenericFail">
+		Wystąpił problem podczas importowania [FILENAME]. Zobacz log, aby uzyskać więcej szczegółów.
+	</notification>
+	<notification name="ShapeImportVersionFail">
+		Importowanie kształtu nie powiodło się. Czy [FILENAME] jest na pewno plikiem awatara?
+	</notification>
+	<notification name="AddToMediaList">
+		Wpisz nazwę domeny, jaką chcesz dodać do [LIST]:
+		<form name="form">
+			<button name="Add" text="Dodaj"/>
+			<button name="Cancel" text="Anuluj"/>
 		</form>
 	</notification>
 </notifications>

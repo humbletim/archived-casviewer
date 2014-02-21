@@ -81,6 +81,7 @@ public:
 	~LLAvatarBoneInfo()
 	{
 		std::for_each(mChildList.begin(), mChildList.end(), DeletePointer());
+		mChildList.clear();
 	}
 	BOOL parseXml(LLXmlTreeNode* node);
 	
@@ -108,6 +109,7 @@ public:
 	~LLAvatarSkeletonInfo()
 	{
 		std::for_each(mBoneInfoList.begin(), mBoneInfoList.end(), DeletePointer());
+		mBoneInfoList.clear();
 	}
 	BOOL parseXml(LLXmlTreeNode* node);
 	S32 getNumBones() const { return mNumBones; }
@@ -132,14 +134,26 @@ LLAvatarAppearance::LLAvatarXmlInfo::LLAvatarXmlInfo()
 LLAvatarAppearance::LLAvatarXmlInfo::~LLAvatarXmlInfo()
 {
 	std::for_each(mMeshInfoList.begin(), mMeshInfoList.end(), DeletePointer());
+	mMeshInfoList.clear();
+
 	std::for_each(mSkeletalDistortionInfoList.begin(), mSkeletalDistortionInfoList.end(), DeletePointer());		
+	mSkeletalDistortionInfoList.clear();
+
 	std::for_each(mAttachmentInfoList.begin(), mAttachmentInfoList.end(), DeletePointer());
+	mAttachmentInfoList.clear();
+
 	deleteAndClear(mTexSkinColorInfo);
 	deleteAndClear(mTexHairColorInfo);
 	deleteAndClear(mTexEyeColorInfo);
+
 	std::for_each(mLayerInfoList.begin(), mLayerInfoList.end(), DeletePointer());		
+	mLayerInfoList.clear();
+
 	std::for_each(mDriverInfoList.begin(), mDriverInfoList.end(), DeletePointer());
+	mDriverInfoList.clear();
+
 	std::for_each(mMorphMaskInfoList.begin(), mMorphMaskInfoList.end(), DeletePointer());
+	mMorphMaskInfoList.clear();
 }
 
 
@@ -504,7 +518,9 @@ void LLAvatarAppearance::computeBodySize()
 	// Certain configurations of avatars can force the overall height (with offset) to go negative.
 	// Enforce a constraint to make sure we don't go below 0.1 meters.
 	// Camera positioning and other things start to break down when your avatar is "walking" while being fully underground
-	if (new_body_size.mV[VZ] + mAvatarOffset.mV[VZ] < 0.1f) 
+// [FS:CR] This is a bad check and will force your head in the ground if the following is true.
+#if 0
+	if (new_body_size.mV[VZ] + mAvatarOffset.mV[VZ] < 0.1f)
 	{
 		mAvatarOffset.mV[VZ] = -(new_body_size.mV[VZ] - 0.11f); // avoid floating point rounding making the above check continue to fail.
 
@@ -519,6 +535,7 @@ void LLAvatarAppearance::computeBodySize()
 			}
 		}
 	}
+#endif // [/FS:CR]
 
 	if (new_body_size != mBodySize || old_offset != mAvatarOffset.mV[VZ])
 	{

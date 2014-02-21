@@ -195,7 +195,7 @@ FSFloaterPlaceDetails::FSFloaterPlaceDetails(const LLSD& seed)
 	mInventoryObserver = new FSPlaceDetailsInventoryObserver(this);
 	gInventory.addObserver(mInventoryObserver);
 
-	mAgentParcelChangedConnection = LLViewerParcelMgr::getInstance()->addAgentParcelChangedCallback(
+	mAgentParcelChangedConnection = gAgent.addParcelChangedCallback(
 			boost::bind(&FSFloaterPlaceDetails::updateVerbs, this));
 }
 
@@ -780,11 +780,11 @@ void FSFloaterPlaceDetails::onOverflowMenuItemClicked(const LLSD& param)
 		if (panel)
 		{
 			panel->createPick(mGlobalPos, mPickPanel);
-		}
 
-		LLRect rect = panel->getRect();
-		mPickPanel->reshape(rect.getWidth(), rect.getHeight());
-		mPickPanel->setRect(rect);
+			LLRect rect = panel->getRect();
+			mPickPanel->reshape(rect.getWidth(), rect.getHeight());
+			mPickPanel->setRect(rect);
+		}
 	}
 	else if (item == "add_to_favbar")
 	{

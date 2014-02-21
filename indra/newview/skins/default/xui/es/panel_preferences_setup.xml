@@ -26,8 +26,8 @@
 			<button label="Establecer" label_selected="Establecer" name="set_cache" width="68"/>
 			<button label="Restablecer" label_selected="Restablecer" name="reset_cache" width="75"/>
 			<button label="Limpiar caché" label_selected="Limpiar" name="clear_cache" width="88"/>
-			<text name="log_path_desc">
-				Directorio de registro de chat:
+			<text name="log_path_desc" width="330">
+				Ubicación de registro de conversaciones y transcripciones:
 			</text>
 			<line_editor name="log_path_string-panelsetup" width="215"/>
 			<button label="Abrir" label_selected="Abrir" name="open_log_path_button-panelsetup" width="35"/>
@@ -55,7 +55,7 @@
 			<check_box initial_value="true" label="Activar plugins" name="browser_plugins_enabled"/>
 			<check_box initial_value="true" label="Aceptar las &apos;cookies&apos;" name="cookies_enabled"/>
 			<check_box initial_value="true" label="Activar Javascript" name="browser_javascript_enabled"/>
-			<check_box initial_value="falso" label="Permitir las ventanas emergentes en el navegador" name="media_popup_enabled"/>
+			<check_box initial_value="false" label="Permitir las ventanas emergentes en el navegador" name="media_popup_enabled"/>
 			<text name="Proxy Settings:">
 				Configuración de proxy:
 			</text>

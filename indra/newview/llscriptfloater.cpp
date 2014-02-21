@@ -881,7 +881,12 @@ LLScriptFloater* LLScriptFloater::show(const LLUUID& notification_id)
 
 	LLRect pos = floater->getRect();
 
-	if (floaterType == LLScriptFloaterManager::OBJ_SCRIPT)
+	// <FS:PP> FIRE-12037: Inventory Offer Dialog boxes hidden
+	// They should be ALWAYS visible on screen, all of them, not only the most recent one - so use the ScriptDialogsPosition detection as well
+	// Otherwise (after accepting/declining that most recent one) user may not notice, that still has something to click (with chiclets hidden, or just too many of them visible on screen), relog and lost pending inventory offer items
+	// if (floaterType == LLScriptFloaterManager::OBJ_SCRIPT)
+	if (floaterType == LLScriptFloaterManager::OBJ_SCRIPT || floaterType == LLScriptFloaterManager::OBJ_UNKNOWN || floaterType == LLScriptFloaterManager::OBJ_GIVE_INVENTORY)
+	// </FS:PP>
 	{
 		eDialogPosition dialogPos = (eDialogPosition)gSavedSettings.getS32("ScriptDialogsPosition");
 
@@ -909,21 +914,21 @@ LLScriptFloater* LLScriptFloater::show(const LLUUID& notification_id)
 		S32 topPad=LLScriptFloaterManager::instance().getTopPad();
 
 		S32 bottomPad = 0;
-		if (gToolBarView->getToolbar(LLToolBarView::TOOLBAR_BOTTOM)->hasButtons())
+		if (gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_BOTTOM)->hasButtons())
 		{
-			bottomPad = gToolBarView->getToolbar(LLToolBarView::TOOLBAR_BOTTOM)->getRect().getHeight();
+			bottomPad = gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_BOTTOM)->getRect().getHeight();
 		}
 
 		S32 leftPad = 0;
-		if (gToolBarView->getToolbar(LLToolBarView::TOOLBAR_LEFT)->hasButtons())
+		if (gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_LEFT)->hasButtons())
 		{
-			leftPad = gToolBarView->getToolbar(LLToolBarView::TOOLBAR_LEFT)->getRect().getWidth();
+			leftPad = gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_LEFT)->getRect().getWidth();
 		}
 
 		S32 rightPad = 0;
-		if (gToolBarView->getToolbar(LLToolBarView::TOOLBAR_RIGHT)->hasButtons())
+		if (gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_RIGHT)->hasButtons())
 		{
-			rightPad = gToolBarView->getToolbar(LLToolBarView::TOOLBAR_RIGHT)->getRect().getWidth();
+			rightPad = gToolBarView->getToolbar(LLToolBarEnums::TOOLBAR_RIGHT)->getRect().getWidth();
 		}
 
 		S32 width = pos.getWidth();

@@ -10,8 +10,9 @@
 		<menu_item_call label="Toolbar-Buttons" name="Toolbar Buttons"/>
 		<menu_item_call label="Profil" name="Profile"/>
 		<menu_item_call label="Auswahlen" name="Picks"/>
+		<menu_item_call label="Auf Facebook posten" name="PostToFacebook"/>
 		<menu_item_call label="Outfit ändern" name="ChangeOutfit"/>
-        <menu_item_call label="Foto machen" name="Take Snapshot"/>
+		<menu_item_call label="Foto machen" name="Take Snapshot"/>
 		<menu_item_check label="Inventar" name="Inventory"/>
 		<menu_item_check label="Inventar" name="ShowSidetrayInventory"/>
 		<menu_item_check label="Steuerung" name="Movement Controls"/>
@@ -19,16 +20,17 @@
 			<menu_item_call label="Hinsetzen" name="Sit Down Here"/>
 			<menu_item_check label="Fliegen" name="Fly"/>
 			<menu_item_check label="Immer rennen" name="Always Run"/>
-            <menu_item_check label="Sitzen erzwingen" name="Force Toggle Sitting"/>
-		    <menu_item_check label="Movelock" name="Move Lock"/>
+			<menu_item_check label="Sitzen erzwingen" name="Force Toggle Sitting"/>
+			<menu_item_check label="Movelock" name="Move Lock"/>
 		</menu>
-        <menu_item_check label="Kamerasteuerung" name="Camera Controls"/>
+		<menu_item_check label="Kamerasteuerung" name="Camera Controls"/>
 		<menu label="Avatar-Befinden" name="avhealth">
 			<menu_item_call label="Avatar-Animationen stoppen" name="Stop Animating My Avatar"/>
+			<menu_item_call label="Avatar-Animationen stoppen &amp; Skripten Rechte entziehen" name="Stop Animating My Avatar With Revoke"/>
 			<menu_item_call label="Avatar undeformieren" name="undeform_avatar"/>
 			<menu_item_call label="Aktualisiere Aussehen (Rebake)" name="Rebake Texture"/>
 			<menu_item_call label="Auf männlichen Standard-Avatar zurücksetzen" name="ResetDefaultAvM"/>
-            <menu_item_call label="Auf weiblichen Standard-Avatar zurücksetzen" name="ResetDefaultAvF"/>
+			<menu_item_call label="Auf weiblichen Standard-Avatar zurücksetzen" name="ResetDefaultAvF"/>
 			<menu_item_check label="Render-Weight für Avatare anzeigen (Ersatz für ARC)" name="Avatar Rendering Cost"/>
 			<menu_item_call label="Lag-Meter" name="Lag Meter"/>
 			<menu_item_call label="LSL-Brücke neu erstellen" name="Recreate LSL Bridge"/>
@@ -52,7 +54,7 @@
 	<menu label="Unterhalten" name="Communicate">
 		<menu_item_call label="Freunde" name="My Friends"/>
 		<menu_item_check label="Kontakte" name="Contacts"/>
-		<menu_item_check label="Kontakt-Sets" name="Contact Sets"/>
+		<menu_item_call label="Kontakt-Sets" name="Contact Sets"/>
 		<menu_item_call label="Gruppen" name="My Groups"/>
 		<menu_item_check label="Chat in der Nähe" name="Nearby Chat"/>
         <menu_item_check label="Leute" name="People"/>
@@ -66,7 +68,7 @@
             <menu_item_check label="Nicht stören" name="Do Not Disturb"/>		
             <menu_item_check label="Automatische Antwort" name="Set Autorespond"/>
             <menu_item_check label="Automatische Antwort an Nicht-Freunde" name="Set Autorespond to non-friends"/>
-            <menu_item_check label="Automatisch Teleport-Angebote abweisen" name="Automatically reject teleport offers"/>
+            <menu_item_check label="Teleport-Angebote und -Anforderungen abweisen" name="Automatically reject teleport offers"/>
         </menu>
         <menu_item_check label="Gesten" name="Gestures"/>
 		<menu label="Voice-Morphing" name="VoiceMorphing">
@@ -134,6 +136,7 @@
 		</menu>
 		<menu_item_call label="Umgebungssuche" name="area_search"/>
 		<menu_item_call label="Sound-Explorer" name="Sound Explorer"/>
+		<menu_item_call label="Animation-Explorer" name="Animation Explorer"/>
 		<menu_item_call label="Asset-Blacklist" name="asset_blacklist"/>
 	</menu>
 	<menu label="Bauen" name="BuildTools">
@@ -252,6 +255,7 @@
 		<menu_item_check label="Namensschilder anzeigen" name="Show Name Tags"/>
 		<menu_item_check label="Anziehen ersetzt nicht-gesperrte Kleidung" name="Wear Replaces Unlocked"/>
 		<menu_item_check label="Beschränkungen..." name="Restrictions"/>
+		<menu_item_check label="Texte..." name="Strings"/>
 	</menu>
 	<menu label="Erweitert" name="Advanced">
 		<menu_item_call label="Textur neu laden" name="Rebake Texture"/>
@@ -421,6 +425,7 @@
 			<menu_item_check label="Konstruktionswarteschlange" name="Build Queue"/>
 			<menu_item_check label="Lichter" name="Lights"/>
 			<menu_item_check label="Gelenkpunkte" name="Collision Skeleton"/>
+			<menu_item_check label="Joints" name="Joints"/>
 			<menu_item_check label="Raycast" name="Raycast"/>
 			<menu_item_check label="Wind-Vektoren" name="Wind Vectors"/>
 			<menu_item_check label="Render-Komplexität" name="rendercomplexity"/>
@@ -466,6 +471,9 @@
 		</menu>
 		<menu_item_call label="Geskriptete Kamera ausgeben" name="Dump Scripted Camera"/>
 		<menu label="Rekorder" name="Recorder">
+			<menu_item_call label="Ereignis-Aufname starten" name="Start event recording"/>
+			<menu_item_call label="Ereignis-Aufname stoppen" name="Stop event recording"/>
+			<menu_item_call label="Ereignis-Aufname wiedergeben" name="Playback event recording"/>
 			<menu_item_call label="Wiedergabe starten" name="Start Playback"/>
 			<menu_item_call label="Wiedergabe stoppen" name="Stop Playback"/>
 			<menu_item_check label="Wiedergabeschleife" name="Loop Playback"/>
@@ -481,6 +489,7 @@
 		<menu label="UI" name="UI">
 			<menu_item_call label="Test Medienbrowser" name="Web Browser Test"/>
 			<menu_item_call label="Webinhaltsbrowser" name="Web Content Browser"/>
+			<menu_item_call label="Facebook Connection-Test" name="FB Connect Test"/>
 			<menu_item_call label="SelectMgr ausgeben" name="Dump SelectMgr"/>
 			<menu_item_call label="Inventarinfo ausgeben" name="Dump Inventory"/>
 			<menu_item_call label="Timer ausgeben" name="Dump Timers"/>
@@ -505,6 +514,7 @@
 			<menu_item_call label="In XML-Datei speichern" name="Save to XML"/>
 			<menu_item_check label="XUI-Namen anzeigen" name="Show XUI Names"/>
 			<menu_item_check label="Debug-Informationen für Views anzeigen" name="DebugViews"/>
+			<menu_item_call label="XUI-Editor" name="UI Preview Tool"/>
 			<menu_item_call label="Test-IMs senden" name="Send Test IMs"/>
 			<menu_item_call label="Namen-Cache leeren" name="Flush Names Caches"/>
 		</menu>

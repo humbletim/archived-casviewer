@@ -168,6 +168,12 @@ void FloaterQuickPrefs::initCallbacks()
 		gSavedSettings.getControl("WindLightUseAtmosShaders")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
 		gSavedSettings.getControl("RenderDeferred")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
 		gSavedSettings.getControl("RenderAvatarVP")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
+		gSavedSettings.getControl("RenderShadowDetail")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
+		gSavedSettings.getControl("FSRenderVignette")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
+		gSavedSettings.getControl("RenderShadowSplitExponent")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
+		gSavedSettings.getControl("RenderShadowGaussian")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
+		gSavedSettings.getControl("RenderSSAOEffect")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::refreshSettings, this));
+
 // <FS:CR> FIRE-9630 - Vignette UI controls
 		getChild<LLSpinCtrl>("VignetteSpinnerX")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeVignetteSpinnerX, this));
 		getChild<LLSlider>("VignetteSliderX")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeVignetteX, this));
@@ -179,6 +185,21 @@ void FloaterQuickPrefs::initCallbacks()
 		getChild<LLSlider>("VignetteSliderZ")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeVignetteZ, this));
 		getChild<LLButton>("Reset_VignetteZ")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onClickResetVignetteZ, this));
 // </FS:CR>
+
+		getChild<LLSlider>("SB_Shd_Clarity")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderShadowSplitExponentSlider, this));
+		getChild<LLSpinCtrl>("S_Shd_Clarity")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderShadowSplitExponentSpinner, this));
+		getChild<LLButton>("Shd_Clarity_Reset")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onClickResetRenderShadowSplitExponentY, this));
+
+		getChild<LLSlider>("SB_Shd_Soften")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderShadowGaussianSlider, this));
+		getChild<LLSlider>("SB_AO_Soften")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderShadowGaussianSlider, this));
+		getChild<LLSpinCtrl>("S_Shd_Soften")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderShadowGaussianSpinner, this));
+		getChild<LLSpinCtrl>("S_AO_Soften")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderShadowGaussianSpinner, this));
+		getChild<LLButton>("Shd_Soften_Reset")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onClickResetRenderShadowGaussianX, this));
+		getChild<LLButton>("Reset_AO_Soften")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onClickResetRenderShadowGaussianY, this));
+
+		getChild<LLSlider>("SB_Effect")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderSSAOEffectSlider, this));
+		getChild<LLSpinCtrl>("S_Effect")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onChangeRenderSSAOEffectSpinner, this));
+		getChild<LLButton>("Reset_Effect")->setCommitCallback(boost::bind(&FloaterQuickPrefs::onClickResetRenderSSAOEffectX, this));
 	}
 	else
 	{
@@ -309,6 +330,7 @@ BOOL FloaterQuickPrefs::postBuild()
 		mCtrlDeferred = getChild<LLCheckBoxCtrl>("RenderDeferred");
 		mCtrlUseSSAO = getChild<LLCheckBoxCtrl>("UseSSAO");
 		mCtrlUseDoF = getChild<LLCheckBoxCtrl>("UseDepthofField");
+		mCtrlUseSSR = getChild<LLCheckBoxCtrl>("FSRenderSSR");
 		mCtrlShadowDetail = getChild<LLComboBox>("ShadowDetail");
 		mCtrlReflectionDetail = getChild<LLComboBox>("Reflections");
 // <FS:CR> FIRE-9630 - Vignette UI controls
@@ -319,6 +341,17 @@ BOOL FloaterQuickPrefs::postBuild()
 		mSliderVignetteY = getChild<LLSlider>("VignetteSliderY");
 		mSliderVignetteZ = getChild<LLSlider>("VignetteSliderZ");
 // </FS:CR>
+		mSliderRenderShadowSplitExponentY = getChild<LLSlider>("SB_Shd_Clarity");
+		mSpinnerRenderShadowSplitExponentY = getChild<LLSpinCtrl>("S_Shd_Clarity");
+
+		mSliderRenderShadowGaussianX = getChild<LLSlider>("SB_Shd_Soften");
+		mSliderRenderShadowGaussianY = getChild<LLSlider>("SB_AO_Soften");
+		mSpinnerRenderShadowGaussianX = getChild<LLSpinCtrl>("S_Shd_Soften");
+		mSpinnerRenderShadowGaussianY = getChild<LLSpinCtrl>("S_AO_Soften");
+
+		mSliderRenderSSAOEffectX = getChild<LLSlider>("SB_Effect");
+		mSpinnerRenderSSAOEffectX = getChild<LLSpinCtrl>("S_Effect");
+
 		refreshSettings();
 	}
 	else
@@ -725,6 +758,7 @@ void FloaterQuickPrefs::refreshSettings()
 
 	mCtrlDeferred->setEnabled(enabled);
 
+	mCtrlUseSSR->setEnabled(enabled && (mCtrlDeferred->get() ? TRUE : FALSE) && gSavedSettings.getS32("RenderShadowDetail") > 0);
 	enabled = enabled && LLFeatureManager::getInstance()->isFeatureAvailable("RenderDeferredSSAO") && (mCtrlDeferred->get() ? TRUE : FALSE);
 		
 	mCtrlUseSSAO->setEnabled(enabled);
@@ -758,6 +792,9 @@ void FloaterQuickPrefs::refreshSettings()
 
 		mCtrlDeferred->setEnabled(FALSE);
 		mCtrlDeferred->setValue(FALSE);
+
+		mCtrlUseSSR->setEnabled(FALSE);
+		mCtrlUseSSR->setValue(FALSE);
 	}
 	
 	// disabled windlight
@@ -778,6 +815,9 @@ void FloaterQuickPrefs::refreshSettings()
 
 		mCtrlDeferred->setEnabled(FALSE);
 		mCtrlDeferred->setValue(FALSE);
+
+		mCtrlUseSSR->setEnabled(FALSE);
+		mCtrlUseSSR->setValue(FALSE);
 	}
 
 	// disabled deferred
@@ -795,6 +835,9 @@ void FloaterQuickPrefs::refreshSettings()
 
 		mCtrlDeferred->setEnabled(FALSE);
 		mCtrlDeferred->setValue(FALSE);
+
+		mCtrlUseSSR->setEnabled(FALSE);
+		mCtrlUseSSR->setValue(FALSE);
 	}
 	
 	// disabled deferred SSAO
@@ -809,6 +852,9 @@ void FloaterQuickPrefs::refreshSettings()
 	{
 		mCtrlShadowDetail->setEnabled(FALSE);
 		mCtrlShadowDetail->setValue(0);
+
+		mCtrlUseSSR->setEnabled(FALSE);
+		mCtrlUseSSR->setValue(FALSE);
 	}
 
 	// disabled reflections
@@ -833,6 +879,9 @@ void FloaterQuickPrefs::refreshSettings()
 
 		mCtrlDeferred->setEnabled(FALSE);
 		mCtrlDeferred->setValue(FALSE);
+
+		mCtrlUseSSR->setEnabled(FALSE);
+		mCtrlUseSSR->setValue(FALSE);
 	}
 	
 	// <FS:CR> FIRE-9630 - Vignette UI controls
@@ -845,6 +894,20 @@ void FloaterQuickPrefs::refreshSettings()
 		mSliderVignetteX->setValue(vignette.mV[VX]);
 		mSliderVignetteY->setValue(vignette.mV[VY]);
 		mSliderVignetteZ->setValue(vignette.mV[VZ]);
+
+		LLVector3 renderShadowSplitExponent = gSavedSettings.getVector3("RenderShadowSplitExponent");
+		mSpinnerRenderShadowSplitExponentY->setValue(renderShadowSplitExponent.mV[VY]);
+		mSliderRenderShadowSplitExponentY->setValue(renderShadowSplitExponent.mV[VY]);
+
+		LLVector3 renderRenderShadowGaussian = gSavedSettings.getVector3("RenderShadowGaussian");
+		mSpinnerRenderShadowGaussianX->setValue(renderRenderShadowGaussian.mV[VX]);
+		mSpinnerRenderShadowGaussianY->setValue(renderRenderShadowGaussian.mV[VY]);
+		mSliderRenderShadowGaussianX->setValue(renderRenderShadowGaussian.mV[VX]);
+		mSliderRenderShadowGaussianY->setValue(renderRenderShadowGaussian.mV[VY]);
+
+		LLVector3 renderSSAOEffect = gSavedSettings.getVector3("RenderSSAOEffect");
+		mSpinnerRenderSSAOEffectX->setValue(renderSSAOEffect.mV[VX]);
+		mSliderRenderSSAOEffectX->setValue(renderSSAOEffect.mV[VX]);
 	}
 	// </FS:CR>
 }
@@ -1399,7 +1462,6 @@ void FloaterQuickPrefs::onValuesChanged()
 
 			// do a best guess on variable types and control widgets
 			ControlType type;
-			BOOL integer;
 			switch(var->type())
 			{
 				// Boolean gets the full set
@@ -1408,7 +1470,6 @@ void FloaterQuickPrefs::onValuesChanged()
 					// increment will be calculated below
 					min_value=0.0;
 					max_value=1.0;
-					integer=TRUE;
 					type=ControlTypeRadio;
 					break;
 				}
@@ -1430,9 +1491,6 @@ void FloaterQuickPrefs::onValuesChanged()
 				}
 				// Fallthrough, S32 and U32 are integer values
 				case TYPE_S32:
-				{
-					integer=TRUE;
-				}
 				// Fallthrough, S32, U32 and F32 should use sliders
 				case TYPE_F32:
 				{
@@ -1443,7 +1501,6 @@ void FloaterQuickPrefs::onValuesChanged()
 				default:
 				{
 					type=ControlTypeText;
-					integer=FALSE;
 				}
 			}
 
@@ -1706,6 +1763,99 @@ void FloaterQuickPrefs::onClickResetVignetteZ()
 	gSavedSettings.setVector3("FSRenderVignette", vignette);
 }
 // </FS:CR> FIRE-9630 - Vignette UI callbacks
+
+
+void FloaterQuickPrefs::onChangeRenderShadowSplitExponentSlider()
+{
+	LLVector3 renderShadowSplitExponent = gSavedSettings.getVector3("RenderShadowSplitExponent");
+	renderShadowSplitExponent.mV[VY] = mSliderRenderShadowSplitExponentY->getValueF32();
+	mSpinnerRenderShadowSplitExponentY->setValue(renderShadowSplitExponent.mV[VY]);
+	gSavedSettings.setVector3("RenderShadowSplitExponent", renderShadowSplitExponent);
+}
+
+void FloaterQuickPrefs::onChangeRenderShadowSplitExponentSpinner()
+{
+	LLVector3 renderShadowSplitExponent = gSavedSettings.getVector3("RenderShadowSplitExponent");
+	renderShadowSplitExponent.mV[VY] = mSpinnerRenderShadowSplitExponentY->getValueF32();
+	mSliderRenderShadowSplitExponentY->setValue(renderShadowSplitExponent.mV[VY]);
+	gSavedSettings.setVector3("RenderShadowSplitExponent", renderShadowSplitExponent);
+}
+
+void FloaterQuickPrefs::onClickResetRenderShadowSplitExponentY()
+{
+	LLVector3 renderShadowSplitExponentDefault = LLVector3(gSavedSettings.getControl("RenderShadowSplitExponent")->getDefault());
+	LLVector3 renderShadowSplitExponent = gSavedSettings.getVector3("RenderShadowSplitExponent");
+	renderShadowSplitExponent.mV[VY] = renderShadowSplitExponentDefault.mV[VY];
+	mSpinnerRenderShadowSplitExponentY->setValue(renderShadowSplitExponent.mV[VY]);
+	mSliderRenderShadowSplitExponentY->setValue(renderShadowSplitExponent.mV[VY]);
+	gSavedSettings.setVector3("RenderShadowSplitExponent", renderShadowSplitExponent);
+}
+
+void FloaterQuickPrefs::onChangeRenderShadowGaussianSlider()
+{
+	LLVector3 renderShadowGaussian = gSavedSettings.getVector3("RenderShadowGaussian");
+	renderShadowGaussian.mV[VX] = mSliderRenderShadowGaussianX->getValueF32();
+	renderShadowGaussian.mV[VY] = mSliderRenderShadowGaussianY->getValueF32();
+	mSpinnerRenderShadowGaussianX->setValue(renderShadowGaussian.mV[VX]);
+	mSpinnerRenderShadowGaussianY->setValue(renderShadowGaussian.mV[VY]);
+	gSavedSettings.setVector3("RenderShadowGaussian", renderShadowGaussian);
+}
+
+void FloaterQuickPrefs::onChangeRenderShadowGaussianSpinner()
+{
+	LLVector3 renderShadowGaussian = gSavedSettings.getVector3("RenderShadowGaussian");
+	renderShadowGaussian.mV[VX] = mSpinnerRenderShadowGaussianX->getValueF32();
+	renderShadowGaussian.mV[VY] = mSpinnerRenderShadowGaussianY->getValueF32();
+	mSliderRenderShadowGaussianX->setValue(renderShadowGaussian.mV[VX]);
+	mSliderRenderShadowGaussianY->setValue(renderShadowGaussian.mV[VY]);
+	gSavedSettings.setVector3("RenderShadowGaussian", renderShadowGaussian);
+}
+
+void FloaterQuickPrefs::onClickResetRenderShadowGaussianX()
+{
+	LLVector3 renderShadowGaussianDefault = LLVector3(gSavedSettings.getControl("RenderShadowGaussian")->getDefault());
+	LLVector3 renderShadowGaussian = gSavedSettings.getVector3("RenderShadowGaussian");
+	renderShadowGaussian.mV[VX] = renderShadowGaussianDefault.mV[VX];
+	mSpinnerRenderShadowGaussianX->setValue(renderShadowGaussian.mV[VX]);
+	mSliderRenderShadowGaussianX->setValue(renderShadowGaussian.mV[VX]);
+	gSavedSettings.setVector3("RenderShadowGaussian", renderShadowGaussian);
+}
+
+void FloaterQuickPrefs::onClickResetRenderShadowGaussianY()
+{
+	LLVector3 renderShadowGaussianDefault = LLVector3(gSavedSettings.getControl("RenderShadowGaussian")->getDefault());
+	LLVector3 renderShadowGaussian = gSavedSettings.getVector3("RenderShadowGaussian");
+	renderShadowGaussian.mV[VY] = renderShadowGaussianDefault.mV[VY];
+	mSpinnerRenderShadowGaussianY->setValue(renderShadowGaussian.mV[VY]);
+	mSliderRenderShadowGaussianY->setValue(renderShadowGaussian.mV[VY]);
+	gSavedSettings.setVector3("RenderShadowGaussian", renderShadowGaussian);
+}
+
+void FloaterQuickPrefs::onChangeRenderSSAOEffectSlider()
+{
+	LLVector3 renderSSAOEffect = gSavedSettings.getVector3("RenderSSAOEffect");
+	renderSSAOEffect.mV[VX] = mSliderRenderSSAOEffectX->getValueF32();
+	mSpinnerRenderSSAOEffectX->setValue(renderSSAOEffect.mV[VX]);
+	gSavedSettings.setVector3("RenderSSAOEffect", renderSSAOEffect);
+}
+
+void FloaterQuickPrefs::onChangeRenderSSAOEffectSpinner()
+{
+	LLVector3 renderSSAOEffect = gSavedSettings.getVector3("RenderSSAOEffect");
+	renderSSAOEffect.mV[VX] = mSpinnerRenderSSAOEffectX->getValueF32();
+	mSliderRenderSSAOEffectX->setValue(renderSSAOEffect.mV[VX]);
+	gSavedSettings.setVector3("RenderSSAOEffect", renderSSAOEffect);
+}
+
+void FloaterQuickPrefs::onClickResetRenderSSAOEffectX()
+{
+	LLVector3 renderSSAOEffectDefault = LLVector3(gSavedSettings.getControl("RenderSSAOEffect")->getDefault());
+	LLVector3 renderSSAOEffect = gSavedSettings.getVector3("RenderSSAOEffect");
+	renderSSAOEffect.mV[VX] = renderSSAOEffectDefault.mV[VX];
+	mSpinnerRenderSSAOEffectX->setValue(renderSSAOEffect.mV[VX]);
+	mSliderRenderSSAOEffectX->setValue(renderSSAOEffect.mV[VX]);
+	gSavedSettings.setVector3("RenderSSAOEffect", renderSSAOEffect);
+}
 
 // <FS:CR> FIRE-9407 - Restore Quickprefs Defaults
 void FloaterQuickPrefs::callbackRestoreDefaults(const LLSD& notification, const LLSD& response)

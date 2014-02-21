@@ -606,7 +606,9 @@ bool LLAvatarNameCache::get(const LLUUID& agent_id, LLAvatarName *av_name)
 			{
 				LLSD info = av_name->asLLSD();
 				info["is_display_name_default"] = LGGContactSets::getInstance()->hasDisplayNameRemoved(agent_id);
-				info["display_name"] = LGGContactSets::getInstance()->hasDisplayNameRemoved(agent_id)?(info["legacy_first_name"].asString() + " " + info["legacy_last_name"].asString()) : LGGContactSets::getInstance()->getPseudonym(agent_id);
+				info["display_name"] = LGGContactSets::getInstance()->hasDisplayNameRemoved(agent_id)
+					? (info["legacy_first_name"].asString() + " " + info["legacy_last_name"].asString())
+					: LGGContactSets::getInstance()->getPseudonym(agent_id);
 				av_name->fromLLSD(info);
 			}
 
@@ -661,10 +663,12 @@ LLAvatarNameCache::callback_connection_t LLAvatarNameCache::get(const LLUUID& ag
 			
 			if(LGGContactSets::getInstance()->hasPseudonym(agent_id))
 			{
-				LL_DEBUGS("AvNameCache") << "DN cache hit via alias" << llendl;
+				LL_DEBUGS("AvNameCache") << "DN cache hit via alias " << agent_id << LL_ENDL;
 				LLSD info = av_name.asLLSD();
 				info["is_display_name_default"] = LGGContactSets::getInstance()->hasDisplayNameRemoved(agent_id);
-				info["display_name"] = LGGContactSets::getInstance()->hasDisplayNameRemoved(agent_id)?(info["legacy_first_name"].asString() + " " + info["legacy_last_name"].asString()) : LGGContactSets::getInstance()->getPseudonym(agent_id);
+				info["display_name"] = LGGContactSets::getInstance()->hasDisplayNameRemoved(agent_id)
+					? (info["legacy_first_name"].asString() + " " + info["legacy_last_name"].asString())
+					: LGGContactSets::getInstance()->getPseudonym(agent_id);
 				av_name.fromLLSD(info);
 			}
 			
@@ -728,6 +732,15 @@ void LLAvatarNameCache::setUseDisplayNames(bool use)
 
 	{
 		LLAvatarName::setUseDisplayNames(use);
+		mUseDisplayNamesSignal();
+	}
+}
+
+void LLAvatarNameCache::setUseUsernames(bool use)
+{
+	if (use != LLAvatarName::useUsernames())
+	{
+		LLAvatarName::setUseUsernames(use);
 		mUseDisplayNamesSignal();
 	}
 }

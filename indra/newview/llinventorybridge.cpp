@@ -74,6 +74,7 @@
 #include "llvoavatarself.h"
 #include "llwearablelist.h"
 #include "lllandmarkactions.h"
+#include "llpanellandmarks.h"
 // [RLVa:KB] - Checked: 2011-05-22 (RLVa-1.3.1)
 #include "rlvactions.h"
 #include "rlvhandler.h"
@@ -1036,12 +1037,12 @@ BOOL LLInvFVBridge::isProtectedFolder() const
 {
 	const LLInventoryModel* model = getInventoryModel();
 	if(!model) return FALSE;
-	if ((mUUID ==  FSLSLBridge::instance().getBridgeFolder()) 
-		|| ((model->isObjectDescendentOf(mUUID, FSLSLBridge::instance().getBridgeFolder()))
-		&& gSavedPerAccountSettings.getBOOL("ProtectBridgeFolder")))
+	if ((mUUID ==  FSLSLBridge::instance().getBridgeFolder()
+		|| model->isObjectDescendentOf(mUUID, FSLSLBridge::instance().getBridgeFolder()))
+		&& gSavedPerAccountSettings.getBOOL("ProtectBridgeFolder"))
 		return TRUE;
 
-	if ((mUUID==AOEngine::instance().getAOFolder() 
+	if ((mUUID == AOEngine::instance().getAOFolder() 
 		|| model->isObjectDescendentOf(mUUID, AOEngine::instance().getAOFolder()))
 		&& gSavedPerAccountSettings.getBOOL("ProtectAOFolders"))
 		return TRUE;
@@ -1554,6 +1555,38 @@ void LLItemBridge::performAction(LLInventoryModel* model, std::string action)
 				landmark->getGlobalPos(global_pos);
 				LLLandmarkActions::getSLURLfromPosGlobal(global_pos, &copy_slurl_to_clipboard_callback_inv, true);
 			}
+		}
+	}
+	else if ("show_on_map" == action)
+	{
+		doActionOnCurSelectedLandmark(boost::bind(&LLItemBridge::doShowOnMap, this, _1));
+	}
+}
+
+void LLItemBridge::doActionOnCurSelectedLandmark(LLLandmarkList::loaded_callback_t cb)
+{
+	LLViewerInventoryItem* cur_item = getItem();
+	if(cur_item && cur_item->getInventoryType() == LLInventoryType::IT_LANDMARK)
+	{ 
+		LLLandmark* landmark = LLLandmarkActions::getLandmark(cur_item->getUUID(), cb);
+		if (landmark)
+		{
+			cb(landmark);
+		}
+	}
+}
+
+void LLItemBridge::doShowOnMap(LLLandmark* landmark)
+{
+	LLVector3d landmark_global_pos;
+	// landmark has already been tested for NULL by calling routine
+	if (landmark->getGlobalPos(landmark_global_pos))
+	{
+		LLFloaterWorldMap* worldmap_instance = LLFloaterWorldMap::getInstance();
+		if (!landmark_global_pos.isExactlyZero() && worldmap_instance)
+		{
+			worldmap_instance->trackLocation(landmark_global_pos);
+			LLFloaterReg::showInstance("world_map", "center");
 		}
 	}
 }
@@ -2337,6 +2370,9 @@ BOOL LLFolderBridge::dragCategoryIntoFolder(LLInventoryCategory* inv_cat,
 	if (!model) return FALSE;
 	if (!isAgentAvatarValid()) return FALSE;
 	if (!isAgentInventory()) return FALSE; // cannot drag categories into library
+	// <FS:TT> Client LSL Bridge (also for #AO)
+	if (isProtectedFolder()) return FALSE;
+	// </FS:TT>
 
 	LLInventoryPanel* destination_panel = mInventoryPanel.get();
 	if (!destination_panel) return false;
@@ -2361,11 +2397,13 @@ BOOL LLFolderBridge::dragCategoryIntoFolder(LLInventoryCategory* inv_cat,
 	if (is_agent_inventory)
 	{
 		const LLUUID &trash_id = model->findCategoryUUIDForType(LLFolderType::FT_TRASH, false);
-		const LLUUID &landmarks_id = model->findCategoryUUIDForType(LLFolderType::FT_LANDMARK, false);
+		// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+		//const LLUUID &landmarks_id = model->findCategoryUUIDForType(LLFolderType::FT_LANDMARK, false);
 
 		const BOOL move_is_into_trash = (mUUID == trash_id) || model->isObjectDescendentOf(mUUID, trash_id);
 		const BOOL move_is_into_outfit = getCategory() && (getCategory()->getPreferredType() == LLFolderType::FT_OUTFIT);
-		const BOOL move_is_into_landmarks = (mUUID == landmarks_id) || model->isObjectDescendentOf(mUUID, landmarks_id);
+		// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+		//const BOOL move_is_into_landmarks = (mUUID == landmarks_id) || model->isObjectDescendentOf(mUUID, landmarks_id);
 
 		//--------------------------------------------------------------------------------
 		// Determine if folder can be moved.
@@ -2427,21 +2465,23 @@ BOOL LLFolderBridge::dragCategoryIntoFolder(LLInventoryCategory* inv_cat,
 				}
 			}
 		}
-		if (is_movable && move_is_into_landmarks)
-		{
-			for (S32 i=0; i < descendent_items.count(); ++i)
-			{
-				LLViewerInventoryItem* item = descendent_items[i];
+		// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+		//if (is_movable && move_is_into_landmarks)
+		//{
+		//	for (S32 i=0; i < descendent_items.count(); ++i)
+		//	{
+		//		LLViewerInventoryItem* item = descendent_items[i];
 
-				// Don't move anything except landmarks and categories into Landmarks folder.
-				// We use getType() instead of getActua;Type() to allow links to landmarks and folders.
-				if (LLAssetType::AT_LANDMARK != item->getType() && LLAssetType::AT_CATEGORY != item->getType())
-				{
-					is_movable = FALSE;
-					break; // It's generally movable, but not into Landmarks.
-				}
-			}
-		}
+		//		// Don't move anything except landmarks and categories into Landmarks folder.
+		//		// We use getType() instead of getActua;Type() to allow links to landmarks and folders.
+		//		if (LLAssetType::AT_LANDMARK != item->getType() && LLAssetType::AT_CATEGORY != item->getType())
+		//		{
+		//			is_movable = FALSE;
+		//			break; // It's generally movable, but not into Landmarks.
+		//		}
+		//	}
+		//}
+		// </FS:Ansariel>
 		if (is_movable && move_is_into_outbox)
 		{
 			const int nested_folder_levels = get_folder_path_length(outbox_id, mUUID) + get_folder_levels(inv_cat);
@@ -2984,7 +3024,10 @@ void LLInventoryCopyAndWearObserver::changed(U32 mask)
 				    mContentsCount)
 				{
 					gInventory.removeObserver(this);
-					LLAppearanceMgr::instance().wearInventoryCategory(category, FALSE, FALSE);
+					// <FS:Ansariel> FIRE-938: "copy and wear" does replace
+					//LLAppearanceMgr::instance().wearInventoryCategory(category, FALSE, FALSE);
+					LLAppearanceMgr::instance().wearInventoryCategory(category, FALSE, TRUE);
+					// </FS:Ansariel>
 					delete this;
 				}
 			}
@@ -4209,13 +4252,15 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 
 	const LLUUID &current_outfit_id = model->findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT, false);
 	const LLUUID &favorites_id = model->findCategoryUUIDForType(LLFolderType::FT_FAVORITE, false);
-	const LLUUID &landmarks_id = model->findCategoryUUIDForType(LLFolderType::FT_LANDMARK, false);
+	// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+	//const LLUUID &landmarks_id = model->findCategoryUUIDForType(LLFolderType::FT_LANDMARK, false);
 	const LLUUID &outbox_id = model->findCategoryUUIDForType(LLFolderType::FT_OUTBOX, false);
 
 	const BOOL move_is_into_current_outfit = (mUUID == current_outfit_id);
 	const BOOL move_is_into_favorites = (mUUID == favorites_id);
 	const BOOL move_is_into_outfit = (getCategory() && getCategory()->getPreferredType()==LLFolderType::FT_OUTFIT);
-	const BOOL move_is_into_landmarks = (mUUID == landmarks_id) || model->isObjectDescendentOf(mUUID, landmarks_id);
+	// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+	//const BOOL move_is_into_landmarks = (mUUID == landmarks_id) || model->isObjectDescendentOf(mUUID, landmarks_id);
 	const BOOL move_is_into_outbox = model->isObjectDescendentOf(mUUID, outbox_id);
 	const BOOL move_is_from_outbox = model->isObjectDescendentOf(inv_item->getUUID(), outbox_id);
 
@@ -4301,7 +4346,10 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 		{
 			accept = can_move_to_outfit(inv_item, move_is_into_current_outfit);
 		}
-		else if (move_is_into_favorites || move_is_into_landmarks)
+		// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+		//else if (move_is_into_favorites || move_is_into_landmarks)
+		else if (move_is_into_favorites)
+		// </FS:Ansariel>
 		{
 			accept = can_move_to_landmarks(inv_item);
 		}
@@ -4464,7 +4512,10 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 		}
 		// Don't allow to move a single item to Favorites or Landmarks
 		// if it is not a landmark or a link to a landmark.
-		else if ((move_is_into_favorites || move_is_into_landmarks)
+		// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+		//else if ((move_is_into_favorites || move_is_into_landmarks)
+		else if (move_is_into_favorites
+		// </FS:Ansariel>
 				 && !can_move_to_landmarks(inv_item))
 		{
 			accept = FALSE;
@@ -4556,7 +4607,10 @@ BOOL LLFolderBridge::dragItemIntoFolder(LLInventoryItem* inv_item,
 			}
 			// Don't allow to move a single item to Favorites or Landmarks
 			// if it is not a landmark or a link to a landmark.
-			else if (move_is_into_favorites || move_is_into_landmarks)
+			// <FS:Ansariel> FIRE-1392: Allow dragging all asset types into Landmarks folder
+			//else if (move_is_into_favorites || move_is_into_landmarks)
+			else if (move_is_into_favorites)
+			// </FS:Ansariel>
 			{
 				accept = can_move_to_landmarks(inv_item);
 			}
@@ -4880,6 +4934,7 @@ void LLLandmarkBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("Landmark Separator"));
 		items.push_back(std::string("url_copy"));
 		items.push_back(std::string("About Landmark"));
+		items.push_back(std::string("show_on_map"));
 	}
 
 	// Disable "About Landmark" menu item for
@@ -5062,6 +5117,16 @@ void LLCallingCardBridge::performAction(LLInventoryModel* model, std::string act
 			LLAvatarActions::offerTeleport(item->getCreatorUUID());
 		}
 	}
+	else if ("request_lure" == action)
+	{
+		LLViewerInventoryItem *item = getItem();
+		if (item && (item->getCreatorUUID() != gAgent.getID()) &&
+			(!item->getCreatorUUID().isNull()))
+		{
+			LLAvatarActions::teleportRequest(item->getCreatorUUID());
+		}
+	}
+
 	else LLItemBridge::performAction(model, action);
 }
 
@@ -5148,6 +5213,7 @@ void LLCallingCardBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("Send Instant Message Separator"));
 		items.push_back(std::string("Send Instant Message"));
 		items.push_back(std::string("Offer Teleport..."));
+		items.push_back(std::string("Request Teleport..."));
 		items.push_back(std::string("Conference Chat"));
 
 		if (!good_card)
@@ -5157,6 +5223,7 @@ void LLCallingCardBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		if (!good_card || !user_online)
 		{
 			disabled_items.push_back(std::string("Offer Teleport..."));
+			disabled_items.push_back(std::string("Request Teleport..."));
 			disabled_items.push_back(std::string("Conference Chat"));
 		}
 	}
@@ -5808,7 +5875,6 @@ bool confirm_attachment_rez(const LLSD& notification, const LLSD& response)
 			/*
 			{
 				U8 attachment_pt = notification["payload"]["attachment_point"].asInteger();
-				
 				LLMessageSystem* msg = gMessageSystem;
 				msg->newMessageFast(_PREHASH_RezSingleAttachmentFromInv);
 				msg->nextBlockFast(_PREHASH_AgentData);
@@ -6750,7 +6816,7 @@ public:
 		if(item)
 		{
 			if ( get_is_item_worn(mUUID) ) LLAppearanceMgr::instance().removeItemFromAvatar(mUUID);
-			else LLAppearanceMgr::instance().wearItemOnAvatar(mUUID /*item->getUUID()*/, true, true);
+			else LLAppearanceMgr::instance().wearItemOnAvatar(mUUID /*item->getUUID()*/, true, !gSavedSettings.getBOOL("FSDoubleClickAddInventoryClothing"));
 		}
 		// </FS>
 	}

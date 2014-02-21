@@ -287,6 +287,24 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="TestingDisconnect">
 		Verbindungsabbruch wird getestet
 	</string>
+	<string name="SocialFacebookConnecting">
+		Verbinde mit Facebook...
+	</string>
+	<string name="SocialFacebookPosting">
+		Poste...
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		Trenne Verbindung zu Facebook...
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		Problem beim Verbinden mit Facebook
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		Problem beim Posten auf Facebook
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		Problem beim Trennen der Verbindung zu Facebook
+	</string>
 	<string name="TooltipPerson">
 		Person
 	</string>
@@ -887,7 +905,7 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		Offline
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[PRICE] L$ für [AREA] m²
+		[PRICE] L$ für [AREA] m² ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Nicht gefunden.
@@ -1060,6 +1078,12 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="bitmap_image_files">
 		Bitmap-Bilder
 	</string>
+	<string name="png_image_files">
+		PNG-Bilder
+	</string>
+	<string name="save_texture_image_files">
+		Targa- oder PNG-Bilder
+	</string>
 	<string name="avi_movie_file">
 		AVI-Filmdatei
 	</string>
@@ -1092,6 +1116,9 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	</string>
 	<string name="collada_files">
 		COLLADA-Modelle
+	</string>
+	<string name="csv_files">
+		Komma-separierte Werte
 	</string>
 	<string name="AvatarSetNotAutorespond">
 		Automatische Antwort AUS
@@ -1541,7 +1568,7 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		Keine Anhänge getragen
 	</string>
 	<string name="Attachments remain">
-		Anhänge (noch [COUNT] Positionen frei)
+		Anhänge ([COUNT] frei)
 	</string>
 	<string name="Buy">
 		Kaufen
@@ -4156,6 +4183,9 @@ Falls diese Meldung weiterhin angezeigt wird, wenden Sie sich bitte an [SUPPORT_
 	<string name="share_alert">
 		Objekte aus dem Inventar hier her ziehen
 	</string>
+	<string name="facebook_post_success">
+		Sie haben auf Facebook gepostet.
+	</string>
 	<string name="no_session_message">
 		(IM-Session nicht vorhanden)
 	</string>
@@ -4203,9 +4233,11 @@ Falls diese Meldung weiterhin angezeigt wird, wenden Sie sich bitte an [SUPPORT_
 	</string>
 	<string name="message">
 		Ihre Nachricht konnte nicht an die Chat-Sitzung mit [RECIPIENT] gesendet werden.
+Falls die Nachricht nicht innerhalb der nächsten Minuten erscheint, wurde sie vom Server verworfen.
 	</string>
 	<string name="message_session_event">
 		Ihre Nachricht konnte nicht an die Chat-Sitzung mit [RECIPIENT] gesendet werden.
+Falls die Nachricht nicht innerhalb der nächsten Minuten erscheint, wurde sie vom Server verworfen.
 	</string>
 	<string name="mute">
 		Fehler während Moderation.
@@ -5084,6 +5116,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="Command_Snapshot_Label">
 		Foto
 	</string>
+	<string name="Command_Social_Label">
+		Facebook
+	</string>
 	<string name="Command_Speak_Label">
 		Sprechen
 	</string>
@@ -5166,6 +5201,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="Command_Move_Lock_Label">
 		Movelock
 	</string>
+	<string name="Command_Blocklist_Label">
+		Blockierliste
+	</string>
 	<string name="Command_AboutLand_Tooltip">
 		Informationen zu dem von Ihnen besuchten Land
 	</string>
@@ -5234,6 +5272,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Foto aufnehmen (Strg+Umschalt+S)
+	</string>
+	<string name="Command_Social_Tooltip">
+		Auf Facebook posten
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Über Ihr Mikrofon mit Leuten in der Nähe sprechen
@@ -5312,6 +5353,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="Command_Move_Lock_Tooltip">
 		Aktiviert die Movelock-Funktion der Brücke und hält den Avatar an der aktuellen Position
+	</string>
+	<string name="Command_Blocklist_Tooltip">
+		Öffnet die Blockierliste / Liste der ignorierten Einwohner &amp; Objekte 
 	</string>
 	<string name="Toolbar_Bottom_Tooltip">
 		gegenwärtig in der unteren Symbolleiste
@@ -5464,6 +5508,12 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="MediaFilterSharedMediaContentUrlAlwaysBlocked">
 		Geteilte Medien von der URL [MEDIAURL] werden niemals abgespielt.
+	</string>
+	<string name="MediaFilterBlacklist">
+		Blacklist
+	</string>
+	<string name="MediaFilterWhitelist">
+		Whitelist
 	</string>
 
 	<!-- Settings sanity checks -->
@@ -5779,5 +5829,27 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="skin_defaults_starlight_navbar">
 		Die Anzeige der Navigationsleiste wurde als Standard für Starlight-Oberflächendesigns aktiviert.
+	</string>
+
+	<string name="animation_explorer_seconds_ago">
+		Vor [SECONDS] Sekunden
+	</string>
+	<string name="animation_explorer_still_playing">
+		Wird abgespielt
+	</string>
+
+	<string name="FriendOnlineNotification">
+		ist online.
+	</string>
+	<string name="FriendOfflineNotification">
+		ist offline.
+	</string>
+
+	<string name="Inbox_Folderview_New">
+		Neu
+	</string>
+
+	<string name="Mouselook_Unknown_Avatar">
+		Unbekannter Avatar
 	</string>
 </strings>

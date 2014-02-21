@@ -244,7 +244,14 @@ bool LLInventoryFilter::checkFolder(const LLUUID& folder_id) const
 	{
 		return passed_clipboard;
 	}
-	
+
+	// show folder links
+	LLViewerInventoryItem* item = gInventory.getItem(folder_id);
+	if (item && item->getActualType() == LLAssetType::AT_LINK_FOLDER)
+	{
+		return passed_clipboard;
+	}
+
 	if (mFilterOps.mFilterTypes & FILTERTYPE_CATEGORY)
 	{
 		// Can only filter categories for items in your inventory
@@ -1141,15 +1148,53 @@ void LLInventoryFilter::fromParams(const Params& params)
 		return;
 	}
 
-	setFilterObjectTypes(params.filter_ops.types);
-	setFilterCategoryTypes(params.filter_ops.category_types);
-	setFilterWearableTypes(params.filter_ops.wearable_types);
-	setDateRange(params.filter_ops.date_range.min_date,   params.filter_ops.date_range.max_date);
-	setHoursAgo(params.filter_ops.hours_ago);
-	setShowFolderState(params.filter_ops.show_folder_state);
-	setFilterPermissions(params.filter_ops.permissions);
-	setFilterSubString(params.substring);
-	setDateRangeLastLogoff(params.since_logoff);
+	// <FS:Ansariel> FIRE-12418: Only apply filter params if they are really provided
+	//setFilterObjectTypes(params.filter_ops.types);
+	//setFilterCategoryTypes(params.filter_ops.category_types);
+	//setFilterWearableTypes(params.filter_ops.wearable_types);
+	//setDateRange(params.filter_ops.date_range.min_date,   params.filter_ops.date_range.max_date);
+	//setHoursAgo(params.filter_ops.hours_ago);
+	//setShowFolderState(params.filter_ops.show_folder_state);
+	//setFilterPermissions(params.filter_ops.permissions);
+	//setFilterSubString(params.substring);
+	//setDateRangeLastLogoff(params.since_logoff);
+	if (params.filter_ops.types.isProvided())
+	{
+		setFilterObjectTypes(params.filter_ops.types);
+	}
+	if (params.filter_ops.category_types.isProvided())
+	{
+		setFilterCategoryTypes(params.filter_ops.category_types);
+	}
+	if (params.filter_ops.wearable_types.isProvided())
+	{
+		setFilterWearableTypes(params.filter_ops.wearable_types);
+	}
+	if (params.filter_ops.date_range.min_date.isProvided() && params.filter_ops.date_range.max_date.isProvided())
+	{
+		setDateRange(params.filter_ops.date_range.min_date,   params.filter_ops.date_range.max_date);
+	}
+	if (params.filter_ops.hours_ago.isProvided())
+	{
+		setHoursAgo(params.filter_ops.hours_ago);
+	}
+	if (params.filter_ops.show_folder_state.isProvided())
+	{
+		setShowFolderState(params.filter_ops.show_folder_state);
+	}
+	if (params.filter_ops.permissions.isProvided())
+	{
+		setFilterPermissions(params.filter_ops.permissions);
+	}
+	if (params.substring.isProvided())
+	{
+		setFilterSubString(params.substring);
+	}
+	if (params.since_logoff.isProvided())
+	{
+		setDateRangeLastLogoff(params.since_logoff);
+	}
+	// </FS:Ansariel>
 }
 
 U64 LLInventoryFilter::getFilterObjectTypes() const

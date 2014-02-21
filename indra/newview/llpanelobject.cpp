@@ -521,14 +521,6 @@ void LLPanelObject::getState( )
 	}
 // [/RLVa:KB]
 
-// [RLVa:KB] - Checked: 2010-03-31 (RLVa-1.2.0c) | Modified: RLVa-1.0.0g
-	if ( (rlv_handler_t::isEnabled()) && ((gRlvHandler.hasBehaviour(RLV_BHVR_UNSIT)) || (gRlvHandler.hasBehaviour(RLV_BHVR_SITTP))) )
-	{
-		if ( (isAgentAvatarValid()) && (gAgentAvatarp->isSitting()) && (gAgentAvatarp->getRoot() == objectp->getRootEdit()) )
-			enable_move = enable_scale = enable_rotate = FALSE;
-	}
-// [/RLVa:KB]
-
 	LLVector3 vec;
 	if (enable_move)
 	{
@@ -2040,7 +2032,15 @@ void LLPanelObject::sendPosition(BOOL btn_down)
 	{
 		// Clamp the Z height
 		const F32 height = newpos.mV[VZ];
-		const F32 min_height = LLWorld::getInstance()->getMinAllowedZ(mObject, mObject->getPositionGlobal());
+		// <FS:Ansariel> FIRE-12478: Clamp min Z height at new position instead of current if new position is valid
+		//const F32 min_height = LLWorld::getInstance()->getMinAllowedZ(mObject, mObject->getPositionGlobal());
+		LLVector3d height_check_pos = mObject->getPositionGlobal();
+		if (LLWorld::getInstance()->positionRegionValidGlobal(regionp->getPosGlobalFromRegion(newpos)))
+		{
+			height_check_pos = regionp->getPosGlobalFromRegion(newpos);
+		}
+		const F32 min_height = LLWorld::getInstance()->getMinAllowedZ(mObject, height_check_pos);
+		// </FS:Ansariel>
 		const F32 max_height = LLWorld::getInstance()->getRegionMaxHeight();
 
 		if ( height < min_height)
@@ -2428,10 +2428,15 @@ void LLPanelObject::onCommitSculptType(LLUICtrl *ctrl, void* userdata)
 	self->sendSculpt();
 }
 
+std::string get_vector_format_string()
+{
+	S32 precision = gSavedSettings.getS32("FSBuildToolDecimalPrecision");
+	return llformat("<%%.%df, %%.%df, %%.%df>", precision, precision, precision);
+}
 
 void copy_vector_to_clipboard(const LLVector3& vec)
 {
-	std::string stringVec = llformat("<%g, %g, %g>", vec.mV[VX], vec.mV[VY], vec.mV[VZ]);
+	std::string stringVec = llformat(get_vector_format_string().c_str(), vec.mV[VX], vec.mV[VY], vec.mV[VZ]);
 	LLView::getWindow()->copyTextToClipboard(utf8str_to_wstring(stringVec));
 }
 
@@ -2439,7 +2444,9 @@ void LLPanelObject::onCopyPos(const LLSD& data)
 {
 	mClipboardPos = LLVector3(mCtrlPosX->get(), mCtrlPosY->get(), mCtrlPosZ->get());
 	copy_vector_to_clipboard(mClipboardPos);
-	mBtnPastePos->setToolTip(llformat("Paste Position\n<%g, %g, %g>", mClipboardPos.mV[VX], mClipboardPos.mV[VY], mClipboardPos.mV[VZ]));
+	LLStringUtil::format_map_t args;
+	args["VALUE"] = llformat(get_vector_format_string().c_str(), mClipboardPos.mV[VX], mClipboardPos.mV[VY], mClipboardPos.mV[VZ]);
+	mBtnPastePos->setToolTip(getString("Paste Position", args));
 	mHasPosClipboard = TRUE;
 }
 
@@ -2447,7 +2454,9 @@ void LLPanelObject::onCopySize(const LLSD& data)
 {
 	mClipboardSize = LLVector3(mCtrlScaleX->get(), mCtrlScaleY->get(), mCtrlScaleZ->get());
 	copy_vector_to_clipboard(mClipboardSize);
-	mBtnPasteSize->setToolTip(llformat("Paste Size\n<%g, %g, %g>", mClipboardSize.mV[VX], mClipboardSize.mV[VY], mClipboardSize.mV[VZ]));
+	LLStringUtil::format_map_t args;
+	args["VALUE"] = llformat(get_vector_format_string().c_str(), mClipboardSize.mV[VX], mClipboardSize.mV[VY], mClipboardSize.mV[VZ]);
+	mBtnPasteSize->setToolTip(getString("Paste Size", args));
 	mHasSizeClipboard = TRUE;
 }
 
@@ -2455,7 +2464,9 @@ void LLPanelObject::onCopyRot(const LLSD& data)
 {
 	mClipboardRot = LLVector3(mCtrlRotX->get(), mCtrlRotY->get(), mCtrlRotZ->get());
 	copy_vector_to_clipboard(mClipboardRot);
-	mBtnPasteRot->setToolTip(llformat("Paste Rotation\n<%g, %g, %g>", mClipboardRot.mV[VX], mClipboardRot.mV[VY], mClipboardRot.mV[VZ]));
+	LLStringUtil::format_map_t args;
+	args["VALUE"] = llformat(get_vector_format_string().c_str(), mClipboardRot.mV[VX], mClipboardRot.mV[VY], mClipboardRot.mV[VZ]);
+	mBtnPasteRot->setToolTip(getString("Paste Rotation", args));
 	mHasRotClipboard = TRUE;
 }
 

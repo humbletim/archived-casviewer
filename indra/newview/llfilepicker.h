@@ -87,9 +87,9 @@ public:
 		FFLOAD_SCRIPT = 11,
 		FFLOAD_DICTIONARY = 12,
 		FFLOAD_DIRECTORY = 13,   //To call from lldirpicker.
-		// <FS:CR> Export filter
-		FFLOAD_IMPORT = 14
-		// </FS:CR>
+		
+		// Firestorm additions
+		FFLOAD_IMPORT = 50
 	};
 
 	enum ESaveFilter
@@ -110,10 +110,12 @@ public:
 		FFSAVE_PNG = 13,
 		FFSAVE_JPEG = 14,
 		FFSAVE_SCRIPT = 15,
-		FFSAVE_BEAM = 16,
-// <FS:CR> Export filter
-		FFSAVE_EXPORT = 17
-// </FS:CR>
+		FFSAVE_TGAPNG = 16,
+		
+		// Firestorm additions
+		FFSAVE_BEAM = 50,
+		FFSAVE_EXPORT = 51,
+		FFSAVE_CSV = 52
 	};
 
 	// open the dialog. This is a modal operation
@@ -186,6 +188,8 @@ private:
 	// we remember the last path that was accessed for a particular usage
 	std::map <std::string, std::string> mContextToPathMap;
 	std::string mCurContextName;
+	// we also remember the extension of the last added file.
+	std::string mCurrentExtension;
 #endif
 
 	std::vector<std::string> mFiles;

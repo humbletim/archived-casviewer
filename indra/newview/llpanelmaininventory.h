@@ -85,10 +85,15 @@ public:
 
 	void onFilterEdit(const std::string& search_string );
 
+	void setFocusFilterEditor();
+
 	// ## Zi: Filter dropdown
 	void onFilterTypeSelected(const std::string& filter_type_name);
 	void updateFilterDropdown(const LLInventoryFilter* filter);
 	// ## Zi: Filter dropdown
+
+	// <FS:Ansariel> FIRE-12808: Don't save filters during settings restore
+	static bool sSaveFilters;
 
 protected:
 	//
@@ -145,6 +150,8 @@ private:
 	LLSaveFolderState*			mSavedFolderState;
 	std::string					mFilterText;
 	std::string					mFilterSubString;
+	S32							mItemCount;
+	std::string 				mItemCountString;
 	LLTextBox*					mItemcountText;
 
 	// ## Zi: Filter dropdown

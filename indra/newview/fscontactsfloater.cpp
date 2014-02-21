@@ -35,7 +35,7 @@
 #include "llavatarname.h"
 #include "llfloaterreg.h"
 #include "lltabcontainer.h"
-
+#include "llscrolllistctrl.h"
 #include "llavataractions.h"
 #include "llavatarlistitem.h"
 #include "llavatarnamecache.h"
@@ -45,22 +45,18 @@
 #include "llfriendcard.h"
 #include "llgroupactions.h"
 #include "llgrouplist.h"
-// <FS:Ansariel> [FS communication UI]
-//#include "llimfloatercontainer.h"
 #include "fsfloaterimcontainer.h"
-// </FS:Ansariel> [FS communication UI]
 #include "llnotificationsutil.h"
 #include "llfloatersidepanelcontainer.h"
 #include "llstartup.h"
 #include "llviewercontrol.h"
 #include "llvoiceclient.h"
-#include "lggcontactsetsfloater.h"
 
 //Maximum number of people you can select to do an operation on at once.
-#define MAX_FRIEND_SELECT 20
-#define DEFAULT_PERIOD 5.0
-#define RIGHTS_CHANGE_TIMEOUT 5.0
-#define OBSERVER_TIMEOUT 0.5
+const U32 MAX_FRIEND_SELECT = 20;
+const F32 DEFAULT_PERIOD = 5.f;
+const F32 RIGHTS_CHANGE_TIMEOUT = 5.f;
+const F32 OBSERVER_TIMEOUT = 0.5f;
 
 static const std::string FRIENDS_TAB_NAME	= "friends_panel";
 static const std::string GROUP_TAB_NAME		= "groups_panel";
@@ -146,7 +142,6 @@ BOOL FSFloaterContacts::postBuild()
 	mFriendsTab->childSetAction("pay_btn",				boost::bind(&FSFloaterContacts::onPayButtonClicked,				this));
 	mFriendsTab->childSetAction("remove_btn",			boost::bind(&FSFloaterContacts::onDeleteFriendButtonClicked,	this));
 	mFriendsTab->childSetAction("add_btn",				boost::bind(&FSFloaterContacts::onAddFriendWizButtonClicked,	this));
-	mFriendsTab->childSetAction("lgg_fg_openFG",		boost::bind(&FSFloaterContacts::onContactSetsButtonClicked,		this));
 	mFriendsTab->setDefaultBtn("im_btn");
 
 	mGroupsTab = getChild<LLPanel>(GROUP_TAB_NAME);
@@ -213,35 +208,33 @@ void FSFloaterContacts::onOpen(const LLSD& key)
 
 void FSFloaterContacts::openTab(const std::string& name)
 {
-	bool visible = false;
-
 	if (name == "friends")
 	{
-		visible = true;
 		childShowTab("friends_and_groups", "friends_panel");
 	}
 	else if (name == "groups")
 	{
-		visible = true;
 		childShowTab("friends_and_groups", "groups_panel");
 		updateGroupButtons();
 	}
-
-	if (visible)
+	else if (name == "contact_sets")
 	{
-		// <FS:Ansariel> [FS communication UI]
-		//LLIMFloaterContainer* floater_container = (LLIMFloaterContainer *) getHost();
-		FSFloaterIMContainer* floater_container = (FSFloaterIMContainer *) getHost();
-		// </FS:Ansariel> [FS communication UI]
-		if (floater_container)
-		{
-			floater_container->setVisible(TRUE);
-			floater_container->showFloater(this);
-		}
-		else
-		{
-			setVisible(TRUE);
-		}
+		childShowTab("friends_and_groups", "contact_sets_panel");
+	}
+	else
+	{
+		return;
+	}
+
+	FSFloaterIMContainer* floater_container = (FSFloaterIMContainer *) getHost();
+	if (floater_container)
+	{
+		floater_container->setVisible(TRUE);
+		floater_container->showFloater(this);
+	}
+	else
+	{
+		setVisible(TRUE);
 	}
 }
 
@@ -373,11 +366,6 @@ void FSFloaterContacts::onAddFriendWizButtonClicked()
 	}
 }
 
-void FSFloaterContacts::onContactSetsButtonClicked()
-{
-	LLFloaterReg::toggleInstance("contactsets");
-}
-
 //
 // Group actions
 //
@@ -443,6 +431,11 @@ std::string FSFloaterContacts::getActiveTabName() const
 	return mTabContainer->getCurrentPanel()->getName();
 }
 
+LLPanel* FSFloaterContacts::getPanelByName(const std::string& panel_name)
+{
+	return mTabContainer->getPanelByName(panel_name);
+}
+
 LLUUID FSFloaterContacts::getCurrentItemID() const
 {
 	std::string cur_tab = getActiveTabName();
@@ -455,7 +448,7 @@ LLUUID FSFloaterContacts::getCurrentItemID() const
 		else
 			return LLUUID::null;
 	}
-	if (cur_tab == GROUP_TAB_NAME)
+	else if (cur_tab == GROUP_TAB_NAME)
 	{
 		return mGroupList->getSelectedUUID();
 	}

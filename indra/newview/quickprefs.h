@@ -119,6 +119,7 @@ private:
 	LLCheckBoxCtrl*		mCtrlDeferred;
 	LLCheckBoxCtrl*		mCtrlUseSSAO;
 	LLCheckBoxCtrl*		mCtrlUseDoF;
+	LLCheckBoxCtrl*		mCtrlUseSSR;
 	LLComboBox*			mCtrlShadowDetail;
 	LLComboBox*			mCtrlReflectionDetail;
 	
@@ -130,6 +131,17 @@ private:
 	LLSlider*			mSliderVignetteY;
 	LLSlider*			mSliderVignetteZ;
 	
+	LLSlider*			mSliderRenderShadowSplitExponentY;
+	LLSpinCtrl*			mSpinnerRenderShadowSplitExponentY;
+
+	LLSlider*			mSliderRenderShadowGaussianX;
+	LLSlider*			mSliderRenderShadowGaussianY;
+	LLSpinCtrl*			mSpinnerRenderShadowGaussianX;
+	LLSpinCtrl*			mSpinnerRenderShadowGaussianY;
+
+	LLSlider*			mSliderRenderSSAOEffectX;
+	LLSpinCtrl*			mSpinnerRenderSSAOEffectX;
+
 	// <FS:CR>
 	LLButton*			mBtnResetDefaults;
 	
@@ -144,6 +156,20 @@ private:
 	void onClickResetVignetteY();
 	void onClickResetVignetteZ();
 	// </FS:CR>
+
+	void onChangeRenderShadowSplitExponentSlider();
+	void onChangeRenderShadowSplitExponentSpinner();
+	void onClickResetRenderShadowSplitExponentY();
+
+	void onChangeRenderShadowGaussianSlider();
+	void onChangeRenderShadowGaussianSpinner();
+	void onClickResetRenderShadowGaussianX();
+	void onClickResetRenderShadowGaussianY();
+
+	void onChangeRenderSSAOEffectSlider();
+	void onChangeRenderSSAOEffectSpinner();
+	void onClickResetRenderSSAOEffectX();
+
 	// <FS:CR> FIRE-9407 - Restore Quickprefs Defaults
 	void onClickRestoreDefaults();
 	void loadSavedSettingsFromFile(const std::string& settings_path);

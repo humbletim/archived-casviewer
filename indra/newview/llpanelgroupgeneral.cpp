@@ -85,7 +85,8 @@ LLPanelGroupGeneral::LLPanelGroupGeneral()
 	mCtrlListGroup(NULL),
 	mActiveTitleLabel(NULL),
 	mComboActiveTitle(NULL),
-	mAvatarNameCacheConnection(),
+	// <FS:Ansariel> Member list doesn't load properly
+	//mAvatarNameCacheConnection(),
 	mCtrlReceiveGroupChat(NULL) // <exodus/>
 {
 
@@ -93,10 +94,20 @@ LLPanelGroupGeneral::LLPanelGroupGeneral()
 
 LLPanelGroupGeneral::~LLPanelGroupGeneral()
 {
-	if (mAvatarNameCacheConnection.connected())
+	// <FS:Ansariel> Member list doesn't load properly
+	//if (mAvatarNameCacheConnection.connected())
+	//{
+	//	mAvatarNameCacheConnection.disconnect();
+	//}
+	for (avatar_name_cache_connection_map_t::iterator it = mAvatarNameCacheConnections.begin(); it != mAvatarNameCacheConnections.end(); ++it)
 	{
-		mAvatarNameCacheConnection.disconnect();
+		if (it->second.connected())
+		{
+			it->second.disconnect();
+		}
 	}
+	mAvatarNameCacheConnections.clear();
+	// </FS:Ansariel>
 }
 
 BOOL LLPanelGroupGeneral::postBuild()
@@ -173,6 +184,12 @@ BOOL LLPanelGroupGeneral::postBuild()
 		accept_notices = data.mAcceptNotices;
 		list_in_profile = data.mListInProfile;
 	}
+	// <FS:Ansariel> Groupdata debug
+	else
+	{
+		LL_INFOS("Agent_GroupData") << "GROUPDEBUG: Group panel: No agent group data for group " << mGroupID.asString() << LL_ENDL;
+	}
+	// </FS:Ansariel>
 	mCtrlReceiveNotices = getChild<LLCheckBoxCtrl>("receive_notices", recurse);
 	if (mCtrlReceiveNotices)
 	{
@@ -185,11 +202,11 @@ BOOL LLPanelGroupGeneral::postBuild()
 	mCtrlReceiveGroupChat = getChild<LLCheckBoxCtrl>("receive_chat", recurse);
 	if(mCtrlReceiveGroupChat)
 	{
-		mCtrlReceiveNotices->setCommitCallback(onCommitUserOnly, this);
-		mCtrlReceiveNotices->setEnabled(data.mID.notNull());
+		mCtrlReceiveGroupChat->setCommitCallback(onCommitUserOnly, this);
+		mCtrlReceiveGroupChat->setEnabled(data.mID.notNull());
 		if(data.mID.notNull())
 		{
-			mCtrlReceiveNotices->set(!exoGroupMuteList::instance().isMuted(data.mID));
+			mCtrlReceiveGroupChat->set(!exoGroupMuteList::instance().isMuted(data.mID));
 		}
 	}
 	// </exodus>
@@ -801,11 +818,24 @@ void LLPanelGroupGeneral::updateMembers()
 		{
 			// If name is not cached, onNameCache() should be called when it is cached and add this member to list.
 			// *TODO : Use a callback per member, not for the panel group.
-			if (mAvatarNameCacheConnection.connected())
+			// <FS:Ansariel> Member list doesn't load properly
+			//if (mAvatarNameCacheConnection.connected())
+			//{
+			//	mAvatarNameCacheConnection.disconnect();
+			//}
+			//mAvatarNameCacheConnection = LLAvatarNameCache::get(mMemberProgress->first, boost::bind(&LLPanelGroupGeneral::onNameCache, this, gdatap->getMemberVersion(), member, _2));
+			
+			avatar_name_cache_connection_map_t::iterator it = mAvatarNameCacheConnections.find(mMemberProgress->first);
+			if (it != mAvatarNameCacheConnections.end())
 			{
-				mAvatarNameCacheConnection.disconnect();
+				if (it->second.connected())
+				{
+					it->second.disconnect();
+				}
+				mAvatarNameCacheConnections.erase(it);
 			}
-			mAvatarNameCacheConnection = LLAvatarNameCache::get(mMemberProgress->first, boost::bind(&LLPanelGroupGeneral::onNameCache, this, gdatap->getMemberVersion(), member, _2));
+			mAvatarNameCacheConnections[mMemberProgress->first] = LLAvatarNameCache::get(mMemberProgress->first, boost::bind(&LLPanelGroupGeneral::onNameCache, this, gdatap->getMemberVersion(), member, _2, _1));
+			// </FS:Ansariel>
 		}
 	}
 
@@ -843,9 +873,23 @@ void LLPanelGroupGeneral::addMember(LLGroupMemberData* member)
 	}
 }
 
-void LLPanelGroupGeneral::onNameCache(const LLUUID& update_id, LLGroupMemberData* member, const LLAvatarName& av_name)
+// <FS:Ansariel> Member list doesn't load properly
+//void LLPanelGroupGeneral::onNameCache(const LLUUID& update_id, LLGroupMemberData* member, const LLAvatarName& av_name)
+void LLPanelGroupGeneral::onNameCache(const LLUUID& update_id, LLGroupMemberData* member, const LLAvatarName& av_name, const LLUUID& av_id)
+// </FS:Ansariel>
 {
-	mAvatarNameCacheConnection.disconnect();
+	// <FS:Ansariel> Member list doesn't load properly
+	//mAvatarNameCacheConnection.disconnect();
+	avatar_name_cache_connection_map_t::iterator it = mAvatarNameCacheConnections.find(av_id);
+	if (it != mAvatarNameCacheConnections.end())
+	{
+		if (it->second.connected())
+		{
+			it->second.disconnect();
+		}
+		mAvatarNameCacheConnections.erase(it);
+	}
+	// </FS:Ansariel>
 
 	LLGroupMgrGroupData* gdatap = LLGroupMgr::getInstance()->getGroupData(mGroupID);
 
@@ -1037,6 +1081,12 @@ void LLPanelGroupGeneral::setGroupID(const LLUUID& id)
 		accept_notices = data.mAcceptNotices;
 		list_in_profile = data.mListInProfile;
 	}
+	// <FS:Ansariel> Groupdata debug
+	else
+	{
+		LL_INFOS("Agent_GroupData") << "GROUPDEBUG: Group panel: No agent group data for group " << mGroupID.asString() << LL_ENDL;
+	}
+	// </FS:Ansariel>
 	mCtrlReceiveNotices = getChild<LLCheckBoxCtrl>("receive_notices");
 	if (mCtrlReceiveNotices)
 	{

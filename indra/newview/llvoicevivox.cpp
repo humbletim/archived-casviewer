@@ -376,6 +376,13 @@ void LLVivoxVoiceClient::terminate()
 	{
 		killGateway();
 	}
+
+	// <FS:Ansariel> Delete useless Vivox logs on logout
+	if (gSavedSettings.getString("VivoxDebugLevel") == "0")
+	{
+		gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_EXECUTABLE, ""), "VivoxVoiceService-*.log");
+	}
+	// </FS:Ansariel>
 }
 
 //---------------------------------------------------
@@ -467,11 +474,17 @@ void LLVivoxVoiceClient::connectorCreate()
 	setState(stateConnectorStarting);
 
 	std::string savedLogLevel = gSavedSettings.getString("VivoxDebugLevel");
-		
-	if(savedLogLevel != "-0")
+	
+	// <FS:Ansariel> Fixing Vivox debug level
+	//if(savedLogLevel != "-0")
+	if(savedLogLevel != "0")
+	// </FS:Ansariel>
 	{
 		LL_DEBUGS("Voice") << "creating connector with logging enabled" << LL_ENDL;
-		loglevel = "0";
+		// <FS:Ansariel> Fixing Vivox debug level
+		//loglevel = "0";
+		loglevel = savedLogLevel;
+		// </FS:Ansariel>
 	}
 	
 	stream 
@@ -786,7 +799,6 @@ void LLVivoxVoiceClient::stateMachine()
 						{
 							loglevel = "0";	// turn logging off completely
 						}
-						loglevel = "0";	// turn logging off completely
 						params.args.add("-ll");
 						params.args.add(loglevel);
 						params.cwd = gDirUtilp->getAppRODataDir();

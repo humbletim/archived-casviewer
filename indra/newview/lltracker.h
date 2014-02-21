@@ -105,12 +105,18 @@ public:
 	
 	static const std::string& getLabel() { return instance()->mLabel; }
 	static const std::string& getToolTip() { return instance()->mToolTip; }
+
+	// <FS:Ansariel> Exodus' mouselook combat feature
+	void drawMarker(const LLVector3d& pos_global, const LLColor4& color);
+
 protected:
 	LLTracker();
 	~LLTracker();
 
+	static void drawBeacon(LLVector3 pos_agent, std::string direction, LLColor4 fogged_color, F32 dist);
 	static void renderBeacon( LLVector3d pos_global, 
 							 const LLColor4& color, 
+							 const LLColor4& color_under,
 							 LLHUDText* hud_textp, 
 							 const std::string& label );
 
@@ -119,7 +125,7 @@ protected:
 	void stopTrackingLocation(BOOL clear_ui = FALSE);
 	void stopTrackingLandmark(BOOL clear_ui = FALSE);
 
-	void drawMarker(const LLVector3d& pos_global, const LLColor4& color);
+	//void drawMarker(const LLVector3d& pos_global, const LLColor4& color); <FS:Ansariel> Exodus' mouselook combat feature
 	void setLandmarkVisited();
 	void cacheLandmarkPosition();
 	void purgeBeaconText();
