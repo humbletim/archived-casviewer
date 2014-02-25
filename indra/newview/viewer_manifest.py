@@ -327,8 +327,8 @@ class ViewerManifest(LLManifest,FSViewerManifest):
             app_suffix=self.channel_variant()
 			
         #<FS:ND> tag "OS" after CHANNEL_VENDOR_BASE and before any suffix
-        if self.fs_flavor() == 'oss':
-		      app_suffix = "OS" + app_suffix
+        #if self.fs_flavor() == 'oss':
+		#      app_suffix = "OS" + app_suffix
         #</FS:ND>
 
         #<FS:ND> Don't separate name by whitespace. This break a lot of things in the old FS installer logic.
@@ -707,7 +707,7 @@ class Windows_i686_Manifest(ViewerManifest):
 
         # <FS:ND> Properly name OS version, also add Phoenix- in front of installer name
         #installer_file = self.installer_base_name() + '_Setup.exe'
-        installer_file = "Phoenix-%(app_name)s-%(version_dashes)s_Setup.exe" % substitution_strings
+        installer_file = "%(app_name)s-%(version_dashes)s_Setup.exe" % substitution_strings
         # </FS:ND>
         
         substitution_strings['installer_file'] = installer_file
