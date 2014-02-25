@@ -46,7 +46,7 @@ Version serveur vocal : [VOICE_VERSION]
 	<tab_container name="about_tab">
 		<panel label="Infos" name="support_panel">
     <text name="support_intro">    
-The CtrlAltStudio Viewer is based on the Firestorm viewer, to which certain functionality is added. For details see: http://ctrlaltstudio.com/viewer
+The CtrlAltStudio Viewer is based on the Firestorm viewer, to which certain changes are made. Details: http://ctrlaltstudio.com/viewer
     </text>
 			<button label="Copier dans le presse-papiers" name="copy_btn"/>
 		</panel>
