@@ -93,3 +93,4 @@ glob:fmod*
 my_autobuild.xml
 syntax: regexp
 ^indra/build
+.*\.wixobj

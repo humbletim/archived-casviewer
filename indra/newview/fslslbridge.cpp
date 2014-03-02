@@ -1,6 +1,6 @@
 /** 
- * @file fslslbridge.cpp 
- * @FSLSLBridge implementation 
+ * @file fslslbridge.cpp
+ * @brief FSLSLBridge implementation
  *
  * $LicenseInfo:firstyear=2011&license=fsviewerlgpl$
  * Phoenix Firestorm Viewer Source Code
@@ -155,7 +155,7 @@ bool FSLSLBridge::lslToViewer(std::string message, LLUUID fromID, LLUUID ownerID
 		return false;
 	}
 	std::string tag = message.substr(0, tagend + 1);
-	std::string ourBridge = gSavedPerAccountSettings.getString("FSLSLBridgeUUID");
+	std::string ourBridge = findFSCategory().asString();
 	//</FS:TS> FIRE-962
 	
 	bool status = false;
@@ -871,16 +871,30 @@ void FSLSLBridgeScriptCallback::fire(const LLUUID& inv_item)
 		url = gAgent.getRegion()->getCapability("UpdateScriptAgent");
 	}
 
+	bool cleanup = false;
 	std::string isMono = "mono";  //could also be "lsl2"
 	if (!url.empty() && obj != NULL)  
 	{
 		const std::string fName = prepUploadFile();
-		LLLiveLSLEditor::uploadAssetViaCapsStatic(url, fName, 
-			obj->getID(), inv_item, isMono, true);
-		LL_INFOS("FSLSLBridge") << "updating script ID for bridge" << LL_ENDL;
-		FSLSLBridge::instance().mScriptItemID = inv_item;
+		if (!fName.empty())
+		{
+			LLLiveLSLEditor::uploadAssetViaCapsStatic(url, fName, 
+				obj->getID(), inv_item, isMono, true);
+			LL_INFOS("FSLSLBridge") << "updating script ID for bridge" << LL_ENDL;
+			FSLSLBridge::instance().mScriptItemID = inv_item;
+		}
+		else
+		{
+			reportToNearbyChat(LLTrans::getString("fsbridge_failure_creation_create_script"));
+			cleanup = true;
+		}
 	}
 	else
+	{
+		cleanup = true;
+	}
+
+	if (cleanup)
 	{
 		//can't complete bridge creation - detach and remove object, remove script
 		//try to clean up and go away. Fail.
@@ -904,6 +918,11 @@ std::string FSLSLBridgeScriptCallback::prepUploadFile()
 	std::string fNew = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,UPLOAD_SCRIPT_CURRENT);
 
 	LLFILE* fpIn = LLFile::fopen(fName, "rt");
+	if (!fpIn)
+	{
+		LL_WARNS("FSLSLBridge") << "Cannot open script resource file" << LL_ENDL;
+		return "";
+	}
 	fseek(fpIn, 0, SEEK_END);
 	long lSize = ftell(fpIn);
 	rewind(fpIn);
@@ -920,11 +939,14 @@ std::string FSLSLBridgeScriptCallback::prepUploadFile()
 	std::string bridgeScript( (char const*)&vctData[0] );
 
 	std::string bridgekey = "BRIDGEKEY";
-	std::string newauth = LLUUID::generateNewID().asString();
-	bridgeScript.replace(bridgeScript.find(bridgekey), bridgekey.length(), newauth);
-	gSavedPerAccountSettings.setString("FSLSLBridgeUUID", newauth);
+	bridgeScript.replace(bridgeScript.find(bridgekey), bridgekey.length(), FSLSLBridge::getInstance()->findFSCategory().asString());
 
 	LLFILE *fpOut = LLFile::fopen(fNew, "wt");
+	if (!fpOut)
+	{
+		LL_WARNS("FSLSLBridge") << "Cannot open script upload file" << LL_ENDL;
+		return "";
+	}
 
 	if (bridgeScript.size() != fwrite(bridgeScript.c_str(), 1, bridgeScript.size(), fpOut))
 	{

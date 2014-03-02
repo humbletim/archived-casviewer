@@ -1182,17 +1182,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-  <key>FSLeaveMouselookOnFocus</key>
-    <map>
-      <key>Comment</key>
-      <string>Exit mouselook mode when regaining focus</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>
   <key>FSEnableRightclickMenuInMouselook</key>
     <map>
       <key>Comment</key>
@@ -12620,11 +12609,29 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Backup</key>
     <integer>0</integer>
   </map>
-
+  <key>Mesh2MaxConcurrentRequests</key>
+  <map>
+    <key>Comment</key>
+    <string>Number of connections to use for loading meshes.</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>U32</string>
+    <key>Value</key>
+    <integer>8</integer>
+    <key>SanityCheckType</key>
+    <string>LessThan</string>
+    <key>SanityValue</key>
+    <array>
+      <integer>13</integer>
+    </array>
+    <key>SanityComment</key>
+    <string>Setting this value too high will make it less likely that mesh objects will load correctly and cause performace degradation for you and others in the same region.</string>
+  </map>
   <key>MeshMaxConcurrentRequests</key>
   <map>
     <key>Comment</key>
-    <string>Number of threads to use for loading meshes.</string>
+    <string>Number of connections to use for loading meshes (legacy system).</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -12639,6 +12646,28 @@ Change of this parameter will affect the layout of buttons in notification toast
     </array>
     <key>SanityComment</key>
     <string>Setting this value too high will make it less likely that mesh objects will load correctly and cause performace degradation for you and others in the same region.</string>
+  </map>
+  <key>MeshUseHttpRetryAfter</key>
+  <map>
+    <key>Comment</key>
+    <string>If TRUE, use Retry-After response headers when rescheduling a mesh request that fails with an HTTP 503 status.  Static.</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <boolean>1</boolean>
+  </map>
+  <key>MeshUseGetMesh1</key>
+  <map>
+    <key>Comment</key>
+    <string>If TRUE, use the legacy GetMesh capability for mesh download requests.  Semi-dynamic (read at region crossings).</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <boolean>0</boolean>
   </map>
    <key>RunMultipleThreads</key>
     <map>
@@ -19602,28 +19631,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <string>Grey</string>
     </map>
-  <key>FSMaxMeshRequestsPerSecond</key>
-  <map>
-    <key>Comment</key>
-    <string>The maximum number of mesh requests per second.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>U32</string>
-    <key>Value</key>
-    <integer>100</integer>
-  </map>
-  <key>FSMeshRequestTimeout</key>
-  <map>
-    <key>Comment</key>
-    <string>The timeout in seconds for a mesh request to complete before it will be issued again.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>S32</string>
-    <key>Value</key>
-    <real>150</real>
-  </map>
     <key>ExodusFlickrLastTags</key>
     <map>
       <key>Comment</key>
@@ -20244,7 +20251,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <integer>1</integer>
     </map>
     <!-- End: Prefs > Sound/Media => UI Sounds -->
-  
     <key>FSShowVoiceVisualizer</key>
     <map>
       <key>Comment</key>

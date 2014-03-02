@@ -6135,6 +6135,14 @@ URL: [MOAPURL]
 
   <notification
    icon="notifytip.tga"
+   name="ChatSystemMessageTip"
+   type="notifytip"
+   log_to_chat="true">
+[MESSAGE]
+  </notification>
+
+  <notification
+   icon="notifytip.tga"
    name="Cancelled"
    type="notifytip">
 Cancelled.
@@ -11603,6 +11611,14 @@ Export failed unexpectedly. Please see the log for details.
       <tag>Export</tag>
 		Successfully saved [OBJECT] to [FILENAME].
     </notification>
+
+    <notification
+     icon="alertmodal.tga"
+     name="MeshMaxConcurrentReqTooHigh"
+     type="alertmodal">
+The value you set, [VALUE], for the number of concurrent requests to load mesh objects (debug setting [DEBUGNAME]) is higher than the maximum of [MAX]. It has been reset to the default of [DEFAULT].
+    <tag>fail</tag>
+    </notification>
 	
     <notification
      icon="alertmodal.tga"
@@ -11634,14 +11650,6 @@ AntiSpam: Blocked [SOURCE] for sending an instant message with more than [COUNT]
       log_to_chat="true"
       type="notifytip">
 AntiSpam: Blocked [SOURCE] for sending a chat message with more than [COUNT] lines.
-    </notification>
-
-    <notification
-     icon="alertmodal.tga"
-     name="MeshMaxConcurrentReqTooHigh"
-     type="alertmodal">
-The value you set for the number of concurrent requests to load mesh objects, [VALUE], is higher than the maximum of [MAX]. It has been reset to the default of [DEFAULT].
-    <tag>fail</tag>
     </notification>
 
   <!-- <FS:Zi> Notification template for changed settings when selecting certain skins -->

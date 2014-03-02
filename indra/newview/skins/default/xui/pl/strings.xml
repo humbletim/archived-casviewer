@@ -4746,6 +4746,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="Command_Blocklist_Label">
 		Zablokowani
 	</string>
+	<string name="Command_ResyncAnimations_Label">
+		Synchronizuj animacje
+	</string>
 	<string name="Command_AboutLand_Tooltip">
 		Informacje o miejscu, które odwiedzasz
 	</string>
@@ -4895,6 +4898,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="Command_Blocklist_Tooltip">
 		Otwiera listę zablokowanych/wyciszonych
+	</string>
+	<string name="Command_ResyncAnimations_Tooltip">
+		Synchronizuj animacje awatarów (CTRL+S)
 	</string>
 	<string name="Toolbar_Bottom_Tooltip">
 		obecnie na Twoim dolnym pasku
@@ -5192,6 +5198,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="fsbridge_creating">
 		Trwa tworzenie Mostu LSL. To może chwilę zająć, poczekaj proszę.
+	</string>
+	<string name="fsbridge_failure_creation_create_script">
+		Most LSL nie został utworzony. Skrypt Mostu nie może zostać utworzony.
 	</string>
 	<string name="fsbridge_failure_creation_bad_name">
 		Most LSL nie został utworzony, bo jest nazwany niepoprawnie. Spróbuj stworzyć go na nowo ('Naprawa awatara' w menu 'Awatar' na górze).
