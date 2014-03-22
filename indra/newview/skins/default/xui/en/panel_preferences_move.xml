@@ -440,17 +440,17 @@
          length="1"
          height="10"
          layout="topleft"
-         left="48"
+         left="12"
          name="single_click_action_lbl"
          width="150"
          top_pad="10">
          Single click on land:
         </text>
         <combo_box
-         height="23"
+         height="20"
          layout="topleft"
-         left_pad="10"
-         top_delta="-6"
+         left_pad="13"
+         top_delta="-3"
          name="single_click_action_combo"
          width="200">
             <combo_box.item
@@ -470,17 +470,17 @@
          length="1"
          height="10"
          layout="topleft"
-         left="48"
+         left="12"
          name="double_click_action_lbl"
          width="150"
          top_pad="10">
          Double click on land:
         </text>
         <combo_box
-         height="23"
+         height="20"
          layout="topleft"
-         left_pad="10"
-         top_delta="-6"
+         left_pad="13"
+         top_delta="-3"
          name="double_click_action_combo"
          width="200">
             <combo_box.item
@@ -561,7 +561,7 @@
          top_pad="8" />
         <button
          follows="top|left"
-         height="23"
+         height="20"
          label="Joystick Configuration"
          layout="topleft"
          left_pad="10"
