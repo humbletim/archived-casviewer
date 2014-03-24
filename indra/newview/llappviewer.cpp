@@ -5827,13 +5827,17 @@ void LLAppViewer::idleShutdown()
 		return;
 	}
 
-	static bool saved_snapshot = false;
-	if (!saved_snapshot)
-	{
-		saved_snapshot = true;
-		saveFinalSnapshot();
-		return;
-	}
+	// <CV:David>
+	// Saving a snapshot here causes disconcerting screen artifacts to be displayed during logout.
+	// This is due to conflict with the snapshot also being saved just before LLAppViewer::mainLoop() exits.
+	//static bool saved_snapshot = false;
+	//if (!saved_snapshot)
+	//{
+	//	saved_snapshot = true;
+	//	saveFinalSnapshot();
+	//	return;
+	//}
+	// </CV:David>
 
 	const F32 SHUTDOWN_UPLOAD_SAVE_TIME = 5.f;
 
