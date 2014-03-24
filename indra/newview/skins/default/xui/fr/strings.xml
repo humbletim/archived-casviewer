@@ -131,11 +131,11 @@
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-		http://secondlife.com/download
-	</string>
+    http://ctrlaltstudio.com/viewer
+  </string>
 	<string name="LoginFailedViewerNotPermitted">
 		Le client que vous utilisez ne permet plus d&apos;accéder à Second Life. Téléchargez un nouveau client à la page suivante :
-http://secondlife.com/download
+http://ctrlaltstudio.com/viewer
 
 Pour plus d&apos;informations, consultez la page FAQ ci-dessous :
 http://secondlife.com/viewer-access-faq

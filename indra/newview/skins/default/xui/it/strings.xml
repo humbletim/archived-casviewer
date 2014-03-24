@@ -128,11 +128,11 @@
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-		http://secondlife.com/download.
-	</string>
+    http://ctrlaltstudio.com/viewer
+  </string>
 	<string name="LoginFailedViewerNotPermitted">
 		Il viewer utilizzato non è più in grado di accedere a Second Life. Visita la parina seguente per scaricare un nuovo viewer:
-http://secondlife.com/download.
+http://ctrlaltstudio.com/viewer.
 
 Per maggiori informazioni, consulta le domande frequenti alla pagina seguente:
 http://secondlife.com/viewer-access-faq

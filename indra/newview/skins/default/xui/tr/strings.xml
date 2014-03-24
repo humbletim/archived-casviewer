@@ -5,14 +5,14 @@
      that are returned from one component and may appear in many places-->
 <strings>
 	<string name="SECOND_LIFE">
-		Second Life
-	</string>
+    [CURRENT_GRID]
+  </string>
 	<string name="APP_NAME">
-		Second Life
-	</string>
+    CtrlAltStudio Viewer
+  </string>
 	<string name="CAPITALIZED_APP_NAME">
-		SECOND LIFE
-	</string>
+    CTRLALTSTUDIO VIEWER
+  </string>
 	<string name="SECOND_LIFE_GRID">
 		Second Life Ağı
 	</string>
@@ -140,11 +140,11 @@
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-		http://secondlife.com/download
-	</string>
+    http://ctrlaltstudio.com/viewer
+  </string>
 	<string name="LoginFailedViewerNotPermitted">
 		Kullandığınız görüntüleyici ile artık Second Life&apos;a erişemezsiniz. Yeni bir görüntüleyiciyi karşıdan yüklemek için lütfen şu sayfayı ziyaret edin:
-http://secondlife.com/download
+http://ctrlaltstudio.com/viewer
 
 Daha fazla bilgi edinmek için asağıdaki SSS sayfamızı ziyaret edin:
 http://secondlife.com/viewer-access-faq

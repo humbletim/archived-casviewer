@@ -128,10 +128,10 @@
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-		http://secondlife.com/download
-	</string>
+    http://ctrlaltstudio.com/viewer
+  </string>
 	<string name="LoginFailedViewerNotPermitted">
-		O visualizador utilizado já não é compatível com o Second Life.  Visite a página abaixo para baixar uma versão atual: http://secondlife.com/download
+		O visualizador utilizado já não é compatível com o Second Life.  Visite a página abaixo para baixar uma versão atual: http://ctrlaltstudio.com/viewer
 
 Para saber mais, visite as perguntas frequentes abaixo: http://secondlife.com/viewer-access-faq
 	</string>

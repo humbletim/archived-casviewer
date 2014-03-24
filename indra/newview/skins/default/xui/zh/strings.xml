@@ -5,14 +5,14 @@
      that are returned from one component and may appear in many places-->
 <strings>
 	<string name="SECOND_LIFE">
-		第二人生
-	</string>
+    [CURRENT_GRID]
+  </string>
 	<string name="APP_NAME">
-		第二人生
-	</string>
+    CtrlAltStudio Viewer
+  </string>
 	<string name="CAPITALIZED_APP_NAME">
-		第二人生
-	</string>
+    CTRLALTSTUDIO VIEWER
+  </string>
 	<string name="SECOND_LIFE_GRID">
 		第二人生網格
 	</string>
@@ -140,11 +140,11 @@
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-		http://secondlife.com/download
-	</string>
+    http://ctrlaltstudio.com/viewer
+  </string>
 	<string name="LoginFailedViewerNotPermitted">
 		你目前所用的 Viewer 已經無法再進入第二人生。 請到這個頁面下載最新 Viewer：
-http://secondlife.com/download
+http://ctrlaltstudio.com/viewer
 
 欲知詳情，請參閱下面的常見問題集：
 http://secondlife.com/viewer-access-faq
