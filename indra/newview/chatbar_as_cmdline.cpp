@@ -550,7 +550,10 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
 				S32 band_width;
                 if (i >> band_width)
                 {
-					band_width = llclamp(band_width, 50, 3000);
+					// <CV:David>
+					//band_width = llclamp(band_width, 50, 3000);
+					band_width = llclamp(band_width, 50, 10000);
+					// </CV:David>
 					gSavedSettings.setF32("ThrottleBandwidthKBPS", band_width);
 					LLStringUtil::format_map_t args;
 					std::string bw_cmd_respond;
