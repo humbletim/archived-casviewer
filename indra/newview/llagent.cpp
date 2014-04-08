@@ -4565,9 +4565,15 @@ bool LLAgent::teleportCore(bool is_local)
 		gPipeline.resetVertexBuffers();
 		
 		// <FS:Ansariel> Draw Distance stepping; originally based on SpeedRez by Henri Beauchamp, licensed under LGPL
-		if (gSavedSettings.getBOOL("FSRenderFarClipStepping"))
+		// <CV:David> Modified for minimum draw distance < 32.f.
+		//if (gSavedSettings.getBOOL("FSRenderFarClipStepping"))
+		F32 draw_distance = gSavedSettings.getF32("RenderFarClip");
+		if (draw_distance > 32.f && gSavedSettings.getBOOL("FSRenderFarClipStepping"))
+		// </CV:David>
 		{
-			F32 draw_distance = gSavedSettings.getF32("RenderFarClip");
+			// <CV:David>
+			// F32 draw_distance = gSavedSettings.getF32("RenderFarClip");
+			// </CV:David>
 			if (gSavedDrawDistance < draw_distance)
 			{
 				gSavedDrawDistance = draw_distance;

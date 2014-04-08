@@ -2643,10 +2643,18 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		display_startup();
 
 		// <FS:Ansariel> Draw Distance stepping; originally based on SpeedRez by Henri Beauchamp, licensed under LGPL
-		if (gSavedSettings.getBOOL("FSRenderFarClipStepping"))
+
+		// <CV:David> Modified for minimum draw distance < 32.f.
+		//if (gSavedSettings.getBOOL("FSRenderFarClipStepping"))
+		F32 draw_distance = gSavedSettings.getF32("RenderFarClip");
+		if (draw_distance > 32.f && gSavedSettings.getBOOL("FSRenderFarClipStepping"))
+		// </CV:David>
 		{
 			// progressive draw distance stepping if requested.
-			F32 dist1 = gSavedSettings.getF32("RenderFarClip");
+			// <CV:David>
+			//F32 dist1 = gSavedSettings.getF32("RenderFarClip");
+			F32 dist1 = draw_distance;
+			// </CV:David>
 			F32 dist2 = gSavedSettings.getF32("FSSavedRenderFarClip");
 			gSavedDrawDistance = (dist1 >= dist2 ? dist1 : dist2);
 			gSavedSettings.setF32("FSSavedRenderFarClip", gSavedDrawDistance);
