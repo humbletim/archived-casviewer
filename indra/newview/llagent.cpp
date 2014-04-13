@@ -110,8 +110,6 @@
 #include "utilitybar.h"
 #include "NACLantispam.h"
 
-#undef min  //<CV:David>
-
 using namespace LLAvatarAppearanceDefines;
 
 extern LLMenuBarGL* gMenuBarView;
@@ -666,7 +664,7 @@ void LLAgent::moveAt(F32 velocity)
 
 	S32 direction = (velocity >= 0) ? 1 : -1;
 
-	U32 speed = std::min(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
+	U32 speed = llmin(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
 	mWalkSpeedFlag = mWalkSpeedFlags[speed];
 
 	moveAt(direction);
@@ -753,7 +751,7 @@ void LLAgent::moveLeft(F32 velocity)
 
 	S32 direction = (velocity >= 0) ? 1 : -1;
 
-	U32 speed = std::min(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
+	U32 speed = llmin(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
 	mWalkSpeedFlag = mWalkSpeedFlags[speed];
 
 	moveLeft(direction);
@@ -838,7 +836,7 @@ void LLAgent::moveUp(F32 velocity)
 
 	S32 direction = (velocity >= 0) ? 1 : -1;
 
-	U32 speed = std::min(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
+	U32 speed = llmin(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
 	mWalkSpeedFlag = mWalkSpeedFlags[speed];
 
 	moveUp(direction);
