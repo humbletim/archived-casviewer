@@ -157,7 +157,7 @@ done
 # Don't quote $LL_WRAPPER because, if empty, it should simply vanish from the
 # command line. But DO quote "${ARGS[@]}": preserve separate args as
 # individually quoted.
-$LL_WRAPPER bin/do-not-directly-run-firestorm-bin "${ARGS[@]}"
+$LL_WRAPPER bin/do-not-directly-run-casviewer-bin "${ARGS[@]}"
 LL_RUN_ERR=$?
 
 # Handle any resulting errors
@@ -169,7 +169,7 @@ if [ $LL_RUN_ERR -ne 0 ]; then
 		cat << EOFMARKER
 You are running the Firestorm Viewer on a x86_64 platform.  The
 most common problems when launching the Viewer (particularly
-'bin/do-not-directly-run-firestorm-bin: not found' and 'error while
+'bin/do-not-directly-run-casviewer-bin: not found' and 'error while
 loading shared libraries') may be solved by installing your Linux
 distribution's 32-bit compatibility packages.
 For example, on Ubuntu and other Debian-based Linuxes you might run:

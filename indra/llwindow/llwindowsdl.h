@@ -74,6 +74,7 @@ public:
 	/*virtual*/ void hideCursorUntilMouseMove();
 	/*virtual*/ BOOL isCursorHidden();
 	/*virtual*/ void updateCursor();
+	/*virtual*/ ECursorType getCursor() const;  // <CV:David> Added to fix Linux build.
 	/*virtual*/ void captureMouse();
 	/*virtual*/ void releaseMouse();
 	/*virtual*/ void setMouseClipping( BOOL b );
@@ -148,10 +149,11 @@ public:
 #endif // LL_X11	
 
 protected:
+	// <CV:David> Added output_type parameter.
 	LLWindowSDL(LLWindowCallbacks* callbacks,
 		const std::string& title, int x, int y, int width, int height, U32 flags,
 		BOOL fullscreen, BOOL clearBg, BOOL disable_vsync, BOOL use_gl,
-		BOOL ignore_pixel_depth, U32 fsaa_samples);
+		BOOL ignore_pixel_depth, U32 fsaa_samples, U32 output_type);
 	~LLWindowSDL();
 
 	/*virtual*/ BOOL	isValid();
