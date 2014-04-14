@@ -47,11 +47,6 @@ Note: You need to do a build with -DPACKAGE:BOOL=TRUE before building with this 
 Note: For Max OSX and Linux builds, set configure_casviewer.sh as executable: chmod +x scripts configure_casviewer.sh.
 
 
-Building and running on Mac OSX worked once but something broke after changeset 34322. And updating to the Firestorm 4.5.1 
-codebase may have introduced new changes that need modifying for CtrlAltStudio Viewer. Updates to get Mac OSX building again 
-are welcome! Files that may need attention include:
-- indra\mac_updater
-
 Building and running on Linux has not been fully updated. In particular, while much of the build scripts have been updated, 
 certain Linux-specific files have not been renamed or updated, including:
 - debian
