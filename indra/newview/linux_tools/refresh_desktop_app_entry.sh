@@ -21,7 +21,7 @@ Type=Application\n\
 Categories=Application;Internet;Network;\n\
 StartupNotify=true\n\
 X-Desktop-File-Install-Version=3.0\n
-StartupWMClass=do-not-directly-run-firestorm-bin"
+StartupWMClass=do-not-directly-run-casviewer-bin"
 
     echo " - Installing menu entries in ${desktop_entries_dir}"
     mkdir -vp "${desktop_entries_dir}"

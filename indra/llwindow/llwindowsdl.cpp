@@ -188,12 +188,13 @@ Display* LLWindowSDL::get_SDL_Display(void)
 #endif // LL_X11
 
 
+// <CV:David> Added output_type parameter.
 LLWindowSDL::LLWindowSDL(LLWindowCallbacks* callbacks,
 			 const std::string& title, S32 x, S32 y, S32 width,
 			 S32 height, U32 flags,
 			 BOOL fullscreen, BOOL clearBg,
 			 BOOL disable_vsync, BOOL use_gl,
-			 BOOL ignore_pixel_depth, U32 fsaa_samples)
+			 BOOL ignore_pixel_depth, U32 fsaa_samples, U32 output_type)
 	: LLWindow(callbacks, fullscreen, flags),
 	  Lock_Display(NULL),
 	  Unlock_Display(NULL), mGamma(1.0f)
