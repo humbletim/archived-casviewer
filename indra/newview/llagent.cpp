@@ -86,6 +86,7 @@
 #include "llviewerjoystick.h"
 #include "llviewermediafocus.h"
 #include "llviewermenu.h"
+#include "llviewernetwork.h" // <FS:PP> For FIRE-10718: llGetSimulatorHostname() is causing LSL Bridge to sleep for 10 seconds
 #include "llviewerobjectlist.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
@@ -4479,7 +4480,14 @@ bool LLAgent::teleportBridgeLocal(LLVector3& pos_local)
 	msgstream << std::setiosflags(std::ios::fixed) << std::setprecision(6); 
 	msgstream << pos_local.mV[VX] << ", " << pos_local.mV[VY] << ", "  << pos_local.mV[VZ];
 
-	return FSLSLBridge::instance().viewerToLSL("llMoveToTarget|" + msgstream.str());
+	// Check for FIRE-10718: llGetSimulatorHostname() is causing LSL Bridge to sleep for 10 seconds during check for current hostname in order to prevent double-click teleport on SL grid, so let's check this in the viewer itself and send 1/0 as additional value
+#ifdef OPENSIM
+	const std::string isLindenLabHost = LLGridManager::getInstance()->isInSecondLife() ? "1" : "0";
+#else
+	const std::string isLindenLabHost = "1";
+#endif
+
+	return FSLSLBridge::instance().viewerToLSL("llMoveToTarget|" + msgstream.str() + "|" + isLindenLabHost);
 }
 
 bool LLAgent::teleportBridgeGlobal(const LLVector3d& pos_global)
@@ -4887,7 +4895,7 @@ void LLAgent::doTeleportViaLocation(const LLVector3d& pos_global)
 		sendReliableMessage();
 	}
 // <FS:TT> Client LSL Bridge
-	if (gSavedSettings.getBOOL("UseLSLBridge") && isLocal)
+	if (FSLSLBridge::instance().canUseBridge() && isLocal)
 	{
 		teleportBridgeGlobal(pos_global);
 	}
@@ -4927,7 +4935,7 @@ void LLAgent::doTeleportViaLocationLookAt(const LLVector3d& pos_global)
 	teleportRequest(region_handle, pos_local, getTeleportKeepsLookAt());
 
 // <FS:TT> Client LSL Bridge
-	if (gSavedSettings.getBOOL("UseLSLBridge"))
+	if (FSLSLBridge::instance().canUseBridge())
 	{
 		if (region_handle == to_region_handle(getPositionGlobal()))
 		{

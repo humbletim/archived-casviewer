@@ -38,6 +38,7 @@
 #include "fsradar.h"
 #include "llagent.h"
 #include "llagentcamera.h"
+#include "llavataractions.h"
 #include "llcalc.h"
 // <FS:Ansariel> [FS communication UI]
 //#include "llfloaternearbychat.h"
@@ -466,8 +467,12 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
 			if(command == std::string(sFSCmdLinePos))
 			{
 				F32 x, y, z;
-				if (i >> x && i >> y && i >> z)
+				if (i >> x && i >> y)
 				{
+					if (!(i >> z))
+					{
+						z = gAgent.getPositionGlobal().mdV[VZ];
+					}
 					LLViewerRegion* agentRegionp = gAgent.getRegion();
 					if (agentRegionp)
 					{
@@ -1210,20 +1215,10 @@ LLUUID cmdline_partial_name2key(std::string partial_name)
 void cmdline_tp2name(std::string target)
 {
 	LLUUID avkey = cmdline_partial_name2key(target);
-	FSRadar* radar = FSRadar::getInstance();
-	if (avkey.notNull() && radar)
+	if (avkey.notNull())
 	{
-		FSRadarEntry* entry = radar->getEntry(avkey);
-		if (entry)
-		{
-			LLVector3d pos = entry->getGlobalPos();
-			pos.mdV[VZ] += 2.0;
-			gAgent.teleportViaLocation(pos);
-			return;
-		}
+		LLAvatarActions::teleportTo(avkey);
 	}
-
-	reportToNearbyChat("Avatar not found.");
 }
 
 void cmdline_rezplat(bool use_saved_value, F32 visual_radius) //cmdline_rezplat() will still work... just will use the saved value

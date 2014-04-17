@@ -169,10 +169,10 @@ void FSRadar::updateRadarList()
 	static LLCachedControl<bool> RadarLeaveChannelAlert(gSavedSettings, "RadarLeaveChannelAlert");
 	static LLCachedControl<F32> nearMeRange(gSavedSettings, "NearMeRange");
 	static LLCachedControl<bool> limitRange(gSavedSettings, "LimitRadarByRange");
-	static LLCachedControl<bool> sUseLSLBridge(gSavedSettings, "UseLSLBridge");
 	static LLCachedControl<F32> RenderFarClip(gSavedSettings, "RenderFarClip");
 	static LLCachedControl<bool> sFSLegacyRadarFriendColoring(gSavedSettings, "FSLegacyRadarFriendColoring");
 	static LLCachedControl<bool> sRadarColorNamesByDistance(gSavedSettings, "FSRadarColorNamesByDistance", false);
+	bool sUseLSLBridge = FSLSLBridge::instance().canUseBridge();
 
 	F32 drawRadius(RenderFarClip);
 	const LLVector3d& posSelf = gAgent.getPositionGlobal();
@@ -650,7 +650,7 @@ void FSRadar::updateRadarList()
 		U32 loop = 0;
 		while (loop < num_entering)
 		{
-			for (int i = 0; i < num_this_pass; i++)
+			for (S32 i = 0; i < num_this_pass; i++)
 			{
 				msg = llformat("%s,%s", msg.c_str(), mRadarEnterAlerts[loop + i].asString().c_str());
 			}
@@ -680,7 +680,7 @@ void FSRadar::updateRadarList()
 		U32 loop = 0;
 		while (loop < num_leaving)
 		{
-			for (int i = 0; i < num_this_pass; i++)
+			for (S32 i = 0; i < num_this_pass; i++)
 			{
 				msg = llformat("%s,%s", msg.c_str(), mRadarLeaveAlerts[loop + i].asString().c_str());
 			}
@@ -782,9 +782,13 @@ void FSRadar::teleportToAvatar(const LLUUID& targetAv)
 		}
 		else
 		{
+			avpos.mdV[VZ] += 2.0f;
 			gAgent.teleportViaLocation(avpos);
 		}
-		return;
+	}
+	else
+	{
+		LLNotificationsUtil::add("TeleportToAvatarNotPossible");
 	}
 }
 
@@ -870,8 +874,15 @@ bool FSRadar::radarReportToCheck(const LLSD& userdata)
 
 void FSRadar::startTracking(const LLUUID& avatar_id)
 {
-	mTrackedAvatarId = avatar_id;
-	updateTracking();
+	if (getEntry(avatar_id))
+	{
+		mTrackedAvatarId = avatar_id;
+		updateTracking();
+	}
+	else
+	{
+		LLNotificationsUtil::add("TrackAvatarNotPossible");
+	}
 }
 
 void FSRadar::checkTracking()

@@ -137,7 +137,7 @@
 #include "fslslbridge.h"
 #include "fscommon.h"
 #include "fsfloaterexport.h"
-#include "fscontactsfloater.h"	// <FS:Zi> Display group list in contacts floater
+#include "fsfloatercontacts.h"	// <FS:Zi> Display group list in contacts floater
 #include "fspose.h"	// <FS:CR> FIRE-4345: Undeform
 #include "fswsassetblacklist.h"
 #include "llavatarpropertiesprocessor.h"	// ## Zi: Texture Refresh
@@ -4257,8 +4257,8 @@ class FSSelfToggleMoveLock : public view_listener_t
         {
 			if (LLGridManager::getInstance()->isInSecondLife())
 			{
-				bool new_value = !gSavedSettings.getBOOL("UseMoveLock");
-				gSavedSettings.setBOOL("UseMoveLock", new_value);
+				bool new_value = !gSavedPerAccountSettings.getBOOL("UseMoveLock");
+				gSavedPerAccountSettings.setBOOL("UseMoveLock", new_value);
 				if (new_value)
 				{
 					reportToNearbyChat(LLTrans::getString("MovelockEnabled"));
@@ -4287,7 +4287,7 @@ class FSSelfCheckMoveLock : public view_listener_t
 		bool new_value(false);
 		if (LLGridManager::getInstance()->isInSecondLife())
 		{
-			new_value = gSavedSettings.getBOOL("UseMoveLock");
+			new_value = gSavedPerAccountSettings.getBOOL("UseMoveLock");
 		}
 #ifdef OPENSIM
 		else
@@ -4301,12 +4301,7 @@ class FSSelfCheckMoveLock : public view_listener_t
 
 bool enable_bridge_function()
 {
-#ifdef OPENSIM
-	if (LLGridManager::getInstance()->isInOpenSim() && !LLGridManager::getInstance()->isInAuroraSim())
-		// No bridge on OpenSim yet.
-		return false;
-#endif // OPENSIM
-	return (gSavedSettings.getBOOL("UseLSLBridge") && FSLSLBridge::instance().isBridgeValid());
+	return FSLSLBridge::instance().canUseBridge();
 }
 
 bool enable_move_lock()
@@ -6628,70 +6623,6 @@ void toggle_debug_menus(void*)
 	show_debug_menus();
 }
 
-void toggle_v1_menus(void*)	// V1 menu system	-WoLf
-{
-	BOOL visible = ! gSavedSettings.getBOOL("FSUseV1Menus");
-	gSavedSettings.setBOOL("FSUseV1Menus", visible);
-	show_v1_menus();
-}
-
-// AO This may be called a few seconds after activations, to reset it back to V2-style
-void menuTimerV1()
-{
-	gSavedSettings.setBOOL("FSUseV1Menus", FALSE);
-	show_v1_menus();
-}
-
-void show_v1_menus()	// V1 menu system	-WoLf
-{
-	BOOL V1 = gSavedSettings.getBOOL("FSUseV1Menus");
-	rlvCallbackTimerOnce(30, boost::bind(&menuTimerV1));
-	
-	if ( gMenuBarView )
-	{
-	// The original menu system
-		gMenuBarView->setItemVisible("Me", !V1);
-		gMenuBarView->setItemEnabled("Me", !V1);
-		gMenuBarView->setItemVisible("Communicate", !V1);
-		gMenuBarView->setItemEnabled("Communicate", !V1);
-		gMenuBarView->setItemVisible("World", !V1);
-		gMenuBarView->setItemEnabled("World", !V1);
-		gMenuBarView->setItemVisible("BuildTools", !V1);
-		gMenuBarView->setItemEnabled("BuildTools", !V1);
-		gMenuBarView->setItemVisible("Content", !V1);
-		gMenuBarView->setItemEnabled("Content", !V1);
-		gMenuBarView->setItemVisible("Help", !V1);
-		gMenuBarView->setItemEnabled("Help", !V1);
-		gMenuBarView->setItemVisible("Advanced", !V1);
-		gMenuBarView->setItemEnabled("Advanced", !V1);
-		gMenuBarView->setItemVisible("Develop", !V1);
-		gMenuBarView->setItemEnabled("Develop", !V1);
-
-	// The V1 menu system
-		gMenuBarView->setItemVisible("V1-File", V1);
-		gMenuBarView->setItemEnabled("V1-File", V1);
-		gMenuBarView->setItemVisible("V1-Edit", V1);
-		gMenuBarView->setItemEnabled("V1-Edit", V1);
-		gMenuBarView->setItemVisible("V1-View", V1);
-		gMenuBarView->setItemEnabled("V1-View", V1);
-		gMenuBarView->setItemVisible("V1-World", V1);
-		gMenuBarView->setItemEnabled("V1-World", V1);
-		gMenuBarView->setItemVisible("V1-Tools", V1);
-		gMenuBarView->setItemEnabled("V1-Tools", V1);
-		gMenuBarView->setItemVisible("V1-Help", V1);
-		gMenuBarView->setItemEnabled("V1-Help", V1);
-		gMenuBarView->setItemVisible("V1-Firestorm", V1);
-		gMenuBarView->setItemEnabled("V1-Firestorm", V1);
-		gMenuBarView->setItemVisible("V1-Advanced", V1);
-		gMenuBarView->setItemEnabled("V1-Advanced", V1);
-
-		if (V1 == false)
-		{
-			show_debug_menus();
-		}
-	}
-}
-
 // LLUUID gExporterRequestID;
 // std::string gExportDirectory;
 
@@ -8744,6 +8675,17 @@ class LLAdvancedClickRenderProfile: public view_listener_t
 	}
 };
 
+void gpu_benchmark();
+
+class LLAdvancedClickRenderBenchmark: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		gpu_benchmark();
+		return true;
+	}
+};
+
 //[FIX FIRE-1927 - enable DoubleClickTeleport shortcut : SJ]
 class LLAdvancedToggleDoubleClickTeleport: public view_listener_t
 {
@@ -9611,6 +9553,22 @@ void handle_show_url(const LLSD& param)
 		LLWeb::loadURLInternal(url);
 	}
 
+}
+
+void handle_report_bug(const LLSD& param)
+{
+	LLUIString url(param.asString());
+	
+	LLStringUtil::format_map_t replace;
+	replace["[ENVIRONMENT]"] = LLURI::escape(LLAppViewer::instance()->getViewerInfoString());
+	LLSLURL location_url;
+	LLAgentUI::buildSLURL(location_url);
+	replace["[LOCATION]"] = location_url.getSLURLString();
+
+	LLUIString file_bug_url = gSavedSettings.getString("ReportBugURL");
+	file_bug_url.setArgs(replace);
+
+	LLWeb::loadURLExternal(file_bug_url.getString());
 }
 
 void handle_buy_currency_test(void*)
@@ -10814,6 +10772,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedCheckRenderShadowOption(), "Advanced.CheckRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderShadowOption(), "Advanced.ClickRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderProfile(), "Advanced.ClickRenderProfile");
+	view_listener_t::addMenu(new LLAdvancedClickRenderBenchmark(), "Advanced.ClickRenderBenchmark");
 	//[FIX FIRE-1927 - enable DoubleClickTeleport shortcut : SJ]
 	view_listener_t::addMenu(new LLAdvancedToggleDoubleClickTeleport, "Advanced.ToggleDoubleClickTeleport");
 
@@ -10831,6 +10790,7 @@ void initialize_menus()
 	commit.add("Advanced.WebBrowserTest", boost::bind(&handle_web_browser_test,	_2));	// sigh! this one opens the MEDIA browser
 	commit.add("Advanced.WebContentTest", boost::bind(&handle_web_content_test, _2));	// this one opens the Web Content floater
 	commit.add("Advanced.ShowURL", boost::bind(&handle_show_url, _2));
+	commit.add("Advanced.ReportBug", boost::bind(&handle_report_bug, _2));
 	view_listener_t::addMenu(new LLAdvancedBuyCurrencyTest(), "Advanced.BuyCurrencyTest");
 	view_listener_t::addMenu(new LLAdvancedDumpSelectMgr(), "Advanced.DumpSelectMgr");
 	view_listener_t::addMenu(new LLAdvancedDumpInventory(), "Advanced.DumpInventory");

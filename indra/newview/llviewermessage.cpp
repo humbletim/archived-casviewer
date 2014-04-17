@@ -2766,15 +2766,15 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			// <FS:Ansariel> Log autoresponse notification after initial message
 			bool has_session = true;
 
-			// return a standard "do not disturb" message, but only do it to online IM 
+			// return a standard "do not disturb" message, but only do it to online IM
 			// (i.e. not other auto responses and not store-and-forward IM)
+			// <FS:Ansariel> Old "do not disturb" message behavior: only send once if session not open
 			if (!gIMMgr->hasSession(session_id))
 			{
+			// </FS:Ansariel>
 				// <FS:Ansariel> Log autoresponse notification after initial message
 				has_session = false;
 
-				// if there is not a panel for this conversation (i.e. it is a new IM conversation
-				// initiated by the other party) then...
 				// <FS:Ansariel> FS autoresponse feature
 				//send_do_not_disturb_message(msg, from_id, session_id);
 				std::string my_name;
@@ -2811,7 +2811,9 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 					session_id);
 				gAgent.sendReliableMessage();
 				// </FS:Ansariel> FS autoresponse feature
+			// <FS:Ansariel> Old "do not disturb" message behavior: only send once if session not open
 			}
+			// </FS:Ansariel>
 
 			// <FS:Ansariel> checkfor and process reqinfo
 			if (has_session)
@@ -2828,7 +2830,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 
 			// <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground (notification on receipt of IM)
 			chat.mText = buffer;
-			if ((chat.mFromID != gAgent.getID() || chat.mFromName == SYSTEM_FROM) && FSKeywords::getInstance()->chatContainsKeyword(chat, false))
+			if (FSKeywords::getInstance()->chatContainsKeyword(chat, false))
 			{
 				FSKeywords::notify(chat);
 			}
@@ -2924,7 +2926,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 
 				// <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground (notification on receipt of IM)
 				chat.mText = message;
-				if ((chat.mFromID != gAgent.getID() || chat.mFromName == SYSTEM_FROM) && FSKeywords::getInstance()->chatContainsKeyword(chat, false))
+				if (FSKeywords::getInstance()->chatContainsKeyword(chat, false))
 				{
 					FSKeywords::notify(chat);
 				}
@@ -3384,7 +3386,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			chat.mText = message;
 
 			// <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground (notification on receipt of Task IM)
-			if ((chat.mFromID != gAgent.getID() || chat.mFromName == SYSTEM_FROM) && FSKeywords::getInstance()->chatContainsKeyword(chat, true))
+			if (FSKeywords::getInstance()->chatContainsKeyword(chat, true))
 			{
 				FSKeywords::notify(chat);
 			}
@@ -3486,7 +3488,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 
 			// <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground (notification on receipt of IM)
 			chat.mText = message;
-			if ((chat.mFromID != gAgent.getID() || chat.mFromName == SYSTEM_FROM) && FSKeywords::getInstance()->chatContainsKeyword(chat, false))
+			if (FSKeywords::getInstance()->chatContainsKeyword(chat, false))
 			{
 				FSKeywords::notify(chat);
 			}
@@ -4424,8 +4426,7 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 			case CHAT_TYPE_OWNER:
 				// <FS:TT> Client LSL Bridge
 				{
-					static LLCachedControl<bool> sUseLSLBridge(gSavedSettings, "UseLSLBridge");
-					if (sUseLSLBridge && FSLSLBridge::instance().lslToViewer(mesg, from_id, owner_id))
+					if (FSLSLBridge::instance().lslToViewer(mesg, from_id, owner_id))
 					{
 						return;
 					}
@@ -4606,7 +4607,7 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 		chat.mOwnerID = owner_id;
 
 		// <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground (notification on receipt of local chat)
-		if ((chat.mFromID != gAgent.getID() || chat.mFromName == SYSTEM_FROM) && FSKeywords::getInstance()->chatContainsKeyword(chat, true))
+		if (FSKeywords::getInstance()->chatContainsKeyword(chat, true))
 		{
 			FSKeywords::notify(chat);
 		}
@@ -8365,7 +8366,7 @@ void process_teleport_failed(LLMessageSystem *msg, void**)
 	gAgent.stopTyping();
 
 	llinfos << "Teleport error, reason=" << reason << llendl;
-	if ((!gSavedSettings.getBOOL("UseLSLBridge")) ||
+	if (!FSLSLBridge::instance().canUseBridge() ||
 		(reason != "Could not teleport closer to destination"))
 	{
 		LLNotificationsUtil::add("CouldNotTeleportReason", args);

@@ -2814,7 +2814,7 @@ void LLViewerWindow::draw()
 
 					if (renderIFF)
 					{
-						LLTracker::instance()->drawMarker(targetPosition, targetColor);
+						LLTracker::instance()->drawMarker(targetPosition, targetColor, true);
 					}
 
 					if (inMouselook && !crosshairRendered && !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
@@ -3719,8 +3719,6 @@ void LLViewerWindow::updateUI()
 
 	updateLayout();
 
-	mLastMousePoint = mCurrentMousePoint;
-
 	// cleanup unused selections when no modal dialogs are open
 	if (LLModalDialog::activeCount() == 0)
 	{
@@ -3960,10 +3958,14 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
+
+	mLastMousePoint = mCurrentMousePoint;
+
 	// <CV:David>
 	S32 max_width = gRift3DEnabled ? gRiftHResolution : getWindowWidthScaled();
 	S32 max_height = gRift3DEnabled ? gRiftVResolution : getWindowHeightScaled();
 	// </CV:David>
+
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
@@ -3996,7 +3998,7 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	{
 		mCurrentMousePoint.mY = max_height;
 	}
-	// <CV:David>
+	// </CV:David>
 	else
 	{
 		mCurrentMousePoint.mY = point.mY;

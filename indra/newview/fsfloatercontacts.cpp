@@ -1,5 +1,5 @@
 /** 
- * @file fscontactsfloater.cpp
+ * @file fsfloatercontacts.cpp
  * @brief Legacy contacts floater implementation
  *
  * $LicenseInfo:firstyear=2011&license=fsviewerlgpl$
@@ -28,7 +28,7 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "fscontactsfloater.h"
+#include "fsfloatercontacts.h"
 
 // libs
 #include "llagent.h"
@@ -185,10 +185,7 @@ void FSFloaterContacts::updateGroupButtons()
 
 void FSFloaterContacts::onOpen(const LLSD& key)
 {
-	// <FS:Ansariel> [FS communication UI]
-	//LLIMFloaterContainer* floater_container = LLIMFloaterContainer::getInstance();
 	FSFloaterIMContainer* floater_container = FSFloaterIMContainer::getInstance();
-	// </FS:Ansariel> [FS communication UI]
 	if (gSavedSettings.getBOOL("ContactsTornOff"))
 	{
 		// first set the tear-off host to the conversations container
@@ -204,6 +201,8 @@ void FSFloaterContacts::onOpen(const LLSD& key)
 	}
 
 	openTab(key.asString());
+
+	LLFloater::onOpen(key);
 }
 
 void FSFloaterContacts::openTab(const std::string& name)
@@ -226,7 +225,7 @@ void FSFloaterContacts::openTab(const std::string& name)
 		return;
 	}
 
-	FSFloaterIMContainer* floater_container = (FSFloaterIMContainer *) getHost();
+	FSFloaterIMContainer* floater_container = dynamic_cast<FSFloaterIMContainer*>(getHost());
 	if (floater_container)
 	{
 		floater_container->setVisible(TRUE);

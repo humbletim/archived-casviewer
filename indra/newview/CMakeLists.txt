@@ -139,11 +139,11 @@ set(viewer_SOURCE_FILES
     fschathistory.cpp
     fscommon.cpp
     fsconsoleutils.cpp
-    fscontactsfloater.cpp
     fsdata.cpp
     fsexportperms.cpp
     fsfloateraddtocontactset.cpp
     fsfloaterblocklist.cpp
+    fsfloatercontacts.cpp
     fsfloatercontactsetconfiguration.cpp
     fsfloaterexport.cpp
     fsfloatergroup.cpp
@@ -838,11 +838,11 @@ set(viewer_HEADER_FILES
     fschathistory.h
     fscommon.h
     fsconsoleutils.h
-    fscontactsfloater.h
     fsdata.h
     fsexportperms.h
     fsfloateraddtocontactset.h
     fsfloaterblocklist.h
+    fsfloatercontacts.h
     fsfloatercontactsetconfiguration.h
     fsfloaterexport.h
     fsfloatergroup.h
@@ -1543,8 +1543,8 @@ LIST(APPEND viewer_SOURCE_FILES llleapmotioncontroller.cpp)
 LIST(APPEND viewer_HEADER_FILES llleapmotioncontroller.h)
 
 if (LEAPMOTION)
-  LIST(APPEND viewer_SOURCE_FILES fsleaptool.cpp fsleapexampletool.cpp )
-  LIST(APPEND viewer_HEADER_FILES fsleaptool.h fsleapexampletool.h )
+  LIST(APPEND viewer_SOURCE_FILES fsleaptool.cpp fsleapexampletool.cpp fsleapmaniptool.cpp )
+  LIST(APPEND viewer_HEADER_FILES fsleaptool.h fsleapexampletool.h fsleapmaniptool.h )
 endif (LEAPMOTION)
 
 if (DARWIN)
@@ -2355,7 +2355,7 @@ if (DARWIN)
   set(MACOSX_BUNDLE_BUNDLE_NAME "CASviewer")
   set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${VIEWER_SHORT_VERSION}")
   set(MACOSX_BUNDLE_BUNDLE_VERSION "${VIEWER_SHORT_VERSION}${VIEWER_MACOSX_PHASE}${VIEWER_REVISION}")
-  set(MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2013 CtrlAltStudio")
+  set(MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2013-2014 CtrlAltStudio")
   # <CV:David> Retain Firestorm filename
   set(MACOSX_BUNDLE_NSMAIN_NIB_FILE "Firestorm.nib")
   set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")

@@ -390,6 +390,9 @@ Czy na pewno chcesz kontynuować?
 		Bufor danych zostanie przeniesiony po restarcie aplikacji [APP_NAME].
 Pamiętaj: Opcja ta wyczyszcza bufor danych.
 	</notification>
+	<notification name="SoundCacheWillBeMoved">
+		Bufor dźwięków zostanie przeniesiony po restarcie aplikacji [APP_NAME].
+	</notification>
 	<notification name="ChangeConnectionPort">
 		Ustawienia portu zostają zaktualizowane po restarcie aplikacji [APP_NAME].
 	</notification>
@@ -1748,6 +1751,10 @@ co przekracza limit [LIMIT].
 		Na pewno chcesz się teleportować do &lt;nolink&gt;[LOCATION]&lt;/nolink&gt;?
 		<usetemplate ignoretext="Potwierdź próbę teleportacji do zapisanego miejsca" name="okcancelignore" notext="Anuluj" yestext="Teleportuj"/>
 	</notification>
+	<notification name="TeleportViaSLAPP">
+		Na pewno chcesz się teleportować do &lt;nolink&gt;[LOCATION]&lt;/nolink&gt;?
+		<usetemplate ignoretext="Potwierdź próbę teleportacji przez SLAPP" name="okcancelignore" notext="Anuluj" yestext="Teleportuj"/>
+	</notification>	
 	<notification name="TeleportToPick">
 		Teleportować do [PICK]?
 		<usetemplate ignoretext="Potwierdź, że chcesz teleportować się do miejsca w Ulubionych" name="okcancelignore" notext="Anuluj" yestext="Teleportuj"/>
@@ -1968,6 +1975,9 @@ Kontynuować?
 	</notification>
 	<notification name="ProblemAddingEstateManager">
 		Problemy z dodawaniem nowego zarządcy majątku. Jeden lub więcej majątków może mieć wypełnioną listę zarządców.
+	</notification>
+	<notification name="ProblemAddingEstateBanManager">
+		Nie można dodać właściciela lub zarządcy majątku na listę banów.
 	</notification>
 	<notification name="ProblemAddingEstateGeneric">
 		Problemy z dodawaniem do listy majątku. Jeden lub więcej majątków może mieć wypełnioną listę.
@@ -2225,6 +2235,14 @@ Chcesz wyłączyć Tryb Zajętości przed zakończeniem tej transakcji?
 	</notification>
 	<notification name="ConfirmClearCache">
 		Na pewno chcesz wyczyścić bufor Przeglądarki?
+		<usetemplate name="okcancelbuttons" notext="Anuluj" yestext="OK"/>
+	</notification>
+	<notification name="ConfirmClearInventoryCache">
+		Na pewno chcesz wyczyścić bufor Szafy?
+		<usetemplate name="okcancelbuttons" notext="Anuluj" yestext="OK"/>
+	</notification>
+	<notification name="ConfirmClearWebBrowserCache">
+		Na pewno chcesz wyczyścić bufor wbudowanej przeglądarki internetowej?
 		<usetemplate name="okcancelbuttons" notext="Anuluj" yestext="OK"/>
 	</notification>
 	<notification name="ConfirmClearCookies">
@@ -3729,10 +3747,10 @@ Obecne ustawienie: [CURRENT_VALUE]
 		Nie można przybliżyć do tego awatara, ponieważ jest poza zasięgiem.
 	</notification>
 	<notification name="TrackAvatarNotPossible">
-		Nie można śledzić tego awatara, ponieważ jest poza zasięgiem.
+		Nie można śledzić tego awatara, ponieważ jest poza zasięgiem radaru.
 	</notification>
 	<notification name="CacheEmpty">
-		Pamięć podręczna Twojej Przeglądarki jest pusta. Miej na uwadze, że możesz przez jakiś czas odczuwać obniżoną wydajność i spowolnione doczytywanie obiektów z Szafy.
+		Pamięć podręczna (bufor danych) Twojej Przeglądarki jest pusta. Miej na uwadze, że możesz przez jakiś czas odczuwać obniżoną wydajność i spowolnione doczytywanie obiektów z Szafy.
 	</notification>
 	<notification name="FirstJoinSupportGroup">
 		Witaj w grupie wsparcia Phoenix/Firestorm!
@@ -3814,6 +3832,9 @@ Anulowano.
 	<notification name="SitFailNotSameRegion">
 		Spróbuj podejść bliżej. Nie można usiąść na obiekcie,
 bo nie jest w tym samym regionie, co Ty.
+	</notification>
+	<notification name="ChatHistoryIsBusyAlert">
+		Plik historii czatu jest w tej chwili przetwarzany przez poprzednią operację. Spróbuj ponownie za kilka minut lub wybierz czat innej osoby.
 	</notification>
 	<notification name="NoNewObjectRegionFull">
 		Nie można utworzyć nowego obiektu. Region jest pełny.
@@ -4065,6 +4086,9 @@ może być pełny lub właśnie restartuje.
 	<notification name="LinkFailedTooMuchPhysics">
 		Obiekt zużywa zbyt dużo zasobów fizycznych -- jego cechy dynamiczne zostały wyłączone.
 	</notification>
+	<notification name="EstateManagerFailedllTeleportHome">
+		Obiekt '[OBJECT_NAME]' na pozycji [SLURL] nie może teleportować zarządców majątku do ich miejsc startu.
+	</notification>
 	<notification name="TeleportedHomeByObjectOnParcel">
 		Zostałeś/aś przeniesiony/a do lokalizacji startowej przez obiekt '[OBJECT_NAME]' na działce '[PARCEL_NAME]'
 	</notification>
@@ -4236,9 +4260,6 @@ może być pełny lub właśnie restartuje.
 	<notification name="UpdateViewerBuyParcel">
 		Musisz zaktualizować swoją przeglądarkę, aby móc kupić tą działkę.
 	</notification>
-	<notification name="LandBuyAccessBlocked">
-		Nie możesz kupić tej ziemi ze względu na swoją klasyfikację wieku. Musisz potwierdzić swój wiek lub/oraz zainstalować najnowszą przeglądarkę. Udaj się proszę do Bazy Wiedzy, aby poznać więcej szczegółów na temat uzyskiwania dostępu z tą klasyfikacją wieku.
-	</notification>
 	<notification name="CantBuyParcelNotForSale">
 		Nie można kupić, ta działka nie jest na sprzedaż.
 	</notification>
@@ -4261,13 +4282,19 @@ może być pełny lub właśnie restartuje.
 		Zbyt mało dzierżawionych działek w zaznaczeniu do przyłączenia.
 	</notification>
 	<notification name="CantDivideLandMultipleParcelsSelected">
-		Nie można podzielić ziemi. Zaznaczono więcej niż jedną działkę. Spróbuj zaznaczyć mniejszy obszar ziemi.
+		Nie można podzielić ziemi.
+Zaznaczono więcej niż jedną działkę.
+Spróbuj zaznaczyć mniejszy obszar ziemi.
 	</notification>
 	<notification name="CantDivideLandCantFindParcel">
-		Nie można podzielić ziemi. Nie można znaleźć działki. Prosimy o zgłoszenie błędu, w menu Pomoc.
+		Nie można podzielić ziemi.
+Nie można znaleźć działki.
+Prosimy o zgłoszenie błędu, w menu Pomoc.
 	</notification>
 	<notification name="CantDivideLandWholeParcelSelected">
-		Nie można podzielić ziemi. Cała działka jest zaznaczona. Spróbuj zaznaczyć mniejszy obszar ziemi.
+		Nie można podzielić ziemi.
+Cała działka jest zaznaczona.
+Spróbuj zaznaczyć mniejszy obszar ziemi.
 	</notification>
 	<notification name="LandHasBeenDivided">
 		Ziemia została podzielona.

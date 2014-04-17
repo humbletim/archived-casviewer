@@ -521,8 +521,8 @@ LLFloater::~LLFloater()
 	
 	if( gFocusMgr.childHasKeyboardFocus(this))
 	{
-	// Just in case we might still have focus here, release it.
-	releaseFocus();
+		// Just in case we might still have focus here, release it.
+		releaseFocus();
 	}
 
 	// This is important so that floaters with persistent rects (i.e., those
@@ -540,7 +540,6 @@ LLFloater::~LLFloater()
 	setVisible(false); // We're not visible if we're destroyed
 	storeVisibilityControl();
 	storeDockStateControl();
-
 	delete mMinimizeSignal;
 }
 
@@ -611,11 +610,6 @@ LLControlGroup*	LLFloater::getControlGroup()
 
 void LLFloater::setVisible( BOOL visible )
 {
-	// Ansariel: This method is called everytime the UI updates.
-	//           Why should we want to update visibility even
-	//           if nothing has changed?
-	if (visible == LLPanel::getVisible()) return;
-
 	LLPanel::setVisible(visible); // calls handleVisibilityChange()
 	if( visible && mFirstLook )
 	{
@@ -1203,7 +1197,11 @@ void LLFloater::handleReshape(const LLRect& new_rect, bool by_user)
 
 	if (by_user && !getHost())
 	{
-		static_cast<LLFloaterView*>(getParent())->adjustToFitScreen(this, !isMinimized());
+		LLFloaterView * floaterVp = dynamic_cast<LLFloaterView*>(getParent());
+		if (floaterVp)
+		{
+			floaterVp->adjustToFitScreen(this, !isMinimized());
+		}
 	}
 
 	// if not minimized, adjust all snapped dependents to new shape
@@ -1414,11 +1412,8 @@ void LLFloater::setFocus( BOOL b )
 	if (b)
 	{
 		// only push focused floaters to front of stack if not in midst of ctrl-tab cycle
-
-		// <FS:ND/> Don't use C-cast to cast between objects.
-		// if (!getHost() && !((LLFloaterView*)getParent())->getCycleMode())
-		LLFloaterView *pParent = dynamic_cast<LLFloaterView*>(getParent());
-		if (!getHost() && pParent && !pParent->getCycleMode() )
+		LLFloaterView * parent = dynamic_cast<LLFloaterView *>(getParent());
+		if (!getHost() && parent && !parent->getCycleMode())
 		{
 			if (!isFrontmost())
 			{
@@ -1688,10 +1683,7 @@ void LLFloater::bringToFront( S32 x, S32 y )
 		}
 		else
 		{
-			// <FS:ND/> Don't use C-cast to cast between objects.
-			// LLFloaterView* parent = (LLFloaterView*) getParent();
 			LLFloaterView* parent = dynamic_cast<LLFloaterView*>( getParent() );
-
 			if (parent)
 			{
 				parent->bringToFront( this );
@@ -1726,16 +1718,15 @@ void LLFloater::setFrontmost(BOOL take_focus)
 		// the appropriate panel
 		hostp->showFloater(this);
 	}
-	else if( getParent() )
+	else
 	{
 		// there are more than one floater view
 		// so we need to query our parent directly
-
-		// <FS:ND/> Don't use C-cast to cast between objects.
-		// ((LLFloaterView*)getParent())->bringToFront(this, take_focus);
-		LLFloaterView* pView = dynamic_cast<LLFloaterView*>(getParent());
-		if( pView )
-			pView->bringToFront(this, take_focus);
+		LLFloaterView * parent = dynamic_cast<LLFloaterView*>( getParent() );
+		if (parent)
+		{
+			parent->bringToFront(this, take_focus);
+		}
 
 		// Make sure to set the appropriate transparency type (STORM-732).
 		updateTransparency(hasFocus() || getIsChrome() ? TT_ACTIVE : TT_INACTIVE);
@@ -1833,6 +1824,9 @@ void LLFloater::onClickTearOff(LLFloater* self)
 	}
 	self->updateTitleButtons();
     self->setOpenPositioning(LLFloaterEnums::POSITIONING_RELATIVE);
+	// <FS:Ansariel> Explicitly call storeVisibilityControl() here so we don't produce
+	//               stale visibility settings, especially if floaters get docked
+	self->storeVisibilityControl();
 }
 
 // static
@@ -1874,6 +1868,14 @@ void LLFloater::initRectControl()
 void LLFloater::closeFrontmostFloater()
 {
 	LLFloater* floater_to_close = gFloaterView->getFrontmostClosableFloater();
+	// <FS:Ansariel> CTRL-W doesn't work with multifloaters
+	LLMultiFloater* multi_floater = dynamic_cast<LLMultiFloater*>(floater_to_close);
+	if (multi_floater)
+	{
+		multi_floater->closeDockedFloater();
+	}
+	else
+	// </FS:Ansariel>
 	if(floater_to_close)
 	{
 		floater_to_close->closeFloater();
@@ -2476,6 +2478,9 @@ LLRect LLFloaterView::findNeighboringPosition( LLFloater* reference_floater, LLF
 
 void LLFloaterView::bringToFront(LLFloater* child, BOOL give_focus)
 {
+	if (!child)
+		return;
+
 	if (mFrontChild == child)
 	{
 		if (give_focus && !gFocusMgr.childHasKeyboardFocus(child))
@@ -2953,9 +2958,9 @@ void LLFloaterView::adjustToFitScreen(LLFloater* floater, BOOL allow_partial_out
 		}
 	}
 
-	const LLRect& left_toolbar_rect = mToolbarRects[LLToolBarEnums::TOOLBAR_LEFT];
-	const LLRect& bottom_toolbar_rect = mToolbarRects[LLToolBarEnums::TOOLBAR_BOTTOM];
-	const LLRect& right_toolbar_rect = mToolbarRects[LLToolBarEnums::TOOLBAR_RIGHT];
+	const LLRect& left_toolbar_rect = mToolbarLeftRect;
+	const LLRect& bottom_toolbar_rect = mToolbarBottomRect;
+	const LLRect& right_toolbar_rect = mToolbarRightRect;
 	const LLRect& floater_rect = floater->getRect();
 
 	S32 delta_left = left_toolbar_rect.notEmpty() ? left_toolbar_rect.mRight - floater_rect.mRight : 0;
@@ -3062,10 +3067,13 @@ LLFloater *LLFloaterView::getFocusedFloater() const
 {
 	for ( child_list_const_iter_t child_it = getChildList()->begin(); child_it != getChildList()->end(); ++child_it)
 	{
-		LLUICtrl* ctrlp = (*child_it)->isCtrl() ? static_cast<LLUICtrl*>(*child_it) : NULL;
-		if ( ctrlp && ctrlp->hasFocus() )
+		if ((*child_it)->isCtrl())
 		{
-			return static_cast<LLFloater *>(ctrlp);
+			LLFloater* ctrlp = dynamic_cast<LLFloater*>(*child_it);
+			if ( ctrlp && ctrlp->hasFocus() )
+			{
+				return ctrlp;
+			}
 		}
 	}
 	return NULL;
@@ -3218,9 +3226,20 @@ void LLFloaterView::popVisibleAll(const skip_list_t& skip_list)
 
 void LLFloaterView::setToolbarRect(LLToolBarEnums::EToolBarLocation tb, const LLRect& toolbar_rect)
 {
-	if (tb < LLToolBarEnums::TOOLBAR_COUNT)
+	switch (tb)
 	{
-		mToolbarRects[tb] = toolbar_rect;
+	case LLToolBarEnums::TOOLBAR_LEFT:
+		mToolbarLeftRect = toolbar_rect;
+		break;
+	case LLToolBarEnums::TOOLBAR_BOTTOM:
+		mToolbarBottomRect = toolbar_rect;
+		break;
+	case LLToolBarEnums::TOOLBAR_RIGHT:
+		mToolbarRightRect = toolbar_rect;
+		break;
+	default:
+		llwarns << "setToolbarRect() passed odd toolbar number " << (S32) tb << llendl;
+		break;
 	}
 }
 

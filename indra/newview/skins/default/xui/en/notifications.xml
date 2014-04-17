@@ -1114,6 +1114,13 @@ If you disable Javascript, the search function will not work properly, and you w
 Cache will be moved after restarting [APP_NAME].
 Note: This will also clear the cache.
   </notification>
+  
+  <notification
+   icon="alertmodal.tga"
+   name="SoundCacheWillBeMoved"
+   type="alertmodal">
+Sound cache will be moved after restarting [APP_NAME].
+  </notification>
 
   <notification
    icon="alertmodal.tga"
@@ -4332,6 +4339,19 @@ Are you sure you want to teleport to &lt;nolink&gt;[LOCATION]&lt;/nolink&gt;?
      notext="Cancel"
      yestext="Teleport"/>
   </notification>
+  
+  <notification
+   icon="alertmodal.tga"
+   name="TeleportViaSLAPP"
+   type="alertmodal">
+Are you sure you want to teleport to &lt;nolink&gt;[LOCATION]&lt;/nolink&gt;?
+    <tag>confirm</tag>
+    <usetemplate
+     ignoretext="Confirm that I want to teleport via SLAPP"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Teleport"/>
+  </notification>	
 
   <notification
    icon="alertmodal.tga"
@@ -5022,6 +5042,14 @@ Problems adding a new estate manager.  One or more estates may have a full manag
 
   <notification
    icon="alertmodal.tga"
+   name="ProblemAddingEstateBanManager"
+   type="alertmodal">
+Unable to add estate owner or manager to ban list.
+    <tag>fail</tag>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="ProblemAddingEstateGeneric"
    type="alertmodal">
 Problems adding to this estate list.  One or more estates may have a full list.
@@ -5659,6 +5687,30 @@ Are you sure you want to delete your travel, web, and search history?
    name="ConfirmClearCache"
    type="alertmodal">
 Are you sure you want to clear your viewer cache?
+    <tag>confirm</tag>
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Cancel"
+     yestext="OK"/>
+  </notification>
+  
+  <notification
+   icon="alertmodal.tga"
+   name="ConfirmClearInventoryCache"
+   type="alertmodal">
+Are you sure you want to clear your inventory cache?
+    <tag>confirm</tag>
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Cancel"
+     yestext="OK"/>
+  </notification>
+  
+  <notification
+   icon="alertmodal.tga"
+   name="ConfirmClearWebBrowserCache"
+   type="alertmodal">
+Are you sure you want to clear your web browser cache?
     <tag>confirm</tag>
     <usetemplate
      name="okcancelbuttons"
@@ -9523,7 +9575,7 @@ Cannot zoom to this avatar, because it is out of reach.
    icon="alertmodal.tga"
    name="TrackAvatarNotPossible"
    type="alertmodal">
-Cannot track this avatar, because it is out of reach.
+Cannot track this avatar, because it is beyond radar range.
   <tag>fail</tag>
   </notification>
 
@@ -9743,6 +9795,16 @@ You cannot sit because you are not allowed on that land.
    <tag>fail</tag>
 Try moving closer.  Can't sit on object because
 it is not in the same region as you.
+  </notification>
+  
+  <notification
+   icon="alert.tga"
+   name="ChatHistoryIsBusyAlert"
+   type="alertmodal">
+   Chat history file is busy with previous operation. Please try again in a few minutes or choose chat with another person.
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
   </notification>
   
   <notification
@@ -10398,8 +10460,17 @@ Object uses too many physics resources -- its dynamics have been disabled.
 
   <notification
    icon="alertmodal.tga"
+   name="EstateManagerFailedllTeleportHome"
+   persist="false"
+   type="notify">
+    <tag>fail</tag>
+The object '[OBJECT_NAME]' at [SLURL] cannot teleport estate managers home.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="TeleportedHomeByObjectOnParcel"
-   persist="true"
+   persist="false"
    type="notify">
    <tag>fail</tag>
 You have been teleported home by the object '[OBJECT_NAME]' on the parcel '[PARCEL_NAME]'
@@ -10408,7 +10479,7 @@ You have been teleported home by the object '[OBJECT_NAME]' on the parcel '[PARC
   <notification
    icon="alertmodal.tga"
    name="TeleportedHomeByObject"
-   persist="true"
+   persist="false"
    type="notify">
    <tag>fail</tag>
 You have been teleported home by the object '[OBJECT_NAME]'
@@ -10852,15 +10923,7 @@ Only the first 10 selected objects have been disabled. Refresh and make addition
    type="notify">
    <tag>fail</tag>
 You need to update your viewer to buy this parcel.
-  </notification>
-
-  <notification
-   icon="alertmodal.tga"
-   name="LandBuyAccessBlocked"
-   type="notify">
-   <tag>fail</tag>
-You can't buy this land due to your maturity Rating. You may need to validate your age and/or install the latest Viewer. Please go to the Knowledge Base for details on accessing areas with this maturity Rating.
-  </notification>
+  </notification>  
 
   <notification
    icon="alertmodal.tga"
@@ -10923,7 +10986,9 @@ Not enough leased parcels in selection to join.
    name="CantDivideLandMultipleParcelsSelected"
    type="notify">
    <tag>fail</tag>
-Can't divide land. There is more than one parcel selected. Try selecting a smaller piece of land.
+Can't divide land.
+There is more than one parcel selected.
+Try selecting a smaller piece of land.
   </notification>
 
   <notification
@@ -10931,7 +10996,9 @@ Can't divide land. There is more than one parcel selected. Try selecting a small
    name="CantDivideLandCantFindParcel"
    type="notify">
    <tag>fail</tag>
-Can't divide land. Can't find the parcel. Please report with Help -> Report Bug...
+Can't divide land.
+Can't find the parcel.
+Please report with Help -> Report Bug...
   </notification>
 
   <notification
@@ -10939,7 +11006,8 @@ Can't divide land. Can't find the parcel. Please report with Help -> Report Bug.
    name="CantDivideLandWholeParcelSelected"
    type="notify">
    <tag>fail</tag>
-Can't divide land. Whole parcel is selected. Try selecting a smaller piece of land.
+Can't divide land. Whole parcel is selected.
+Try selecting a smaller piece of land.
   </notification>
 
   <notification

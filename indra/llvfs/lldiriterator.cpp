@@ -51,7 +51,16 @@ private:
 LLDirIterator::Impl::Impl(const std::string &dirname, const std::string &mask)
 	: mIsValid(false)
 {
+	// <FS:ND> Unicode path on Windows need some extra handling
+
+	// fs::path dir_path(dirname);
+#ifdef LL_WINDOWS
+	fs::path dir_path( utf8str_to_utf16str(dirname) );
+#else
 	fs::path dir_path(dirname);
+#endif                                                                                                                                                                                                                                      
+	
+	// </FS:ND>
 
 	bool is_dir = false;
 
@@ -119,16 +128,25 @@ bool LLDirIterator::Impl::next(std::string &fname)
 
 	fs::directory_iterator end_itr; // default construction yields past-the-end
 	bool found = false;
-	while (mIter != end_itr && !found)
-	{
-		boost::smatch match;
-		std::string name = mIter->path().filename().string();
-		if ((found = boost::regex_match(name, match, mFilterExp)))
-		{
-			fname = name;
-		}
 
-		++mIter;
+	// Check if path is a directory.
+	try
+	{
+		while (mIter != end_itr && !found)
+		{
+			boost::smatch match;
+			std::string name = mIter->path().filename().string();
+			if (found = boost::regex_match(name, match, mFilterExp))
+			{
+				fname = name;
+			}
+
+			++mIter;
+		}
+	}
+	catch (const fs::filesystem_error& e)
+	{
+		llwarns << e.what() << llendl;
 	}
 
 	return found;

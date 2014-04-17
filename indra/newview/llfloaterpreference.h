@@ -155,6 +155,12 @@ protected:
 public:
 
 	void setCacheLocation(const LLStringExplicit& location);
+	// <FS:Ansariel> Sound cache
+	void setSoundCacheLocation(const LLStringExplicit& location);
+	void onClickSetSoundCache();
+	void onClickBrowseSoundCache();
+	void onClickResetSoundCache();
+	// </FS:Ansariel>
 
 	void onClickSetCache();
 	void onClickBrowseCache();
@@ -196,6 +202,10 @@ public:
 	void onClickChatOnlineNotices();
 	void onClickClearSpamList();
 	//void callback_clear_settings(const LLSD& notification, const LLSD& response);
+	// <FS:Ansariel> Clear inventory cache button
+	void onClickInventoryClearCache();
+	// <FS:Ansariel> Clear web browser cache button
+	void onClickWebBrowserClearCache();
 	
 	void updateSliderText(LLSliderCtrl* ctrl, LLTextBox* text_box);
 	void refreshUI();

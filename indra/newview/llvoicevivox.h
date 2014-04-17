@@ -659,6 +659,8 @@ private:
 	LLSocket::ptr_t mSocket;
 	bool mConnected;
 	
+	// We should kill the voice daemon in case of connection alert 
+	bool mTerminateDaemon;
 	
 	LLPumpIO *mPump;
 	friend class LLVivoxProtocolParser;
@@ -781,6 +783,9 @@ private:
 	{
 		earLocCamera = 0,		// ear at camera
 		earLocAvatar,			// ear at avatar
+		// <FS:Ansariel> Equal voice volume; by Tigh MacFanatic
+		earLocSpeaker,			// ear at speaker, speakers not affected by position
+		// </FS:Ansariel>
 		earLocMixed				// ear at avatar location/camera direction
 	};
 	

@@ -387,6 +387,7 @@ void LLMultiFloater::setVisible(BOOL visible)
 
 BOOL LLMultiFloater::handleKeyHere(KEY key, MASK mask)
 {
+	// <FS:Ansariel> This won't work - CTRL-W is intercepted by LLFileCloseWindow!
 	if (key == 'W' && mask == MASK_CONTROL)
 	{
 		LLFloater* floater = getActiveFloater();
@@ -576,3 +577,32 @@ void LLMultiFloater::computeResizeLimits(S32& new_min_width, S32& new_min_height
 		}
 	}
 }
+
+// <FS:Ansariel> CTRL-W doesn't work with multifloaters
+void LLMultiFloater::closeDockedFloater()
+{
+	LLFloater* floater = getActiveFloater();
+	// is user closeable and is system closeable
+	if (floater && floater->canClose() && floater->isCloseable())
+	{
+		floater->closeFloater();
+
+		// EXT-5695 (Tabbed IM window loses focus if close any tabs by Ctrl+W)
+		// bring back focus on tab container if there are any tab left
+		if(mTabContainer->getTabCount() > 0)
+		{
+			mTabContainer->setFocus(TRUE);
+		}
+		else
+		{
+			// Call closeFloater() here so that focus gets properly handed over
+			closeFloater();
+		}
+
+		return;
+	}
+
+	// Close multifloater itself if we can't close any hosted floaters
+	closeFloater();
+}
+// <FS:Ansariel>

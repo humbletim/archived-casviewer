@@ -19,6 +19,9 @@
 	<string name="StartupClearingCache">
 		Cache wird gelöscht...
 	</string>
+	<string name="StartupClearingTextureCache">
+		Textur-Cache wird gelöscht...
+	</string>
 	<string name="StartupInitializingTextureCache">
 		Textur-Cache wird initialisiert...
 	</string>
@@ -28,6 +31,57 @@
 	<string name="StartupRequireDriverUpdate">
 		Grafikinitialisierung fehlgeschlagen. Bitte aktualisieren Sie Ihren Grafiktreiber.
 	</string>
+	<string name="AboutHeader">
+		[APP_NAME] [VIEWER_VERSION_0].[VIEWER_VERSION_1].[VIEWER_VERSION_2] ([VIEWER_VERSION_3]) [BUILD_DATE] [BUILD_TIME] ([CHANNEL]) [BUILD_TYPE]
+[[VIEWER_RELEASE_NOTES_URL] [ReleaseNotes]]
+	</string>
+	<string name="AboutCompiler">
+		Kompiliert mit [COMPILER] version [COMPILER_VERSION]
+	</string>
+	<string name="AboutPosition">
+		Sie befinden sich an [POSITION_LOCAL_0,number,1], [POSITION_LOCAL_1,number,1], [POSITION_LOCAL_2,number,1] in [REGION] auf &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+SLURL: &lt;nolink&gt;[SLURL]&lt;/nolink&gt;
+(globalen Koordinaten [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1])
+[SERVER_VERSION]
+[SERVER_RELEASE_NOTES_URL]
+	</string>
+	<string name="AboutSystem">
+		CPU: [CPU]
+Speicher: [MEMORY_MB] MB
+Betriebssystem: [OS_VERSION]
+Grafikkarten-Hersteller: [GRAPHICS_CARD_VENDOR]
+Grafikkarte: [GRAPHICS_CARD]
+	</string>
+	<string name="AboutDriver">
+		Windows Grafiktreiber-Version: [GRAPHICS_DRIVER_VERSION]
+	</string>
+	<string name="AboutLibs">
+		OpenGL Version: [OPENGL_VERSION]
+
+RestrainedLove API: [RLV_VERSION]
+libcurl-Version: [LIBCURL_VERSION]
+J2C-Decoderversion: [J2C_VERSION]
+Audio-Treiberversion: [AUDIO_DRIVER_VERSION]
+Qt Webkit-Version: [QT_WEBKIT_VERSION]
+Voice-Serverversion: [VOICE_VERSION]
+	</string>
+	<string name="AboutSettings">
+Modus: [MODE]
+Oberflächendesign: [SKIN] ([THEME])
+Schriftart: [FONT] ([FONT_SCREEN_DPI])
+Draw Distance: [DRAW_DISTANCE]
+Bandbreite: [BANDWIDTH]
+LOD-Faktor: [LOD]
+Darstellungsqualität: [RENDERQUALITY]
+Texturspeicher: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
+	</string>
+	<string name="AboutTraffic">
+		Paketverlust: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)
+	</string>
+	<string name="ErrorFetchingServerReleaseNotesURL">
+		Fehler beim Abrufen der URL für die Server-Versionshinweise.
+	</string>
+	
 	<string name="ProgressRestoring">
 		Wird wiederhergestellt...
 	</string>
@@ -4751,10 +4805,10 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		CapsLock
 	</string>
 	<string name="Home">
-		Zuhause
+		Pos1
 	</string>
 	<string name="End">
-		End
+		Ende
 	</string>
 	<string name="PgUp">
 		PgUp
@@ -5223,7 +5277,7 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Mit Leuten in der Nähe chatten (Strg+T)
 	</string>
 	<string name="Command_Conversations_Tooltip">
-		Mit allen unterhalten
+		Mit allen unterhalten (Strg+T)
 	</string>
 	<string name="Command_Compass_Tooltip">
 		Kompass
@@ -5313,7 +5367,7 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Öffnet die Regions- und Grundbesitzverwaltung (Alt+R)
 	</string>
 	<string name="Command_Fly_Tooltip">
-		Flugmodus ein-/ausschalten
+		Flugmodus ein-/ausschalten (Pos1)
 	</string>
 	<string name="Command_Groundsit_Tooltip">
 		Aktiviert/Deaktiviert erzwungenes Sitzen auf dem Boden (Strg+Alt+S)
@@ -5325,10 +5379,10 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Öffnet die Asset-Blacklist mit einer Übersicht über alle geblockten Objekte
 	</string>
 	<string name="Command_Phototools_Tooltip">
-		Erweiterte Fotografie-Tools
+		Erweiterte Fotografie-Tools (Alt+P)
 	</string>
 	<string name="Command_Phototools_View_Tooltip">
-		Erweiterte Kameratools
+		Erweiterte Kameratools (Strg+Umschalt+C)
 	</string>
 	<string name="Command_Contact_Sets_Tooltip">
 		Öffnet die Kontakt-Sets (Strg+Alt+Umschalt+C)
@@ -5340,7 +5394,7 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Erstellt eine Landmarke an der aktuellen Position
 	</string>
 	<string name="Command_Teleport_History_Tooltip">
-		Öffnet die Teleport-Liste
+		Öffnet die Teleport-Liste (Alt+H)
 	</string>
 	<string name="Command_Pose_Stand_Tooltip">
 		Startet den Pose-Stand für den Avatar zum Justieren von Anhängen
@@ -5355,7 +5409,7 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Öffnet das Unterhaltungsprotokoll mit Chatverläufen
 	</string>
 	<string name="Command_Move_Lock_Tooltip">
-		Aktiviert die Movelock-Funktion der Brücke und hält den Avatar an der aktuellen Position
+		Aktiviert die Movelock-Funktion der Brücke und hält den Avatar an der aktuellen Position (Strg+Alt+P)
 	</string>
 	<string name="Command_Blocklist_Tooltip">
 		Öffnet die Blockierliste / Liste der ignorierten Einwohner &amp; Objekte

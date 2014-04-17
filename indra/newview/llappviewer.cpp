@@ -40,6 +40,7 @@
 #include "llagent.h"
 #include "llagentcamera.h"
 #include "llagentlanguage.h"
+#include "llagentui.h"
 #include "llagentwearables.h"
 #include "llfloaterimcontainer.h"
 #include "llwindow.h"
@@ -60,6 +61,7 @@
 #include "llcurl.h"
 #include "llcalc.h"
 #include "llconversationlog.h"
+#include "lldxhardware.h"
 #include "lltexturestats.h"
 #include "lltexturestats.h"
 #include "llviewerwindow.h"
@@ -75,10 +77,10 @@
 #include "lluicolortable.h"
 #include "llurldispatcher.h"
 #include "llurlhistory.h"
-//#include "llfirstuse.h"
 #include "llrender.h"
 #include "llteleporthistory.h"
 #include "lltoast.h"
+#include "llsdutil_math.h"
 #include "lllocationhistory.h"
 #include "llfasttimerview.h"
 #include "llvector4a.h"
@@ -94,7 +96,9 @@
 // [SL:KB] - Patch: Appearance-Misc | Checked: 2013-02-12 (Catznip-3.4)
 #include "llappearancemgr.h"
 // [/SL:KB]
-// [RLVa:KB] - Checked: 2010-05-03 (RLVa-1.2.0g)
+// [RLVa:KB] - Checked: 2010-04-18 (RLVa-1.4.0)
+#include "rlvactions.h"
+#include "rlvhelper.h"
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
@@ -139,10 +143,6 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
-
-// [RLVa:KB] - Checked: 2010-05-03 (RLVa-1.2.0g)
-#include "rlvhandler.h"
-// [/RLVa:KB]
 
 #if LL_WINDOWS
 #	include <share.h> // For _SH_DENYWR in processMarkerFiles
@@ -804,7 +804,8 @@ LLAppViewer::LLAppViewer() :
 	mFastTimerLogThread(NULL),
 	mUpdater(new LLUpdaterService()),
 	mSaveSettingsOnExit(true),		// <FS:Zi> Backup Settings
-	mSettingsLocationList(NULL)
+	mSettingsLocationList(NULL),
+	mPurgeTextures(false) // <FS:Ansariel> FIRE-13066
 {
 	if(NULL != sInstance)
 	{
@@ -896,7 +897,7 @@ bool LLAppViewer::init()
 	initLoggingAndGetLastDuration();
 	
 	processMarkerFiles();
-
+	
 	//
 	// OK to write stuff to logs now, we've now crash reported if necessary
 	//
@@ -1647,8 +1648,8 @@ void LLAppViewer::checkMemory()
 	}
 	mMemCheckTimer.reset() ;
 
-		//update the availability of memory
-		LLMemory::updateMemoryInfo() ;
+	//update the availability of memory
+	LLMemory::updateMemoryInfo() ;
 
 	bool is_low = LLMemory::isMemoryPoolLow() ;
 
@@ -2333,7 +2334,7 @@ bool LLAppViewer::cleanup()
 		gAudiop->setStreamingAudioImpl(NULL);
 
 		// shut down the audio subsystem
-			gAudiop->shutdown();
+        gAudiop->shutdown();
 
 		delete gAudiop;
 		gAudiop = NULL;
@@ -2353,10 +2354,13 @@ bool LLAppViewer::cleanup()
 	removeCacheFiles("*.tmp");
 	removeCacheFiles("*.lso");
 	removeCacheFiles("*.out");
-	if(!gSavedSettings.getBOOL("FSKeepUnpackedCacheFiles"))
+	// <FS:Ansariel> Sound cache
+	//removeCacheFiles("*.dsf");
+	if (!gSavedSettings.getBOOL("FSKeepUnpackedCacheFiles"))
 	{
-		removeCacheFiles("*.dsf");
+		gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_FS_SOUND_CACHE, ""), "*.dsf");
 	}
+	// </FS:Ansariel>
 	removeCacheFiles("*.bodypart");
 	removeCacheFiles("*.clothing");
 
@@ -2549,6 +2553,8 @@ bool LLAppViewer::cleanup()
 	{
 		llinfos << "Purging all cache files on exit" << llendflush;
 		gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_CACHE,""), "*.*");
+		// <FS:Ansariel> Sound cache
+		gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_FS_SOUND_CACHE, ""), "*.*");
 	}
 
 	removeMarkerFile(); // Any crashes from here on we'll just have to ignore
@@ -3306,9 +3312,9 @@ bool LLAppViewer::initConfiguration()
                 {
 					llwarns << "Failed --set " << name << ": setting name unknown." << llendl;
                 }
+                }
             }
         }
-    }
 
     if  (clp.hasOption("logevents")) {
 	LLViewerEventRecorder::instance().setEventLoggingOn();
@@ -3316,7 +3322,7 @@ bool LLAppViewer::initConfiguration()
 
 	std::string CmdLineChannel(gSavedSettings.getString("CmdLineChannel"));
 	if(! CmdLineChannel.empty())
-    {
+	{
 		LLVersionInfo::resetChannel(CmdLineChannel);
 	}
 
@@ -3328,16 +3334,16 @@ bool LLAppViewer::initConfiguration()
 		LLFastTimer::sLog = TRUE;
 		LLFastTimer::sLogName = std::string("performance");		
 	}
-	
+
 	std::string test_name(gSavedSettings.getString("LogMetrics"));
 	if (! test_name.empty())
- 	{
+	{
  		LLFastTimer::sMetricLog = TRUE ;
 		// '--logmetrics' is specified with a named test metric argument so the data gathering is done only on that test
 		// In the absence of argument, every metric would be gathered (makes for a rather slow run and hard to decipher report...)
 		llinfos << "'--logmetrics' argument : " << test_name << llendl;
 			LLFastTimer::sLogName = test_name;
-		}
+ 	}
 
 	if (clp.hasOption("graphicslevel"))
 	{
@@ -3346,14 +3352,14 @@ bool LLAppViewer::initConfiguration()
 		// that value for validity.
 		U32 graphicslevel = gSavedSettings.getU32("RenderQualityPerformance");
 		if (LLFeatureManager::instance().isValidGraphicsLevel(graphicslevel))
-        {
+		{
 			// graphicslevel is valid: save it and engage it later. Capture
 			// the requested value separately from the settings variable
 			// because, if this is the first run, LLViewerWindow's constructor
 			// will call LLFeatureManager::applyRecommendedSettings(), which
 			// overwrites this settings variable!
 			mForceGraphicsLevel = graphicslevel;
-        }
+		}
 	}
 
 	LLFastTimerView::sAnalyzePerformance = gSavedSettings.getBOOL("AnalyzePerformance");
@@ -3392,17 +3398,37 @@ bool LLAppViewer::initConfiguration()
 	// but rather it belongs into the gridmanager)
 	std::string CmdLineLoginLocation(gSavedSettings.getString("CmdLineLoginLocation"));
 	if(! CmdLineLoginLocation.empty())
-    {
+	{
 		start_slurl = CmdLineLoginLocation;
 		// <FS:Ansariel> FIRE-11586: Restore grid manager workaround (grid is still empty here!)
 		//LLStartUp::setStartSLURL(start_slurl);
 		//if(start_slurl.getType() == LLSLURL::LOCATION) 
 		//{  
 		//	LLGridManager::getInstance()->setGridChoice(start_slurl.getGrid());
-  //  }
+		//}
 		LLStartUp::setStartSLURLString(CmdLineLoginLocation);
 		// </FS:Ansariel>
-    }
+
+	}
+
+	//RN: if we received a URL, hand it off to the existing instance.
+	// don't call anotherInstanceRunning() when doing URL handoff, as
+	// it relies on checking a marker file which will not work when running
+	// out of different directories
+
+	if (start_slurl.isValid() &&
+		(gSavedSettings.getBOOL("SLURLPassToOtherInstance")))
+	{
+		// <FS:Ansariel> FIRE-11586: Temporary fix until grid manager has been reworked
+		//if (sendURLToOtherInstance(start_slurl.getSLURLString()))
+		if (sendURLToOtherInstance(CmdLineLoginLocation))
+		// </FS:Ansariel>
+		{  
+			// successfully handed off URL to existing instance, exit
+			return false;
+		}
+	}
+
 
 	// <FS:TT> Hacking to save the skin and theme for future use.
 	mCurrentSkin = gSavedSettings.getString("SkinCurrent");
@@ -3495,19 +3521,20 @@ bool LLAppViewer::initConfiguration()
 	// don't call anotherInstanceRunning() when doing URL handoff, as
 	// it relies on checking a marker file which will not work when running
 	// out of different directories
-
-	if (start_slurl.isValid() &&
-		(gSavedSettings.getBOOL("SLURLPassToOtherInstance")))
-	{
-		// <FS:Ansariel> FIRE-11586: Temporary fix until grid manager has been reworked
-		//if (sendURLToOtherInstance(start_slurl.getSLURLString()))
-		if (sendURLToOtherInstance(CmdLineLoginLocation))
-		// </FS:Ansariel>
-		{
-			// successfully handed off URL to existing instance, exit
-			return false;
-		}
-	}
+	// <FS:Ansariel> Duplicate call
+	//if (start_slurl.isValid() &&
+	//	(gSavedSettings.getBOOL("SLURLPassToOtherInstance")))
+	//{
+	//	// <FS:Ansariel> FIRE-11586: Temporary fix until grid manager has been reworked
+	//	//if (sendURLToOtherInstance(start_slurl.getSLURLString()))
+	//	if (sendURLToOtherInstance(CmdLineLoginLocation))
+	//	// </FS:Ansariel>
+	//	{
+	//		// successfully handed off URL to existing instance, exit
+	//		return false;
+	//	}
+	//}
+	// </FS:Ansariel>
 
 	//
 	// Check for another instance of the app running
@@ -3528,7 +3555,10 @@ bool LLAppViewer::initConfiguration()
 		// This is the second instance of SL. Turn off voice support,
 		// but make sure the setting is *not* persisted.
 		LLControlVariable* disable_voice = gSavedSettings.getControl("CmdLineDisableVoice");
-		if(disable_voice)
+		// <FS:Ansariel> Voice in multiple instances; by Latif Khalifa
+		//if(disable_voice)
+		if(disable_voice && !gSavedSettings.getBOOL("VoiceMultiInstance"))
+		// </FS:Ansariel>
 		{
 			const BOOL DO_NOT_PERSIST = FALSE;
 			disable_voice->setValue(LLSD(TRUE), DO_NOT_PERSIST);
@@ -3733,26 +3763,26 @@ namespace {
 		{
 			LL_WARNS("UpdaterService") << "no info url supplied - defaulting to hard coded release notes pattern" << LL_ENDL;
 
-		// truncate version at the rightmost '.' 
-		std::string version_short(data["version"]);
-		size_t short_length = version_short.rfind('.');
-		if (short_length != std::string::npos)
-		{
-			version_short.resize(short_length);
-		}
+			// truncate version at the rightmost '.' 
+			std::string version_short(data["version"]);
+			size_t short_length = version_short.rfind('.');
+			if (short_length != std::string::npos)
+			{
+				version_short.resize(short_length);
+			}
 
-		LLUIString relnotes_url("[RELEASE_NOTES_BASE_URL][CHANNEL_URL]/[VERSION_SHORT]");
-		relnotes_url.setArg("[VERSION_SHORT]", version_short);
+			LLUIString relnotes_url("[RELEASE_NOTES_BASE_URL][CHANNEL_URL]/[VERSION_SHORT]");
+			relnotes_url.setArg("[VERSION_SHORT]", version_short);
 
-		// *TODO thread the update service's response through to this point
-		std::string const & channel = LLVersionInfo::getChannel();
-		boost::shared_ptr<char> channel_escaped(curl_escape(channel.c_str(), channel.size()), &curl_free);
+			// *TODO thread the update service's response through to this point
+			std::string const & channel = LLVersionInfo::getChannel();
+			boost::shared_ptr<char> channel_escaped(curl_escape(channel.c_str(), channel.size()), &curl_free);
 
-		relnotes_url.setArg("[CHANNEL_URL]", channel_escaped.get());
-		relnotes_url.setArg("[RELEASE_NOTES_BASE_URL]", LLTrans::getString("RELEASE_NOTES_BASE_URL"));
+			relnotes_url.setArg("[CHANNEL_URL]", channel_escaped.get());
+			relnotes_url.setArg("[RELEASE_NOTES_BASE_URL]", LLTrans::getString("RELEASE_NOTES_BASE_URL"));
 			substitutions["INFO_URL"] = relnotes_url.getString();
 		}
-
+		
 		LLNotificationsUtil::add(notification_name, substitutions, LLSD(), apply_callback);
 	}
 
@@ -3987,7 +4017,7 @@ bool LLAppViewer::initWindow()
 		LLFeatureManager::getInstance()->setGraphicsLevel(*mForceGraphicsLevel, false);
 		gSavedSettings.setU32("RenderQualityPerformance", *mForceGraphicsLevel);
 	}
-			
+
 	// Set this flag in case we crash while initializing GL
 	gSavedSettings.setBOOL("RenderInitError", TRUE);
 	gSavedSettings.saveToFile( gSavedSettings.getString("ClientSettingsFile"), TRUE );
@@ -4045,6 +4075,285 @@ void LLAppViewer::writeDebugInfo()
 	LLSDSerialize::toPrettyXML(gDebugInfo, out_file);
 	out_file.close();
 }
+
+LLSD LLAppViewer::getViewerInfo() const
+{
+	// The point of having one method build an LLSD info block and the other
+	// construct the user-visible About string is to ensure that the same info
+	// is available to a getInfo() caller as to the user opening
+	// LLFloaterAbout.
+	LLSD info;
+	LLSD version;
+	version.append(LLVersionInfo::getMajor());
+	version.append(LLVersionInfo::getMinor());
+	version.append(LLVersionInfo::getPatch());
+	version.append(LLVersionInfo::getBuild());
+	info["VIEWER_VERSION"] = version;
+	info["VIEWER_VERSION_STR"] = LLVersionInfo::getVersion();
+	info["BUILD_DATE"] = __DATE__;
+	info["BUILD_TIME"] = __TIME__;
+	info["CHANNEL"] = LLVersionInfo::getChannel();
+
+// <FS:CR> FIRE-8273: Add Open-sim indicator to About floater
+#ifdef OPENSIM
+	info["BUILD_TYPE"] = LLTrans::getString("FSWithOpensim");
+#else
+	info["BUILD_TYPE"] = LLTrans::getString("FSWithHavok");
+#endif // OPENSIM
+// </FS:CR>
+	info["SKIN"] = gSavedSettings.getString("FSInternalSkinCurrent");
+	info["THEME"] = gSavedSettings.getString("FSInternalSkinCurrentTheme");
+
+	//[FIRE 3113 : SJ] Added Font and fontsize to info
+	info["FONT"] = "Unknown Font";
+	std::string fsInternalFontSettingsFile = gSavedSettings.getString("FSInternalFontSettingsFile");
+	if (fsInternalFontSettingsFile == "fonts.xml") info["FONT"] = "Deja Vu";
+	else if (fsInternalFontSettingsFile == "fonts_ubuntu.xml") info["FONT"] = "Ubuntu Font Family";
+	else if (fsInternalFontSettingsFile == "fonts_liberation.xml") info["FONT"] = "Liberation";
+	else if (fsInternalFontSettingsFile == "fonts_droid.xml") info["FONT"] = "Droid Sans";
+	else if (fsInternalFontSettingsFile == "fonts_mobi.xml") info["FONT"] = "Mobi Sans";
+	else if (fsInternalFontSettingsFile == "fonts_roboto.xml") info["FONT"] = "Roboto";
+	else if (fsInternalFontSettingsFile == "fonts_dyslexia.xml") info["FONT"] = "OpenDyslexic";
+	
+	info["FONT_SIZE"] = gSavedSettings.getF32("FSFontSizeAdjustment");
+	info["FONT_SCREEN_DPI"] = gSavedSettings.getF32("FontScreenDPI");
+
+	//[FIRE-3923 : SJ] Added Drawdistance, bandwidth and LOD to info
+	info["DRAW_DISTANCE"] = gSavedSettings.getF32("RenderFarClip");
+	info["BANDWIDTH"] = gSavedSettings.getF32("ThrottleBandwidthKBPS");
+	info["LOD"] =gSavedSettings.getF32("RenderVolumeLODFactor");
+
+	//[FIRE 3113 : SJ] Added Settingsfile to info
+	info["MODE"] = "Unknown Mode";
+	std::string sessionSettingsFile = gSavedSettings.getString("SessionSettingsFile");
+	if (sessionSettingsFile == "settings_firestorm.xml") info["MODE"] = "Firestorm";
+	else if (sessionSettingsFile == "settings_phoenix.xml") info["MODE"] = "Phoenix";
+	else if (sessionSettingsFile == "settings_v3.xml") info["MODE"] = "Viewer 3";
+	else if (sessionSettingsFile == "settings_hybrid.xml") info["MODE"] = "Hybrid";
+	else if (sessionSettingsFile == "settings_latency.xml") info["MODE"] = "Latency";
+
+	// return a URL to the release notes for this viewer, such as:
+	// http://wiki.secondlife.com/wiki/Release_Notes/Second Life Beta Viewer/2.1.0.123456
+	std::string url = LLTrans::getString("RELEASE_NOTES_BASE_URL");
+	if (! LLStringUtil::endsWith(url, "/"))
+		url += "/";
+	url += LLURI::escape(LLVersionInfo::getChannel()) + "/";
+	url += LLURI::escape(LLVersionInfo::getVersion());
+
+	info["VIEWER_RELEASE_NOTES_URL"] = url;
+
+#if LL_MSVC
+	info["COMPILER"] = "MSVC";
+	info["COMPILER_VERSION"] = _MSC_VER;
+#elif LL_CLANG	// <FS:CR> Clang identification
+	info["COMPILER"] = "Clang";
+	info["COMPILER_VERSION"] = CLANG_VERSION_STRING;
+#elif LL_GNUC
+	info["COMPILER"] = "GCC";
+	info["COMPILER_VERSION"] = GCC_VERSION;
+#endif
+
+	// Position
+	LLViewerRegion* region = gAgent.getRegion();
+	if (region)
+	{
+		LLVector3d pos = gAgent.getPositionGlobal();
+		info["POSITION"] = ll_sd_from_vector3d(pos);
+		info["POSITION_LOCAL"] = ll_sd_from_vector3(gAgent.getPosAgentFromGlobal(pos));
+		info["REGION"] = gAgent.getRegion()->getName();
+		info["HOSTNAME"] = gAgent.getRegion()->getHost().getHostName();
+		info["HOSTIP"] = gAgent.getRegion()->getHost().getString();
+		info["SERVER_VERSION"] = gLastVersionChannel;
+		LLSLURL slurl;
+		LLAgentUI::buildSLURL(slurl);
+		info["SLURL"] = slurl.getSLURLString();
+	}
+
+	// CPU
+	info["CPU"] = gSysCPU.getCPUString();
+	info["MEMORY_MB"] = LLSD::Integer(gSysMemory.getPhysicalMemoryKB() / 1024);
+	// Moved hack adjustment to Windows memory size into llsys.cpp
+	info["OS_VERSION"] = LLAppViewer::instance()->getOSInfo().getOSString();
+	info["GRAPHICS_CARD_VENDOR"] = (const char*)(glGetString(GL_VENDOR));
+	info["GRAPHICS_CARD"] = (const char*)(glGetString(GL_RENDERER));
+
+#if LL_WINDOWS
+	LLSD driver_info = gDXHardware.getDisplayInfo();
+	if (driver_info.has("DriverVersion"))
+	{
+		info["GRAPHICS_DRIVER_VERSION"] = driver_info["DriverVersion"];
+	}
+#endif
+
+// [RLVa:KB] - Checked: 2010-04-18 (RLVa-1.2.0)
+	info["RLV_VERSION"] = (RlvActions::isRlvEnabled()) ? RlvStrings::getVersionAbout() : "(disabled)";
+// [/RLVa:KB]
+	info["OPENGL_VERSION"] = (const char*)(glGetString(GL_VERSION));
+	info["LIBCURL_VERSION"] = LLCurl::getVersionString();
+	info["J2C_VERSION"] = LLImageJ2C::getEngineInfo();
+	bool want_fullname = true;
+	info["AUDIO_DRIVER_VERSION"] = gAudiop ? LLSD(gAudiop->getDriverName(want_fullname)) : LLSD();
+	if(LLVoiceClient::getInstance()->voiceEnabled())
+	{
+		LLVoiceVersionInfo version = LLVoiceClient::getInstance()->getVersion();
+		std::ostringstream version_string;
+		version_string << version.serverType << " " << version.serverVersion << std::endl;
+		info["VOICE_VERSION"] = version_string.str();
+	}
+	else 
+	{
+		info["VOICE_VERSION"] = LLTrans::getString("NotConnected");
+	}
+
+	// TODO: Implement media plugin version query
+	info["QT_WEBKIT_VERSION"] = "4.7.1 (version number hard-coded)";
+
+	if (gPacketsIn > 0)
+	{
+		info["PACKETS_LOST"] = LLViewerStats::getInstance()->mPacketsLostStat.getCurrent();
+		// <FS:Ansariel> FIRE-3925: Formatting fails when reaching 1,000,000;
+		//               Use S32 since it will be used in LLStringUtil::formatNumber anyway.
+		//info["PACKETS_IN"] = F32(gPacketsIn);
+		info["PACKETS_IN"] = S32(gPacketsIn);
+		// </FS:Ansariel>
+		info["PACKETS_PCT"] = 100.f*info["PACKETS_LOST"].asReal() / info["PACKETS_IN"].asReal();
+	}
+
+	if (mServerReleaseNotesURL.empty())
+	{
+		if (gAgent.getRegion())
+		{
+			info["SERVER_RELEASE_NOTES_URL"] = LLTrans::getString("RetrievingData");
+		}
+	}
+	else if (LLStringUtil::startsWith(mServerReleaseNotesURL, "http")) // it's an URL
+	{
+		info["SERVER_RELEASE_NOTES_URL"] = "[" + LLWeb::escapeURL(mServerReleaseNotesURL) + " " + LLTrans::getString("ReleaseNotes") + "]";
+	}
+	else
+	{
+		info["SERVER_RELEASE_NOTES_URL"] = mServerReleaseNotesURL;
+	}
+
+	// <FS:PP> FIRE-4785: Current render quality setting in sysinfo / about floater
+	switch (gSavedSettings.getU32("RenderQualityPerformance"))
+	{
+		case 0:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_low");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Low (1/7)";
+			break;
+		case 1:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_mediumlow");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Medium-Low (2/7)";
+			break;
+		case 2:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_medium");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Medium (3/7)";
+			break;
+		case 3:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_mediumhigh");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Medium-High (4/7)";
+			break;
+		case 4:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_high");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "High (5/7)";
+			break;
+		case 5:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_highultra");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "High-Ultra (6/7)";
+			break;
+		case 6:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_ultra");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Ultra (7/7)";
+			break;
+		default:
+			info["RENDERQUALITY"] = LLTrans::getString("render_quality_unknown");
+			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Unknown, user has RenderQualityPerformance debug setting beyond the normal range (0-6)";
+			break;
+	}
+	// </FS:PP>
+
+	// <FS:Ansariel> FIRE-11768: Include texture memory settings
+	info["TEXTUREMEMORY"] = gSavedSettings.getS32("TextureMemory");
+	info["TEXTUREMEMORYMULTIPLIER"] = gSavedSettings.getF32("RenderTextureMemoryMultiple");
+	// </FS:Ansariel>
+
+	return info;
+}
+
+std::string LLAppViewer::getViewerInfoString() const
+{
+	std::ostringstream support;
+
+	LLSD info(getViewerInfo());
+
+	// Render the LLSD from getInfo() as a format_map_t
+	LLStringUtil::format_map_t args;
+
+	// allow the "Release Notes" URL label to be localized
+	args["ReleaseNotes"] = LLTrans::getString("ReleaseNotes");
+
+	for (LLSD::map_const_iterator ii(info.beginMap()), iend(info.endMap());
+		ii != iend; ++ii)
+	{
+		if (! ii->second.isArray())
+		{
+			// Scalar value
+			if (ii->second.isUndefined())
+			{
+				args[ii->first] = LLTrans::getString("none_text");
+			}
+			else
+			{
+				// don't forget to render value asString()
+				args[ii->first] = ii->second.asString();
+			}
+		}
+		else
+		{
+			// array value: build KEY_0, KEY_1 etc. entries
+			for (LLSD::Integer n(0), size(ii->second.size()); n < size; ++n)
+			{
+				args[STRINGIZE(ii->first << '_' << n)] = ii->second[n].asString();
+			}
+		}
+	}
+
+	// Now build the various pieces
+	support << LLTrans::getString("AboutHeader", args);
+	if (info.has("REGION"))
+	{
+// [RLVa:KB] - Checked: 2014-02-24 (RLVa-1.4.10)
+		support << "\n\n";
+		if (RlvActions::canShowLocation())
+			support << LLTrans::getString("AboutPosition", args);
+		else
+			support << RlvStrings::getString(RLV_STRING_HIDDEN_REGION);
+// [/RLVa:KB]
+		//support << "\n\n" << LLTrans::getString("AboutPosition", args);
+	}
+	support << "\n\n" << LLTrans::getString("AboutSystem", args);
+	support << "\n";
+	if (info.has("GRAPHICS_DRIVER_VERSION"))
+	{
+		support << "\n" << LLTrans::getString("AboutDriver", args);
+	}
+	support << "\n" << LLTrans::getString("AboutLibs", args);
+	if (info.has("BANDWIDTH")) //For added info in help floater
+	{
+		support << "\n" << LLTrans::getString("AboutSettings", args);
+	}
+	if (info.has("COMPILER"))
+	{
+		support << "\n" << LLTrans::getString("AboutCompiler", args);
+	}
+	if (info.has("PACKETS_IN"))
+	{
+		support << '\n' << LLTrans::getString("AboutTraffic", args);
+	}
+	return support.str();
+}
+
 
 void LLAppViewer::cleanupSavedSettings()
 {
@@ -4308,9 +4617,9 @@ void LLAppViewer::handleViewerCrash()
 	if (gDirUtilp)
 	{
 		std::string crash_marker_file_name = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-																			gLLErrorActivated
-																			? LLERROR_MARKER_FILE_NAME
-																			: ERROR_MARKER_FILE_NAME);
+																	 gLLErrorActivated
+																	 ? LLERROR_MARKER_FILE_NAME
+																	 : ERROR_MARKER_FILE_NAME);
 		LLAPRFile crash_marker_file ;
 		crash_marker_file.open(crash_marker_file_name, LL_APR_WB);
 		if (crash_marker_file.getFileHandle())
@@ -4321,7 +4630,7 @@ void LLAppViewer::handleViewerCrash()
 		else
 		{
 			LL_WARNS("MarkerFile") << "Cannot create error marker file " << crash_marker_file_name << LL_ENDL;
-		}
+		}		
 	}
 	else
 	{
@@ -4466,7 +4775,7 @@ void LLAppViewer::processMarkerFiles()
 		}
 
 		if (mSecondInstance)
-		{
+	{
 			LL_INFOS("MarkerFile") << "Exec marker '"<< mMarkerFileName << "' owned by another instance" << LL_ENDL;
 		}
 		else if (marker_is_same_version)
@@ -4480,7 +4789,7 @@ void LLAppViewer::processMarkerFiles()
 		{
 			LL_INFOS("MarkerFile") << "Exec marker '"<< mMarkerFileName << "' found, but versions did not match" << LL_ENDL;
 		}
-	}
+	}    
 	else // marker did not exist... last exec (if any) did not freeze
 	{
 		// Create the marker file for this execution & lock it; it will be deleted on a clean exit
@@ -4534,12 +4843,12 @@ void LLAppViewer::processMarkerFiles()
 			{
 				gLastExecEvent = LAST_EXEC_LOGOUT_CRASH;
 				LL_INFOS("MarkerFile") << "LLError marker '"<< llerror_marker_file << "' crashed, setting LastExecEvent to LOGOUT_CRASH" << LL_ENDL;
-			}
-			else
-			{
+		}
+		else
+		{
 				gLastExecEvent = LAST_EXEC_LLERROR_CRASH;
 				LL_INFOS("MarkerFile") << "LLError marker '"<< llerror_marker_file << "' crashed, setting LastExecEvent to LLERROR_CRASH" << LL_ENDL;
-			}
+		}
 		}
 		else
 		{
@@ -4552,20 +4861,20 @@ void LLAppViewer::processMarkerFiles()
 	if(LLAPRFile::isExist(error_marker_file, NULL, LL_APR_RB))
 	{
 		if (markerIsSameVersion(error_marker_file))
-		{
+	{
 			if (gLastExecEvent == LAST_EXEC_LOGOUT_FROZE)
-			{
+		{
 				gLastExecEvent = LAST_EXEC_LOGOUT_CRASH;
 				LL_INFOS("MarkerFile") << "Error marker '"<< error_marker_file << "' crashed, setting LastExecEvent to LOGOUT_CRASH" << LL_ENDL;
-			}
-			else
-			{
-				gLastExecEvent = LAST_EXEC_OTHER_CRASH;
-				LL_INFOS("MarkerFile") << "Error marker '"<< error_marker_file << "' crashed, setting LastExecEvent to " << gLastExecEvent << LL_ENDL;
-			}
 		}
 		else
 		{
+				gLastExecEvent = LAST_EXEC_OTHER_CRASH;
+				LL_INFOS("MarkerFile") << "Error marker '"<< error_marker_file << "' crashed, setting LastExecEvent to " << gLastExecEvent << LL_ENDL;
+		}
+	}
+	else
+	{
 			LL_INFOS("MarkerFile") << "Error marker '"<< error_marker_file << "' marker found, but versions did not match" << LL_ENDL;
 		}
 		LLAPRFile::remove(error_marker_file);
@@ -4577,29 +4886,29 @@ void LLAppViewer::removeMarkerFile(bool leave_logout_marker)
 	if (!mSecondInstance)
 	{		
 		LL_DEBUGS("MarkerFile") << (leave_logout_marker?"leave":"remove") <<" logout" << LL_ENDL;
-		if (mMarkerFile.getFileHandle())
-		{
+	if (mMarkerFile.getFileHandle())
+	{
 			LL_DEBUGS("MarkerFile") << "removing exec marker '"<<mMarkerFileName<<"'"<< LL_ENDL;
 			mMarkerFile.close() ;
-			LLAPRFile::remove( mMarkerFileName );
+		LLAPRFile::remove( mMarkerFileName );
+	}
+	else
+	{
+			LL_WARNS("MarkerFile") << "marker '"<<mMarkerFileName<<"' not open"<< LL_ENDL;
+	}
+	if (!leave_logout_marker)
+	{
+		if (mLogoutMarkerFile.getFileHandle())
+		{
+				LL_DEBUGS("MarkerFile") << "removing logout marker '"<<mLogoutMarkerFileName<<"'"<< LL_ENDL;
+			mLogoutMarkerFile.close();
 		}
 		else
 		{
-			LL_WARNS("MarkerFile") << "marker '"<<mMarkerFileName<<"' not open"<< LL_ENDL;
-		}
-		if (!leave_logout_marker)
-		{
-			if (mLogoutMarkerFile.getFileHandle())
-			{
-				LL_DEBUGS("MarkerFile") << "removing logout marker '"<<mLogoutMarkerFileName<<"'"<< LL_ENDL;
-				mLogoutMarkerFile.close();
-			}
-			else
-			{
 				LL_WARNS("MarkerFile") << "logout marker '"<<mLogoutMarkerFileName<<"' not open"<< LL_ENDL;
-			}
-			LLAPRFile::remove( mLogoutMarkerFileName );
 		}
+		LLAPRFile::remove( mLogoutMarkerFileName );
+	}
 	}
 	else
 	{
@@ -4901,26 +5210,38 @@ bool LLAppViewer::initCache()
 
 	if(!read_only)
 	{
+		// <FS:Ansariel> Clear inventory cache button
+		std::string clear_inventory_agent_id = gSavedSettings.getString("FSPurgeInventoryCacheOnStartup");
+		if (clear_inventory_agent_id != std::string())
+		{
+			gSavedSettings.setString("FSPurgeInventoryCacheOnStartup", std::string());
+			std::string inv_cache_file = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, clear_inventory_agent_id + ".inv.gz");
+			LL_INFOS("LLAppViewer") << "Purging inventory cache file: " << inv_cache_file << LL_ENDL;
+			LLFile::remove(inv_cache_file);
+		}
+		// </FS:Ansariel>
+
 		// Purge cache if user requested it
 		if (gSavedSettings.getBOOL("PurgeCacheOnStartup") ||
 			gSavedSettings.getBOOL("PurgeCacheOnNextStartup"))
 		{
 			gSavedSettings.setBOOL("PurgeCacheOnNextStartup", false);
-			llinfos << "Scheduling texture purge, based on PurgeCache* settings." << llendl;
+			LL_INFOS("AppCache") << "Scheduling texture purge, based on PurgeCache* settings." << LL_ENDL;
 			mPurgeCache = true;
 			// STORM-1141 force purgeAllTextures to get called to prevent a crash here. -brad
 			texture_cache_mismatch = true;
 		}
 		
-		// If the J2C has changed since the last run, clear the cache
+		// <FS> If the J2C has changed since the last run, clear the cache
 		const std::string j2c_info = LLImageJ2C::getEngineInfo();
 		const std::string j2c_last = gSavedSettings.getString("LastJ2CVersion");
 		if (j2c_info != j2c_last && !j2c_last.empty())
 		{
-			llinfos << "Scheduling texture purge, based on LastJ2CVersion mismatch." << llendl;
-			mPurgeCache = true;
+			LL_INFOS("AppCache") << "Scheduling texture purge, based on LastJ2CVersion mismatch." << LL_ENDL;
+			mPurgeTextures = true;
 		}
 		gSavedSettings.setString("LastJ2CVersion", j2c_info);
+		// </FS>
 	
 		// We have moved the location of the cache directory over time.
 		migrateCacheDirectory();
@@ -4945,12 +5266,29 @@ bool LLAppViewer::initCache()
 		gSavedSettings.setString("CacheLocation", "");
 		gSavedSettings.setString("CacheLocationTopFolder", "");
 	}
+
+	// <FS:Ansariel> Sound cache
+	if (!gDirUtilp->setSoundCacheDir(gSavedSettings.getString("FSSoundCacheLocation")))
+	{
+		LL_WARNS("AppCache") << "Unable to set sound cache location" << LL_ENDL;
+		gSavedSettings.setString("FSSoundCacheLocation", "");
+	}
+	// </FS:Ansariel>
 	
 	if (mPurgeCache && !read_only)
 	{
 		LLSplashScreen::update(LLTrans::getString("StartupClearingCache"));
 		purgeCache();
 	}
+
+	// <FS:Ansariel> FIRE-13066
+	if (mPurgeTextures && !read_only)
+	{
+		LL_INFOS("AppCache") << "Purging Texture Cache..." << LL_ENDL;
+		LLSplashScreen::update(LLTrans::getString("StartupClearingTextureCache"));
+		LLAppViewer::getTextureCache()->purgeCache(LL_PATH_CACHE);
+	}
+	// </FS:Ansariel>
 
 	LLSplashScreen::update(LLTrans::getString("StartupInitializingTextureCache"));
 	
@@ -5619,7 +5957,7 @@ void LLAppViewer::idle()
 		
         if (!(logoutRequestSent() && hasSavedFinalSnapshot()))
 		{
-			gObjectList.update(gAgent, *LLWorld::getInstance());
+			gObjectList.update(gAgent);
 		}
 	}
 	
@@ -6414,7 +6752,7 @@ void LLAppViewer::handleLoginComplete()
 
 void LLAppViewer::launchUpdater()
 {
-		LLSD query_map = LLSD::emptyMap();
+	LLSD query_map = LLSD::emptyMap();
 	query_map["os"] = gPlatform;
 
 	// *TODO change userserver to be grid on both viewer and sim, since
@@ -6615,7 +6953,7 @@ void LLAppViewer::metricsSend(bool enable_reporting)
 			// Make a copy of the main stats to send into another thread.
 			// Receiving thread takes ownership.
 			LLViewerAssetStats * main_stats(new LLViewerAssetStats(*gViewerAssetStatsMain));
-			
+
 			// Send a report request into 'thread1' to get the rest of the data
 			// and provide some additional parameters while here.
 			LLAppViewer::sTextureFetch->commandSendMetrics(caps_url,

@@ -116,7 +116,7 @@
 #include "llsdserialize.h"
 
 // Firestorm Includes
-#include "fscontactsfloater.h" // TS: sort contacts list
+#include "fsfloatercontacts.h" // TS: sort contacts list
 #include "fsfloaterimcontainer.h"
 #include "growlmanager.h"
 #include "llavatarname.h"	// <FS:CR> Deeper name cache stuffs
@@ -221,6 +221,7 @@ bool callback_clear_browser_cache(const LLSD& notification, const LLSD& response
 bool callback_clear_cache(const LLSD& notification, const LLSD& response);
 
 // <Firestorm>
+bool callback_clear_inventory_cache(const LLSD& notification, const LLSD& response);
 void handleFlightAssistOptionChanged(const LLSD& newvalue);
 void handleMovelockOptionChanged(const LLSD& newvalue);
 bool callback_clear_settings(const LLSD& notification, const LLSD& response);
@@ -244,6 +245,35 @@ void handleUsernameFormatOptionChanged(const LLSD& newvalue);
 //bool callback_reset_dialogs(const LLSD& notification, const LLSD& response, LLFloaterPreference* floater);
 
 void fractionFromDecimal(F32 decimal_val, S32& numerator, S32& denominator);
+
+// <FS:Ansariel> Clear inventory cache button
+bool callback_clear_inventory_cache(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
+	if ( option == 0 ) // YES
+	{
+		// flag client texture cache for clearing next time the client runs
+		gSavedSettings.setString("FSPurgeInventoryCacheOnStartup", gAgentID.asString());
+		LLNotificationsUtil::add("CacheWillClear");
+	}
+
+	return false;
+}
+// </FS:Ansariel>
+
+// <FS:Ansariel> Clear inventory cache button
+bool callback_clear_web_browser_cache(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
+	if ( option == 0 ) // YES
+	{
+		LLViewerMedia::clearAllCaches();
+		LLViewerMedia::clearAllCookies();
+	}
+
+	return false;
+}
+// </FS:Ansariel>
 
 bool callback_clear_cache(const LLSD& notification, const LLSD& response)
 {
@@ -435,6 +465,12 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	
 	mCommitCallbackRegistrar.add("Pref.ClearCache",				boost::bind(&LLFloaterPreference::onClickClearCache, this));
 	mCommitCallbackRegistrar.add("Pref.WebClearCache",			boost::bind(&LLFloaterPreference::onClickBrowserClearCache, this));
+	// <FS:Ansariel> Clear inventory cache button
+	mCommitCallbackRegistrar.add("Pref.InvClearCache",			boost::bind(&LLFloaterPreference::onClickInventoryClearCache, this));
+	// </FS:Ansariel>
+	// <FS:Ansariel> Clear web browser cache button
+	mCommitCallbackRegistrar.add("Pref.WebBrowserClearCache",		boost::bind(&LLFloaterPreference::onClickWebBrowserClearCache, this));
+	// </FS:Ansariel>
 	mCommitCallbackRegistrar.add("Pref.SetCache",				boost::bind(&LLFloaterPreference::onClickSetCache, this));
 	mCommitCallbackRegistrar.add("Pref.ResetCache",				boost::bind(&LLFloaterPreference::onClickResetCache, this));
 //	mCommitCallbackRegistrar.add("Pref.ClickSkin",				boost::bind(&LLFloaterPreference::onClickSkin, this,_1, _2));
@@ -500,6 +536,12 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	gSavedSettings.getControl("FSClientTagsVisibility")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
 	gSavedSettings.getControl("FSColorClienttags")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
 	// </FS:CR>
+
+	// <FS:Ansariel> Sound cache
+	mCommitCallbackRegistrar.add("Pref.BrowseSoundCache",				boost::bind(&LLFloaterPreference::onClickBrowseSoundCache, this));
+	mCommitCallbackRegistrar.add("Pref.SetSoundCache",					boost::bind(&LLFloaterPreference::onClickSetSoundCache, this));
+	mCommitCallbackRegistrar.add("Pref.ResetSoundCache",				boost::bind(&LLFloaterPreference::onClickResetSoundCache, this));
+	// </FS:Ansariel>
 	// </Firestorm callbacks>
 
 	// <CV:David>
@@ -623,6 +665,10 @@ BOOL LLFloaterPreference::postBuild()
 	getChildView("log_path_string-panelsetup")->setEnabled(FALSE);// and the redundant instance -WoLf
 	std::string cache_location = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, "");
 	setCacheLocation(cache_location);
+	// <FS:Ansariel> Sound cache
+	setSoundCacheLocation(gSavedSettings.getString("FSSoundCacheLocation"));
+	getChild<LLUICtrl>("FSSoundCacheLocation")->setEnabled(FALSE);
+	// </FS:Ansariel>
 
 	getChild<LLComboBox>("language_combobox")->setCommitCallback(boost::bind(&LLFloaterPreference::onLanguageChange, this));
 	
@@ -809,6 +855,8 @@ void LLFloaterPreference::apply()
 	
 	std::string cache_location = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, "");
 	setCacheLocation(cache_location);
+	// <FS:Ansariel> Sound cache
+	setSoundCacheLocation(gSavedSettings.getString("FSSoundCacheLocation"));
 	
 	LLViewerMedia::setCookiesEnabled(getChild<LLUICtrl>("cookies_enabled")->getValue());
 	
@@ -1217,6 +1265,20 @@ void LLFloaterPreference::onClickBrowserClearCache()
 	LLNotificationsUtil::add("ConfirmClearBrowserCache", LLSD(), LLSD(), callback_clear_browser_cache);
 }
 
+// <FS:Ansariel> Clear inventory cache button
+void LLFloaterPreference::onClickInventoryClearCache()
+{
+	LLNotificationsUtil::add("ConfirmClearInventoryCache", LLSD(), LLSD(), callback_clear_inventory_cache);
+}
+// </FS:Ansariel>
+
+// <FS:Ansariel> Clear web browser cache button
+void LLFloaterPreference::onClickWebBrowserClearCache()
+{
+	LLNotificationsUtil::add("ConfirmClearWebBrowserCache", LLSD(), LLSD(), callback_clear_web_browser_cache);
+}
+// </FS:Ansariel>
+
 // Called when user changes language via the combobox.
 void LLFloaterPreference::onLanguageChange()
 {
@@ -1330,6 +1392,39 @@ void LLFloaterPreference::onClickResetCache()
 	gSavedSettings.setString("CacheLocationTopFolder", top_folder);
 }
 
+// <FS:Ansariel> Sound cache
+void LLFloaterPreference::onClickSetSoundCache()
+{
+	std::string cur_name(gSavedSettings.getString("FSSoundCacheLocation"));
+	std::string proposed_name(cur_name);
+
+	LLDirPicker& picker = LLDirPicker::instance();
+	if (! picker.getDir(&proposed_name ) )
+	{
+		return; //Canceled!
+	}
+
+	std::string dir_name = picker.getDirName();
+	if (!dir_name.empty() && dir_name != cur_name)
+	{
+		gSavedSettings.setString("FSSoundCacheLocation", dir_name);
+		setSoundCacheLocation(dir_name);
+		LLNotificationsUtil::add("SoundCacheWillBeMoved");
+	}
+}
+
+void LLFloaterPreference::onClickBrowseSoundCache()
+{
+	gViewerWindow->getWindow()->openFile(gDirUtilp->getExpandedFilename(LL_PATH_FS_SOUND_CACHE, ""));
+}
+
+void LLFloaterPreference::onClickResetSoundCache()
+{
+	gSavedSettings.setString("FSSoundCacheLocation", std::string());
+	setSoundCacheLocation(std::string());
+	LLNotificationsUtil::add("SoundCacheWillBeMoved");
+}
+// </FS:Ansariel>
 
 
 // Performs a wipe of the local settings dir on next restart 
@@ -2219,6 +2314,12 @@ void LLFloaterPreference::setPersonalInfo(const std::string& visibility, bool im
 
 	// <FS:Ansariel> FIRE-420: Show end of last conversation in history
 	getChildView("LogShowHistory")->setEnabled(TRUE);
+
+	// <FS:Ansariel> Clear inventory cache button
+	getChildView("ClearInventoryCache")->setEnabled(TRUE);
+
+	// <FS:Ansariel> Clear web browser cache button
+	getChildView("ClearWebBrowserCache")->setEnabled(TRUE);
 }
 
 void LLFloaterPreference::refreshUI()
@@ -2433,6 +2534,15 @@ void LLFloaterPreference::setCacheLocation(const LLStringExplicit& location)
 	cache_location_editor->setToolTip(location);
 }
 
+// <FS:Ansariel> Sound cache
+void LLFloaterPreference::setSoundCacheLocation(const LLStringExplicit& location)
+{
+	LLUICtrl* cache_location_editor = getChild<LLUICtrl>("FSSoundCacheLocation");
+	cache_location_editor->setValue(location);
+	cache_location_editor->setToolTip(location);
+}
+// </FS:Ansariel>
+
 void LLFloaterPreference::selectPanel(const LLSD& name)
 {
 	LLTabContainer * tab_containerp = getChild<LLTabContainer>("pref core");
@@ -2522,7 +2632,7 @@ void LLFloaterPreference::changed()
 //---------------------------------------------------------------------------- */
 //</FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
 
-static LLRegisterPanelClassWrapper<LLPanelPreference> t_places("panel_preference");
+static LLPanelInjector<LLPanelPreference> t_places("panel_preference");
 LLPanelPreference::LLPanelPreference()
 //<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
 //: LLPanel(),
@@ -2678,15 +2788,6 @@ BOOL LLPanelPreference::postBuild()
 		getChild<LLCheckBoxCtrl>("notify_growl_always_checkbox")->setEnabled(gSavedSettings.getBOOL("FSEnableGrowl") && GrowlManager::isUsable());
 	}
 	// </FS:Ansariel>
-
-#ifdef OPENSIM // <FS:AW optional opensim support/>
-// <FS:AW Disable LSL bridge on opensim>
-	if(LLGridManager::getInstance()->isInOpenSim() && !LLGridManager::getInstance()->isInAuroraSim() && hasChild("UseLSLBridge", TRUE))
-	{
- 		getChild<LLCheckBoxCtrl>("UseLSLBridge")->setEnabled(FALSE);
-	}
-// </FS:AW Disable LSL bridge on opensim>
-#endif // OPENSIM // <FS:AW optional opensim support/>
 
 	apply();
 	return true;
@@ -2927,8 +3028,8 @@ private:
 	// </FS:Ansariel>
 };
 
-static LLRegisterPanelClassWrapper<LLPanelPreferenceGraphics> t_pref_graph("panel_preference_graphics");
-static LLRegisterPanelClassWrapper<LLPanelPreferencePrivacy> t_pref_privacy("panel_preference_privacy");
+static LLPanelInjector<LLPanelPreferenceGraphics> t_pref_graph("panel_preference_graphics");
+static LLPanelInjector<LLPanelPreferencePrivacy> t_pref_privacy("panel_preference_privacy");
 
 BOOL LLPanelPreferenceGraphics::postBuild()
 {
@@ -3207,7 +3308,7 @@ void LLFloaterPreferenceProxy::onChangeSocksSettings()
 }
 
 // [SL:KB] - Patch: Viewer-CrashReporting | Checked: 2010-11-16 (Catznip-2.6.0a) | Added: Catznip-2.4.0b
-static LLRegisterPanelClassWrapper<LLPanelPreferenceCrashReports> t_pref_crashreports("panel_preference_crashreports");
+static LLPanelInjector<LLPanelPreferenceCrashReports> t_pref_crashreports("panel_preference_crashreports");
 
 LLPanelPreferenceCrashReports::LLPanelPreferenceCrashReports()
 	: LLPanelPreference()
@@ -3270,7 +3371,7 @@ void LLPanelPreferenceCrashReports::cancel()
 // [/SL:KB]
 
 // [SL:KB] - Patch: Viewer-Skins | Checked: 2010-10-21 (Catznip-2.2)
-static LLRegisterPanelClassWrapper<LLPanelPreferenceSkins> t_pref_skins("panel_preference_skins");
+static LLPanelInjector<LLPanelPreferenceSkins> t_pref_skins("panel_preference_skins");
 
 LLPanelPreferenceSkins::LLPanelPreferenceSkins()
 	: LLPanelPreference()
@@ -3500,7 +3601,7 @@ S32 copy_prefs_file(const std::string& from, const std::string& to)
 	return rv;
 }
 
-static LLRegisterPanelClassWrapper<FSPanelPreferenceBackup> t_pref_backup("panel_preference_backup");
+static LLPanelInjector<FSPanelPreferenceBackup> t_pref_backup("panel_preference_backup");
 
 FSPanelPreferenceBackup::FSPanelPreferenceBackup() : LLPanelPreference()
 {
@@ -4193,7 +4294,7 @@ void LLFloaterPreference::populateFontSelectionCombo()
 
 // <FS:AW optional opensim support>
 #ifdef OPENSIM
-static LLRegisterPanelClassWrapper<LLPanelPreferenceOpensim> t_pref_opensim("panel_preference_opensim");
+static LLPanelInjector<LLPanelPreferenceOpensim> t_pref_opensim("panel_preference_opensim");
 
 LLPanelPreferenceOpensim::LLPanelPreferenceOpensim() : LLPanelPreference(),
 	mGridListControl(NULL)
