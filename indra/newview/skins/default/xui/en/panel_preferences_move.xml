@@ -549,11 +549,23 @@
          width="270"
          control_name="TurnAroundWhenWalkingBackwards"
          tool_tip="Turns your avatar around to face the camera when you are walking backwards."/>
+        <!-- <CV:David>
         <check_box
          control_name="JoystickEnabled"
          follows="left|top"
          height="16"
          label="Enable joystick (SpaceNavigator)"
+         layout="topleft"
+         left="10"
+         name="enable_joystick"
+         width="200"
+         top_pad="8" />
+         -->
+        <check_box
+         control_name="JoystickEnabled"
+         follows="left|top"
+         height="16"
+         label="Enable joystick"
          layout="topleft"
          left="10"
          name="enable_joystick"

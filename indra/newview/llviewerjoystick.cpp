@@ -49,6 +49,7 @@
 
 // <CV:David>
 #include "llviewerdisplay.h"
+#include <boost/regex.hpp>
 // </CV:David>
 
 // ----------------------------------------------------------------------------
@@ -275,9 +276,21 @@ void LLViewerJoystick::init(bool autoenable)
 				gSavedSettings.setString("JoystickInitialized", "SpaceNavigator");
 			}
 		}
+		// <CV:David>
+		if (isLikeXboxController())
+		{
+			// It's an Xbox controller, we have defaults for it.
+			if (gSavedSettings.getString("JoystickInitialized") != "XboxController")
+			{
+				// Only set the defaults if we haven't already (in case they were overridden)
+				setXboxControllerDefaults();
+				gSavedSettings.setString("JoystickInitialized", "XboxController");
+			}
+		}
+		// </CV:David>
 		else
 		{
-			// It's not a Space Navigator
+			// It's not a Space Navigator <CV:David> or Xbox 360 </CV:David>
 			gSavedSettings.setString("JoystickInitialized", "UnknownDevice");
 		}
 	}
@@ -288,6 +301,14 @@ void LLViewerJoystick::init(bool autoenable)
 	
 	llinfos << "ndof: mDriverState=" << mDriverState << "; mNdofDev=" 
 			<< mNdofDev << "; libinit=" << libinit << llendl;
+
+	// <CV:David>
+	if (mDriverState == JDS_INITIALIZED)
+	{
+		llinfos << "Joystick = " << getDescription() << llendl;
+	}
+	// </CV:David>
+
 #endif
 }
 
@@ -1237,7 +1258,10 @@ void LLViewerJoystick::scanJoystick()
 }
 
 // -----------------------------------------------------------------------------
-std::string LLViewerJoystick::getDescription()
+// <CV:David>
+//std::string LLViewerJoystick::getDescription()
+std::string LLViewerJoystick::getDescription() const
+// </CV:David>
 {
 	std::string res;
 #if LIB_NDOF
@@ -1245,9 +1269,25 @@ std::string LLViewerJoystick::getDescription()
 	{
 		res = ll_safe_string(mNdofDev->product);
 	}
+
+	// <CV:David>
+	// Tidy up description of Xbox controllers.
+	res = boost::regex_replace(res, boost::regex("^Controller \\((.*)\\)$", boost::regex::perl), "$1");
+	// </CV:David>
 #endif
 	return res;
 }
+
+// <CV:David>
+std::string LLViewerJoystick::getDescriptionShort() const
+{
+	std::string res;
+#if LIB_NDOF
+	res = boost::regex_replace(getDescription(), boost::regex("^(\\S+(\\s+\\S+)?).*$", boost::regex::perl), "$1");
+#endif
+	return res;
+}
+// </CV:David>
 
 bool LLViewerJoystick::isLikeSpaceNavigator() const
 {
@@ -1262,7 +1302,33 @@ bool LLViewerJoystick::isLikeSpaceNavigator() const
 #endif
 }
 
+// <CV:David>
+bool LLViewerJoystick::isLikeXboxController() const
+{
+#if LIB_NDOF	
+	return (isJoystickInitialized() && (getDescription().find("Xbox") == 0));
+#else
+	return false;
+#endif
+}
+// </CV:David>
+
 // -----------------------------------------------------------------------------
+// <CV:David>
+void LLViewerJoystick::setControllerDefaults()
+{
+	if (isLikeXboxController())
+	{
+		setXboxControllerDefaults();
+	}
+	else
+	{
+		// SpaceNavigator or other controller
+		setSNDefaults();
+	}
+}
+// </CV:David>
+
 void LLViewerJoystick::setSNDefaults()
 {
 #if LL_DARWIN || LL_LINUX
@@ -1282,8 +1348,12 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setS32("JoystickAxis0", 1); // z (at)
 	gSavedSettings.setS32("JoystickAxis1", 0); // x (slide)
 	gSavedSettings.setS32("JoystickAxis2", 2); // y (up)
-	gSavedSettings.setS32("JoystickAxis3", 4); // pitch
-	gSavedSettings.setS32("JoystickAxis4", 3); // roll 
+	// <CV:David> Comments label pitch and roll the wrong way around
+	//gSavedSettings.setS32("JoystickAxis3", 4); // pitch
+	//gSavedSettings.setS32("JoystickAxis4", 3); // roll 
+	gSavedSettings.setS32("JoystickAxis3", 4); // roll
+	gSavedSettings.setS32("JoystickAxis4", 3); // pitch 
+	// <CV:David>
 	gSavedSettings.setS32("JoystickAxis5", 5); // yaw
 	gSavedSettings.setS32("JoystickAxis6", -1);
 	
@@ -1345,3 +1415,75 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setF32("BuildFeathering", 12.f);
 	gSavedSettings.setF32("FlycamFeathering", 5.f);
 }
+
+// <CV:David>
+void LLViewerJoystick::setXboxControllerDefaults()
+{
+#if LL_DARWIN || LL_LINUX
+	const float platformScale = 20.f;
+	const float platformScaleAvXZ = 1.f;
+#else
+	const float platformScale = 1.f;
+	const float platformScaleAvXZ = 2.f;
+#endif
+
+	//gViewerWindow->alertXml("CacheWillClear");
+	llinfos << "Restoring Xbox Controller defaults..." << llendl;
+
+	gSavedSettings.setS32("JoystickAxis0", 1); // z (at)
+	gSavedSettings.setS32("JoystickAxis1", 0); // x (slide)
+	gSavedSettings.setS32("JoystickAxis2", 2); // y (up)
+	gSavedSettings.setS32("JoystickAxis3", -1); // roll
+	gSavedSettings.setS32("JoystickAxis4", 4); // pitch 
+	gSavedSettings.setS32("JoystickAxis5", 3); // yaw
+	gSavedSettings.setS32("JoystickAxis6", -1);
+	
+	gSavedSettings.setBOOL("Cursor3D", false);
+	gSavedSettings.setBOOL("AutoLeveling", true);
+	gSavedSettings.setBOOL("ZoomDirect", false);
+	
+	gSavedSettings.setF32("AvatarAxisScale1", 0.2f * platformScaleAvXZ);
+	gSavedSettings.setF32("AvatarAxisScale2", 0.4f * platformScale);
+	gSavedSettings.setF32("AvatarAxisScale0", 0.2f * platformScaleAvXZ);
+	gSavedSettings.setF32("AvatarAxisScale4", 1.0f * platformScale);
+	gSavedSettings.setF32("AvatarAxisScale5", 2.0f * platformScale);
+	gSavedSettings.setF32("AvatarAxisScale3", 1.0f * platformScale);
+	gSavedSettings.setF32("BuildAxisScale1", 0.8f * platformScale);
+	gSavedSettings.setF32("BuildAxisScale2", 0.8f * platformScale);
+	gSavedSettings.setF32("BuildAxisScale0", 1.6f * platformScale);
+	gSavedSettings.setF32("BuildAxisScale4", 1.0f * platformScale);
+	gSavedSettings.setF32("BuildAxisScale5", 2.0f * platformScale);
+	gSavedSettings.setF32("BuildAxisScale3", 1.0 * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale1", 12.f * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale2", 16.f * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale0", 20.f * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale4", 1.f * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale5", 2.f * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale3", 1.f * platformScale);
+	gSavedSettings.setF32("FlycamAxisScale6", 0.f * platformScale);
+	
+	gSavedSettings.setF32("AvatarAxisDeadZone1", .2f);
+	gSavedSettings.setF32("AvatarAxisDeadZone2", .2f);
+	gSavedSettings.setF32("AvatarAxisDeadZone0", .2f);
+	gSavedSettings.setF32("AvatarAxisDeadZone4", .2f);
+	gSavedSettings.setF32("AvatarAxisDeadZone5", .2f);
+	gSavedSettings.setF32("AvatarAxisDeadZone3", .2f);
+	gSavedSettings.setF32("BuildAxisDeadZone1", .1f);
+	gSavedSettings.setF32("BuildAxisDeadZone2", .1f);
+	gSavedSettings.setF32("BuildAxisDeadZone0", .2f);
+	gSavedSettings.setF32("BuildAxisDeadZone4", .1f);
+	gSavedSettings.setF32("BuildAxisDeadZone5", .1f);
+	gSavedSettings.setF32("BuildAxisDeadZone3", .1f);
+	gSavedSettings.setF32("FlycamAxisDeadZone1", .2f);
+	gSavedSettings.setF32("FlycamAxisDeadZone2", .2f);
+	gSavedSettings.setF32("FlycamAxisDeadZone0", .2f);
+	gSavedSettings.setF32("FlycamAxisDeadZone4", .2f);
+	gSavedSettings.setF32("FlycamAxisDeadZone5", .2f);
+	gSavedSettings.setF32("FlycamAxisDeadZone3", .2f);
+	gSavedSettings.setF32("FlycamAxisDeadZone6", 1.f);
+	
+	gSavedSettings.setF32("AvatarFeathering", 6.f);
+	gSavedSettings.setF32("BuildFeathering", 12.f);
+	gSavedSettings.setF32("FlycamFeathering", 10.f);
+}
+// </CV:David>

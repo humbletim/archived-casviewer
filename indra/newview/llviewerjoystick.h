@@ -61,14 +61,20 @@ public:
 	U32 getJoystickButton(U32 button) const;
 	bool isJoystickInitialized() const {return (mDriverState==JDS_INITIALIZED);}
 	bool isLikeSpaceNavigator() const;
+	bool isLikeXboxController() const;  // <CV:David>
 	void setNeedsReset(bool reset = true) { mResetFlag = reset; }
 	void setCameraNeedsUpdate(bool b)     { mCameraUpdated = b; }
 	bool getCameraNeedsUpdate() const     { return mCameraUpdated; }
 	bool getOverrideCamera() { return mOverrideCamera; }
 	void setOverrideCamera(bool val);
 	bool toggleFlycam();
-	void setSNDefaults();
-	std::string getDescription();
+	// <CV:David>
+	//void setSNDefaults();
+	void setControllerDefaults();
+	//std::string getDescription();
+	std::string getDescription() const;
+	std::string getDescriptionShort() const;
+	// <CV:David>
 	
 protected:
 	void updateEnabled(bool autoenable);
@@ -100,6 +106,10 @@ private:
 	static F32				sDelta[7];
 
 	// <CV:David>
+
+	// Controller-specific defaults.
+	void setSNDefaults();
+	void setXboxControllerDefaults();
 
 	// The SpaceNavigator has a maximum update rate which necessitates continuing previous movement between samples.
 	LLFrameTimer mSampleTimer;

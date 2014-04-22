@@ -882,6 +882,7 @@
      left="290"
      name="FlycamAxisDeadZone6"
      width="56" />
+    <!-- <CV:David>
     <button
      follows="left|top"
      height="22"
@@ -891,6 +892,17 @@
      name="SpaceNavigatorDefaults"
      top="429"
      width="200" />
+     -->
+    <button
+     follows="left|top"
+     height="22"
+     label="Controller Defaults"
+     layout="topleft"
+     left="359"
+     name="ControllerDefaults"
+     top="429"
+     width="200" />
+    <!-- </CV:David> -->
     <button
      follows="right|bottom"
      height="20"

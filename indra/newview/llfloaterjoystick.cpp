@@ -102,7 +102,12 @@ BOOL LLFloaterJoystick::postBuild()
 	mCheckFlycamEnabled = getChild<LLCheckBoxCtrl>("JoystickFlycamEnabled");
 	childSetCommitCallback("JoystickFlycamEnabled",onCommitJoystickEnabled,this);
 
-	childSetAction("SpaceNavigatorDefaults", onClickRestoreSNDefaults, this);
+	// <CV:David>
+	//childSetAction("SpaceNavigatorDefaults", onClickRestoreSNDefaults, this);
+	getChild<LLButton>("ControllerDefaults")->setLabel(std::string(LLViewerJoystick::getInstance()->getDescriptionShort() + " Defaults"));
+	childSetAction("ControllerDefaults", onClickRestoreControllerDefaults, this);
+	// </CV:David>
+
 	childSetAction("cancel_btn", onClickCancel, this);
 	childSetAction("ok_btn", onClickOK, this);
 
@@ -281,10 +286,17 @@ void LLFloaterJoystick::onCommitJoystickEnabled(LLUICtrl*, void *joy_panel)
 	}
 }
 
-void LLFloaterJoystick::onClickRestoreSNDefaults(void *joy_panel)
+// <CV:David>
+//void LLFloaterJoystick::onClickRestoreSNDefaults(void *joy_panel)
+//{
+//	setSNDefaults();
+//}
+
+void LLFloaterJoystick::onClickRestoreControllerDefaults(void *joy_panel)
 {
-	setSNDefaults();
+	setControllerDefaults();
 }
+// </CV:David>
 
 void LLFloaterJoystick::onClickCancel(void *joy_panel)
 {
@@ -313,7 +325,14 @@ void LLFloaterJoystick::onClickOK(void *joy_panel)
 	}
 }
 
-void LLFloaterJoystick::setSNDefaults()
+// <CV:David>
+//void LLFloaterJoystick::setSNDefaults()
+//{
+//	LLViewerJoystick::getInstance()->setSNDefaults();
+//}
+
+void LLFloaterJoystick::setControllerDefaults()
 {
-	LLViewerJoystick::getInstance()->setSNDefaults();
+	LLViewerJoystick::getInstance()->setControllerDefaults();
 }
+// </CV:David>
