@@ -3562,7 +3562,10 @@ BOOL LLAgent::setUserGroupFlags(const LLUUID& group_id, BOOL accept_notices, BOO
 
 BOOL LLAgent::canJoinGroups() const
 {
-	return mGroups.count() < gMaxAgentGroups;
+	// [CR] FIRE-12229
+	//return mGroups.count() < gMaxAgentGroups;
+	return ((!gMaxAgentGroups) || (mGroups.count() < gMaxAgentGroups));
+	// [/CR]
 }
 
 LLQuaternion LLAgent::getHeadRotation()
