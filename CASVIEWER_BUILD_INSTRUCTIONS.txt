@@ -10,7 +10,7 @@ in the same manner as FmodEX. The resultant package file however cannot be put o
 license, "source redistributions must include the whole of the Oculus SDK".
 
 To build the package, "3p-ovr-sdk":
-- Make a local clone of the repository: https://bitbucket.org/ctrlaltstudio/3p-ovr-sdk
+- Make a local clone of the repository: https://bitbucket.org/cinderblocks/3p-ovr-sdk
 - Put a copy of the Oculus Rift SDK Zip file in the root directory.
 - In a command prompt, change directory to the root directory.
 - Then: autobuild build ... This should result in "BUILD SUCCEEDED".
