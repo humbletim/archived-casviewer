@@ -1200,7 +1200,9 @@ bool LLViewerJoystick::toggleFlycam()
 	{
 		// Exiting from the flycam mode: since we are going to keep the flycam POV for
 		// the main camera until the avatar moves, we need to track this situation.
-		setCameraNeedsUpdate(false);
+		// <CV:David> Need to reposition camera when exit flycam while in Riftlook. Makes no sense not to do the same other times.
+		//setCameraNeedsUpdate(false);
+		// </CV:David>
 		setNeedsReset(true);
 		LLPanelStandStopFlying::clearStandStopFlyingMode(LLPanelStandStopFlying::SSFM_FLYCAM);
 	}
