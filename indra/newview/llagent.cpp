@@ -575,7 +575,7 @@ void LLAgent::onAppFocusGained()
 //		//gAgentCamera.changeCameraToDefault();
 //		if (gRift3DEnabled)
 //		{
-//			setRiftlook(false);
+//			CVToggle3D::setRiftlook(false);
 //		}
 //		else
 //		{

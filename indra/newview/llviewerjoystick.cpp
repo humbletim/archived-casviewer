@@ -75,6 +75,15 @@ F32  LLViewerJoystick::sDelta[] = {0,0,0,0,0,0,0};
 
 // <CV:David>
 const F32 SAMPLE_TIME = 0.02f;		// Empirically determined. In seconds.
+
+const U32 XBOX_A_KEY = 0;			// Xbox keys
+const U32 XBOX_B_KEY = 1;
+const U32 XBOX_X_KEY = 2;
+const U32 XBOX_Y_KEY = 3;
+const U32 XBOX_L_BUMP_KEY = 4;
+const U32 XBOX_R_BUMP_KEY = 5;
+const U32 XBOX_BACK_KEY = 6;
+const U32 XBOX_START_KEY = 7;
 // </CV:David>
 
 // -----------------------------------------------------------------------------
@@ -268,6 +277,8 @@ void LLViewerJoystick::init(bool autoenable)
 		// A Joystick device is plugged in
 		if (isLikeSpaceNavigator())
 		{
+			mController = SPACENAVIGATOR_CONTROLLER;  // <CV:David>
+
 			// It's a space navigator, we have defaults for it.
 			if (gSavedSettings.getString("JoystickInitialized") != "SpaceNavigator")
 			{
@@ -279,6 +290,8 @@ void LLViewerJoystick::init(bool autoenable)
 		// <CV:David>
 		if (isLikeXboxController())
 		{
+			mController = XBOX_CONTROLLER;
+
 			// It's an Xbox controller, we have defaults for it.
 			if (gSavedSettings.getString("JoystickInitialized") != "XboxController")
 			{
@@ -291,6 +304,7 @@ void LLViewerJoystick::init(bool autoenable)
 		else
 		{
 			// It's not a Space Navigator <CV:David> or Xbox 360 </CV:David>
+			mController = UNKNOWN_CONTROLLER;  // <CV:David>
 			gSavedSettings.setString("JoystickInitialized", "UnknownDevice");
 		}
 	}
@@ -747,7 +761,10 @@ void LLViewerJoystick::moveAvatar(bool reset)
 	bool is_zero = true;
 	static bool button_held = false;
 
-	if (mBtn[1] == 1)
+	// <CV:David>
+	//if (mBtn[1] == 1)
+	if ((mController != XBOX_CONTROLLER) && (mBtn[1] == 1))
+	// </CV:David>
 	{
 		// If AutomaticFly is enabled, then button1 merely causes a
 		// jump (as the up/down axis already controls flying) if on the
@@ -1209,6 +1226,24 @@ bool LLViewerJoystick::toggleFlycam()
 	return true;
 }
 
+// <CV:David>
+bool LLViewerJoystick::toggleMouse()
+{
+	// DJRTODO
+
+	return true;
+}
+// </CV:David>
+
+// <CV:David>
+bool LLViewerJoystick::toggle3d()
+{
+	CVToggle3D::toggle3D();
+
+	return true;
+}
+// </CV:David>
+
 void LLViewerJoystick::scanJoystick()
 {
 	if (mDriverState != JDS_INITIALIZED || !gSavedSettings.getBOOL("JoystickEnabled"))
@@ -1239,20 +1274,99 @@ void LLViewerJoystick::scanJoystick()
 		return;
 	}
 
-	static long toggle_flycam = 0;
+	// <CV:David>
+	//static long toggle_flycam = 0;
 
-	if (mBtn[0] == 1)
-    {
-		if (mBtn[0] != toggle_flycam)
+	// Guard against high FPS making buttons too sensitive.
+	if (mNewSample)
+	{
+		static long toggle_3d = 0;
+		static long toggle_mouse = 0;
+		static long toggle_flycam_held = 0;
+		static long toggle_mouse_held = 0;
+		const long MIN_HOLD_COUNT = 5;
+
+		static long toggle_flycam = 0;
+
+		if (mController == XBOX_CONTROLLER)
 		{
-			toggle_flycam = toggleFlycam() ? 1 : 0;
+			// Special command keys ...
+			if ((mBtn[XBOX_BACK_KEY] == 1) && (mBtn[XBOX_START_KEY] == 1))
+			{
+				// - Back + Start = toggle 3D
+				if (!toggle_3d)
+				{
+					toggle_3d = toggle3d();
+				}
+			}
+			else
+			{
+				toggle_3d = 0;
+
+				// - Back = toggle flycam
+				if (mBtn[XBOX_BACK_KEY] == 1)
+				{
+					if (toggle_flycam_held < MIN_HOLD_COUNT)
+					{
+						toggle_flycam_held += 1;
+					}
+					else if (!toggle_flycam)
+					{
+						toggle_flycam = toggleFlycam();
+					}
+				}
+				else
+				{
+					toggle_flycam = 0;
+					toggle_flycam_held = 0;
+				}
+
+				// - Start = toggle mouse/camera control
+				if (mBtn[XBOX_START_KEY] == 1)
+				{
+					if (toggle_mouse_held < MIN_HOLD_COUNT)
+					{
+						toggle_mouse_held += 1;
+					}
+					else if (!toggle_mouse)
+					{
+						toggle_mouse = toggleMouse();
+					}
+				}
+				else
+				{
+					toggle_mouse = 0;
+					toggle_mouse_held = 0;
+				}
+			}
+
+			// Ctrl, Alt, Shift, Esc keys ...
+			//  DJRTODO
+	
+			// Mouse clicks ...
+			//  DJRTODO
+		}
+		else
+		{
+		// </CV:David>
+
+			if (mBtn[0] == 1)
+			{
+				if (mBtn[0] != toggle_flycam)
+				{
+					toggle_flycam = toggleFlycam() ? 1 : 0;
+				}
+			}
+			else
+			{
+				toggle_flycam = 0;
+			}
+
+		// <CV:David>
 		}
 	}
-	else
-	{
-		toggle_flycam = 0;
-	}
-	
+	// </CV:David>
+
 	if (!mOverrideCamera && !(LLToolMgr::getInstance()->inBuildMode() && gSavedSettings.getBOOL("JoystickBuildEnabled")))
 	{
 		moveAvatar();

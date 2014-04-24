@@ -1014,7 +1014,7 @@ void LLFloaterPreference::onVertexShaderEnable()
 	{
 		// Temporarily set VertexShaderEnable so that setRiftlook() reshapes the window correctly.
 		gSavedSettings.setBOOL("VertexShaderEnable", TRUE);
-		setRiftlook(false);
+		CVToggle3D::setRiftlook(false);
 		gSavedSettings.setBOOL("VertexShaderEnable", FALSE);
 	}
 	// </CV:David>

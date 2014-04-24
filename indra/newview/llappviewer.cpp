@@ -4712,7 +4712,7 @@ void LLAppViewer::userQuit()
 	// <CV:David>
 	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
 	{
-		setRiftlook(FALSE);
+		CVToggle3D::setRiftlook(FALSE);
 	}
 	// </CV:David>
 	

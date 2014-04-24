@@ -43,6 +43,15 @@ typedef enum e_joystick_driver_state
 	JDS_INITIALIZING
 } EJoystickDriverState;
 
+// <CV:David>
+typedef enum e_controller_type
+{
+	XBOX_CONTROLLER,
+	SPACENAVIGATOR_CONTROLLER,
+	UNKNOWN_CONTROLLER
+} EControllerType;
+// </CV:David>
+
 class LLViewerJoystick : public LLSingleton<LLViewerJoystick>
 {
 public:
@@ -69,6 +78,8 @@ public:
 	void setOverrideCamera(bool val);
 	bool toggleFlycam();
 	// <CV:David>
+	bool toggleMouse();
+	bool toggle3d();
 	//void setSNDefaults();
 	void setControllerDefaults();
 	//std::string getDescription();
@@ -107,6 +118,9 @@ private:
 
 	// <CV:David>
 
+	// Controllers.
+	EControllerType mController;
+	
 	// Controller-specific defaults.
 	void setSNDefaults();
 	void setXboxControllerDefaults();
