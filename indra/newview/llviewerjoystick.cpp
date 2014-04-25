@@ -429,6 +429,21 @@ void LLViewerJoystick::agentJump()
 void LLViewerJoystick::agentSlide(F32 inc)
 {
 	// <CV:David>
+	if (mControlCursor)
+	{
+		if (abs(inc) > 0.001)
+		{
+			S32 x, y;
+			LLUI::getMousePositionScreen(&x, &y);
+			x = llclamp(x + (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowWidthRaw());
+			LLUI::setMousePositionScreen(x, y);
+		}
+
+		return;
+	}
+	// </CV:David>
+
+	// <CV:David>
 	/*
 	if (inc < 0.f)
 	{
@@ -439,6 +454,7 @@ void LLViewerJoystick::agentSlide(F32 inc)
 		gAgent.moveLeft(-1);
 	}
 	*/
+
 	static F32 previousSlideInc = 0.f;		  // Smooth a little.
 
 	if (inc != 0.f)
@@ -464,6 +480,21 @@ void LLViewerJoystick::agentSlide(F32 inc)
 void LLViewerJoystick::agentPush(F32 inc)
 {
 	// <CV:David>
+	if (mControlCursor)
+	{
+		if (abs(inc) > 0.001)
+		{
+			S32 x, y;
+			LLUI::getMousePositionScreen(&x, &y);
+			y = llclamp(y - (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowHeightRaw());
+			LLUI::setMousePositionScreen(x, y);
+		}
+
+		return;
+	}
+	// </CV:David>
+
+	// <CV:David>
 	/*
 	if (inc < 0.f)                            // forward
 	{
@@ -474,6 +505,7 @@ void LLViewerJoystick::agentPush(F32 inc)
 		gAgent.moveAt(-1, false);
 	}
 	*/
+
 	static F32 previousPushInc = 0.f;		  // Smooth a little.
 
 	if (inc != 0.f)
@@ -499,6 +531,13 @@ void LLViewerJoystick::agentPush(F32 inc)
 void LLViewerJoystick::agentFly(F32 inc)
 {
 	// <CV:David>
+	if (mControlCursor)
+	{
+		return;
+	}
+	// </CV:David>
+
+	// <CV:David>
 	/*
 	if (inc < 0.f)
 	{
@@ -517,6 +556,7 @@ void LLViewerJoystick::agentFly(F32 inc)
 		gAgent.moveUp(-1);
 	}
 	*/
+
 	static F32 previousFlyInc = 0.f;		  // Smooth a little.
 
 	if (inc != 0.f)
@@ -541,6 +581,13 @@ void LLViewerJoystick::agentFly(F32 inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentPitch(F32 pitch_inc)
 {
+	// <CV:David>
+	if (mControlCursor)
+	{
+		return;
+	}
+	// </CV:David>
+
 	if (pitch_inc < 0)
 	{
 		gAgent.setControlFlags(AGENT_CONTROL_PITCH_POS);
@@ -556,6 +603,13 @@ void LLViewerJoystick::agentPitch(F32 pitch_inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentYaw(F32 yaw_inc)
 {	
+	// <CV:David>
+	if (mControlCursor)
+	{
+		return;
+	}
+	// </CV:David>
+
 	// Cannot steer some vehicles in mouselook if the script grabs the controls
 	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
 	{
@@ -749,11 +803,18 @@ void LLViewerJoystick::moveAvatar(bool reset)
 	// <CV:David>
 	if (!mNewSample)
 	{
-		agentSlide(mCurrentMovement[X_I]);
-		agentFly(mCurrentMovement[Y_I]);
-		agentPush(mCurrentMovement[Z_I]);
-		agentPitch(mCurrentMovement[RX_I]);
-		agentYaw(mCurrentMovement[RY_I]);
+		// <CV:David>
+		if (!mControlCursor)
+		{
+		// </CV:David>
+			agentSlide(mCurrentMovement[X_I]);
+			agentFly(mCurrentMovement[Y_I]);
+			agentPush(mCurrentMovement[Z_I]);
+			agentPitch(mCurrentMovement[RX_I]);
+			agentYaw(mCurrentMovement[RY_I]);
+		// <CV:David>
+		}
+		// </CV:David>
 		return;
 	}
 
