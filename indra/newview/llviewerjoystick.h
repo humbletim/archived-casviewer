@@ -78,7 +78,7 @@ public:
 	void setOverrideCamera(bool val);
 	bool toggleFlycam();
 	// <CV:David>
-	bool toggleMouse();
+	bool toggleCursor();
 	bool toggle3d();
 	//void setSNDefaults();
 	void setControllerDefaults();
@@ -124,6 +124,9 @@ private:
 	// Controller-specific defaults.
 	void setSNDefaults();
 	void setXboxControllerDefaults();
+
+	// Control cursor instead of avatar?
+	bool mControlCursor;
 
 	// The SpaceNavigator has a maximum update rate which necessitates continuing previous movement between samples.
 	LLFrameTimer mSampleTimer;

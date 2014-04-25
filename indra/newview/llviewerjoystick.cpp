@@ -184,6 +184,8 @@ LLViewerJoystick::LLViewerJoystick()
 
 	mMoving = false;
 	mMovingNudges = 0;
+
+	mControlCursor = false;
 	// </CV:David>
 }
 
@@ -1227,9 +1229,9 @@ bool LLViewerJoystick::toggleFlycam()
 }
 
 // <CV:David>
-bool LLViewerJoystick::toggleMouse()
+bool LLViewerJoystick::toggleCursor()
 {
-	// DJRTODO
+	mControlCursor = !mControlCursor;
 
 	return true;
 }
@@ -1281,9 +1283,9 @@ void LLViewerJoystick::scanJoystick()
 	if (mNewSample)
 	{
 		static long toggle_3d = 0;
-		static long toggle_mouse = 0;
+		static long toggle_cursor = 0;
 		static long toggle_flycam_held = 0;
-		static long toggle_mouse_held = 0;
+		static long toggle_cursor_held = 0;
 		const long MIN_HOLD_COUNT = 5;
 
 		static long toggle_flycam = 0;
@@ -1321,22 +1323,22 @@ void LLViewerJoystick::scanJoystick()
 					toggle_flycam_held = 0;
 				}
 
-				// - Start = toggle mouse/camera control
+				// - Start = toggle cursor/camera control
 				if (mBtn[XBOX_START_KEY] == 1)
 				{
-					if (toggle_mouse_held < MIN_HOLD_COUNT)
+					if (toggle_cursor_held < MIN_HOLD_COUNT)
 					{
-						toggle_mouse_held += 1;
+						toggle_cursor_held += 1;
 					}
-					else if (!toggle_mouse)
+					else if (!toggle_cursor)
 					{
-						toggle_mouse = toggleMouse();
+						toggle_cursor = toggleCursor();
 					}
 				}
 				else
 				{
-					toggle_mouse = 0;
-					toggle_mouse_held = 0;
+					toggle_cursor = 0;
+					toggle_cursor_held = 0;
 				}
 			}
 
