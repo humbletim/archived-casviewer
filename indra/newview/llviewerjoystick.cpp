@@ -1407,7 +1407,35 @@ void LLViewerJoystick::scanJoystick()
 			//  DJRTODO
 	
 			// Mouse clicks ...
-			//  DJRTODO
+			static long left_mouse_down = 0;
+			static long right_mouse_down = 0;
+
+			S32 x, y;
+			LLUI::getMousePositionScreen(&x, &y);
+			LLCoordGL coord(x, y);
+			MASK mask = gKeyboard->currentMask(TRUE);
+
+			if (mBtn[XBOX_L_BUMP_KEY] == 1 && left_mouse_down == 0)
+			{
+				gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), coord, mask);
+				left_mouse_down = 1;
+			}
+			else if (mBtn[XBOX_L_BUMP_KEY] == 0 && left_mouse_down == 1)
+			{
+				gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), coord, mask);
+				left_mouse_down = 0;
+			}
+
+			if (mBtn[XBOX_R_BUMP_KEY] == 1 && right_mouse_down == 0)
+			{
+				gViewerWindow->handleRightMouseDown(gViewerWindow->getWindow(), coord, mask);
+				right_mouse_down = 1;
+			}
+			else if (mBtn[XBOX_R_BUMP_KEY] == 0 && right_mouse_down == 1)
+			{
+				gViewerWindow->handleRightMouseUp(gViewerWindow->getWindow(), coord, mask);
+				right_mouse_down = 0;
+			}
 		}
 		else
 		{
