@@ -585,6 +585,18 @@ void LLViewerJoystick::agentPitch(F32 pitch_inc)
 	// <CV:David>
 	if (mControlCursor)
 	{
+		if (abs(pitch_inc) > 0.001)
+		{
+			static U32 count = 0;
+
+			count += 1;
+			if (count > 2)  // Slow down the zoom in/out.
+			{
+				gViewerWindow->handleScrollWheel( pitch_inc > 0.f ? 1 : -1);
+				count = 0;
+			}
+		}
+
 		return;
 	}
 	// </CV:David>
