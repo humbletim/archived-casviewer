@@ -78,3 +78,19 @@ void LLKeyboardHeadless::scanKeyboard()
 	}
 }
  
+// <CV:David>
+void LLKeyboardHeadless::setKeyDown(KEY key, BOOL down)
+{
+	mKeyDown[key] = down;
+}
+
+void LLKeyboardHeadless::setKeyLevel(KEY key, BOOL level)
+{
+	mKeyLevel[key] = level;
+}
+
+void LLKeyboardHeadless::setKeyUp(KEY key, BOOL up)
+{
+	mKeyUp[key] = up;
+}
+// </CV:David>

@@ -49,6 +49,7 @@
 
 // <CV:David>
 #include "llviewerdisplay.h"
+#include "llviewerkeyboard.h"
 #include <boost/regex.hpp>
 // </CV:David>
 
@@ -1403,9 +1404,75 @@ void LLViewerJoystick::scanJoystick()
 				}
 			}
 
-			// Ctrl, Alt, Shift, Esc keys ...
-			//  DJRTODO
-	
+			// Esc, Alt, Ctrl, Shift keys ...
+			static bool esc_key_down = false;
+			static bool alt_key_down = false;
+			static bool ctrl_key_down = false;
+			static bool shift_key_down = false;
+
+			// Esc
+			if (mBtn[XBOX_Y_KEY] == 1 && !esc_key_down)
+			{
+				gKeyboard->handleTranslatedKeyDown(KEY_ESCAPE, MASK_NONE);
+				esc_key_down = true;
+			}
+			else if (mBtn[XBOX_Y_KEY] == 0 && esc_key_down)
+			{
+				gKeyboard->handleTranslatedKeyUp(KEY_ESCAPE, MASK_NONE);
+				esc_key_down = false;
+			}
+
+			// Alt
+			if (mBtn[XBOX_A_KEY] == 1 && !alt_key_down)
+			{
+				gKeyboard->setKeyDown(KEY_ALT, TRUE);
+				alt_key_down = true;
+			}
+			else if (mBtn[XBOX_A_KEY] == 0 && alt_key_down)
+			{
+				gKeyboard->setKeyLevel(KEY_ALT, FALSE);
+				gKeyboard->setKeyUp(KEY_ALT, TRUE);
+				alt_key_down = false;
+			}
+			else if (alt_key_down)
+			{
+				gKeyboard->setKeyLevel(KEY_ALT, TRUE);
+			}
+
+			// Ctrl
+			if (mBtn[XBOX_X_KEY] == 1 && !ctrl_key_down)
+			{
+				gKeyboard->setKeyDown(KEY_CONTROL, TRUE);
+				ctrl_key_down = true;
+			}
+			else if (mBtn[XBOX_X_KEY] == 0 && ctrl_key_down)
+			{
+				gKeyboard->setKeyLevel(KEY_CONTROL, FALSE);
+				gKeyboard->setKeyUp(KEY_CONTROL, TRUE);
+				ctrl_key_down = false;
+			}
+			else if (ctrl_key_down)
+			{
+				gKeyboard->setKeyLevel(KEY_CONTROL, TRUE);
+			}
+
+			// Shift
+			if (mBtn[XBOX_B_KEY] == 1 && !shift_key_down)
+			{
+				gKeyboard->setKeyDown(KEY_SHIFT, TRUE);
+				shift_key_down = true;
+			}
+			else if (mBtn[XBOX_B_KEY] == 0 && shift_key_down)
+			{
+				gKeyboard->setKeyDown(KEY_SHIFT, FALSE);
+				gKeyboard->setKeyUp(KEY_SHIFT, TRUE);
+				shift_key_down = false;
+			}
+			else if (shift_key_down)
+			{
+				gKeyboard->setKeyLevel(KEY_SHIFT, TRUE);
+			}
+
 			// Mouse clicks ...
 			static long left_mouse_down = 0;
 			static long right_mouse_down = 0;

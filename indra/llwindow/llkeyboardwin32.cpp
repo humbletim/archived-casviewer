@@ -271,7 +271,11 @@ void LLKeyboardWin32::scanKeyboard()
 				// ...translate back to windows key
 				U16 virtual_key = inverseTranslateExtendedKey(key);
 				// keydown in highest bit
-				if (!pending_key_events && !(GetAsyncKeyState(virtual_key) & 0x8000))
+				// </CV:David>
+				// Key may be down in a controller.
+				//if (!pending_key_events && !(GetAsyncKeyState(virtual_key) & 0x8000))
+				if (!mKeyLevelController[key] && !pending_key_events && !(GetAsyncKeyState(virtual_key) & 0x8000))
+				// <CV:David>
 				{
  					//llinfos << "Key up event missed, resetting" << llendl;
 					mKeyLevel[key] = FALSE;
@@ -300,6 +304,24 @@ void LLKeyboardWin32::scanKeyboard()
 		}
 	}
 }
+
+// <CV:David>
+void LLKeyboardWin32::setKeyDown(KEY key, BOOL down)
+{
+	mKeyDown[key] = down;
+}
+
+void LLKeyboardWin32::setKeyLevel(KEY key, BOOL level)
+{
+	mKeyLevel[key] = level;
+	mKeyLevelController[key] = level;
+}
+
+void LLKeyboardWin32::setKeyUp(KEY key, BOOL up)
+{
+	mKeyUp[key] = up;
+}
+// </CV:David>
 
 BOOL LLKeyboardWin32::translateExtendedKey(const U16 os_key, const MASK mask, KEY *translated_key)
 {

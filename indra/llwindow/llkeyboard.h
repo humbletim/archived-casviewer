@@ -111,6 +111,13 @@ public:
 
 	static void		setStringTranslatorFunc( LLKeyStringTranslatorFunc *trans_func );
 	
+	// <CV:David>
+	// For controller keys.
+	virtual void setKeyDown(KEY key, BOOL down) = 0;
+	virtual void setKeyLevel(KEY key, BOOL level) = 0;
+	virtual void setKeyUp(KEY key, BOOL up) = 0;
+	// </CV:David>
+
 protected:
 	void 			addKeyName(KEY key, const std::string& name);
 

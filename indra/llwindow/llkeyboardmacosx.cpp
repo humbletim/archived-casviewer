@@ -304,6 +304,23 @@ void LLKeyboardMacOSX::scanKeyboard()
 	}
 }
 
+// <CV:David>
+void LLKeyboardWin32::setKeyDown(KEY key, BOOL down)
+{
+	mKeyDown[key] = down;
+}
+
+void LLKeyboardWin32::setKeyLevel(KEY key, BOOL level)
+{
+	mKeyLevel[key] = level;
+}
+
+void LLKeyboardWin32::setKeyUp(KEY key, BOOL up)
+{
+	mKeyUp[key] = up;
+}
+// </CV:David>
+
 BOOL LLKeyboardMacOSX::translateNumpadKey( const U16 os_key, KEY *translated_key )
 {
 	return translateKey(os_key, translated_key);
