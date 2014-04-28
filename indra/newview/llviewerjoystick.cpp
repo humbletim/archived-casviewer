@@ -1476,7 +1476,7 @@ void LLViewerJoystick::scanJoystick()
 			}
 			else if (mBtn[XBOX_B_KEY] == 0 && shift_key_down)
 			{
-				gKeyboard->setKeyDown(KEY_SHIFT, FALSE);
+				gKeyboard->setKeyLevel(KEY_SHIFT, FALSE);
 				gKeyboard->setKeyUp(KEY_SHIFT, TRUE);
 				shift_key_down = false;
 			}
