@@ -1360,7 +1360,7 @@ void LLViewerJoystick::scanJoystick()
 		static long toggle_cursor = 0;
 		static long toggle_flycam_held = 0;
 		static long toggle_cursor_held = 0;
-		const long MIN_HOLD_COUNT = 5;
+		const long MIN_HOLD_COUNT = 3;
 
 		static long toggle_flycam = 0;
 
