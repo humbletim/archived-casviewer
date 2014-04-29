@@ -66,6 +66,7 @@ public:
 	void moveObjects(bool reset = false);
 	void moveAvatar(bool reset = false);
 	void moveFlycam(bool reset = false);
+	void moveCursor();  // <CV:David>
 	F32 getJoystickAxis(U32 axis) const;
 	U32 getJoystickButton(U32 button) const;
 	bool isJoystickInitialized() const {return (mDriverState==JDS_INITIALIZED);}
@@ -96,6 +97,11 @@ protected:
 	void agentPitch(F32 pitch_inc);
 	void agentYaw(F32 yaw_inc);
 	void agentJump();
+	// <CV:David>
+	void cursorSlide(F32 inc);
+	void cursorPush(F32 incl);
+	void cursorZoom(F32 ind);
+	// </CV:David>
 	void resetDeltas(S32 axis[]);
 #if LIB_NDOF
 	static NDOF_HotPlugResult HotPlugAddCallback(NDOF_Device *dev);

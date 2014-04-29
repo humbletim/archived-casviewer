@@ -430,21 +430,6 @@ void LLViewerJoystick::agentJump()
 void LLViewerJoystick::agentSlide(F32 inc)
 {
 	// <CV:David>
-	if (mControlCursor)
-	{
-		if (abs(inc) > 0.001)
-		{
-			S32 x, y;
-			LLUI::getMousePositionScreen(&x, &y);
-			x = llclamp(x + (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowWidthRaw());
-			LLUI::setMousePositionScreen(x, y);
-		}
-
-		return;
-	}
-	// </CV:David>
-
-	// <CV:David>
 	/*
 	if (inc < 0.f)
 	{
@@ -481,21 +466,6 @@ void LLViewerJoystick::agentSlide(F32 inc)
 void LLViewerJoystick::agentPush(F32 inc)
 {
 	// <CV:David>
-	if (mControlCursor)
-	{
-		if (abs(inc) > 0.001)
-		{
-			S32 x, y;
-			LLUI::getMousePositionScreen(&x, &y);
-			y = llclamp(y - (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowHeightRaw());
-			LLUI::setMousePositionScreen(x, y);
-		}
-
-		return;
-	}
-	// </CV:David>
-
-	// <CV:David>
 	/*
 	if (inc < 0.f)                            // forward
 	{
@@ -531,13 +501,6 @@ void LLViewerJoystick::agentPush(F32 inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentFly(F32 inc)
 {
-	// <CV:David>
-	if (mControlCursor)
-	{
-		return;
-	}
-	// </CV:David>
-
 	// <CV:David>
 	/*
 	if (inc < 0.f)
@@ -582,25 +545,6 @@ void LLViewerJoystick::agentFly(F32 inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentPitch(F32 pitch_inc)
 {
-	// <CV:David>
-	if (mControlCursor)
-	{
-		if (abs(pitch_inc) > 0.001)
-		{
-			static U32 count = 0;
-
-			count += 1;
-			if (count > 2)  // Slow down the zoom in/out.
-			{
-				gViewerWindow->handleScrollWheel( pitch_inc > 0.f ? 1 : -1);
-				count = 0;
-			}
-		}
-
-		return;
-	}
-	// </CV:David>
-
 	if (pitch_inc < 0)
 	{
 		gAgent.setControlFlags(AGENT_CONTROL_PITCH_POS);
@@ -616,13 +560,6 @@ void LLViewerJoystick::agentPitch(F32 pitch_inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentYaw(F32 yaw_inc)
 {	
-	// <CV:David>
-	if (mControlCursor)
-	{
-		return;
-	}
-	// </CV:David>
-
 	// Cannot steer some vehicles in mouselook if the script grabs the controls
 	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
 	{
@@ -642,6 +579,53 @@ void LLViewerJoystick::agentYaw(F32 yaw_inc)
 		gAgent.yaw(-yaw_inc);
 	}
 }
+
+// -----------------------------------------------------------------------------
+// <CV:David>
+void LLViewerJoystick::cursorSlide(F32 inc)
+{
+	if (abs(inc) > 0.001)
+	{
+		S32 x, y;
+		LLUI::getMousePositionScreen(&x, &y);
+		x = llclamp(x + (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowWidthRaw());
+		LLUI::setMousePositionScreen(x, y);
+	}
+}
+// </CV:David>
+
+// -----------------------------------------------------------------------------
+// <CV:David>
+void LLViewerJoystick::cursorPush(F32 inc)
+{
+	if (abs(inc) > 0.001)
+	{
+		S32 x, y;
+		LLUI::getMousePositionScreen(&x, &y);
+		y = llclamp(y - (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowHeightRaw());
+		LLUI::setMousePositionScreen(x, y);
+	}
+}
+// </CV:David>
+
+// -----------------------------------------------------------------------------
+// <CV:David>
+void LLViewerJoystick::cursorZoom(F32 inc)
+{
+	if (abs(inc) > 0.001)
+	{
+		static U32 count = 0;
+
+		count += 1;
+		if (count > 2)  // Slow down the zoom in/out.
+		{
+			gViewerWindow->handleScrollWheel(inc > 0.f ? 1 : -1);
+			count = 0;
+		}
+	}
+}
+	// </CV:David>
+// </CV:David>
 
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::resetDeltas(S32 axis[])
@@ -1091,153 +1075,163 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	static LLVector3    		sFlycamPosition;
 	static F32          		sFlycamZoom;
 	
-	if (!gFocusMgr.getAppHasFocus() || mDriverState != JDS_INITIALIZED
-		|| !gSavedSettings.getBOOL("JoystickEnabled") || !gSavedSettings.getBOOL("JoystickFlycamEnabled"))
+	// <CV:David>
+	// Don't move flycam while controlling cursor but do maintain flycam camera positioning.
+	if (!mControlCursor || reset)
 	{
-		return;
-	}
+	// </CV:David>
 
-	S32 axis[] = 
-	{
-		gSavedSettings.getS32("JoystickAxis0"),
-		gSavedSettings.getS32("JoystickAxis1"),
-		gSavedSettings.getS32("JoystickAxis2"),
-		gSavedSettings.getS32("JoystickAxis3"),
-		gSavedSettings.getS32("JoystickAxis4"),
-		gSavedSettings.getS32("JoystickAxis5"),
-		gSavedSettings.getS32("JoystickAxis6")
-	};
-
-	bool in_build_mode = LLToolMgr::getInstance()->inBuildMode();
-	if (reset || mResetFlag)
-	{
-		sFlycamPosition = LLViewerCamera::getInstance()->getOrigin();
-		sFlycamRotation = LLViewerCamera::getInstance()->getQuaternion();
-		sFlycamZoom = LLViewerCamera::getInstance()->getView();
-		
-		resetDeltas(axis);
-
-		return;
-	}
-
-	F32 axis_scale[] =
-	{
-		gSavedSettings.getF32("FlycamAxisScale0"),
-		gSavedSettings.getF32("FlycamAxisScale1"),
-		gSavedSettings.getF32("FlycamAxisScale2"),
-		gSavedSettings.getF32("FlycamAxisScale3"),
-		gSavedSettings.getF32("FlycamAxisScale4"),
-		gSavedSettings.getF32("FlycamAxisScale5"),
-		gSavedSettings.getF32("FlycamAxisScale6")
-	};
-
-	F32 dead_zone[] =
-	{
-		gSavedSettings.getF32("FlycamAxisDeadZone0"),
-		gSavedSettings.getF32("FlycamAxisDeadZone1"),
-		gSavedSettings.getF32("FlycamAxisDeadZone2"),
-		gSavedSettings.getF32("FlycamAxisDeadZone3"),
-		gSavedSettings.getF32("FlycamAxisDeadZone4"),
-		gSavedSettings.getF32("FlycamAxisDeadZone5"),
-		gSavedSettings.getF32("FlycamAxisDeadZone6")
-	};
-
-	F32 time = gFrameIntervalSeconds;
-
-	// avoid making ridiculously big movements if there's a big drop in fps 
-	if (time > .2f)
-	{
-		time = .2f;
-	}
-
-	F32 cur_delta[7];
-	F32 feather = gSavedSettings.getF32("FlycamFeathering");
-	bool absolute = gSavedSettings.getBOOL("Cursor3D");
-	bool is_zero = true;
-
-	for (U32 i = 0; i < 7; i++)
-	{
-		cur_delta[i] = -getJoystickAxis(axis[i]);
-
-
-		F32 tmp = cur_delta[i];
-		if (absolute)
+		if (!gFocusMgr.getAppHasFocus() || mDriverState != JDS_INITIALIZED
+			|| !gSavedSettings.getBOOL("JoystickEnabled") || !gSavedSettings.getBOOL("JoystickFlycamEnabled"))
 		{
-			cur_delta[i] = cur_delta[i] - sLastDelta[i];
+			return;
 		}
-		sLastDelta[i] = tmp;
 
-		if (cur_delta[i] > 0)
+		S32 axis[] = 
 		{
-			cur_delta[i] = llmax(cur_delta[i]-dead_zone[i], 0.f);
+			gSavedSettings.getS32("JoystickAxis0"),
+			gSavedSettings.getS32("JoystickAxis1"),
+			gSavedSettings.getS32("JoystickAxis2"),
+			gSavedSettings.getS32("JoystickAxis3"),
+			gSavedSettings.getS32("JoystickAxis4"),
+			gSavedSettings.getS32("JoystickAxis5"),
+			gSavedSettings.getS32("JoystickAxis6")
+		};
+
+		bool in_build_mode = LLToolMgr::getInstance()->inBuildMode();
+		if (reset || mResetFlag)
+		{
+			sFlycamPosition = LLViewerCamera::getInstance()->getOrigin();
+			sFlycamRotation = LLViewerCamera::getInstance()->getQuaternion();
+			sFlycamZoom = LLViewerCamera::getInstance()->getView();
+		
+			resetDeltas(axis);
+
+			return;
+		}
+
+		F32 axis_scale[] =
+		{
+			gSavedSettings.getF32("FlycamAxisScale0"),
+			gSavedSettings.getF32("FlycamAxisScale1"),
+			gSavedSettings.getF32("FlycamAxisScale2"),
+			gSavedSettings.getF32("FlycamAxisScale3"),
+			gSavedSettings.getF32("FlycamAxisScale4"),
+			gSavedSettings.getF32("FlycamAxisScale5"),
+			gSavedSettings.getF32("FlycamAxisScale6")
+		};
+
+		F32 dead_zone[] =
+		{
+			gSavedSettings.getF32("FlycamAxisDeadZone0"),
+			gSavedSettings.getF32("FlycamAxisDeadZone1"),
+			gSavedSettings.getF32("FlycamAxisDeadZone2"),
+			gSavedSettings.getF32("FlycamAxisDeadZone3"),
+			gSavedSettings.getF32("FlycamAxisDeadZone4"),
+			gSavedSettings.getF32("FlycamAxisDeadZone5"),
+			gSavedSettings.getF32("FlycamAxisDeadZone6")
+		};
+
+		F32 time = gFrameIntervalSeconds;
+
+		// avoid making ridiculously big movements if there's a big drop in fps 
+		if (time > .2f)
+		{
+			time = .2f;
+		}
+
+		F32 cur_delta[7];
+		F32 feather = gSavedSettings.getF32("FlycamFeathering");
+		bool absolute = gSavedSettings.getBOOL("Cursor3D");
+		bool is_zero = true;
+
+		for (U32 i = 0; i < 7; i++)
+		{
+			cur_delta[i] = -getJoystickAxis(axis[i]);
+
+
+			F32 tmp = cur_delta[i];
+			if (absolute)
+			{
+				cur_delta[i] = cur_delta[i] - sLastDelta[i];
+			}
+			sLastDelta[i] = tmp;
+
+			if (cur_delta[i] > 0)
+			{
+				cur_delta[i] = llmax(cur_delta[i]-dead_zone[i], 0.f);
+			}
+			else
+			{
+				cur_delta[i] = llmin(cur_delta[i]+dead_zone[i], 0.f);
+			}
+
+			// We may want to scale camera movements up or down in build mode.
+			// NOTE: this needs to remain after the deadzone calculation, otherwise
+			// we have issues with flycam "jumping" when the build dialog is opened/closed  -Nyx
+			if (in_build_mode)
+			{
+				if (i == X_I || i == Y_I || i == Z_I)
+				{
+					static LLCachedControl<F32> build_mode_scale(gSavedSettings,"FlycamBuildModeScale", 1.0);
+					cur_delta[i] *= build_mode_scale;
+				}
+			}
+
+			cur_delta[i] *= axis_scale[i];
+		
+			if (!absolute)
+			{
+				cur_delta[i] *= time;
+			}
+
+			sDelta[i] = sDelta[i] + (cur_delta[i]-sDelta[i])*time*feather;
+
+			is_zero = is_zero && (cur_delta[i] == 0.f);
+
+		}
+	
+		// Clear AFK state if moved beyond the deadzone
+		if (!is_zero && gAwayTimer.getElapsedTimeF32() > LLAgent::MIN_AFK_TIME)
+		{
+			gAgent.clearAFK();
+		}
+	
+		sFlycamPosition += LLVector3(sDelta) * sFlycamRotation;
+
+		LLMatrix3 rot_mat(sDelta[3], sDelta[4], sDelta[5]);
+		sFlycamRotation = LLQuaternion(rot_mat)*sFlycamRotation;
+
+		if (gSavedSettings.getBOOL("AutoLeveling"))
+		{
+			LLMatrix3 level(sFlycamRotation);
+
+			LLVector3 x = LLVector3(level.mMatrix[0]);
+			LLVector3 y = LLVector3(level.mMatrix[1]);
+			LLVector3 z = LLVector3(level.mMatrix[2]);
+
+			y.mV[2] = 0.f;
+			y.normVec();
+
+			level.setRows(x,y,z);
+			level.orthogonalize();
+				
+			LLQuaternion quat(level);
+			sFlycamRotation = nlerp(llmin(feather*time,1.f), sFlycamRotation, quat);
+		}
+
+		if (gSavedSettings.getBOOL("ZoomDirect"))
+		{
+			sFlycamZoom = sLastDelta[6]*axis_scale[6]+dead_zone[6];
 		}
 		else
 		{
-			cur_delta[i] = llmin(cur_delta[i]+dead_zone[i], 0.f);
+			sFlycamZoom += sDelta[6];
 		}
 
-		// We may want to scale camera movements up or down in build mode.
-		// NOTE: this needs to remain after the deadzone calculation, otherwise
-		// we have issues with flycam "jumping" when the build dialog is opened/closed  -Nyx
-		if (in_build_mode)
-		{
-			if (i == X_I || i == Y_I || i == Z_I)
-			{
-				static LLCachedControl<F32> build_mode_scale(gSavedSettings,"FlycamBuildModeScale", 1.0);
-				cur_delta[i] *= build_mode_scale;
-			}
-		}
-
-		cur_delta[i] *= axis_scale[i];
-		
-		if (!absolute)
-		{
-			cur_delta[i] *= time;
-		}
-
-		sDelta[i] = sDelta[i] + (cur_delta[i]-sDelta[i])*time*feather;
-
-		is_zero = is_zero && (cur_delta[i] == 0.f);
-
+	// <CV:David>
 	}
-	
-	// Clear AFK state if moved beyond the deadzone
-	if (!is_zero && gAwayTimer.getElapsedTimeF32() > LLAgent::MIN_AFK_TIME)
-	{
-		gAgent.clearAFK();
-	}
-	
-	sFlycamPosition += LLVector3(sDelta) * sFlycamRotation;
-
-	LLMatrix3 rot_mat(sDelta[3], sDelta[4], sDelta[5]);
-	sFlycamRotation = LLQuaternion(rot_mat)*sFlycamRotation;
-
-	if (gSavedSettings.getBOOL("AutoLeveling"))
-	{
-		LLMatrix3 level(sFlycamRotation);
-
-		LLVector3 x = LLVector3(level.mMatrix[0]);
-		LLVector3 y = LLVector3(level.mMatrix[1]);
-		LLVector3 z = LLVector3(level.mMatrix[2]);
-
-		y.mV[2] = 0.f;
-		y.normVec();
-
-		level.setRows(x,y,z);
-		level.orthogonalize();
-				
-		LLQuaternion quat(level);
-		sFlycamRotation = nlerp(llmin(feather*time,1.f), sFlycamRotation, quat);
-	}
-
-	if (gSavedSettings.getBOOL("ZoomDirect"))
-	{
-		sFlycamZoom = sLastDelta[6]*axis_scale[6]+dead_zone[6];
-	}
-	else
-	{
-		sFlycamZoom += sDelta[6];
-	}
+	// </CV:David>
 
 	// <CV:David>
 	//	LLMatrix3 mat(sFlycamRotation);
@@ -1262,6 +1256,120 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	LLViewerCamera::getInstance()->mYAxis = LLVector3(mat.mMatrix[1]);
 	LLViewerCamera::getInstance()->mZAxis = LLVector3(mat.mMatrix[2]);
 }
+
+// -----------------------------------------------------------------------------
+// <CV:David>
+// Based on moveAvatar().
+void LLViewerJoystick::moveCursor()
+{
+	if (!gFocusMgr.getAppHasFocus() || mDriverState != JDS_INITIALIZED
+		|| !gSavedSettings.getBOOL("JoystickEnabled") || !gSavedSettings.getBOOL("JoystickAvatarEnabled"))
+	{
+		return;
+	}
+
+	S32 axis[] = 
+	{
+		// [1 0 2 4  3  5]
+		// [Z X Y RZ RX RY]
+		gSavedSettings.getS32("JoystickAxis0"),
+		gSavedSettings.getS32("JoystickAxis1"),
+		gSavedSettings.getS32("JoystickAxis2"),
+		gSavedSettings.getS32("JoystickAxis3"),
+		gSavedSettings.getS32("JoystickAxis4"),
+		gSavedSettings.getS32("JoystickAxis5")
+	};
+
+	if (!mNewSample)
+	{
+		return;
+	}
+	mNewSample = false;
+
+	F32 axis_scale[] =
+	{
+		gSavedSettings.getF32("AvatarAxisScale0"),
+		gSavedSettings.getF32("AvatarAxisScale1"),
+		gSavedSettings.getF32("AvatarAxisScale2"),
+		gSavedSettings.getF32("AvatarAxisScale3"),
+		gSavedSettings.getF32("AvatarAxisScale4"),
+		gSavedSettings.getF32("AvatarAxisScale5")
+	};
+
+	F32 dead_zone[] =
+	{
+		gSavedSettings.getF32("AvatarAxisDeadZone0"),
+		gSavedSettings.getF32("AvatarAxisDeadZone1"),
+		gSavedSettings.getF32("AvatarAxisDeadZone2"),
+		gSavedSettings.getF32("AvatarAxisDeadZone3"),
+		gSavedSettings.getF32("AvatarAxisDeadZone4"),
+		gSavedSettings.getF32("AvatarAxisDeadZone5")
+	};
+
+	// time interval in seconds between this frame and the previous
+	F32 time = gFrameIntervalSeconds;
+
+	// avoid making ridicously big movements if there's a big drop in fps 
+	if (time > .2f)
+	{
+		time = .2f;
+	}
+
+	// note: max feather is 32.0
+	F32 feather = gSavedSettings.getF32("AvatarFeathering"); 
+	
+	F32 cur_delta[6];
+#if LIB_NDOF
+    bool absolute = (gSavedSettings.getBOOL("Cursor3D") && mNdofDev->absolute);
+#else
+    bool absolute = false;
+#endif
+	// remove dead zones and determine biggest movement on the joystick 
+	for (U32 i = 0; i < 6; i++)
+	{
+		cur_delta[i] = -mAxes[axis[i]];
+		if (absolute)
+		{
+			F32 tmp = cur_delta[i];
+			cur_delta[i] = cur_delta[i] - sLastDelta[i];
+			sLastDelta[i] = tmp;
+		}
+
+		if (cur_delta[i] > 0)
+		{
+			cur_delta[i] = llmax(cur_delta[i]-dead_zone[i], 0.f);
+		}
+		else
+		{
+			cur_delta[i] = llmin(cur_delta[i]+dead_zone[i], 0.f);
+		}
+	}
+
+	sDelta[X_I] = -cur_delta[X_I] * axis_scale[X_I];
+	sDelta[Y_I] = -cur_delta[Y_I] * axis_scale[Y_I];
+	sDelta[Z_I] = -cur_delta[Z_I] * axis_scale[Z_I];
+	cur_delta[RX_I] *= -axis_scale[RX_I] * mPerfScale;
+	cur_delta[RY_I] *= -axis_scale[RY_I] * mPerfScale;
+		
+	if (!absolute)
+	{
+		cur_delta[RX_I] *= time;
+		cur_delta[RY_I] *= time;
+	}
+	sDelta[RX_I] += (cur_delta[RX_I] - sDelta[RX_I]) * time * feather;
+	sDelta[RY_I] += (cur_delta[RY_I] - sDelta[RY_I]) * time * feather;
+	
+	mCurrentMovement[X_I] = sDelta[X_I];
+	mCurrentMovement[Y_I] = sDelta[Y_I];
+	mCurrentMovement[Z_I] = sDelta[Z_I];
+	mCurrentMovement[RX_I] = sDelta[RX_I];
+	mCurrentMovement[RY_I] = sDelta[RY_I];
+
+	cursorSlide(sDelta[X_I]);		// left / right
+	cursorPush(sDelta[Z_I]);		// up / down
+	cursorZoom(sDelta[RX_I]);		// mousewheel
+}
+// </CV:David>
 
 // -----------------------------------------------------------------------------
 bool LLViewerJoystick::toggleFlycam()
@@ -1330,7 +1438,11 @@ void LLViewerJoystick::scanJoystick()
 #if LL_WINDOWS
 	// On windows, the flycam is updated syncronously with a timer, so there is
 	// no need to update the status of the joystick here.
-	if (!mOverrideCamera)
+	// <CV:David>
+	// But Do need to update joystick status if an Xbox controller.
+	// if (!mOverrideCamera)
+	if (!mOverrideCamera || mController == XBOX_CONTROLLER)
+	// </CV:David>
 #endif
 	// <CV:David>
 	//updateStatus();
@@ -1537,10 +1649,20 @@ void LLViewerJoystick::scanJoystick()
 	}
 	// </CV:David>
 
-	if (!mOverrideCamera && !(LLToolMgr::getInstance()->inBuildMode() && gSavedSettings.getBOOL("JoystickBuildEnabled")))
+	// <CV:David>
+	//if (!mOverrideCamera && !(LLToolMgr::getInstance()->inBuildMode() && gSavedSettings.getBOOL("JoystickBuildEnabled")))
+	if (!mOverrideCamera && !(LLToolMgr::getInstance()->inBuildMode() && gSavedSettings.getBOOL("JoystickBuildEnabled")) && !mControlCursor)
+	// </CV:David>
 	{
 		moveAvatar();
 	}
+
+	// <CV:David>
+	if (mControlCursor)
+	{
+		moveCursor();
+	}
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
