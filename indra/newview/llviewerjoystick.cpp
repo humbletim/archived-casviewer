@@ -983,7 +983,10 @@ void LLViewerJoystick::moveAvatar(bool reset)
 	handleRun((F32) sqrt(sDelta[Z_I]*sDelta[Z_I] + sDelta[X_I]*sDelta[X_I]));
 	
 	// Allow forward/backward movement some priority
-	if (dom_axis == Z_I)
+	// <CV:David>
+	//if (dom_axis == Z_I)
+	if (dom_axis == Z_I && mController != XBOX_CONTROLLER)
+	// </CV:David>
 	{
 		// <CV:David>
 		memset(mCurrentMovement, 0, sizeof(mCurrentMovement));
