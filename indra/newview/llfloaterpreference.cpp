@@ -693,6 +693,12 @@ BOOL LLFloaterPreference::postBuild()
 	populateFontSelectionCombo();
 	// </FS:Kadah>
     
+	// <CV:David>
+	#if LL_WINDOWS
+		getChild<LLUICtrl>("SetOutput120Hz")->setEnabled(TRUE);
+	#endif
+	// </CV:David>
+
 	return TRUE;
 }
 
