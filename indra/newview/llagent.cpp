@@ -2638,7 +2638,10 @@ void LLAgent::endAnimationUpdateUI()
 	//---------------------------------------------------------------------
 	// Set up UI for mode we're entering
 	//---------------------------------------------------------------------
-	if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
+	// <CV:David>
+	//if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
+	if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK || gRift3DEnabled)
+	// </CV:David>
 	{
 
 		// <FS:PP> FIRE-8868: Show UI in mouselook
