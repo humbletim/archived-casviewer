@@ -545,6 +545,13 @@ void LLViewerJoystick::agentFly(F32 inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentPitch(F32 pitch_inc)
 {
+	// <CV:David>
+	if (gRift3DEnabled && gRiftMouseHorizontal)
+	{
+		return;
+	}
+	// </CV:David>
+
 	if (pitch_inc < 0)
 	{
 		gAgent.setControlFlags(AGENT_CONTROL_PITCH_POS);
