@@ -10412,6 +10412,12 @@ void CVToggle3D::setRiftlook(bool on)
 	gRift3DEnabled = on;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
 
+	bool was_in_flycam = LLViewerJoystick::getInstance()->getOverrideCamera();
+	if (was_in_flycam)
+	{
+		LLViewerJoystick::getInstance()->toggleFlycam();
+	}
+
 	if (gRift3DEnabled)
 	{
 		llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
@@ -10448,6 +10454,11 @@ void CVToggle3D::setRiftlook(bool on)
 		gSavedSettings.setF32("CameraAngle", DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
+	}
+
+	if (was_in_flycam)
+	{
+		LLViewerJoystick::getInstance()->toggleFlycam();
 	}
 
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
