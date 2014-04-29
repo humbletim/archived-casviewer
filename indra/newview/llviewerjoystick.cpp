@@ -586,10 +586,14 @@ void LLViewerJoystick::cursorSlide(F32 inc)
 {
 	if (abs(inc) > 0.001)
 	{
+		static F32 previousInc = 0.f;  // Smooth a little.
+
 		S32 x, y;
 		LLUI::getMousePositionScreen(&x, &y);
-		x = llclamp(x + (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowWidthRaw());
+		x = llclamp(x + (S32)((inc + previousInc) * 150.f), 0, gViewerWindow->getWindowWidthRaw());
 		LLUI::setMousePositionScreen(x, y);
+
+		previousInc = inc;
 	}
 }
 // </CV:David>
@@ -600,9 +604,11 @@ void LLViewerJoystick::cursorPush(F32 inc)
 {
 	if (abs(inc) > 0.001)
 	{
+		static F32 previousInc = 0.f;  // Smooth a little.
+
 		S32 x, y;
 		LLUI::getMousePositionScreen(&x, &y);
-		y = llclamp(y - (S32)(inc * abs(inc) * abs(inc) * 400.f), 0, gViewerWindow->getWindowHeightRaw());
+		y = llclamp(y - (S32)((inc + previousInc) * 150.f), 0, gViewerWindow->getWindowHeightRaw());
 		LLUI::setMousePositionScreen(x, y);
 	}
 }
