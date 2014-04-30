@@ -40,6 +40,13 @@ public:
 	/*virtual*/ void	resetMaskKeys();
 	/*virtual*/ MASK	currentMask(BOOL for_mouse_event);
 	/*virtual*/ void	scanKeyboard();
+
+	// <CV:David>
+	/*virtual*/ void	setKeyDown(KEY key, BOOL down);
+	/*virtual*/ void	setKeyLevel(KEY key, BOOL level);
+	/*virtual*/ void	setKeyUp(KEY key, BOOL up);
+	// </CV:David>
+
 #ifdef LL_DARWIN
 	/*virtual*/ void	handleModifier(MASK mask);
 #endif

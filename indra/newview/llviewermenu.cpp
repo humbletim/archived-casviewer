@@ -4903,7 +4903,7 @@ void handle_reset_view()
 	{
 		if (gAgentCamera.cameraMouselook())
 		{
-			setRiftlook(FALSE);
+			CVToggle3D::setRiftlook(FALSE);
 		}
 		else
 		{
@@ -10388,10 +10388,35 @@ bool viewer_3d_enabled()
 	}
 }
 
-void setRiftlook(bool on)
+void CVToggle3D::toggle3D()
+{
+	if (gOutputType == OUTPUT_TYPE_STEREO)
+	{
+		setStereoscopic(!gStereoscopic3DEnabled);
+	}
+	else if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DConfigured)
+	{
+		setRiftlook(!gRift3DEnabled);
+	}
+}
+
+void CVToggle3D::setStereoscopic(bool on)
+{
+	gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
+	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
+	llinfos << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << llendl;
+}
+
+void CVToggle3D::setRiftlook(bool on)
 {
 	gRift3DEnabled = on;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
+	bool was_in_flycam = LLViewerJoystick::getInstance()->getOverrideCamera();
+	if (was_in_flycam)
+	{
+		LLViewerJoystick::getInstance()->toggleFlycam();
+	}
 
 	if (gRift3DEnabled)
 	{
@@ -10431,29 +10456,22 @@ void setRiftlook(bool on)
 		gAgentCamera.changeCameraToDefault();
 	}
 
+	if (was_in_flycam)
+	{
+		LLViewerJoystick::getInstance()->toggleFlycam();
+	}
+
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
 }
 	
-class CVToggle3D : public view_listener_t
+bool CVToggle3D::handleEvent(const LLSD& userdata)
 {
-	bool handleEvent(const LLSD& userdata)
-	{
-		if (gOutputType == OUTPUT_TYPE_STEREO)
-		{
-			gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
-			gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
-			llinfos << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << llendl;
-		}
-		else if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DConfigured)
-		{
-			setRiftlook(!gRift3DEnabled);
-		}
+	toggle3D();
+	return true;
+}
 
-		return true;
-	}
-};
 
 class CVCheck3D : public view_listener_t
 {

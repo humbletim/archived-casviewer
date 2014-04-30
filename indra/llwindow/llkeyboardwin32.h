@@ -44,6 +44,11 @@ public:
 	/*virtual*/ void	resetMaskKeys();
 	/*virtual*/ MASK	currentMask(BOOL for_mouse_event);
 	/*virtual*/ void	scanKeyboard();
+	// <CV:David>
+	/*virtual*/ void	setKeyDown(KEY key, BOOL down);
+	/*virtual*/ void	setKeyLevel(KEY key, BOOL level);
+	/*virtual*/ void	setKeyUp(KEY key, BOOL up);
+	// </CV:David>
 	BOOL				translateExtendedKey(const U16 os_key, const MASK mask, KEY *translated_key);
 	U16					inverseTranslateExtendedKey(const KEY translated_key);
 
@@ -53,6 +58,8 @@ protected:
 private:
 	std::map<U16, KEY> mTranslateNumpadMap;
 	std::map<KEY, U16> mInvTranslateNumpadMap;
+
+	BOOL mKeyLevelController[KEY_COUNT];  // <CV:David> Key may be down in a controller.
 };
 
 #endif

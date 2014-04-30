@@ -43,7 +43,10 @@ public:
 	virtual void apply();	// Apply the changed values.
 	virtual void cancel();	// Cancel the changed values.
 	virtual void draw();
-	static  void setSNDefaults();
+	// <CV:David>
+	//static  void setSNDefaults();
+	static  void setControllerDefaults();
+	// </CV:David>
 
 private:
 
@@ -53,7 +56,10 @@ private:
 	void initFromSettings();
 	
 	static void onCommitJoystickEnabled(LLUICtrl*, void*);
-	static void onClickRestoreSNDefaults(void*);
+	// <CV:David>
+	//static void onClickRestoreSNDefaults(void*);
+	static void onClickRestoreControllerDefaults(void*);
+	// </CV:David>
 	static void onClickCancel(void*);
 	static void onClickOK(void*);
 

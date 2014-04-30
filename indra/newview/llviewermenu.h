@@ -167,7 +167,18 @@ bool enable_object_export();
 // </FS:Techwolf Lupindo>
 
 // <CV:David>
-void setRiftlook(bool on);
+
+class CVToggle3D : public view_listener_t
+{
+public: 
+	static void toggle3D();
+	static void setStereoscopic(bool on);
+	static void setRiftlook(bool on);
+
+private:
+	bool handleEvent(const LLSD& userdata);
+};
+
 // </CV:David>
 
 

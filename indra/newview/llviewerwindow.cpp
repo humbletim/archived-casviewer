@@ -1528,7 +1528,7 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 		// <CV:David>
 		if (gRift3DEnabled)
 		{
-			setRiftlook(false);
+			CVToggle3D::setRiftlook(false);
 		}
 		else
 		// </CV:David>

@@ -43,6 +43,15 @@ typedef enum e_joystick_driver_state
 	JDS_INITIALIZING
 } EJoystickDriverState;
 
+// <CV:David>
+typedef enum e_controller_type
+{
+	XBOX_CONTROLLER,
+	SPACENAVIGATOR_CONTROLLER,
+	UNKNOWN_CONTROLLER
+} EControllerType;
+// </CV:David>
+
 class LLViewerJoystick : public LLSingleton<LLViewerJoystick>
 {
 public:
@@ -57,18 +66,27 @@ public:
 	void moveObjects(bool reset = false);
 	void moveAvatar(bool reset = false);
 	void moveFlycam(bool reset = false);
+	void moveCursor();  // <CV:David>
 	F32 getJoystickAxis(U32 axis) const;
 	U32 getJoystickButton(U32 button) const;
 	bool isJoystickInitialized() const {return (mDriverState==JDS_INITIALIZED);}
 	bool isLikeSpaceNavigator() const;
+	bool isLikeXboxController() const;  // <CV:David>
 	void setNeedsReset(bool reset = true) { mResetFlag = reset; }
 	void setCameraNeedsUpdate(bool b)     { mCameraUpdated = b; }
 	bool getCameraNeedsUpdate() const     { return mCameraUpdated; }
 	bool getOverrideCamera() { return mOverrideCamera; }
 	void setOverrideCamera(bool val);
 	bool toggleFlycam();
-	void setSNDefaults();
-	std::string getDescription();
+	// <CV:David>
+	bool toggleCursor();
+	bool toggle3d();
+	//void setSNDefaults();
+	void setControllerDefaults();
+	//std::string getDescription();
+	std::string getDescription() const;
+	std::string getDescriptionShort() const;
+	// <CV:David>
 	
 protected:
 	void updateEnabled(bool autoenable);
@@ -79,6 +97,11 @@ protected:
 	void agentPitch(F32 pitch_inc);
 	void agentYaw(F32 yaw_inc);
 	void agentJump();
+	// <CV:David>
+	void cursorSlide(F32 inc);
+	void cursorPush(F32 incl);
+	void cursorZoom(F32 ind);
+	// </CV:David>
 	void resetDeltas(S32 axis[]);
 #if LIB_NDOF
 	static NDOF_HotPlugResult HotPlugAddCallback(NDOF_Device *dev);
@@ -100,6 +123,16 @@ private:
 	static F32				sDelta[7];
 
 	// <CV:David>
+
+	// Controllers.
+	EControllerType mController;
+	
+	// Controller-specific defaults.
+	void setSNDefaults();
+	void setXboxControllerDefaults();
+
+	// Control cursor instead of avatar?
+	bool mControlCursor;
 
 	// The SpaceNavigator has a maximum update rate which necessitates continuing previous movement between samples.
 	LLFrameTimer mSampleTimer;
