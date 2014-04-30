@@ -220,6 +220,8 @@ protected:
 public:
 	virtual void getWindowChrome( U32 &aChromeW, U32 &aChromeH );
 // </FS:ND>
+
+	static BOOL getDisplayResolution(S32 &width, S32 &height, S32 &bits, S32 &refresh);  // <CV:David>
 };
 
 class LLSplashScreenWin32 : public LLSplashScreen

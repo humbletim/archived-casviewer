@@ -3936,11 +3936,29 @@ bool LLAppViewer::initWindow()
 		.output_type(gOutputType);  // <CV:David>
 
 	// <CV:David>
-	if (gRift3DConfigured && window_params.fullscreen)
+	if (window_params.fullscreen)
 	{
-		LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHResolution << ", Height = " << gRiftVResolution << LL_ENDL;
-		window_params.width = gRiftHResolution;
-		window_params.height = gRiftVResolution;
+		if (gRift3DConfigured)
+		{
+			LL_INFOS("AppInit") << "Oculus Rift: Width = " << gRiftHResolution << ", Height = " << gRiftVResolution << LL_ENDL;
+			window_params.width = gRiftHResolution;
+			window_params.height = gRiftVResolution;
+		}
+		else
+		{
+			// The current screen resolution may be lower than that previously used. 
+			S32 width, height, bits, refresh;
+			if (LLWindow::getDisplayResolution(width, height, bits, refresh))
+			{
+				LL_INFOS("AppInit") << "Full screen: Width = " << width << ", Height = " << height << LL_ENDL;
+				window_params.width = width;
+				window_params.height = height;
+			}
+			else
+			{
+				LL_WARNS("AppInit") << "Full screen: Could not determine screen size to set" << LL_ENDL;
+			}
+		}
 	}
 	// </CV:David>
 

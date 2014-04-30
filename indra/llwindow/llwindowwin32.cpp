@@ -3968,4 +3968,23 @@ void LLWindowWin32::getWindowChrome( U32 &aChromeW, U32 &aChromeH )
 }
 // </FS:ND>
 
+// <CV:David>
+// static
+BOOL LLWindowWin32::getDisplayResolution(S32 &width, S32 &height, S32 &bits, S32 &refresh)
+{
+	DEVMODE dev_mode;
+	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dev_mode))
+	{
+		width = dev_mode.dmPelsWidth;
+		height = dev_mode.dmPelsHeight;
+		bits = dev_mode.dmBitsPerPel;
+		refresh = dev_mode.dmDisplayFrequency;
+
+		return true;
+	}
+
+	return false;
+}
+// </CV:David>
+
 #endif // LL_WINDOWS
