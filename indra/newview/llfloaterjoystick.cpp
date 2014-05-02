@@ -106,6 +106,8 @@ BOOL LLFloaterJoystick::postBuild()
 	//childSetAction("SpaceNavigatorDefaults", onClickRestoreSNDefaults, this);
 	getChild<LLButton>("ControllerDefaults")->setLabel(std::string(LLViewerJoystick::getInstance()->getDescriptionShort() + " Defaults"));
 	childSetAction("ControllerDefaults", onClickRestoreControllerDefaults, this);
+
+	getChild<LLCheckBoxCtrl>("JoystickSwapMouseButtons")->setEnabled(LLViewerJoystick::getInstance()->isLikeXboxController());
 	// </CV:David>
 
 	childSetAction("cancel_btn", onClickCancel, this);
@@ -192,6 +194,8 @@ void LLFloaterJoystick::initFromSettings()
 	mAvatarFeathering = gSavedSettings.getF32("AvatarFeathering");
 	mBuildFeathering = gSavedSettings.getF32("BuildFeathering");
 	mFlycamFeathering = gSavedSettings.getF32("FlycamFeathering");
+
+	mSwapMouseButtons = gSavedSettings.getBOOL("JoystickSwapMouseButtons");  // <CV:David>
 }
 
 void LLFloaterJoystick::refresh()
@@ -267,6 +271,8 @@ void LLFloaterJoystick::cancel()
 	gSavedSettings.setF32("AvatarFeathering", mAvatarFeathering);
 	gSavedSettings.setF32("BuildFeathering", mBuildFeathering);
 	gSavedSettings.setF32("FlycamFeathering", mFlycamFeathering);
+
+	gSavedSettings.setBOOL("JoystickSwapMouseButtons", mSwapMouseButtons);  // <CV:David>
 }
 
 void LLFloaterJoystick::onCommitJoystickEnabled(LLUICtrl*, void *joy_panel)

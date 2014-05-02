@@ -1627,24 +1627,36 @@ void LLViewerJoystick::scanJoystick()
 			LLUI::getMousePositionScreen(&x, &y);
 			LLCoordGL coord(x, y);
 			MASK mask = gKeyboard->currentMask(TRUE);
+			U32 left_mouse_button, right_mouse_button;
 
-			if (mBtn[XBOX_L_BUMP_KEY] == 1 && left_mouse_down == 0)
+			if (gSavedSettings.getBOOL("JoystickSwapMouseButtons"))
+			{
+				left_mouse_button = XBOX_R_BUMP_KEY;
+				right_mouse_button = XBOX_L_BUMP_KEY;
+			}
+			else
+			{
+				left_mouse_button = XBOX_L_BUMP_KEY;
+				right_mouse_button = XBOX_R_BUMP_KEY;
+			}
+
+			if (mBtn[left_mouse_button] == 1 && left_mouse_down == 0)
 			{
 				gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), coord, mask);
 				left_mouse_down = 1;
 			}
-			else if (mBtn[XBOX_L_BUMP_KEY] == 0 && left_mouse_down == 1)
+			else if (mBtn[left_mouse_button] == 0 && left_mouse_down == 1)
 			{
 				gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), coord, mask);
 				left_mouse_down = 0;
 			}
 
-			if (mBtn[XBOX_R_BUMP_KEY] == 1 && right_mouse_down == 0)
+			if (mBtn[right_mouse_button] == 1 && right_mouse_down == 0)
 			{
 				gViewerWindow->handleRightMouseDown(gViewerWindow->getWindow(), coord, mask);
 				right_mouse_down = 1;
 			}
-			else if (mBtn[XBOX_R_BUMP_KEY] == 0 && right_mouse_down == 1)
+			else if (mBtn[right_mouse_button] == 0 && right_mouse_down == 1)
 			{
 				gViewerWindow->handleRightMouseUp(gViewerWindow->getWindow(), coord, mask);
 				right_mouse_down = 0;
@@ -1844,6 +1856,8 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setF32("AvatarFeathering", 6.f);
 	gSavedSettings.setF32("BuildFeathering", 12.f);
 	gSavedSettings.setF32("FlycamFeathering", 5.f);
+
+	gSavedSettings.setBOOL("JoystickSwapMouseButtons", FALSE);  // <CV:David>
 }
 
 // <CV:David>
@@ -1915,5 +1929,7 @@ void LLViewerJoystick::setXboxControllerDefaults()
 	gSavedSettings.setF32("AvatarFeathering", 6.f);
 	gSavedSettings.setF32("BuildFeathering", 12.f);
 	gSavedSettings.setF32("FlycamFeathering", 10.f);
+
+	gSavedSettings.setBOOL("JoystickSwapMouseButtons", TRUE);  // </CV:David>
 }
 // </CV:David>

@@ -84,6 +84,7 @@ private:
 	F32 mAvatarFeathering;
 	F32 mBuildFeathering;
 	F32 mFlycamFeathering;
+	bool mSwapMouseButtons;  // <CV:David>
 
 	// Controls that can disable the flycam
 	LLCheckBoxCtrl	*mCheckJoystickEnabled;
