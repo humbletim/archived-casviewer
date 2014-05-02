@@ -898,7 +898,7 @@
      bottom_delta="18"
      height="10"
      control_name="JoystickSwapMouseButtons"
-     label="Swap left and right mouse buttons"
+     label="Swap left and right bumper buttons"
      enabled="false"
      layout="topleft"
      left="42"
