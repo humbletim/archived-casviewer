@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <floater
  legacy_header_height="18"
- height="500"
+ height="502"
  layout="topleft"
  name="Joystick"
  help_topic="joystick"
@@ -893,6 +893,19 @@
      top="429"
      width="200" />
      -->
+    <!-- <CV:David> -->
+    <check_box
+     bottom_delta="18"
+     height="10"
+     control_name="JoystickSwapMouseButtons"
+     label="Swap left and right bumper buttons"
+     enabled="false"
+     layout="topleft"
+     left="42"
+     top="480"
+     name="JoystickSwapMouseButtons"
+     width="60" />
+    <!-- </CV:David> -->
     <button
      follows="left|top"
      height="22"
@@ -900,7 +913,7 @@
      layout="topleft"
      left="359"
      name="ControllerDefaults"
-     top="429"
+     top="441"
      width="200" />
     <!-- </CV:David> -->
     <button

@@ -85,6 +85,8 @@ const U32 XBOX_L_BUMP_KEY = 4;
 const U32 XBOX_R_BUMP_KEY = 5;
 const U32 XBOX_BACK_KEY = 6;
 const U32 XBOX_START_KEY = 7;
+const U32 XBOX_L_STICK_CLICK = 8;
+const U32 XBOX_R_STICK_CLICK = 9;
 // </CV:David>
 
 // -----------------------------------------------------------------------------
@@ -836,7 +838,7 @@ void LLViewerJoystick::moveAvatar(bool reset)
 
 	// <CV:David>
 	//if (mBtn[1] == 1)
-	if ((mController != XBOX_CONTROLLER) && (mBtn[1] == 1))
+	if ((mController != XBOX_CONTROLLER) && mBtn[1] == 1 || mController == XBOX_CONTROLLER && mBtn[XBOX_L_STICK_CLICK] == 1)
 	// </CV:David>
 	{
 		// If AutomaticFly is enabled, then button1 merely causes a
@@ -1500,6 +1502,7 @@ void LLViewerJoystick::scanJoystick()
 
 		if (mController == XBOX_CONTROLLER)
 		{
+
 			// Special command keys ...
 			if ((mBtn[XBOX_BACK_KEY] == 1) && (mBtn[XBOX_START_KEY] == 1))
 			{
@@ -1548,6 +1551,25 @@ void LLViewerJoystick::scanJoystick()
 					toggle_cursor = 0;
 					toggle_cursor_held = 0;
 				}
+			}
+
+			// Toggle mouse/Rift-look ...
+			static bool right_stick_click_down = false;
+			if (mBtn[XBOX_R_STICK_CLICK] == 1 && !right_stick_click_down)
+			{
+				if (!gAgentCamera.cameraMouselook())
+				{
+					gAgentCamera.changeCameraToMouselook();
+				}
+				else
+				{
+					gAgentCamera.changeCameraToDefault();
+				}
+				right_stick_click_down = true;
+			}
+			else if (mBtn[XBOX_R_STICK_CLICK] == 0 && right_stick_click_down)
+			{
+				right_stick_click_down = false;
 			}
 
 			// Esc, Alt, Ctrl, Shift keys ...
@@ -1627,24 +1649,36 @@ void LLViewerJoystick::scanJoystick()
 			LLUI::getMousePositionScreen(&x, &y);
 			LLCoordGL coord(x, y);
 			MASK mask = gKeyboard->currentMask(TRUE);
+			U32 left_mouse_button, right_mouse_button;
 
-			if (mBtn[XBOX_L_BUMP_KEY] == 1 && left_mouse_down == 0)
+			if (gSavedSettings.getBOOL("JoystickSwapMouseButtons"))
+			{
+				left_mouse_button = XBOX_R_BUMP_KEY;
+				right_mouse_button = XBOX_L_BUMP_KEY;
+			}
+			else
+			{
+				left_mouse_button = XBOX_L_BUMP_KEY;
+				right_mouse_button = XBOX_R_BUMP_KEY;
+			}
+
+			if (mBtn[left_mouse_button] == 1 && left_mouse_down == 0)
 			{
 				gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), coord, mask);
 				left_mouse_down = 1;
 			}
-			else if (mBtn[XBOX_L_BUMP_KEY] == 0 && left_mouse_down == 1)
+			else if (mBtn[left_mouse_button] == 0 && left_mouse_down == 1)
 			{
 				gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), coord, mask);
 				left_mouse_down = 0;
 			}
 
-			if (mBtn[XBOX_R_BUMP_KEY] == 1 && right_mouse_down == 0)
+			if (mBtn[right_mouse_button] == 1 && right_mouse_down == 0)
 			{
 				gViewerWindow->handleRightMouseDown(gViewerWindow->getWindow(), coord, mask);
 				right_mouse_down = 1;
 			}
-			else if (mBtn[XBOX_R_BUMP_KEY] == 0 && right_mouse_down == 1)
+			else if (mBtn[right_mouse_button] == 0 && right_mouse_down == 1)
 			{
 				gViewerWindow->handleRightMouseUp(gViewerWindow->getWindow(), coord, mask);
 				right_mouse_down = 0;
@@ -1844,6 +1878,8 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setF32("AvatarFeathering", 6.f);
 	gSavedSettings.setF32("BuildFeathering", 12.f);
 	gSavedSettings.setF32("FlycamFeathering", 5.f);
+
+	gSavedSettings.setBOOL("JoystickSwapMouseButtons", FALSE);  // <CV:David>
 }
 
 // <CV:David>
@@ -1915,5 +1951,7 @@ void LLViewerJoystick::setXboxControllerDefaults()
 	gSavedSettings.setF32("AvatarFeathering", 6.f);
 	gSavedSettings.setF32("BuildFeathering", 12.f);
 	gSavedSettings.setF32("FlycamFeathering", 10.f);
+
+	gSavedSettings.setBOOL("JoystickSwapMouseButtons", TRUE);  // </CV:David>
 }
 // </CV:David>

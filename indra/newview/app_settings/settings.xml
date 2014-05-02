@@ -6803,6 +6803,20 @@
       <key>Value</key>
         <real>0.25</real>
     </map>
+  
+    <!-- <CV:David> -->
+    <key>JoystickSwapMouseButtons</key>
+    <map>
+      <key>Comment</key>
+      <string>Swap left and right "mouse" buttons?</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <!-- </CV:David> -->
 
     <key>Jpeg2000AdvancedCompression</key>
     <map>
