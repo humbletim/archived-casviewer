@@ -85,6 +85,8 @@ const U32 XBOX_L_BUMP_KEY = 4;
 const U32 XBOX_R_BUMP_KEY = 5;
 const U32 XBOX_BACK_KEY = 6;
 const U32 XBOX_START_KEY = 7;
+const U32 XBOX_L_STICK_CLICK = 8;
+const U32 XBOX_R_STICK_CLICK = 9;
 // </CV:David>
 
 // -----------------------------------------------------------------------------
@@ -836,7 +838,7 @@ void LLViewerJoystick::moveAvatar(bool reset)
 
 	// <CV:David>
 	//if (mBtn[1] == 1)
-	if ((mController != XBOX_CONTROLLER) && (mBtn[1] == 1))
+	if ((mController != XBOX_CONTROLLER) && mBtn[1] == 1 || mController == XBOX_CONTROLLER && mBtn[XBOX_L_STICK_CLICK] == 1)
 	// </CV:David>
 	{
 		// If AutomaticFly is enabled, then button1 merely causes a
@@ -1500,6 +1502,7 @@ void LLViewerJoystick::scanJoystick()
 
 		if (mController == XBOX_CONTROLLER)
 		{
+
 			// Special command keys ...
 			if ((mBtn[XBOX_BACK_KEY] == 1) && (mBtn[XBOX_START_KEY] == 1))
 			{
@@ -1548,6 +1551,25 @@ void LLViewerJoystick::scanJoystick()
 					toggle_cursor = 0;
 					toggle_cursor_held = 0;
 				}
+			}
+
+			// Toggle mouse/Rift-look ...
+			static bool right_stick_click_down = false;
+			if (mBtn[XBOX_R_STICK_CLICK] == 1 && !right_stick_click_down)
+			{
+				if (!gAgentCamera.cameraMouselook())
+				{
+					gAgentCamera.changeCameraToMouselook();
+				}
+				else
+				{
+					gAgentCamera.changeCameraToDefault();
+				}
+				right_stick_click_down = true;
+			}
+			else if (mBtn[XBOX_R_STICK_CLICK] == 0 && right_stick_click_down)
+			{
+				right_stick_click_down = false;
 			}
 
 			// Esc, Alt, Ctrl, Shift keys ...
