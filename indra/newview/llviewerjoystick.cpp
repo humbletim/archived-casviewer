@@ -599,7 +599,20 @@ void LLViewerJoystick::cursorSlide(F32 inc)
 
 		S32 x, y;
 		LLUI::getMousePositionScreen(&x, &y);
-		x = llclamp(x + (S32)((inc + previousInc) * 150.f), 0, gViewerWindow->getWindowWidthRaw());
+
+		// Start out linear for fine control but then ramp up more quickly for faster movement.
+		F32 nudge = inc > 0.f ? 1.f : -1.f;
+		F32 linear = inc + previousInc;
+		F32 square = 0.f;
+		if (abs(linear) > 0.2f)
+		{
+			square = linear > 0.f ? linear - 0.2f : linear + 0.2f;
+			square = square * abs(square);
+		}
+
+		S32 delta = (S32)(nudge + linear * 25.f + square * 300.f);
+
+		x = llclamp(x + delta, 0, gViewerWindow->getWindowWidthRaw());
 		LLUI::setMousePositionScreen(x, y);
 
 		previousInc = inc;
@@ -617,8 +630,23 @@ void LLViewerJoystick::cursorPush(F32 inc)
 
 		S32 x, y;
 		LLUI::getMousePositionScreen(&x, &y);
-		y = llclamp(y - (S32)((inc + previousInc) * 150.f), 0, gViewerWindow->getWindowHeightRaw());
+
+		// Start out linear for fine control but then ramp up more quickly for faster movement.
+		F32 nudge = inc > 0.f ? 1.f : -1.f;
+		F32 linear = inc + previousInc;
+		F32 square = 0.f;
+		if (abs(linear) > 0.2f)
+		{
+			square = linear > 0.f ? linear - 0.2f : linear + 0.2f;
+			square = square * abs(square);
+		}
+
+		S32 delta = (S32)(nudge + linear * 25.f + square * 300.f);
+
+		y = llclamp(y - delta, 0, gViewerWindow->getWindowHeightRaw());
 		LLUI::setMousePositionScreen(x, y);
+
+		previousInc = inc;
 	}
 }
 // </CV:David>
