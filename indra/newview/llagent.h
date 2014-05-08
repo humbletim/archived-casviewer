@@ -598,6 +598,10 @@ public:
 	void			moveAt(F32 velocity);	// velocity: -1.0 .. +1.0
 	void			moveLeft(F32 velocity);	// ""
 	void			moveUp(F32 velocity);	// ""
+	void			moveJump();
+private:
+	LLFrameTimer	mJumpTimer;
+	bool			mJumping;
 	// </CV:David>
 
 	//--------------------------------------------------------------------

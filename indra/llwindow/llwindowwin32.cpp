@@ -522,8 +522,11 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 	}
 
 	// <CV:David>
+	bool try_120Hz = false;
+	DWORD old_refresh = current_refresh;
 	if ((mOutputType == OUTPUT_TYPE_STEREO) && gSavedSettings.getBOOL("SetOutput120Hz") && current_refresh != 120)
 	{
+		try_120Hz = true;
 		current_refresh = 120;
 		llinfos << "Try setting display output to 120Hz" << llendl;
 	}
@@ -563,6 +566,16 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 		{
 			LL_WARNS("Window") << "Couldn't find display mode " << width << " by " << height << " at " << BITS_PER_PIXEL << " bits per pixel" << LL_ENDL;
 			//success = FALSE;
+
+			// <CV:David>
+			if (try_120Hz)
+			{
+				LL_WARNS("Window") << "Reverting to previous refresh rate" << LL_ENDL;
+				gSavedSettings.setBOOL("SetOutput120Hz", false);
+				current_refresh = old_refresh;
+				OSMessageBox(mCallbacks->translateString("MBCannotSet120Hz"), mCallbacks->translateString("MBError"), OSMB_OK);
+			}
+			// <CV:David>
 
 			if (!EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dev_mode))
 			{
@@ -941,14 +954,6 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	{
 		current_refresh = 60;
 	}
-
-	// <CV:David>
-	if ((mOutputType == OUTPUT_TYPE_STEREO) && gSavedSettings.getBOOL("SetOutput120Hz") && current_refresh != 120)
-	{
-		current_refresh = 120;
-		llinfos << "Try setting display output to 120Hz" << llendl;
-	}
-	// <CV:David>
 
 	gGLManager.shutdownGL();
 	//destroy gl context
@@ -3962,5 +3967,24 @@ void LLWindowWin32::getWindowChrome( U32 &aChromeW, U32 &aChromeH )
 	aChromeH = nHeight - nCHeight;
 }
 // </FS:ND>
+
+// <CV:David>
+// static
+BOOL LLWindowWin32::getDisplayResolution(S32 &width, S32 &height, S32 &bits, S32 &refresh)
+{
+	DEVMODE dev_mode;
+	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dev_mode))
+	{
+		width = dev_mode.dmPelsWidth;
+		height = dev_mode.dmPelsHeight;
+		bits = dev_mode.dmBitsPerPel;
+		refresh = dev_mode.dmDisplayFrequency;
+
+		return true;
+	}
+
+	return false;
+}
+// </CV:David>
 
 #endif // LL_WINDOWS

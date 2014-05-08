@@ -1443,6 +1443,7 @@
       control_name="SetOutput120Hz"
       height="16"
       initial_value="false"
+      enabled="false"
       label=" Set output to 120Hz"
       layout="topleft"
       left="344"

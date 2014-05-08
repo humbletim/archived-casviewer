@@ -95,7 +95,10 @@ void agent_jump( EKeystate s )
 		|| gAgent.upGrabbed()
 		|| !gSavedSettings.getBOOL("AutomaticFly"))
 	{
-		gAgent.moveUp(1);
+		// <CV:David>
+		//gAgent.moveUp(1);
+		gAgent.moveJump();
+		// </CV:David>
 	}
 	else
 	{
