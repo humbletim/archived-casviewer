@@ -412,6 +412,8 @@ LLAgent::LLAgent() :
 	mbFlagsDirty(FALSE),
 	mbFlagsNeedReset(FALSE),
 
+	mJumping(false),  // <CV:David>
+
 	mAutoPilot(FALSE),
 	mAutoPilotFlyOnStop(FALSE),
 	mAutoPilotAllowFlying(TRUE),
@@ -607,14 +609,34 @@ void LLAgent::updateWalkSpeed()
 	// Calculate once per main loop iteration.
 	// Sending AGENT_CONTROL_STOP along with the direction flags causes the simulator to move the avatar slowly.
 	// Sending AGENT_CONTROL_STOP every Nth time has the effect of making the avatar move at a slower speed.
+	// Jumping must be done at maximum walk speed so that AGENT_CONTROL_STOP doesn't prevent proper jump action.
 	// Flying speed is controlled by sending or not sending the "fly" messages, not by sending AGENT_CONTROL_STOP.
-	// Works quite well in Second Life but not very well if at all in OpenSim.
 
 	// Variable speed flags to use the current main loop iteration ...
 	static int count = 0;
 	count = (count + 1) % 4;
 
-	if (!getRunning())
+	const F32 PREJUMP_DURATION = 1.f;
+
+	if (mJumping)
+	{
+		if (!mJumpTimer.getStarted())
+		{
+			mControlFlags &= ~AGENT_CONTROL_STOP;
+			mJumpTimer.start();
+		}
+		else if (mJumpTimer.getElapsedTimeF32() > PREJUMP_DURATION)
+		{
+			mJumping = gAgentAvatarp->mInAir && !getFlying();
+		}
+
+		if (!mJumping)
+		{
+			mJumpTimer.stop();
+		}
+	}
+
+	if (!getRunning() && !mJumping)
 	{
 		mWalkSpeedFlags[0] = (getFlying() && (count == 0)) ? 0 : AGENT_CONTROL_STOP;
 		mWalkSpeedFlags[1] = (count == 0) ? 0 : AGENT_CONTROL_STOP;
@@ -824,6 +846,29 @@ void LLAgent::moveLeftNudge(S32 direction)
 	gAgentCamera.resetView(TRUE, FALSE, TRUE);
 // </FS:CR>
 }
+
+// <CV:David>
+//-----------------------------------------------------------------------------
+// moveJump()
+//-----------------------------------------------------------------------------
+void LLAgent::moveJump()
+{
+	mMoveTimer.reset();
+	LLFirstUse::notMoving(false);
+
+	// age chat timer so it fades more quickly when you are intentionally moving
+	ageChat();
+
+	gAgentCamera.setUpKey(LLAgentCamera::directionToKey(1));
+
+	setControlFlags(AGENT_CONTROL_UP_POS | AGENT_CONTROL_FAST_UP);
+	gAgentCamera.resetView(TRUE, FALSE, TRUE);
+
+	mJumping = true;
+	updateWalkSpeed();
+}
+
+// </CV:David>
 
 //-----------------------------------------------------------------------------
 // moveUp()
