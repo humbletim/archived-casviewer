@@ -425,7 +425,10 @@ void LLViewerJoystick::handleRun(F32 inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentJump()
 {
-    gAgent.moveUp(1);
+	// <CV:David>
+	//gAgent.moveUp(1);
+	gAgent.moveJump();
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
@@ -877,7 +880,10 @@ void LLViewerJoystick::moveAvatar(bool reset)
 		{
 			if (!gAgent.getFlying())
 			{
-				gAgent.moveUp(1);
+				// <CV:David>
+				//gAgent.moveUp(1);
+				gAgent.moveJump();
+				// </CV:David>
 			}
 			else if (!button_held)
 			{
