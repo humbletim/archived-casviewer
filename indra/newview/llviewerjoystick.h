@@ -143,6 +143,8 @@ private:
 	bool mMoving;
 	U32 mMovingNudges;
 
+	LLTimer mDoubleClickTimer;
+
 	// </CV:David>
 };
 
