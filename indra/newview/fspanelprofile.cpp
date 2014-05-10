@@ -72,13 +72,13 @@
 #include "llviewerregion.h"
 #include "llworldmap.h"
 
-static LLRegisterPanelClassWrapper<FSPanelProfileSecondLife> t_panel_profile_secondlife("panel_profile_secondlife");
-static LLRegisterPanelClassWrapper<FSPanelProfileWeb> t_panel_web("panel_profile_web");
-static LLRegisterPanelClassWrapper<FSPanelProfileInterests> t_panel_interests("panel_profile_interests");
-static LLRegisterPanelClassWrapper<FSPanelProfilePicks> t_panel_picks("panel_profile_picks");
-static LLRegisterPanelClassWrapper<FSPanelProfileFirstLife> t_panel_firstlife("panel_profile_firstlife");
-static LLRegisterPanelClassWrapper<FSPanelAvatarNotes> t_panel_notes("panel_profile_notes");
-static LLRegisterPanelClassWrapper<FSPanelProfile> t_panel_profile("panel_profile");
+static LLPanelInjector<FSPanelProfileSecondLife> t_panel_profile_secondlife("panel_profile_secondlife");
+static LLPanelInjector<FSPanelProfileWeb> t_panel_web("panel_profile_web");
+static LLPanelInjector<FSPanelProfileInterests> t_panel_interests("panel_profile_interests");
+static LLPanelInjector<FSPanelProfilePicks> t_panel_picks("panel_profile_picks");
+static LLPanelInjector<FSPanelProfileFirstLife> t_panel_firstlife("panel_profile_firstlife");
+static LLPanelInjector<FSPanelAvatarNotes> t_panel_notes("panel_profile_notes");
+static LLPanelInjector<FSPanelProfile> t_panel_profile("panel_profile");
 
 static const std::string PANEL_SECONDLIFE	= "panel_profile_secondlife";
 static const std::string PANEL_WEB			= "panel_profile_web";
@@ -377,7 +377,7 @@ void FSPanelProfileSecondLife::onOpen(const LLSD& key)
 	
 	if (!own_profile)
 	{
-		mVoiceStatus = LLAvatarActions::canCall();
+		mVoiceStatus = LLAvatarActions::canCall() && (LLAvatarActions::isFriend(avatar_id) ? LLAvatarTracker::instance().isBuddyOnline(avatar_id) : TRUE);
 		drop_target->setAgentID( avatar_id );
 		updateOnlineStatus();
 	}
@@ -711,7 +711,7 @@ void FSPanelProfileSecondLife::onChange(EStatusType status, const std::string &c
 		return;
 	}
 
-	mVoiceStatus = LLAvatarActions::canCall();
+	mVoiceStatus = LLAvatarActions::canCall() && (LLAvatarActions::isFriend(getAvatarId()) ? LLAvatarTracker::instance().isBuddyOnline(getAvatarId()) : TRUE);
 }
 
 void FSPanelProfileSecondLife::setAvatarId(const LLUUID& id)

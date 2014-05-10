@@ -18,10 +18,58 @@
 	<string name="StartupDetectingHardware">Detecting hardware...</string>
 	<string name="StartupLoading">Loading [APP_NAME]...</string>
 	<string name="StartupClearingCache">Clearing cache...</string>
+	<string name="StartupClearingTextureCache">Clearing texture cache...</string>
 	<string name="StartupInitializingTextureCache">Initializing texture cache...</string>
 	<string name="StartupInitializingVFS">Initializing VFS...</string>
 	<string name="StartupRequireDriverUpdate">Graphics initialization failed. Please update your graphics driver!</string>
 
+	<!-- about dialog/support string-->
+	<string name="AboutHeader">
+[APP_NAME] [VIEWER_VERSION_0].[VIEWER_VERSION_1].[VIEWER_VERSION_2] ([VIEWER_VERSION_3]) [BUILD_DATE] [BUILD_TIME] ([CHANNEL]) [BUILD_TYPE]
+[[VIEWER_RELEASE_NOTES_URL] [ReleaseNotes]]
+	</string>
+	<string name="AboutCompiler">Built with [COMPILER] version [COMPILER_VERSION]</string>
+	<string name="AboutPosition">
+You are at [POSITION_LOCAL_0,number,1], [POSITION_LOCAL_1,number,1], [POSITION_LOCAL_2,number,1] in [REGION] located at &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+SLURL: &lt;nolink&gt;[SLURL]&lt;/nolink&gt;
+(global coordinates [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1])
+[SERVER_VERSION]
+[SERVER_RELEASE_NOTES_URL]
+	</string>
+	<!-- *NOTE: Do not translate text like GPU, Graphics Card, etc -
+       Most PC users who know what these mean will be used to the English versions,
+       and this info sometimes gets sent to support. -->
+	<string name="AboutSystem">
+CPU: [CPU]
+Memory: [MEMORY_MB] MB
+OS Version: [OS_VERSION]
+Graphics Card Vendor: [GRAPHICS_CARD_VENDOR]
+Graphics Card: [GRAPHICS_CARD]
+	</string>
+	<string name="AboutDriver">Windows Graphics Driver Version: [GRAPHICS_DRIVER_VERSION]</string>
+	<string name="AboutLibs">
+OpenGL Version: [OPENGL_VERSION]
+
+RestrainedLove API: [RLV_VERSION]
+libcurl Version: [LIBCURL_VERSION]
+J2C Decoder Version: [J2C_VERSION]
+Audio Driver Version: [AUDIO_DRIVER_VERSION]
+Qt Webkit Version: [QT_WEBKIT_VERSION]
+Voice Server Version: [VOICE_VERSION]
+	</string>
+  <string name="AboutSettings">
+Settings mode: [MODE]
+Viewer Skin: [SKIN] ([THEME])
+Font Used: [FONT] ([FONT_SCREEN_DPI])
+Draw distance: [DRAW_DISTANCE]
+Bandwidth: [BANDWIDTH]
+LOD factor: [LOD]
+Render quality: [RENDERQUALITY]
+Texture memory: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
+  </string>
+  <string name="AboutTraffic">Packets Lost: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)</string>
+	<string name="ErrorFetchingServerReleaseNotesURL">Error fetching server release notes URL.</string>
+	
 	<!--  progress -->
 	<string name="ProgressRestoring">Restoring...</string>
 	<string name="ProgressChangingResolution">Changing resolution...</string>
@@ -706,7 +754,7 @@ Drag folders to this area and click "Send to Marketplace" to list them for sale 
 	<string name="InvFolder Merchant Outbox">Merchant Outbox</string>
 
   <!-- are used for Friends and Friends/All folders in Inventory "Calling cards" folder. See EXT-694-->
-	<string name="InvFolder Friends">Friends</string>
+	<string name="InvFolder Friends">Friends</string>	
 	<string name="InvFolder All">All</string>
 
 	<!-- Virtual Firestorm system folders -->
@@ -2360,7 +2408,7 @@ Try enclosing path to the editor with double quotes.
   <string name="Command_Avatar_Tooltip">Choose a complete avatar</string>
   <string name="Command_Build_Tooltip">Building objects and reshaping terrain (CTRL+4)</string>
   <string name="Command_Chat_Tooltip">Chat with people nearby using text (CTRL+T)</string>
-  <string name="Command_Conversations_Tooltip">Converse with everyone</string>
+  <string name="Command_Conversations_Tooltip">Converse with everyone (CTRL+T)</string>
   <string name="Command_Compass_Tooltip">Compass</string>
   <string name="Command_Destinations_Tooltip">Destinations of interest</string>
   <string name="Command_Gestures_Tooltip">Gestures for your avatar (CTRL+G)</string>
@@ -2394,17 +2442,17 @@ Try enclosing path to the editor with double quotes.
   <string name="Command_Groundsit_Tooltip">Toggle ground sit mode on/off (CTRL+ALT+S)</string>
   <string name="Command_Sound_Explorer_Tooltip">Opens the sound explorer</string>
   <string name="Command_Asset_Blacklist_Tooltip">Opens the list of all the items you have blacklisted</string>
-  <string name="Command_Phototools_Tooltip">Tools for full-featured image making.</string>
-  <string name="Command_Phototools_View_Tooltip">Advanced phototools camera controls</string>
+  <string name="Command_Phototools_Tooltip">Tools for full-featured image making (ATL+P).</string>
+  <string name="Command_Phototools_View_Tooltip">Advanced phototools camera controls (CTRL+SHIFT+C)</string>
   <string name="Command_Contact_Sets_Tooltip">Opens contact sets (CTRL+ALT+SHIFT+C)</string>
   <string name="Command_Mouselook_Tooltip">Enter mouselook mode (M)</string>
   <string name="Command_Landmark_Here_Tooltip">Creates a landmark at your current position</string>
-  <string name="Command_Teleport_History_Tooltip">Opens Teleport History</string>
+  <string name="Command_Teleport_History_Tooltip">Opens Teleport History (ALT+H)</string>
   <string name="Command_Pose_Stand_Tooltip">Avatar pose stand for adjusting attachments</string>
   <string name="Command_Snapshot_To_Disk_Tooltip">Takes a quick snapshot and saves it to harddisk</string>
   <string name="Command_Radar_Tooltip">Opens the radar for nearby avatars</string>
   <string name="Command_Conversation_Log_Tooltip">Opens the conversation log to view past chat transcripts</string>
-  <string name="Command_Move_Lock_Tooltip">Locks your avatar in its current position</string>
+  <string name="Command_Move_Lock_Tooltip">Locks your avatar in its current position (CTRL+ALT+P)</string>
   <string name="Command_Blocklist_Tooltip">Opens the block/mute list</string>
   <string name="Command_ResyncAnimations_Tooltip">Synchronizes avatar animations</string>
   <!-- CtrlAltStudio Viewer commands -->
@@ -2414,7 +2462,7 @@ Try enclosing path to the editor with double quotes.
   <string name="Toolbar_Left_Tooltip"  >currently in your left toolbar</string>
   <string name="Toolbar_Right_Tooltip" >currently in your right toolbar</string>
 
-  <string name="Command_Fly_Tooltip">Toggle flying mode on/off</string>
+  <string name="Command_Fly_Tooltip">Toggle flying mode on/off (HOME)</string>
 
  <!-- Mesh UI terms -->
   <string name="Retain%">Retain%</string>
@@ -2633,4 +2681,8 @@ Try enclosing path to the editor with double quotes.
   <string name="Inbox_Folderview_New">New</string>
 
   <string name="Mouselook_Unknown_Avatar">Unknown agent</string>
+
+  <string name="groupcountstring">You belong to [COUNT] groups ([REMAINING] remaining).</string>
+  <string name="groupcountunlimitedstring">You belong to [COUNT] groups.</string>
+
 </strings>

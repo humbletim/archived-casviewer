@@ -392,8 +392,9 @@ BOOL LLPanelLandGeneral::postBuild()
 	mContentRating = getChild<LLTextBox>("ContentRatingText");
 	mLandType = getChild<LLTextBox>("LandTypeText");
 	
-	mBtnProfile = getChild<LLButton>("Profile...");
-	mBtnProfile->setClickedCallback(boost::bind(&LLPanelLandGeneral::onClickProfile, this));
+	// <FS:Ansariel> Doesn't exists as of 2014-04-14
+	//mBtnProfile = getChild<LLButton>("Profile...");
+	//mBtnProfile->setClickedCallback(boost::bind(&LLPanelLandGeneral::onClickProfile, this));
 
 	
 	mTextGroupLabel = getChild<LLTextBox>("Group:");
@@ -540,8 +541,9 @@ void LLPanelLandGeneral::refresh()
 		mTextOwner->setText(LLStringUtil::null);
 		mContentRating->setText(LLStringUtil::null);
 		mLandType->setText(LLStringUtil::null);
-		mBtnProfile->setLabel(getString("profile_text"));
-		mBtnProfile->setEnabled(FALSE);
+		// <FS:Ansariel> Doesn't exists as of 2014-04-14
+		//mBtnProfile->setLabel(getString("profile_text"));
+		//mBtnProfile->setEnabled(FALSE);
 
 		mTextClaimDate->setText(LLStringUtil::null);
 		mTextGroup->setText(LLStringUtil::null);
@@ -603,7 +605,8 @@ void LLPanelLandGeneral::refresh()
 			mTextSalePending->setEnabled(FALSE);
 			mTextOwner->setText(getString("public_text"));
 			mTextOwner->setEnabled(FALSE);
-			mBtnProfile->setEnabled(FALSE);
+			// <FS:Ansariel> Doesn't exists as of 2014-04-14
+			//mBtnProfile->setEnabled(FALSE);
 			mTextClaimDate->setText(LLStringUtil::null);
 			mTextClaimDate->setEnabled(FALSE);
 			mTextGroup->setText(getString("none_text"));
@@ -633,12 +636,14 @@ void LLPanelLandGeneral::refresh()
 			mTextOwner->setEnabled(TRUE);
 
 			// We support both group and personal profiles
-			mBtnProfile->setEnabled(TRUE);
+			// <FS:Ansariel> Doesn't exists as of 2014-04-14
+			//mBtnProfile->setEnabled(TRUE);
 
 			if (parcel->getGroupID().isNull())
 			{
 				// Not group owned, so "Profile"
-				mBtnProfile->setLabel(getString("profile_text"));
+				// <FS:Ansariel> Doesn't exists as of 2014-04-14
+				//mBtnProfile->setLabel(getString("profile_text"));
 
 				mTextGroup->setText(getString("none_text"));
 				mTextGroup->setEnabled(FALSE);
@@ -646,7 +651,8 @@ void LLPanelLandGeneral::refresh()
 			else
 			{
 				// Group owned, so "Info"
-				mBtnProfile->setLabel(getString("info_text"));
+				// <FS:Ansariel> Doesn't exists as of 2014-04-14
+				//mBtnProfile->setLabel(getString("info_text"));
 
 				//mTextGroup->setText("HIPPOS!");//parcel->getGroupName());
 				mTextGroup->setEnabled(TRUE);
@@ -914,22 +920,24 @@ void LLPanelLandGeneral::onClickSetGroup()
 	}
 }
 
-void LLPanelLandGeneral::onClickProfile()
-{
-	LLParcel* parcel = mParcel->getParcel();
-	if (!parcel) return;
-
-	if (parcel->getIsGroupOwned())
-	{
-		const LLUUID& group_id = parcel->getGroupID();
-		LLGroupActions::show(group_id);
-	}
-	else
-	{
-		const LLUUID& avatar_id = parcel->getOwnerID();
-		LLAvatarActions::showProfile(avatar_id);
-	}
-}
+// <FS:Ansariel> Doesn't exists as of 2014-04-14
+//void LLPanelLandGeneral::onClickProfile()
+//{
+//	LLParcel* parcel = mParcel->getParcel();
+//	if (!parcel) return;
+//
+//	if (parcel->getIsGroupOwned())
+//	{
+//		const LLUUID& group_id = parcel->getGroupID();
+//		LLGroupActions::show(group_id);
+//	}
+//	else
+//	{
+//		const LLUUID& avatar_id = parcel->getOwnerID();
+//		LLAvatarActions::showProfile(avatar_id);
+//	}
+//}
+// </FS:Ansariel>
 
 // public
 void LLPanelLandGeneral::setGroup(const LLUUID& group_id)
@@ -2037,6 +2045,11 @@ BOOL LLPanelLandOptions::postBuild()
 	mLandingTypeCombo = getChild<LLComboBox>( "landing type");
 	childSetCommitCallback("landing type", onCommitAny, this);
 
+	// <FS:Ansariel> FIRE-10043: Teleport to LP button
+	mTeleportToLandingPointBtn = getChild<LLButton>("teleport_to_landing_point");
+	mTeleportToLandingPointBtn->setCommitCallback(boost::bind(&LLPanelLandOptions::onClickTeleport, this));
+	// </FS:Ansariel>
+
 	return TRUE;
 }
 
@@ -2103,6 +2116,10 @@ void LLPanelLandOptions::refresh()
 		mClearBtn->setEnabled(FALSE);
 
 		mMatureCtrl->setEnabled(FALSE);
+
+		// <FS:Ansariel> FIRE-10043: Teleport to LP button
+		mTeleportToLandingPointBtn->setEnabled(FALSE);
+		// </FS:Ansariel>
 	}
 	else
 	{
@@ -2175,6 +2192,9 @@ void LLPanelLandOptions::refresh()
 		if (pos.isExactlyZero())
 		{
 			mLocationText->setTextArg("[LANDING]", getString("landing_point_none"));
+			// <FS:Ansariel> FIRE-10043: Teleport to LP button
+			mTeleportToLandingPointBtn->setEnabled(FALSE);
+			// </FS:Ansariel>
 		}
 		else
 		{
@@ -2183,6 +2203,9 @@ void LLPanelLandOptions::refresh()
 														   llround(pos.mV[VY]),
 		   												   llround(pos.mV[VZ]),
 														   user_look_at_angle));
+			// <FS:Ansariel> FIRE-10043: Teleport to LP button
+			mTeleportToLandingPointBtn->setEnabled(TRUE);
+			// </FS:Ansariel>
 		}
 
 		mSetBtn->setEnabled( can_change_landing_point );
@@ -2487,6 +2510,17 @@ void LLPanelLandOptions::onClickClear(void* userdata)
 	self->refresh();
 }
 
+// <FS:Ansariel> FIRE-10043: Teleport to LP button
+void LLPanelLandOptions::onClickTeleport()
+{
+	LLParcel* selected_parcel = mParcel->getParcel();
+	LLViewerRegion* region = LLViewerParcelMgr::getInstance()->getSelectionRegion();
+	if (selected_parcel && !selected_parcel->getUserLocation().isExactlyZero() && region)
+	{
+		gAgent.teleportViaLocation(region->getPosGlobalFromRegion(selected_parcel->getUserLocation()));
+	}
+}
+// </FS:Ansariel>
 
 //---------------------------------------------------------------------------
 // LLPanelLandAccess
@@ -2565,6 +2599,10 @@ void LLPanelLandAccess::refresh()
 			S32 count = parcel->mAccessList.size();
 			getChild<LLUICtrl>("AccessList")->setToolTipArg(LLStringExplicit("[LISTED]"), llformat("%d",count));
 			getChild<LLUICtrl>("AccessList")->setToolTipArg(LLStringExplicit("[MAX]"), llformat("%d",PARCEL_MAX_ACCESS_LIST));
+			// <FS:Ansariel> FIRE-9211: Add counter to parcel ban and access lists
+			getChild<LLUICtrl>("AllowedText")->setTextArg(LLStringExplicit("[LISTED]"), llformat("%d",count));
+			getChild<LLUICtrl>("AllowedText")->setTextArg(LLStringExplicit("[MAX]"), llformat("%d",PARCEL_MAX_ACCESS_LIST));
+			// </FS:Ansariel>
 
 			for (access_map_const_iterator cit = parcel->mAccessList.begin();
 				 cit != parcel->mAccessList.end(); ++cit)
@@ -2611,6 +2649,10 @@ void LLPanelLandAccess::refresh()
 
 			getChild<LLUICtrl>("BannedList")->setToolTipArg(LLStringExplicit("[LISTED]"), llformat("%d",count));
 			getChild<LLUICtrl>("BannedList")->setToolTipArg(LLStringExplicit("[MAX]"), llformat("%d",PARCEL_MAX_ACCESS_LIST));
+			// <FS:Ansariel> FIRE-9211: Add counter to parcel ban and access lists
+			getChild<LLUICtrl>("BanCheck")->setTextArg(LLStringExplicit("[LISTED]"), llformat("%d",count));
+			getChild<LLUICtrl>("BanCheck")->setTextArg(LLStringExplicit("[MAX]"), llformat("%d",PARCEL_MAX_ACCESS_LIST));
+			// </FS:Ansariel>
 
 			for (access_map_const_iterator cit = parcel->mBanList.begin();
 				 cit != parcel->mBanList.end(); ++cit)
@@ -2699,6 +2741,12 @@ void LLPanelLandAccess::refresh()
 		getChild<LLUICtrl>("AccessList")->setToolTipArg(LLStringExplicit("[MAX]"), llformat("%d",0));
 		getChild<LLUICtrl>("BannedList")->setToolTipArg(LLStringExplicit("[LISTED]"), llformat("%d",0));
 		getChild<LLUICtrl>("BannedList")->setToolTipArg(LLStringExplicit("[MAX]"), llformat("%d",0));
+		// <FS:Ansariel> FIRE-9211: Add counter to parcel ban and access lists
+		getChild<LLUICtrl>("AllowedText")->setTextArg(LLStringExplicit("[LISTED]"), llformat("%d",0));
+		getChild<LLUICtrl>("AllowedText")->setTextArg(LLStringExplicit("[MAX]"), llformat("%d",0));
+		getChild<LLUICtrl>("BanCheck")->setTextArg(LLStringExplicit("[LISTED]"), llformat("%d",0));
+		getChild<LLUICtrl>("BanCheck")->setTextArg(LLStringExplicit("[MAX]"), llformat("%d",0));
+		// </FS:Ansariel>
 	}	
 }
 

@@ -261,6 +261,7 @@ LLVivoxVoiceClient::LLVivoxVoiceClient() :
 	mSessionTerminateRequested(false),
 	mRelogRequested(false),
 	mConnected(false),
+	mTerminateDaemon(false),
 	mPump(NULL),
 	mSpatialJoiningNum(0),
 
@@ -492,6 +493,9 @@ void LLVivoxVoiceClient::connectorCreate()
 		<< "<ClientName>V2 SDK</ClientName>"
 		<< "<AccountManagementServer>" << mVoiceAccountServerURI << "</AccountManagementServer>"
 		<< "<Mode>Normal</Mode>"
+		// <FS:Ansariel> Voice in multiple instances; by Latif Khalifa
+		<< (gSavedSettings.getBOOL("VoiceMultiInstance") ? "<MinimumPort>30000</MinimumPort><MaximumPort>50000</MaximumPort>" : "")
+		// </FS:Ansariel>
 		<< "<Logging>"
 			<< "<Folder>" << logpath << "</Folder>"
 			<< "<FileNamePrefix>Connector</FileNamePrefix>"
@@ -708,7 +712,7 @@ void LLVivoxVoiceClient::stateMachine()
 		setVoiceEnabled(false);
 	}
 	
-	if(mVoiceEnabled || !mIsInitialized)
+	if(mVoiceEnabled || (!mIsInitialized &&!mTerminateDaemon) )
 	{
 		updatePosition();
 	}
@@ -721,11 +725,12 @@ void LLVivoxVoiceClient::stateMachine()
 		if((getState() != stateDisabled) && (getState() != stateDisableCleanup))
 		{
 			// User turned off voice support.  Send the cleanup messages, close the socket, and reset.
-			if(!mConnected)
+			if(!mConnected || mTerminateDaemon)
 			{
 				// if voice was turned off after the daemon was launched but before we could connect to it, we may need to issue a kill.
 				LL_INFOS("Voice") << "Disabling voice before connection to daemon, terminating." << LL_ENDL;
 				killGateway();
+				mTerminateDaemon = false;
 			}
 			
 			logout();
@@ -766,7 +771,7 @@ void LLVivoxVoiceClient::stateMachine()
 				// Voice is locked out, we must not launch the vivox daemon.
 				setState(stateJail);
 			}
-			else if(!isGatewayRunning())
+			else if(!isGatewayRunning() && gSavedSettings.getBOOL("EnableVoiceChat"))
 			{
 				if (true)           // production build, not test
 				{
@@ -801,6 +806,19 @@ void LLVivoxVoiceClient::stateMachine()
 						}
 						params.args.add("-ll");
 						params.args.add(loglevel);
+						// <FS:Ansariel> Voice in multiple instances; by Latif Khalifa
+						if (gSavedSettings.getBOOL("VoiceMultiInstance"))
+						{
+							S32 port_nr = 30000 + ll_rand(20000);
+							LLControlVariable* voice_port = gSavedSettings.getControl("VivoxVoicePort");
+							if (voice_port)
+							{
+								voice_port->setValue(LLSD(port_nr), false);
+								params.args.add("-i");
+								params.args.add(llformat("127.0.0.1:%u",  gSavedSettings.getU32("VivoxVoicePort")));
+							}
+						}
+						// </FS:Ansariel>
 						params.cwd = gDirUtilp->getAppRODataDir();
 						sGatewayPtr = LLProcess::create(params);
 
@@ -1149,14 +1167,18 @@ void LLVivoxVoiceClient::stateMachine()
 				std::stringstream errs;
 				errs << mVoiceAccountServerURI << "\n:UDP: 3478, 3479, 5060, 5062, 12000-17000";
 				args["HOSTID"] = errs.str();
-				if (LLGridManager::getInstance()->isSystemGrid())
-				{
-					LLNotificationsUtil::add("NoVoiceConnect", args);	
-				}
-				else
-				{
-					LLNotificationsUtil::add("NoVoiceConnect-GIAB", args);	
-				}				
+				mTerminateDaemon = true;
+				// <FS:Ansariel> FIRE-13130: Unknown notification "NoVoiceConnect-GIAB"
+				//if (LLGridManager::getInstance()->isSystemGrid())
+				//{
+				//	LLNotificationsUtil::add("NoVoiceConnect", args);	
+				//}
+				//else
+				//{
+				//	LLNotificationsUtil::add("NoVoiceConnect-GIAB", args);	
+				//}				
+				LLNotificationsUtil::add("NoVoiceConnect", args);
+				// </FS:Ansariel>
 			}
 			else
 			{
@@ -2384,6 +2406,10 @@ void LLVivoxVoiceClient::sendPositionalUpdate(void)
 		LLVector3	earVelocity;
 		LLMatrix3	earRot;
 		
+		// <FS:Ansariel> Equal voice volume; by Tigh MacFanatic
+		if (mEarLocation != earLocSpeaker)
+		{
+		// </FS:Ansariel>
 		switch(mEarLocation)
 		{
 			case earLocCamera:
@@ -2415,7 +2441,10 @@ void LLVivoxVoiceClient::sendPositionalUpdate(void)
 //		LL_DEBUGS("Voice") << "Sending listener position " << earPosition << LL_ENDL;
 		
 		oldSDKTransform(l, u, a, pos, vel);
-		
+		// <FS:Ansariel> Equal voice volume; by Tigh MacFanatic
+		}
+		// </FS:Ansariel>
+
 		stream 
 			<< "<Position>"
 				<< "<X>" << pos.mdV[VX] << "</X>"
@@ -2631,14 +2660,18 @@ void LLVivoxVoiceClient::connectorCreateResponse(int statusCode, std::string &st
 		std::stringstream errs;
 		errs << mVoiceAccountServerURI << "\n:UDP: 3478, 3479, 5060, 5062, 12000-17000";
 		args["HOSTID"] = errs.str();
-		if (LLGridManager::getInstance()->isSystemGrid())
-		{
-			LLNotificationsUtil::add("NoVoiceConnect", args);	
-		}
-		else
-		{
-			LLNotificationsUtil::add("NoVoiceConnect-GIAB", args);	
-		}
+		mTerminateDaemon = true;
+		// <FS:Ansariel> FIRE-13130: Unknown notification "NoVoiceConnect-GIAB"
+		//if (LLGridManager::getInstance()->isSystemGrid())
+		//{
+		//	LLNotificationsUtil::add("NoVoiceConnect", args);	
+		//}
+		//else
+		//{
+		//	LLNotificationsUtil::add("NoVoiceConnect-GIAB", args);	
+		//}
+		LLNotificationsUtil::add("NoVoiceConnect", args);
+		// </FS:Ansariel>
 	}
 	else
 	{
@@ -2646,6 +2679,7 @@ void LLVivoxVoiceClient::connectorCreateResponse(int statusCode, std::string &st
 		LL_INFOS("Voice") << "Connector.Create succeeded, Vivox SDK version is " << versionID << LL_ENDL;
 		mVoiceVersion.serverVersion = versionID;
 		mConnectorHandle = connectorHandle;
+		mTerminateDaemon = false;
 		if(getState() == stateConnectorStarting)
 		{
 			setState(stateConnectorStarted);

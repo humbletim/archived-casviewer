@@ -79,6 +79,9 @@ public:
 	virtual void updateResizeLimits();
 	virtual void updateFloaterTitle(LLFloater* floaterp);
 
+	// <FS:Ansariel> CTRL-W doesn't work with multifloaters
+	void closeDockedFloater();
+
 protected:
 	struct LLFloaterData
 	{

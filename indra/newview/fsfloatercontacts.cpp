@@ -1,5 +1,5 @@
 /** 
- * @file fscontactsfloater.cpp
+ * @file fsfloatercontacts.cpp
  * @brief Legacy contacts floater implementation
  *
  * $LicenseInfo:firstyear=2011&license=fsviewerlgpl$
@@ -28,7 +28,7 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "fscontactsfloater.h"
+#include "fsfloatercontacts.h"
 
 // libs
 #include "llagent.h"
@@ -51,6 +51,7 @@
 #include "llstartup.h"
 #include "llviewercontrol.h"
 #include "llvoiceclient.h"
+#include "fscommon.h"
 
 //Maximum number of people you can select to do an operation on at once.
 const U32 MAX_FRIEND_SELECT = 20;
@@ -171,24 +172,19 @@ void FSFloaterContacts::updateGroupButtons()
 	LLUUID groupId = getCurrentItemID();
 	bool isGroup = groupId.notNull();
 
-	LLUICtrl* groupcount = mGroupsTab->getChild<LLUICtrl>("groupcount");
-	groupcount->setTextArg("[COUNT]", llformat("%d", gAgent.mGroups.count()));
-	groupcount->setTextArg("[MAX]", llformat("%d", gMaxAgentGroups));
+	mGroupsTab->getChild<LLUICtrl>("groupcount")->setValue(FSCommon::populateGroupCount());
 	
 	getChildView("chat_btn")->setEnabled(isGroup && gAgent.hasPowerInGroup(groupId, GP_SESSION_JOIN));
 	getChildView("info_btn")->setEnabled(isGroup);
 	getChildView("activate_btn")->setEnabled(groupId != gAgent.getGroupID());
 	getChildView("leave_btn")->setEnabled(isGroup);
-	getChildView("create_btn")->setEnabled(gAgent.mGroups.count() < gMaxAgentGroups);
+	getChildView("create_btn")->setEnabled((!gMaxAgentGroups) || (gAgent.mGroups.count() < gMaxAgentGroups));
 	getChildView("invite_btn")->setEnabled(isGroup && gAgent.hasPowerInGroup(groupId, GP_MEMBER_INVITE));
 }
 
 void FSFloaterContacts::onOpen(const LLSD& key)
 {
-	// <FS:Ansariel> [FS communication UI]
-	//LLIMFloaterContainer* floater_container = LLIMFloaterContainer::getInstance();
 	FSFloaterIMContainer* floater_container = FSFloaterIMContainer::getInstance();
-	// </FS:Ansariel> [FS communication UI]
 	if (gSavedSettings.getBOOL("ContactsTornOff"))
 	{
 		// first set the tear-off host to the conversations container
@@ -204,6 +200,8 @@ void FSFloaterContacts::onOpen(const LLSD& key)
 	}
 
 	openTab(key.asString());
+
+	LLFloater::onOpen(key);
 }
 
 void FSFloaterContacts::openTab(const std::string& name)
@@ -226,7 +224,7 @@ void FSFloaterContacts::openTab(const std::string& name)
 		return;
 	}
 
-	FSFloaterIMContainer* floater_container = (FSFloaterIMContainer *) getHost();
+	FSFloaterIMContainer* floater_container = dynamic_cast<FSFloaterIMContainer*>(getHost());
 	if (floater_container)
 	{
 		floater_container->setVisible(TRUE);

@@ -92,7 +92,12 @@ const unsigned short *copyFromPBoard()
 		str = [objToPaste objectAtIndex:0];
 	}
 	NSUInteger len = [str length];
-	unichar* buffer = (unichar*)calloc(len, sizeof(unichar));
+
+	// <FS:ND> add+1 for 0-terminator.
+	// unichar* buffer = (unichar*)calloc(len, sizeof(unichar));
+	unichar* buffer = (unichar*)calloc(len+1, sizeof(unichar));
+	// </FS:ND>
+
 	[str getCharacters:buffer range:NSMakeRange(0, len)];
 	[pool release];
 	return buffer;
@@ -449,6 +454,14 @@ long showAlert(std::string text, std::string title, int type)
 
 unsigned int getModifiers()
 {
+	// <FS:ND> Try current event of app first, otherwise we might get wrong results
+	NSEvent *pEvent = [NSApp currentEvent];
+	if( pEvent != nil )
+	{
+		return [pEvent modifierFlags];
+	}
+	// </FS:ND>
+
 	return [NSEvent modifierFlags];
 }
 

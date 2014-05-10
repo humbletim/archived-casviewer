@@ -39,6 +39,7 @@
 #include "llagentdata.h"			// for gAgentID
 #include "llavataractions.h"
 #include "llcallingcard.h"			// for LLAvatarTracker
+#include "llnetmap.h"
 #include "llviewermenu.h"			// for gMenuHolder
 #include "rlvhandler.h"
 
@@ -85,6 +86,9 @@ LLContextMenu* FSRadarMenu::createMenu()
 		registrar.add("Avatar.AddToContactSet",					boost::bind(&FSRadarMenu::addToContactSet,					this));
 		registrar.add("Nearby.People.TeleportToAvatar",			boost::bind(&FSRadarMenu::teleportToAvatar,					this));
 		registrar.add("Nearby.People.TrackAvatar",				boost::bind(&FSRadarMenu::onTrackAvatarMenuItemClick,		this));
+		registrar.add("Nearby.People.SetAvatarMarkColor",		boost::bind(&LLNetMap::setAvatarMarkColor,					id, _2));
+		registrar.add("Nearby.People.ClearAvatarMarkColor",		boost::bind(&LLNetMap::clearAvatarMarkColor,				id));
+		registrar.add("Nearby.People.ClearAllAvatarMarkColors",	boost::bind(&LLNetMap::clearAvatarMarkColors				));
 
 		enable_registrar.add("Avatar.EnableItem",				boost::bind(&FSRadarMenu::enableContextMenuItem,			this, _2));
 		enable_registrar.add("Avatar.CheckItem",				boost::bind(&FSRadarMenu::checkContextMenuItem,				this, _2));
@@ -119,6 +123,9 @@ LLContextMenu* FSRadarMenu::createMenu()
 		registrar.add("Avatar.Derender",						boost::bind(&LLAvatarActions::derenderMultiple,						mUUIDs, false));
 		registrar.add("Avatar.DerenderPermanent",				boost::bind(&LLAvatarActions::derenderMultiple,						mUUIDs, true));
 		registrar.add("Avatar.AddToContactSet",					boost::bind(&FSRadarMenu::addToContactSet,							this));
+		registrar.add("Nearby.People.SetAvatarMarkColor",		boost::bind(&LLNetMap::setAvatarMarkColors,							mUUIDs, _2));
+		registrar.add("Nearby.People.ClearAvatarMarkColor",		boost::bind(&LLNetMap::clearAvatarMarkColors,						mUUIDs));
+		registrar.add("Nearby.People.ClearAllAvatarMarkColors",	boost::bind(&LLNetMap::clearAvatarMarkColors						));
 
 		enable_registrar.add("Avatar.EnableItem",				boost::bind(&FSRadarMenu::enableContextMenuItem,					this, _2));
 		enable_registrar.add("Avatar.VisibleFreezeEject",		boost::bind(&LLAvatarActions::canLandFreezeOrEjectMultiple,			mUUIDs, false));
@@ -239,21 +246,13 @@ void FSRadarMenu::teleportToAvatar()
 // AO: wrapper for functionality managed by LLPanelPeople, because it manages the nearby avatar list.
 // Will only work for avatars within radar range.
 {
-	FSRadar* radar = FSRadar::getInstance();
-	if (radar)
-	{
-		radar->teleportToAvatar(mUUIDs.front());
-	}
+	LLAvatarActions::teleportTo(mUUIDs.front());
 }
 
 // Ansariel: Avatar tracking feature
 void FSRadarMenu::onTrackAvatarMenuItemClick()
 {
-	FSRadar* radar = FSRadar::getInstance();
-	if (radar)
-	{
-		radar->startTracking(mUUIDs.front());
-	}
+	LLAvatarActions::track(mUUIDs.front());
 }
 
 void FSRadarMenu::addToContactSet()

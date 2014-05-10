@@ -7,7 +7,7 @@
 
 $LicenseInfo:firstyear=2006&license=viewerlgpl$
 Second Life Viewer Source Code
-Copyright (C) 2006-2011, Linden Research, Inc.
+Copyright (C) 2006-2014, Linden Research, Inc.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -753,7 +753,23 @@ class Windows_i686_Manifest(ViewerManifest):
           NSIS_path = os.path.expandvars('${ProgramFiles}\\NSIS\\Unicode\\makensis.exe')
           if not os.path.exists(NSIS_path):
               NSIS_path = os.path.expandvars('${ProgramFiles(x86)}\\NSIS\\Unicode\\makensis.exe')
-          self.run_command('"' + proper_windows_path(NSIS_path) + '" /V2 ' + self.dst_path_of(tempfile))
+
+          installer_created=False
+          nsis_attempts=3
+          nsis_retry_wait=15
+          while (not installer_created) and (nsis_attempts > 0):
+            try:
+                nsis_attempts-=1;
+                self.run_command('"' + proper_windows_path(NSIS_path) + '" /V2 ' + self.dst_path_of(tempfile))
+                installer_created=True # if no exception was raised, the codesign worked
+            except ManifestError, err:
+                if nsis_attempts:
+                    print >> sys.stderr, "nsis failed, waiting %d seconds before retrying" % nsis_retry_wait
+                    time.sleep(nsis_retry_wait)
+                    nsis_retry_wait*=2
+                else:
+                    print >> sys.stderr, "Maximum nsis attempts exceeded; giving up"
+                    raise
           # self.remove(self.dst_path_of(tempfile))
         else:
           installer_file = "%(app_name)s-%(version_dashes)s_Setup.msi" % substitution_strings
@@ -913,7 +929,6 @@ class Darwin_i386_Manifest(ViewerManifest):
                                 "libaprutil-1.0.dylib",
                                 "libexpat.1.5.2.dylib",
                                 "libexception_handler.dylib",
-                                "libfmodex.dylib",
                                 "libfmodexL.dylib",
                                 "libGLOD.dylib",
                                 "libgrowl.dylib",
@@ -935,6 +950,20 @@ class Darwin_i386_Manifest(ViewerManifest):
                                 'SLVoice',
                                 ):
                      self.path2basename(libdir, libfile)
+
+                # dylibs that vary based on configuration
+                if self.args['configuration'].lower() == 'debug':
+                    for libfile in (
+                                "libfmodexL.dylib",
+                                ):
+                        dylibs += path_optional(os.path.join("../packages/lib/debug",
+                                                             libfile), libfile)
+                else:
+                    for libfile in (
+                                "libfmodex.dylib",
+                                ):
+                        dylibs += path_optional(os.path.join("../packages/lib/release",
+                                                             libfile), libfile)
                 
                 # our apps
                 for app_bld_dir, app in (("mac_crash_logger", "mac-crash-logger.app"),
@@ -1242,6 +1271,7 @@ class LinuxManifest(ViewerManifest):
             self.path("libalut.so*")
             self.path("libpng15.so.15") #use provided libpng to workaround incompatible system versions on some distros
             self.path("libpng15.so.15.13.0") #use provided libpng to workaround incompatible system versions on some distros
+            self.path("libopenal.so", "libopenal.so.1") # Install as versioned file in case it's missing from the 3p- and won't get copied below
             self.path("libopenal.so*")
             #self.path("libnotify.so.1.1.2", "libnotify.so.1") # LO - uncomment when testing libnotify(growl) on linux
             self.path("libpangox-1.0.so*")

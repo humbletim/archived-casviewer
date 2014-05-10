@@ -200,7 +200,7 @@ public:
 		}
 		else if (level == "teleport_to")
 		{
-			LLUrlAction::executeSLURL(LLSLURL("firestorm", getAvatarId(), "teleportto").getSLURLString());
+			LLAvatarActions::teleportTo(getAvatarId());
 		}
 		else if (level == "teleport")
 		{
@@ -244,7 +244,7 @@ public:
 		}
 		else if (level == "track")
 		{
-			LLUrlAction::executeSLURL(LLSLURL("firestorm", getAvatarId(), "track").getSLURLString());
+			LLAvatarActions::track(getAvatarId());
 		}
 		else if (level == "share")
 		{
@@ -373,7 +373,7 @@ public:
 		}
 		else if (mSourceType == CHAT_SOURCE_AGENT || (mSourceType == CHAT_SOURCE_SYSTEM && mType == CHAT_TYPE_RADAR)) // FS:LO FIRE-1439 - Clickable avatar names on local chat radar crossing reports
 		{
-			LLFloaterReg::showInstance("inspect_avatar", LLSD().with("avatar_id", mAvatarID));
+			LLUrlAction::executeSLURL(LLSLURL("agent", mAvatarID, "inspect").getSLURLString());
 		}
 		//if chat source is system, you may add "else" here to define behaviour.
 	}
@@ -420,7 +420,7 @@ public:
 			user_name->setValue(mFrom);
 			updateMinUserNameWidth();
 		}
-		else if (mSourceType == CHAT_SOURCE_AGENT
+		else if ((mSourceType == CHAT_SOURCE_AGENT || (mSourceType == CHAT_SOURCE_SYSTEM && mType == CHAT_TYPE_RADAR))
 				 && !mAvatarID.isNull()
 				 && chat.mChatStyle != CHAT_STYLE_HISTORY)
 		{
@@ -450,7 +450,7 @@ public:
 // [/RLVa:KB]
 		}
 		else if (chat.mChatStyle == CHAT_STYLE_HISTORY ||
-				 mSourceType == CHAT_SOURCE_AGENT)
+				 (mSourceType == CHAT_SOURCE_AGENT || (mSourceType == CHAT_SOURCE_SYSTEM && mType == CHAT_TYPE_RADAR)))
 		{
 			//if it's an avatar name with a username add formatting
 			S32 username_start = chat.mFromName.rfind(" (");
@@ -496,7 +496,7 @@ public:
 
 // [RLVa:KB] - Checked: 2010-04-22 (RLVa-1.2.2a) | Added: RLVa-1.2.0f
 		// Don't show the context menu, info control or avatar icon tooltip if this chat was subject to @shownames=n
-		if ( (chat.mRlvNamesFiltered) && ((CHAT_SOURCE_AGENT == mSourceType) || (CHAT_SOURCE_OBJECT == mSourceType))  )
+		if ( (chat.mRlvNamesFiltered) && ((mSourceType == CHAT_SOURCE_AGENT || (mSourceType == CHAT_SOURCE_SYSTEM && mType == CHAT_TYPE_RADAR)) || (CHAT_SOURCE_OBJECT == mSourceType))  )
 		{
 			mShowInfoCtrl = mShowContextMenu = false;
 			icon->setDrawTooltip(false);
@@ -645,6 +645,7 @@ protected:
 				menu->setItemEnabled("Request Teleport",false);
 				menu->setItemEnabled("Teleport to",false);
 				menu->setItemEnabled("Voice Call", false);
+				menu->setItemEnabled("Chat History", false);
 				menu->setItemEnabled("Add Contact Set", false);
 				menu->setItemEnabled("Invite Group", false);
 				menu->setItemEnabled("Zoom In", false);
@@ -668,9 +669,9 @@ protected:
 				menu->setItemEnabled("track", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_TRACK_AVATAR));
 				menu->setItemEnabled("Block Unblock", LLAvatarActions::canBlock(mAvatarID));
 				menu->setItemEnabled("Mute Text", LLAvatarActions::canBlock(mAvatarID));
+				menu->setItemEnabled("Chat History", LLLogChat::isTranscriptExist(mAvatarID));
 			}
 
-			menu->setItemEnabled("Chat History", LLLogChat::isTranscriptExist(mAvatarID));
 			menu->setItemEnabled("Map", (LLAvatarTracker::instance().isBuddyOnline(mAvatarID) && is_agent_mappable(mAvatarID)) || gAgent.isGodlike() );
 			menu->buildDrawLabels();
 			menu->updateParent(LLMenuGL::sMenuContainer);
@@ -682,7 +683,7 @@ protected:
 	{
 //		if (mAvatarID.isNull() || mFrom.empty() || CHAT_SOURCE_SYSTEM == mSourceType) return;
 // [RLVa:KB] - Checked: 2010-04-22 (RLVa-1.2.2a) | Added: RLVa-1.2.0f
-		if ( (!mShowInfoCtrl) || (mAvatarID.isNull() || mFrom.empty() || CHAT_SOURCE_SYSTEM == mSourceType) ) return;
+		if ( (!mShowInfoCtrl) || (mAvatarID.isNull() || mFrom.empty() || (CHAT_SOURCE_SYSTEM == mSourceType && mType != CHAT_TYPE_RADAR)) ) return;
 // [/RLVa:KB]
 				
 		if (!sInfoCtrl)
@@ -775,7 +776,7 @@ private:
 			style_params_name.font.name("SansSerifSmall");
 			style_params_name.font.style("NORMAL");
 			style_params_name.readonly_color(userNameColor);
-			user_name->appendText("  - " + av_name.getUserNameForDisplay(), false, style_params_name);
+			user_name->appendText(" - " + av_name.getUserNameForDisplay(), false, style_params_name);
 		}
 		setToolTip( av_name.getUserName() );
 		// name might have changed, update width
@@ -824,7 +825,8 @@ FSChatHistory::FSChatHistory(const FSChatHistory::Params& p)
 	mBottomHeaderPad(p.bottom_header_pad),
 	mChatInputLine(NULL),	// <FS_Zi> FIRE-8602: Typing in chat history focuses chat input line
 	mIsLastMessageFromLog(false),
-	mNotifyAboutUnreadMsg(p.notify_unread_msg)
+	mNotifyAboutUnreadMsg(p.notify_unread_msg),
+	mScrollToBottom(false)
 {
 	mLineSpacingPixels=llclamp(gSavedSettings.getS32("FSFontChatLineSpacingPixels"),0,36);
 }
@@ -926,6 +928,10 @@ static LLFastTimer::DeclareTimer FTM_APPEND_MESSAGE("Append Chat Message");
 void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LLStyle::Params& input_append_params)
 {
 	LLFastTimer _(FTM_APPEND_MESSAGE);
+	// Ansa: FIRE-12754: Hack around a weird issue where the doc size magically increases by 1px
+	//       during draw if the doc exceeds the visible space and the scrollbar is getting visible.
+	mScrollToBottom = (mScroller->isAtBottom() || mScroller->getScrollbar(LLScrollContainer::VERTICAL)->getDocPosMax() <= 1);
+
 	bool use_plain_text_chat_history = args["use_plain_text_chat_history"].asBoolean();
 	bool square_brackets = false; // square brackets necessary for a system messages
 	bool is_p2p = args.has("is_p2p") && args["is_p2p"].asBoolean();
@@ -1356,5 +1362,17 @@ BOOL FSChatHistory::handleUnicodeCharHere(llwchar uni_char)
 
 	// we don't know what to do, so let our base class handle the keystroke
 	return LLTextEditor::handleUnicodeCharHere(uni_char);
+}
+
+void FSChatHistory::draw()
+{
+	LLTextEditor::draw();
+	// Ansa: FIRE-12754: Hack around a weird issue where the doc size magically increases by 1px
+	//       during draw if the doc exceeds the visible space and the scrollbar is getting visible.
+	if (mScrollToBottom)
+	{
+		mScroller->goToBottom();
+		mScrollToBottom = false;
+	}
 }
 // </FS:Zi>

@@ -674,20 +674,32 @@
          height="16"
          control_name ="EnableVoiceChat"
          disabled_control="CmdLineDisableVoice"
-         label="Enabled Voice"
+         label="Enable Voice"
          layout="topleft"
          top_pad="10"
          left="25"
          name="enable_voice_check"
          width="110"/>
+        <check_box
+         follows="left|top"
+         height="16"
+         control_name="VoiceMultiInstance"
+         disabled_control="CmdLineDisableVoice"
+         label="Allow Voice in multiple viewer instances simultaneously"
+         layout="topleft"
+         top_pad="3"
+         left="25"
+         name="VoiceMultiInstance"
+         width="400"/>
          
+<!--
         <text
          type="string"
          length="1"
          follows="left|top"
          layout="topleft"
          left="25"
-         top_pad="10"
+         top_pad="5"
          name="Listen from"
          width="112">
             Listen from:
@@ -714,31 +726,40 @@
          visible="true"
          width="18"
          top_delta="0" />
+-->
         <radio_group
          enabled_control="EnableVoiceChat"
          control_name="VoiceEarLocation"
          follows="left|top"
          layout="topleft"
-         left_delta="-168"
-         width="221"
-         height="20"
+         left="25"
+         width="400"
+         height="60"
+         top_pad="0"
          name="ear_location">
             <radio_item
              height="19"
-             label="Camera position"
+             label="Hear Voice from Camera position"
              follows="left|top"
              layout="topleft"
              name="0"
-             width="200"/>
+             width="150"/>
             <radio_item
              height="19"
              follows="left|top"
-             label="Avatar position"
+             label="Hear Voice from Avatar position"
              layout="topleft"
-             left_pad="-16"
              name="1"
-             top_delta ="0"
-             width="200" />
+             top_pad="-2"
+             width="150" />
+            <radio_item
+             height="19"
+             follows="left|top"
+             label="Hear Voice equally from everyone"
+             layout="topleft"
+             name="2"
+             top_pad="-2"
+             width="150" />
         </radio_group>
 
         <check_box

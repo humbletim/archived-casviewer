@@ -12,6 +12,9 @@
 	<string name="StartupClearingCache">
 		Czyszczenie bufora danych...
 	</string>
+	<string name="StartupClearingTextureCache">
+		Czyszczenie bufora tekstur...
+	</string>
 	<string name="StartupInitializingTextureCache">
 		Inicjowanie bufora danych tekstur...
 	</string>
@@ -20,6 +23,56 @@
 	</string>
 	<string name="StartupRequireDriverUpdate">
 		Nie można zainicjować grafiki. Zaktualizuj sterowniki!
+	</string>
+	<string name="AboutHeader">
+[APP_NAME] [VIEWER_VERSION_0].[VIEWER_VERSION_1].[VIEWER_VERSION_2] ([VIEWER_VERSION_3]) [BUILD_DATE] [BUILD_TIME] ([CHANNEL]) [BUILD_TYPE]
+[[VIEWER_RELEASE_NOTES_URL] [ReleaseNotes]]
+	</string>
+	<string name="AboutCompiler">
+		Zbudowane z [COMPILER] w wersji [COMPILER_VERSION]
+	</string>
+	<string name="AboutPosition">
+Położenie [POSITION_LOCAL_0,number,1], [POSITION_LOCAL_1,number,1], [POSITION_LOCAL_2,number,1] w [REGION] zlokalizowanym w &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
+SLURL: &lt;nolink&gt;[SLURL]&lt;/nolink&gt;
+(koordynaty globalne [POSITION_0,number,1], [POSITION_1,number,1], [POSITION_2,number,1])
+[SERVER_VERSION]
+[SERVER_RELEASE_NOTES_URL]
+	</string>
+	<string name="AboutSystem">
+Procesor (CPU): [CPU]
+Pamięć (Memory): [MEMORY_MB] MB
+Wersja OS (OS Version): [OS_VERSION]
+Sprzedawca karty graficznej (Graphics Card Vendor): [GRAPHICS_CARD_VENDOR]
+Karta graficzna (Graphics Card): [GRAPHICS_CARD]
+	</string>
+	<string name="AboutDriver">
+		Sterownik karty graficznej Windows (Driver Version): [GRAPHICS_DRIVER_VERSION]
+	</string>
+	<string name="AboutLibs">
+Wersja OpenGL: [OPENGL_VERSION]
+
+RestrainedLove API: [RLV_VERSION]
+Wersja libcurl: [LIBCURL_VERSION]
+Wersja dekodera J2C: [J2C_VERSION]
+Wersja sterownika dźwięku (Audio Driver): [AUDIO_DRIVER_VERSION]
+Wersja Qt Webkit: [QT_WEBKIT_VERSION]
+Wersja serwera głosu (Voice Server): [VOICE_VERSION]
+	</string>
+	<string name="AboutSettings">
+Tryb ustawień (Settings Mode): [MODE]
+Skórka i schemat (Skin): [SKIN] ([THEME])
+Czcionka (Font): [FONT] ([FONT_SCREEN_DPI])
+Pole widzenia (Draw Distance): [DRAW_DISTANCE]
+Przepustowość (Bandwidth): [BANDWIDTH]
+Mnożnik poziomu detali (LOD Factor): [LOD]
+Jakość wyświetlania (Render quality): [RENDERQUALITY]
+Pamięć tekstur (Texture memory): [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
+	</string>
+	<string name="AboutTraffic">
+		Pakiety utracone: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)
+	</string>
+	<string name="ErrorFetchingServerReleaseNotesURL">
+		Błąd podczas pobierania informacji o wydaniu.
 	</string>
 	<string name="ProgressRestoring">
 		Przywracanie...
@@ -4765,7 +4818,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Rozmawiaj z ludźmi w pobliżu używając tekstu (CTRL+T)
 	</string>
 	<string name="Command_Conversations_Tooltip">
-		Rozmawiaj ze wszystkimi
+		Rozmawiaj ze wszystkimi (CTRL+T)
 	</string>
 	<string name="Command_Compass_Tooltip">
 		Kompas
@@ -4864,10 +4917,10 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Otwiera listę obiektów, jakie masz na swojej czarnej liście zasobów danych (assetów)
 	</string>
 	<string name="Command_Phototools_Tooltip">
-		Narzędzia do zaawansowanego tworzenia obrazów
+		Narzędzia do zaawansowanego tworzenia obrazów (ATL+P)
 	</string>
 	<string name="Command_Phototools_View_Tooltip">
-		Zaawansowane ustawienia kamery fotograficznej
+		Zaawansowane ustawienia kamery fotograficznej (CTRL+SHIFT+C)
 	</string>
 	<string name="Command_Contact_Sets_Tooltip">
 		Otwiera interfejs Zestawów kontaktów (CTRL+ALT+SHIFT+C)
@@ -4879,7 +4932,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Utwórz Landmark Twojej bieżącej pozycji
 	</string>
 	<string name="Command_Teleport_History_Tooltip">
-		Otwiera historię teleportacji
+		Otwiera historię teleportacji (ALT+H)
 	</string>
 	<string name="Command_Pose_Stand_Tooltip">
 		Podest do pozowania dla awatara, do dostrajania dodatków
@@ -4894,7 +4947,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Otwiera dziennik rozmów, aby zobaczyć przeszłe logi
 	</string>
 	<string name="Command_Move_Lock_Tooltip">
-		Blokuje Twojego awatara na obecnej pozycji
+		Blokuje Twojego awatara na obecnej pozycji (CTRL+ALT+P)
 	</string>
 	<string name="Command_Blocklist_Tooltip">
 		Otwiera listę zablokowanych/wyciszonych
@@ -4912,7 +4965,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		obecnie na Twoim prawym pasku
 	</string>
 	<string name="Command_Fly_Tooltip">
-		Włącz/wyłącz tryb latania
+		Włącz/wyłącz tryb latania (HOME)
 	</string>
 	<string name="Retain%">
 		%Zachowania
@@ -5357,5 +5410,14 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="Inbox_Folderview_New">
 		Nowe
+	</string>
+	<string name="Mouselook_Unknown_Avatar">
+		Nieznana osoba
+	</string>
+	<string name="groupcountstring">
+		Należysz do [COUNT] grup ([REMAINING] pozostało).
+	</string>
+	<string name="groupcountunlimitedstring">
+		Należysz do [COUNT] grup.
 	</string>
 </strings>

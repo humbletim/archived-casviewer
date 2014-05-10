@@ -65,11 +65,9 @@ public:
 
 	virtual void setupCtrls	(LLPanel* parent);
 
-	// <FS:Ansariel> Member list doesn't load properly
-	//void onNameCache(const LLUUID& update_id, LLGroupMemberData* member, const LLAvatarName& av_name);
+	// <FS:Ansariel> Re-add group member list on general panel
 	void onNameCache(const LLUUID& update_id, LLGroupMemberData* member, const LLAvatarName& av_name, const LLUUID& av_id);
-	// </FS:Ansariel>
-	
+
 // <FS> Copy button callbacks
 protected:
 	void onCopyURI();
@@ -87,18 +85,12 @@ private:
 	static void onCommitEnrollment(LLUICtrl* ctrl, void* data);
 	static void onClickInfo(void* userdata);
 	static void onReceiveNotices(LLUICtrl* ctrl, void* data);
-	static void openProfile(void* data);
-
-	S32	 sortMembersList(S32,const LLScrollListItem*,const LLScrollListItem*);
-	void addMember(LLGroupMemberData* member);
 
     static bool joinDlgCB(const LLSD& notification, const LLSD& response);
 
-	void updateMembers();
 	void updateChanged();
 	bool confirmMatureApply(const LLSD& notification, const LLSD& response);
 
-	BOOL			mPendingMemberUpdate;
 	BOOL			mChanged;
 	BOOL			mFirstUse;
 	std::string		mIncompleteMemberDataStr;
@@ -108,8 +100,6 @@ private:
 	LLTextBox			*mFounderName;
 	LLTextureCtrl		*mInsignia;
 	LLTextEditor		*mEditCharter;
-
-	LLNameListCtrl	*mListVisibleMembers;
 
 	// Options (include any updates in updateChanged)
 	LLCheckBoxCtrl	*mCtrlShowInGroupList;
@@ -123,17 +113,24 @@ private:
 	LLComboBox		*mComboMature;
 	LLCheckBoxCtrl	*mCtrlReceiveGroupChat; // <exodus/>
 
-	LLGroupMgrGroupData::member_list_t::iterator mMemberProgress;
-	// <FS:Ansariel> Member list doesn't load properly
-	//boost::signals2::connection mAvatarNameCacheConnection;
-	typedef boost::unordered_map<LLUUID, boost::signals2::connection, FSUUIDHash> avatar_name_cache_connection_map_t;
-	avatar_name_cache_connection_map_t mAvatarNameCacheConnections;
-	// </FS:Ansariel>
-
 	LLUUID mIteratorGroup; // <FS:ND/> FIRE-6074; UUID of the group mMemberProgress belongs to.
 
 	// <FS:Ansariel> For storing group name for copy name button
 	std::string		mGroupName;
+
+	// <FS:Ansariel> Re-add group member list on general panel
+	static void openProfile(void* data);
+	void addMember(LLGroupMemberData* member);
+	void updateMembers();
+	S32 sortMembersList(S32,const LLScrollListItem*,const LLScrollListItem*);
+
+	LLGroupMgrGroupData::member_list_t::iterator mMemberProgress;
+	typedef boost::unordered_map<LLUUID, boost::signals2::connection, FSUUIDHash> avatar_name_cache_connection_map_t;
+	avatar_name_cache_connection_map_t mAvatarNameCacheConnections;
+
+	BOOL			mPendingMemberUpdate;
+	LLNameListCtrl*	mListVisibleMembers;
+	// </FS:Ansariel>
 };
 
 #endif

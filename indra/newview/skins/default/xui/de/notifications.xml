@@ -440,6 +440,9 @@ Sind Sie sicher, dass Sie fortfahren wollen?
 		Der Cache wird nach einem Neustart von [APP_NAME] verschoben.
 Hinweis: Der Cache wird dabei gelöscht/geleert.
 	</notification>
+	<notification name="SoundCacheWillBeMoved">
+		Der Sound-Cache wird nach einem Neustart von [APP_NAME] verschoben.
+	</notification>
 	<notification name="ChangeConnectionPort">
 		Die Port-Einstellungen werden nach einem Neustart von [APP_NAME] wirksam.
 	</notification>
@@ -1785,6 +1788,10 @@ womit Sie die Höchstgrenze von [LIMIT] überschreiten.
 		Sind Sie sicher, dass Sie zu &lt;nolink&gt;[LOCATION]&lt;/nolink&gt; teleportieren möchten?
 		<usetemplate ignoretext="Bestätigen, dass ich zu einer Landmarke teleportieren möchte" name="okcancelignore" notext="Abbrechen" yestext="Teleportieren"/>
 	</notification>
+	<notification name="TeleportViaSLAPP">
+		Sind Sie sicher, dass Sie zu &lt;nolink&gt;[LOCATION]&lt;/nolink&gt; teleportieren möchten?
+		<usetemplate ignoretext="Bestätigen, dass ich via SLAPP teleportieren möchte" name="okcancelignore" notext="Abbrechen" yestext="Teleportieren"/>
+	</notification>
 	<notification name="TeleportToPick">
 		Nach [PICK] teleportieren?
 		<usetemplate ignoretext="Bestätigen, dass ich zu einer Position in Auswahl teleportieren möchte" name="okcancelignore" notext="Abbrechen" yestext="Teleportieren"/>
@@ -2021,6 +2028,9 @@ Tausende Regionen werden verändert und der Spaceserver wird dadurch stark belas
 	</notification>
 	<notification name="ProblemAddingEstateManager">
 		Es gibt Probleme beim Hinzufügen eines neuen Grundbesitzverwalters.  Bei mindestens einem Grundbesitz ist die Verwalterliste voll.
+	</notification>
+	<notification name="ProblemAddingEstateBanManager">
+		Grundbesitzeigentümer oder Grundbesitzverwalter kann nicht zur Bannliste hinzugefügt werden.
 	</notification>
 	<notification name="ProblemAddingEstateGeneric">
 		Problem beim Hinzufügen zu dieser Grundbesitzliste.  Bei mindestens einem Grundbesitz ist die Liste voll.
@@ -2283,6 +2293,14 @@ Möchten Sie den Nicht-stören-Modus deaktivieren, bevor Sie diese Transaktion a
 		Möchten Sie Ihren Viewer-Cache wirklich leeren?
 		<usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="OK"/>
 	</notification>
+	<notification name="ConfirmClearInventoryCache">
+		Möchten Sie Ihren Inventar-Cache wirklich leeren?
+		<usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="OK"/>
+	</notification>
+	<notification name="ConfirmClearWebBrowserCache">
+		Möchten Sie Ihren Webbrowser-Cache wirklich leeren?
+		<usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="OK"/>
+	</notification>
 	<notification name="ConfirmClearCookies">
 		Sind Sie sicher, dass Sie Ihre Cookies löschen möchten?
 		<usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="Ja"/>
@@ -2472,6 +2490,9 @@ Dies kann die Eingabe Ihres Passworts beeinflussen.
 	</notification>
 	<notification name="CannotRemoveProtectedCategories">
 		Geschützte Kategorien können nicht entfernt werden.
+	</notification>
+	<notification name="OfferedCard">
+		Sie haben [NAME] Ihre Vistenkarte angeboten.
 	</notification>
 	<notification name="UnableToBuyWhileDownloading">
 		Kauf nicht möglich. Objektdaten werden noch geladen.
@@ -3561,6 +3582,10 @@ Versuch abgebrochen.
 		Kommen Sie näher heran.  Sitzen auf Objekt nicht möglich, da
 es sich nicht in der gleichen Region befindet wie Sie.
 	</notification>
+	<notification name="ChatHistoryIsBusyAlert">
+		Der Chatverlauf ist noch mit einer vorhergehenden Aktion beschäftigt. Bitte versuchen Sie es in ein paar Sekunden erneut oder wählen Sie den Chatverlauf einer anderen Person.
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
 	<notification name="NoNewObjectRegionFull">
 		Neues Objekt kann nicht erstellt werden. Die Region ist voll.
 	</notification>
@@ -3811,6 +3836,9 @@ Sie ist voll oder startet in Kürze neu.
 	<notification name="LinkFailedTooMuchPhysics">
 		Objekt verwendet zu viele Physikressourcen – seine Dynamik wurde deaktiviert.
 	</notification>
+	<notification name="EstateManagerFailedllTeleportHome">
+		Das Objekt „[OBJECT_NAME]“ an [SLURL] kann Grundbesitzverwalter nicht nach Hause teleportieren.
+	</notification>
 	<notification name="TeleportedHomeByObjectOnParcel">
 		Sie wurden vom Objekt „[OBJECT_NAME]“ auf der Parzelle „[PARCEL_NAME]“ nach Hause teleportiert
 	</notification>
@@ -4004,13 +4032,19 @@ Sie ist voll oder startet in Kürze neu.
 		Auswahl enthält nicht genügend gemietete Parzellen zum Zusammenlegen.
 	</notification>
 	<notification name="CantDivideLandMultipleParcelsSelected">
-		Land kann nicht geteilt werden. Mehr als eine Parzelle ist ausgewählt. Wählen Sie ein kleineres Stück Land aus.
+		Land kann nicht geteilt werden.
+Mehr als eine Parzelle ist ausgewählt.
+Wählen Sie ein kleineres Stück Land aus.
 	</notification>
 	<notification name="CantDivideLandCantFindParcel">
-		Land kann nicht geteilt werden. Parzelle nicht auffindbar. Melden Sie das Problem über „Hilfe“ -&gt; „Fehler melden“...
+		Land kann nicht geteilt werden.
+Parzelle nicht auffindbar.
+Melden Sie das Problem über „Hilfe“ -&gt; „Fehler melden“...
 	</notification>
 	<notification name="CantDivideLandWholeParcelSelected">
-		Land kann nicht geteilt werden. Die gesamte Parzelle ist ausgewählt. Wählen Sie ein kleineres Stück Land aus.
+		Land kann nicht geteilt werden.
+Die gesamte Parzelle ist ausgewählt.
+Wählen Sie ein kleineres Stück Land aus.
 	</notification>
 	<notification name="LandHasBeenDivided">
 		Land wurde geteilt.
@@ -4391,7 +4425,7 @@ Zoomen auf Avatar nicht möglich, da er sich außerhalb der Reichweite befindet.
   </notification>
 
   <notification name="TrackAvatarNotPossible">
-Verfolgen des Avatars nicht möglich, da er sich außerhalb der Reichweite befindet.
+Verfolgen des Avatars nicht möglich, da er sich außerhalb der Radar-Reichweite befindet.
   </notification>
   
    <notification name="CacheEmpty">
@@ -4746,7 +4780,7 @@ Der Wert, der für das gleichzeitige Laden von Mesh-Objekten gesetzt wurde ([VAL
 		[COUNT] Avatare wurden zu Kontakt-Set „[SET]“ hinzugefügt.
 	</notification>
 	<notification name="SetAvatarPseudonym">
-		Alias für [NAME] eingeben:
+		Alias für [AVATAR] eingeben:
 		<form name="form">
 			<button name="Create" text="Erstellen"/>
 			<button name="Cancel" text="Abbrechen"/>

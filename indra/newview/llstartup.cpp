@@ -210,8 +210,8 @@
 #include "growlmanager.h"
 #endif
 
-#include "fscontactsfloater.h"
 #include "fsdata.h"
+#include "fsfloatercontacts.h"
 #include "fsfloaterimcontainer.h"
 #include "fsfloaternearbychat.h"
 #include "fsfloatersearch.h"
@@ -976,15 +976,19 @@ bool idle_startup()
 			display_startup();
 			LLPanelLogin::giveFocus();
 
-			if (gSavedSettings.getBOOL("FirstLoginThisInstall"))
+			// MAINT-3231 Show first run dialog only for Desura viewer
+			if (gSavedSettings.getString("sourceid") == "1208_desura")
 			{
-				LL_INFOS("AppInit") << "FirstLoginThisInstall, calling show_first_run_dialog()" << LL_ENDL;
+				if (gSavedSettings.getBOOL("FirstLoginThisInstall"))
+				{
+					LL_INFOS("AppInit") << "FirstLoginThisInstall, calling show_first_run_dialog()" << LL_ENDL;
 				// <FS:CR> Don't show first run dialog, ever, at all.
-			//	show_first_run_dialog();
-			}
-			else
-			{
-				LL_DEBUGS("AppInit") << "FirstLoginThisInstall off" << LL_ENDL;
+				//	show_first_run_dialog();
+				}
+				else
+				{
+					LL_DEBUGS("AppInit") << "FirstLoginThisInstall off" << LL_ENDL;
+				}
 			}
 
 			LLStartUp::setStartupState( STATE_LOGIN_WAIT );		// Wait for user input
@@ -1743,7 +1747,8 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		// by the voice's events
 		// <FS:Ansariel> [FS communication UI]
 		//LLFloaterIMContainer::getInstance();
-		FSFloaterIMContainer::getInstance();
+		FSFloaterIMContainer* floater_imcontainer = FSFloaterIMContainer::getInstance();
+		floater_imcontainer->initTabs();
 
 		// <FS:ND> FIRE-3066: Force creation or FSFLoaterContacts here, this way it will register with LLAvatarTracker early enough.
 		// Otherwise it is only create if isChatMultriTab() == true and LLIMFloaterContainer::getInstance is called
@@ -1752,7 +1757,7 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		
 		// Do something with pContacts so no overzealous optimizer optimzes our neat little call to FSFloaterContacts::getInstance() away.
 		if( pContacts )
-			llinfos << "Constructed " <<  pContacts->getTitle() << llendl;
+			LL_INFOS("AppInit") << "Constructed " <<  pContacts->getName() << LL_ENDL;
 		// </FS:ND>
 
 		// <FS:Ansariel> FIRE-8560/FIRE-8592: We neet to create the instance of the radar
@@ -1762,7 +1767,7 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		//               data update.
 		LLFloaterSidePanelContainer::getPanel("people", "panel_people");
 		FSRadar::instance();
-		llinfos << "Radar initialized" << llendl;
+		LL_INFOS("AppInit") << "Radar initialized" << LL_ENDL;
 		// </FS:Ansariel>
 
 		// <FS:Ansariel> Register check function for registrar enable checks
@@ -2574,15 +2579,6 @@ LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim, first_sim_size_x, 
 		set_startup_status(1.0, "", "");
 		display_startup();
 
-// <FS:AW Disable LSL bridge on opensim>
-#ifdef OPENSIM // <FS:AW optional opensim support/>
-		if (LLGridManager::getInstance()->isInOpenSim()  && !LLGridManager::getInstance()->isInAuroraSim())
-		{
-			gSavedSettings.setBOOL("UseLSLBridge", FALSE);
-		}
-#endif // OPENSIM // <FS:AW optional opensim support/>
-// </FS:AW Disable LSL bridge on opensim>
-
 		// <FS:TT> Client LSL Bridge
 		if (gSavedSettings.getBOOL("UseLSLBridge"))
 		{
@@ -3341,6 +3337,8 @@ void LLStartUp::initNameCache()
 	// capabilities for display name lookup
 	LLAvatarNameCache::initClass(false,gSavedSettings.getBOOL("UsePeopleAPI"));
 	LLAvatarNameCache::setUseDisplayNames(gSavedSettings.getBOOL("UseDisplayNames"));
+	// <FS:Ansariel> FIRE-13073: Show username setting doesn't apply after relog
+	LLAvatarNameCache::setUseUsernames(gSavedSettings.getBOOL("NameTagShowUsernames"));
 
 	// <FS:CR> Legacy name/Username format
 	LLAvatarName::setUseLegacyFormat(gSavedSettings.getBOOL("FSNameTagShowLegacyUsernames"));
@@ -4103,9 +4101,16 @@ bool process_login_success_response(U32 &first_sim_size_x, U32 &first_sim_size_y
 	}
 	else
 	{
+// [CR] FIRE-12229
+#ifdef OPENSIM
+		gMaxAgentGroups = 0;
+		LL_INFOS("LLStartup") << "did not receive max-agent-groups. unlimited groups activated" << LL_ENDL;
+#else
 		gMaxAgentGroups = DEFAULT_MAX_AGENT_GROUPS;
 		LL_INFOS("LLStartup") << "using gMaxAgentGroups default: "
 							  << gMaxAgentGroups << LL_ENDL;
+#endif
+// [CR] FIRE-12229
 	}
 
 // <FS:AW opensim currency support>

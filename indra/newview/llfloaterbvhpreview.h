@@ -36,6 +36,8 @@
 
 class LLVOAvatar;
 class LLViewerJointMesh;
+// <FS> Preview on own avatar
+class LLFloaterBvhPreview;
 
 class LLPreviewAnimation : public LLViewerDynamicTexture
 {
@@ -55,8 +57,9 @@ public:
 	void	pan(F32 right, F32 up);
 	virtual BOOL needsUpdate() { return mNeedsUpdate; }
 
-	LLVOAvatar* getPreviewAvatar();
-	LLVOAvatar* getDummyAvatar();	// <FS:Zi> Animation Explorer
+	LLVOAvatar* getDummyAvatar() { return mDummyAvatar; }
+	// <FS> Preview on own avatar
+	LLVOAvatar* getPreviewAvatar(LLFloaterBvhPreview* floaterp);
 
 protected:
 	BOOL				mNeedsUpdate;
@@ -71,6 +74,9 @@ protected:
 
 class LLFloaterBvhPreview : public LLFloaterNameDesc
 {
+	// <FS> Preview on own avatar
+	friend class LLPreviewAnimation;
+
 public:
 	LLFloaterBvhPreview(const std::string& filename);
 	virtual ~LLFloaterBvhPreview();
@@ -104,13 +110,18 @@ public:
 	bool validateEaseIn(const LLSD& data);
 	bool validateEaseOut(const LLSD& data);
 	static void	onBtnOK(void*);
+	// <FS> Reload animation from disk
 	static void	onBtnReload(void*);
-	static void onSaveComplete(const LLUUID& asset_uuid, LLAssetType::EType type, void* user_data, S32 status, LLExtStat ext_status);
-	static bool sUseDummy;
+	static void onSaveComplete(const LLUUID& asset_uuid,
+									   LLAssetType::EType type,
+									   void* user_data,
+									   S32 status, LLExtStat ext_status);
 private:
 	void setAnimCallbacks() ;
+	// <FS> Reload animation from disk
 	BOOL loadBVH();
 	void unloadMotion();
+	// </FS>
 	
 protected:
 	void			draw();
@@ -129,6 +140,12 @@ protected:
 	LLAnimPauseRequest	mPauseRequest;
 
 	std::map<std::string, LLUUID>	mIDList;
+
+	// <FS> Preview on own avatar
+	bool mUseOwnAvatar;
+
+	// <FS:Ansariel> FIRE-2083: Slider in upload animation floater doesn't work
+	LLFrameTimer		mTimer;
 };
 
 #endif  // LL_LLFLOATERBVHPREVIEW_H

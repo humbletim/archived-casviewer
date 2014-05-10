@@ -37,11 +37,12 @@
 #include "llagent.h"
 #include "lltransientfloatermgr.h"
 #include "fsfloaternearbychat.h"
-#include "fscontactsfloater.h"
+#include "fsfloatercontacts.h"
 #include "llfloater.h"
 #include "llviewercontrol.h"
 #include "fsfloaterim.h"
 #include "llvoiceclient.h"
+#include "lltoolbarview.h"
 
 static const F32 VOICE_STATUS_UPDATE_INTERVAL = 1.0f;
 
@@ -74,12 +75,6 @@ FSFloaterIMContainer::~FSFloaterIMContainer()
 
 BOOL FSFloaterIMContainer::postBuild()
 {
-	
-	if (!gSavedSettings.getBOOL("ContactsTornOff"))
-	{
-		addFloater(FSFloaterContacts::getInstance(), TRUE);
-	}
-
 	mNewMessageConnection = LLIMModel::instance().mNewMsgSignal.connect(boost::bind(&FSFloaterIMContainer::onNewMessageReceived, this, _1));
 	// Do not call base postBuild to not connect to mCloseSignal to not close all floaters via Close button
 	// mTabContainer will be initialized in LLMultiFloater::addChild()
@@ -92,51 +87,67 @@ BOOL FSFloaterIMContainer::postBuild()
 	return TRUE;
 }
 
-void FSFloaterIMContainer::onOpen(const LLSD& key)
+void FSFloaterIMContainer::initTabs()
 {
-
-	LLMultiFloater::onOpen(key);
-	
-
 	// If we're using multitabs, and we open up for the first time
 	// Add localchat by default if it's not already on the screen somewhere else. -AO	
 	// But only if it hasnt been already so we can reopen it to the same tab -KC
 	// Improved handling to leave most of the work to the LL tear-off code -Zi
+	// This is mirrored from FSFloaterContacts::onOpen() and FSFloaterNearbyChat::onOpen()
+	// respectively: If those floaters are hosted, they don't store their visibility state.
+	// Instead, the visibility state of the hosting container is stored. (See Zi's changes to
+	// LLFloater::storeVisibilityControl()) That means if contacts and/or nearby chat floater
+	// are hosted and FSFloaterIMContainer was visible at logout, we will end up here during
+	// next login and have to configure those floaters so their tear off state and icon is
+	// correct. Configure contacts first and nearby chat last so nearby chat will be active
+	// once FSFloaterIMContainer has opened. -AH
 
-	LLFloater* floater = FSFloaterNearbyChat::getInstance();
-	if (! LLFloater::isVisible(floater) && (floater->getHost() != this))
+	FSFloaterContacts* floater_contacts = FSFloaterContacts::getInstance();
+	if (!LLFloater::isVisible(floater_contacts) && (floater_contacts->getHost() != this))
+	{
+		if (gSavedSettings.getBOOL("ContactsTornOff"))
+		{
+			// first set the tear-off host to the conversations container
+			floater_contacts->setHost(this);
+			// clear the tear-off host right after, the "last host used" will still stick
+			floater_contacts->setHost(NULL);
+			// reparent to floater view
+			gFloaterView->addChild(floater_contacts);
+		}
+		else
+		{
+			addFloater(floater_contacts, TRUE);
+		}
+	}
+
+	LLFloater* floater_chat = FSFloaterNearbyChat::getInstance();
+	if (!LLFloater::isVisible(floater_chat) && (floater_chat->getHost() != this))
 	{
 		if (gSavedSettings.getBOOL("ChatHistoryTornOff"))
 		{
 			// first set the tear-off host to this floater
-			floater->setHost(this);
+			floater_chat->setHost(this);
 			// clear the tear-off host right after, the "last host used" will still stick
-			floater->setHost(NULL);
+			floater_chat->setHost(NULL);
 			// reparent to floater view
-			gFloaterView->addChild(floater);
+			gFloaterView->addChild(floater_chat);
 		}
 		else
 		{
-			LLMultiFloater::showFloater(floater);
+			addFloater(floater_chat, TRUE);
 		}
 	}
+}
 
+void FSFloaterIMContainer::onOpen(const LLSD& key)
+{
+	LLMultiFloater::onOpen(key);
+	initTabs();
 	LLFloater* active_floater = getActiveFloater();
 	if (active_floater && !active_floater->hasFocus())
 	{
-		active_floater->setFocus(TRUE);
+		mTabContainer->setFocus(TRUE);
 	}
-	
-/*
-	if (key.isDefined())
-	{
-		LLIMFloater* im_floater = LLIMFloater::findInstance(key.asUUID());
-		if (im_floater)
-		{
-			im_floater->openFloater();
-		}
-	}
-*/
 }
 
 void FSFloaterIMContainer::addFloater(LLFloater* floaterp, 
@@ -168,7 +179,7 @@ void FSFloaterIMContainer::addFloater(LLFloater* floaterp,
 		else
 		{
 			// add chat history as second tab if contact window is present, first tab otherwise
-			if (getChildView("imcontacts"))
+			if (dynamic_cast<FSFloaterContacts*>(mTabContainer->getPanelByIndex(0)))
 			{
 				// assuming contacts window is first tab, select it
 				mTabContainer->selectFirstTab();
@@ -188,55 +199,11 @@ void FSFloaterIMContainer::addFloater(LLFloater* floaterp,
 		return;
 	}
 
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-11-17 (Catznip-3.2.0a) | Added: Catznip-3.2.0a
-	LLUUID session_id = floaterp->getKey();
-	if (session_id.isNull())
-	{
-		// Re-insert the nearby chat floater at the start
-		insertion_point = LLTabContainer::START;
-	}
-// [/SL:KB]
-
 	LLMultiFloater::addFloater(floaterp, select_added_floater, insertion_point);
 
-//	LLUUID session_id = floaterp->getKey();
-
-	LLIconCtrl* icon = 0;
-
-// [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-11-17 (Catznip-3.2.0a) | Added: Catznip-3.2.0a
-	if (session_id.isNull())
-	{
-		// Don't allow the nearby chat tab to be drag-rearranged
-		mTabContainer->lockTabs(1);
-
-		// Add an icon for the nearby chat floater
-		LLIconCtrl::Params icon_params;
-		icon_params.image = LLUI::getUIImage("Command_Chat_Icon");
-		icon = LLUICtrlFactory::instance().create<LLIconCtrl>(icon_params);
-	}
-	else if (gAgent.isInGroup(session_id, TRUE))
-// [/SL:KB]
-//	if(gAgent.isInGroup(session_id, TRUE))
-	{
-		LLGroupIconCtrl::Params icon_params;
-		icon_params.group_id = session_id;
-		icon = LLUICtrlFactory::instance().create<LLGroupIconCtrl>(icon_params);
-
-		mSessions[session_id] = floaterp;
-		floaterp->mCloseSignal.connect(boost::bind(&FSFloaterIMContainer::onCloseFloater, this, session_id));
-	}
-	else
-	{
-		LLUUID avatar_id = LLIMModel::getInstance()->getOtherParticipantID(session_id);
-
-		LLAvatarIconCtrl::Params icon_params;
-		icon_params.avatar_id = avatar_id;
-		icon = LLUICtrlFactory::instance().create<LLAvatarIconCtrl>(icon_params);
-
-		mSessions[session_id] = floaterp;
-		floaterp->mCloseSignal.connect(boost::bind(&FSFloaterIMContainer::onCloseFloater, this, session_id));
-	}
-	mTabContainer->setTabImage(floaterp, icon);
+	LLUUID session_id = floaterp->getKey();
+	mSessions[session_id] = floaterp;
+	floaterp->mCloseSignal.connect(boost::bind(&FSFloaterIMContainer::onCloseFloater, this, session_id));
 }
 
 // [SL:KB] - Patch: Chat-NearbyChatBar | Checked: 2011-12-11 (Catznip-3.2.0d) | Added: Catznip-3.2.0d
@@ -258,13 +225,6 @@ void FSFloaterIMContainer::removeFloater(LLFloater* floaterp)
 		floaterp->setCanClose(TRUE);
 	}
 	// </FS:ND>
-
-
-	LLUUID idSession = floaterp->getKey();
-	if (idSession.isNull())
-	{
-		mTabContainer->unlockTabs();
-	}
 	LLMultiFloater::removeFloater(floaterp);
 }
 // [/SL:KB]
@@ -329,6 +289,15 @@ void FSFloaterIMContainer::setMinimized(BOOL b)
 	}
 }
 
+void FSFloaterIMContainer::setVisible(BOOL b)
+{
+	LLMultiFloater::setVisible(b);
+
+	if (b)
+	{
+		mFlashingSessions.clear();
+	}
+}
 
 //virtual
 void FSFloaterIMContainer::sessionAdded(const LLUUID& session_id, const std::string& name, const LLUUID& other_participant_id, BOOL has_offline_msg)
@@ -349,6 +318,13 @@ void FSFloaterIMContainer::sessionRemoved(const LLUUID& session_id)
 	if (iMfloater != NULL)
 	{
 		iMfloater->closeFloater();
+	}
+
+	uuid_vec_t::iterator found = std::find(mFlashingSessions.begin(), mFlashingSessions.end(), session_id);
+	if (found != mFlashingSessions.end())
+	{
+		mFlashingSessions.erase(found);
+		checkFlashing();
 	}
 }
 
@@ -479,4 +455,20 @@ LLFloater* FSFloaterIMContainer::getCurrentVoiceFloater()
 	return NULL;
 }
 
+void FSFloaterIMContainer::addFlashingSession(const LLUUID& session_id)
+{
+	uuid_vec_t::iterator found = std::find(mFlashingSessions.begin(), mFlashingSessions.end(), session_id);
+	if (found == mFlashingSessions.end())
+	{
+		mFlashingSessions.push_back(session_id);
+	}
+}
+
+void FSFloaterIMContainer::checkFlashing()
+{
+	if (mFlashingSessions.empty())
+	{
+		gToolBarView->flashCommand(LLCommandId("chat"), false);
+	}
+}
 // EOF

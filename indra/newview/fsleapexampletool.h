@@ -42,7 +42,8 @@ namespace nd
 		public:
 			virtual ~ExampleTool(){}
 
-			virtual void onFrame(Leap::HandList const&);
+			virtual void onLeapFrame( Leap::Frame const& );
+			virtual void onRenderFrame( Leap::Frame const& );
 			virtual void render();
 			virtual std::string getDebugString();
 			virtual std::string getName();

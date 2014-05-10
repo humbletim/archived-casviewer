@@ -137,7 +137,7 @@
 #include "fslslbridge.h"
 #include "fscommon.h"
 #include "fsfloaterexport.h"
-#include "fscontactsfloater.h"	// <FS:Zi> Display group list in contacts floater
+#include "fsfloatercontacts.h"	// <FS:Zi> Display group list in contacts floater
 #include "fspose.h"	// <FS:CR> FIRE-4345: Undeform
 #include "fswsassetblacklist.h"
 #include "llavatarpropertiesprocessor.h"	// ## Zi: Texture Refresh
@@ -4017,6 +4017,61 @@ bool enable_freeze_eject(const LLSD& avatar_id)
 //	return new_value;
 }
 
+// <FS:Ansariel> FIRE-13515: Re-add give calling card
+class LLAvatarGiveCard : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		LL_INFOS("LLAvatarGiveCard") << "handle_give_card()" << LL_ENDL;
+		LLViewerObject* dest = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+// [RLVa:KB] - Checked: 2010-06-04 (RLVa-1.2.0d) | Modified: RLVa-1.2.0d | OK
+		//if(dest && dest->isAvatar())
+		if ( (dest && dest->isAvatar()) && (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) )
+// [/RLVa:KB]
+		{
+			bool found_name = false;
+			LLSD args;
+			LLSD old_args;
+			LLNameValue* nvfirst = dest->getNVPair("FirstName");
+			LLNameValue* nvlast = dest->getNVPair("LastName");
+			if(nvfirst && nvlast)
+			{
+				std::string full_name = gCacheName->buildFullName(nvfirst->getString(), nvlast->getString());
+				args["NAME"] = full_name;
+				old_args["NAME"] = full_name;
+				found_name = true;
+			}
+			LLViewerRegion* region = dest->getRegion();
+			LLHost dest_host;
+			if(region)
+			{
+				dest_host = region->getHost();
+			}
+			if(found_name && dest_host.isOk())
+			{
+				LLMessageSystem* msg = gMessageSystem;
+				msg->newMessage("OfferCallingCard");
+				msg->nextBlockFast(_PREHASH_AgentData);
+				msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+				msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+				msg->nextBlockFast(_PREHASH_AgentBlock);
+				msg->addUUIDFast(_PREHASH_DestID, dest->getID());
+				LLUUID transaction_id;
+				transaction_id.generate();
+				msg->addUUIDFast(_PREHASH_TransactionID, transaction_id);
+				msg->sendReliable(dest_host);
+				LLNotificationsUtil::add("OfferedCard", args);
+			}
+			else
+			{
+				LLNotificationsUtil::add("CantOfferCallingCard", old_args);
+			}
+		}
+		return true;
+	}
+};
+// </FS:Ansariel> FIRE-13515: Re-add give calling card
+
 bool callback_leave_group(const LLSD& notification, const LLSD& response)
 {
 	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
@@ -4257,8 +4312,8 @@ class FSSelfToggleMoveLock : public view_listener_t
         {
 			if (LLGridManager::getInstance()->isInSecondLife())
 			{
-				bool new_value = !gSavedSettings.getBOOL("UseMoveLock");
-				gSavedSettings.setBOOL("UseMoveLock", new_value);
+				bool new_value = !gSavedPerAccountSettings.getBOOL("UseMoveLock");
+				gSavedPerAccountSettings.setBOOL("UseMoveLock", new_value);
 				if (new_value)
 				{
 					reportToNearbyChat(LLTrans::getString("MovelockEnabled"));
@@ -4287,7 +4342,7 @@ class FSSelfCheckMoveLock : public view_listener_t
 		bool new_value(false);
 		if (LLGridManager::getInstance()->isInSecondLife())
 		{
-			new_value = gSavedSettings.getBOOL("UseMoveLock");
+			new_value = gSavedPerAccountSettings.getBOOL("UseMoveLock");
 		}
 #ifdef OPENSIM
 		else
@@ -4301,12 +4356,7 @@ class FSSelfCheckMoveLock : public view_listener_t
 
 bool enable_bridge_function()
 {
-#ifdef OPENSIM
-	if (LLGridManager::getInstance()->isInOpenSim() && !LLGridManager::getInstance()->isInAuroraSim())
-		// No bridge on OpenSim yet.
-		return false;
-#endif // OPENSIM
-	return (gSavedSettings.getBOOL("UseLSLBridge") && FSLSLBridge::instance().isBridgeValid());
+	return FSLSLBridge::instance().canUseBridge();
 }
 
 bool enable_move_lock()
@@ -6628,70 +6678,6 @@ void toggle_debug_menus(void*)
 	show_debug_menus();
 }
 
-void toggle_v1_menus(void*)	// V1 menu system	-WoLf
-{
-	BOOL visible = ! gSavedSettings.getBOOL("FSUseV1Menus");
-	gSavedSettings.setBOOL("FSUseV1Menus", visible);
-	show_v1_menus();
-}
-
-// AO This may be called a few seconds after activations, to reset it back to V2-style
-void menuTimerV1()
-{
-	gSavedSettings.setBOOL("FSUseV1Menus", FALSE);
-	show_v1_menus();
-}
-
-void show_v1_menus()	// V1 menu system	-WoLf
-{
-	BOOL V1 = gSavedSettings.getBOOL("FSUseV1Menus");
-	rlvCallbackTimerOnce(30, boost::bind(&menuTimerV1));
-	
-	if ( gMenuBarView )
-	{
-	// The original menu system
-		gMenuBarView->setItemVisible("Me", !V1);
-		gMenuBarView->setItemEnabled("Me", !V1);
-		gMenuBarView->setItemVisible("Communicate", !V1);
-		gMenuBarView->setItemEnabled("Communicate", !V1);
-		gMenuBarView->setItemVisible("World", !V1);
-		gMenuBarView->setItemEnabled("World", !V1);
-		gMenuBarView->setItemVisible("BuildTools", !V1);
-		gMenuBarView->setItemEnabled("BuildTools", !V1);
-		gMenuBarView->setItemVisible("Content", !V1);
-		gMenuBarView->setItemEnabled("Content", !V1);
-		gMenuBarView->setItemVisible("Help", !V1);
-		gMenuBarView->setItemEnabled("Help", !V1);
-		gMenuBarView->setItemVisible("Advanced", !V1);
-		gMenuBarView->setItemEnabled("Advanced", !V1);
-		gMenuBarView->setItemVisible("Develop", !V1);
-		gMenuBarView->setItemEnabled("Develop", !V1);
-
-	// The V1 menu system
-		gMenuBarView->setItemVisible("V1-File", V1);
-		gMenuBarView->setItemEnabled("V1-File", V1);
-		gMenuBarView->setItemVisible("V1-Edit", V1);
-		gMenuBarView->setItemEnabled("V1-Edit", V1);
-		gMenuBarView->setItemVisible("V1-View", V1);
-		gMenuBarView->setItemEnabled("V1-View", V1);
-		gMenuBarView->setItemVisible("V1-World", V1);
-		gMenuBarView->setItemEnabled("V1-World", V1);
-		gMenuBarView->setItemVisible("V1-Tools", V1);
-		gMenuBarView->setItemEnabled("V1-Tools", V1);
-		gMenuBarView->setItemVisible("V1-Help", V1);
-		gMenuBarView->setItemEnabled("V1-Help", V1);
-		gMenuBarView->setItemVisible("V1-Firestorm", V1);
-		gMenuBarView->setItemEnabled("V1-Firestorm", V1);
-		gMenuBarView->setItemVisible("V1-Advanced", V1);
-		gMenuBarView->setItemEnabled("V1-Advanced", V1);
-
-		if (V1 == false)
-		{
-			show_debug_menus();
-		}
-	}
-}
-
 // LLUUID gExporterRequestID;
 // std::string gExportDirectory;
 
@@ -8744,6 +8730,17 @@ class LLAdvancedClickRenderProfile: public view_listener_t
 	}
 };
 
+void gpu_benchmark();
+
+class LLAdvancedClickRenderBenchmark: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		gpu_benchmark();
+		return true;
+	}
+};
+
 //[FIX FIRE-1927 - enable DoubleClickTeleport shortcut : SJ]
 class LLAdvancedToggleDoubleClickTeleport: public view_listener_t
 {
@@ -9611,6 +9608,22 @@ void handle_show_url(const LLSD& param)
 		LLWeb::loadURLInternal(url);
 	}
 
+}
+
+void handle_report_bug(const LLSD& param)
+{
+	LLUIString url(param.asString());
+	
+	LLStringUtil::format_map_t replace;
+	replace["[ENVIRONMENT]"] = LLURI::escape(LLAppViewer::instance()->getViewerInfoString());
+	LLSLURL location_url;
+	LLAgentUI::buildSLURL(location_url);
+	replace["[LOCATION]"] = location_url.getSLURLString();
+
+	LLUIString file_bug_url = gSavedSettings.getString("ReportBugURL");
+	file_bug_url.setArgs(replace);
+
+	LLWeb::loadURLExternal(file_bug_url.getString());
 }
 
 void handle_buy_currency_test(void*)
@@ -10832,6 +10845,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedCheckRenderShadowOption(), "Advanced.CheckRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderShadowOption(), "Advanced.ClickRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderProfile(), "Advanced.ClickRenderProfile");
+	view_listener_t::addMenu(new LLAdvancedClickRenderBenchmark(), "Advanced.ClickRenderBenchmark");
 	//[FIX FIRE-1927 - enable DoubleClickTeleport shortcut : SJ]
 	view_listener_t::addMenu(new LLAdvancedToggleDoubleClickTeleport, "Advanced.ToggleDoubleClickTeleport");
 
@@ -10849,6 +10863,7 @@ void initialize_menus()
 	commit.add("Advanced.WebBrowserTest", boost::bind(&handle_web_browser_test,	_2));	// sigh! this one opens the MEDIA browser
 	commit.add("Advanced.WebContentTest", boost::bind(&handle_web_content_test, _2));	// this one opens the Web Content floater
 	commit.add("Advanced.ShowURL", boost::bind(&handle_show_url, _2));
+	commit.add("Advanced.ReportBug", boost::bind(&handle_report_bug, _2));
 	view_listener_t::addMenu(new LLAdvancedBuyCurrencyTest(), "Advanced.BuyCurrencyTest");
 	view_listener_t::addMenu(new LLAdvancedDumpSelectMgr(), "Advanced.DumpSelectMgr");
 	view_listener_t::addMenu(new LLAdvancedDumpInventory(), "Advanced.DumpInventory");
@@ -11009,6 +11024,9 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAvatarDebug(), "Avatar.Debug");
 	view_listener_t::addMenu(new LLAvatarVisibleDebug(), "Avatar.VisibleDebug");
 	view_listener_t::addMenu(new LLAvatarInviteToGroup(), "Avatar.InviteToGroup");
+	// <FS:Ansariel> FIRE-13515: Re-add give calling card
+	view_listener_t::addMenu(new LLAvatarGiveCard(), "Avatar.GiveCard");
+	// </FS:Ansariel> FIRE-13515: Re-add give calling card
 	commit.add("Avatar.Eject", boost::bind(&handle_avatar_eject, LLSD()));
 	commit.add("Avatar.ShowInspector", boost::bind(&handle_avatar_show_inspector));
 	view_listener_t::addMenu(new LLAvatarSendIM(), "Avatar.SendIM");
@@ -11138,10 +11156,7 @@ void initialize_menus()
 // [RLVa:KB] - Checked: 2010-04-23 (RLVa-1.2.0g) | Added: RLVa-1.2.0
 	commit.add("RLV.ToggleEnabled", boost::bind(&rlvMenuToggleEnabled));
 	enable.add("RLV.CheckEnabled", boost::bind(&rlvMenuCheckEnabled));
-	if (rlv_handler_t::isEnabled())
-	{
-		enable.add("RLV.EnableIfNot", boost::bind(&rlvMenuEnableIfNot, _2));
-	}
+	enable.add("RLV.EnableIfNot", boost::bind(&rlvMenuEnableIfNot, _2));
 // [/RLVa:KB]
 
 	// <FS:Ansariel> Toggle internal web browser

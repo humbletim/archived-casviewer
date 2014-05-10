@@ -395,6 +395,7 @@
 			<menu_item_check label="Okresowe spowolnienie" name="Periodic Slow Frame"/>
 			<menu_item_check label="Test klatek obrazu" name="Frame Test"/>
 			<menu_item_call label="Profil klatek obrazu" name="Frame Profile"/>
+			<menu_item_call label="Testowanie (benchmark)" name="Benchmark"/>
 		</menu>
 		<menu label="Renderowanie metadanych" name="Render Metadata">
 			<menu_item_check label="Bryły brzegowe (Bounding Boxes)" name="Bounding Boxes"/>
@@ -609,15 +610,5 @@
 				<menu_item_call label="Oficjalny blog Lindenów" name="Official Linden Blog"/>
 			</menu>
 		</menu>
-	</menu>
-	<menu label="Plik" name="V1-File"/>
-	<menu label="Edycja" name="V1-Edit"/>
-	<menu label="Widok" name="V1-View"/>
-	<menu label="Świat" name="V1-World"/>
-	<menu label="Narzędzia" name="V1-Tools"/>
-	<menu label="Pomoc" name="V1-Help"/>
-	<menu label="CtrlAltStudio" name="V1-Firestorm"/>
-	<menu label="Zaawansowane" name="V1-Advanced">
-		<menu_item_check label="Używaj menu V1" name="V1 Menus"/>
 	</menu>
 </menu_bar>
