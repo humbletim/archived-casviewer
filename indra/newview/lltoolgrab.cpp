@@ -548,8 +548,12 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 	const F32 RADIANS_PER_PIXEL_X = 0.01f;
 	const F32 RADIANS_PER_PIXEL_Y = 0.01f;
 
-	S32 dx = x - (gViewerWindow->getWorldViewWidthScaled() / 2);
-	S32 dy = y - (gViewerWindow->getWorldViewHeightScaled() / 2);
+	// <CV:David>
+	//S32 dx = x - (gViewerWindow->getWorldViewWidthScaled() / 2);
+	//S32 dy = y - (gViewerWindow->getWorldViewHeightScaled() / 2);
+	S32 dx = x - (gViewerWindow->getWindowWidthScaled() / 2);
+	S32 dy = y - (gViewerWindow->getWindowHeightScaled() / 2);
+	// </CV:David>
 
 	if (dx != 0 || dy != 0)
 	{
@@ -674,7 +678,10 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 			// Handle auto-rotation at screen edge.
 			LLVector3 grab_pos_agent = gAgent.getPosAgentFromGlobal( grab_point_global );
 
-			LLCoordGL grab_center_gl( gViewerWindow->getWorldViewWidthScaled() / 2, gViewerWindow->getWorldViewHeightScaled() / 2);
+			// <CV:David>
+			//LLCoordGL grab_center_gl( gViewerWindow->getWorldViewWidthScaled() / 2, gViewerWindow->getWorldViewHeightScaled() / 2);
+			LLCoordGL grab_center_gl( gViewerWindow->getWindowWidthScaled() / 2, gViewerWindow->getWindowHeightScaled() / 2);
+			// </CV:David>
 			LLViewerCamera::getInstance()->projectPosAgentToScreen(grab_pos_agent, grab_center_gl);
 
 			const S32 ROTATE_H_MARGIN = gViewerWindow->getWorldViewWidthScaled() / 20;
