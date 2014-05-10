@@ -12537,6 +12537,7 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <!-- <CV:David>
 		<key>ReportBugURL</key>
 		<map>
 			<key>Comment</key>
@@ -12547,6 +12548,18 @@ Change of this parameter will affect the layout of buttons in notification toast
 			<string>String</string>
 			<key>Value</key>
 			<string>http://jira.phoenixviewer.com/secure/CreateIssueDetails!init.jspa?pid=10005&amp;issuetype=1&amp;priority=3&amp;environment=[ENVIRONMENT]</string>
+		</map>
+    -->
+		<key>ReportBugURL</key>
+		<map>
+			<key>Comment</key>
+			<string>URL used for filing bugs from viewer</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>String</string>
+			<key>Value</key>
+			<string>http://ctrlaltstudio.com/viewer/support</string>
 		</map>
 	<key>RevokePermsOnStopAnimation</key>
     <map>
