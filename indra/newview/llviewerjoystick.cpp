@@ -77,7 +77,7 @@ F32  LLViewerJoystick::sDelta[] = {0,0,0,0,0,0,0};
 // <CV:David>
 const F32 SAMPLE_TIME = 0.02f;		// Empirically determined. In seconds.
 
-const U32 XBOX_A_KEY = 0;			// Xbox keys
+const U32 XBOX_A_KEY = 0;			// Xbox keys.
 const U32 XBOX_B_KEY = 1;
 const U32 XBOX_X_KEY = 2;
 const U32 XBOX_Y_KEY = 3;
@@ -87,6 +87,8 @@ const U32 XBOX_BACK_KEY = 6;
 const U32 XBOX_START_KEY = 7;
 const U32 XBOX_L_STICK_CLICK = 8;
 const U32 XBOX_R_STICK_CLICK = 9;
+
+const F32 DOUBLE_CLICK_INTERVAL = 0.5f;	// Windows default.
 // </CV:David>
 
 // -----------------------------------------------------------------------------
@@ -189,6 +191,8 @@ LLViewerJoystick::LLViewerJoystick()
 	mMovingNudges = 0;
 
 	mControlCursor = false;
+
+	mDoubleClickTimer.start();
 	// </CV:David>
 }
 
@@ -425,7 +429,10 @@ void LLViewerJoystick::handleRun(F32 inc)
 // -----------------------------------------------------------------------------
 void LLViewerJoystick::agentJump()
 {
-    gAgent.moveUp(1);
+	// <CV:David>
+	//gAgent.moveUp(1);
+	gAgent.moveJump();
+	// </CV:David>
 }
 
 // -----------------------------------------------------------------------------
@@ -599,7 +606,20 @@ void LLViewerJoystick::cursorSlide(F32 inc)
 
 		S32 x, y;
 		LLUI::getMousePositionScreen(&x, &y);
-		x = llclamp(x + (S32)((inc + previousInc) * 150.f), 0, gViewerWindow->getWindowWidthRaw());
+
+		// Start out linear for fine control but then ramp up more quickly for faster movement.
+		F32 nudge = inc > 0.f ? 1.f : -1.f;
+		F32 linear = inc + previousInc;
+		F32 square = 0.f;
+		if (abs(linear) > 0.2f)
+		{
+			square = linear > 0.f ? linear - 0.2f : linear + 0.2f;
+			square = square * abs(square);
+		}
+
+		S32 delta = (S32)(nudge + linear * 25.f + square * 300.f);
+
+		x = llclamp(x + delta, 0, gViewerWindow->getWindowWidthRaw());
 		LLUI::setMousePositionScreen(x, y);
 
 		previousInc = inc;
@@ -617,8 +637,23 @@ void LLViewerJoystick::cursorPush(F32 inc)
 
 		S32 x, y;
 		LLUI::getMousePositionScreen(&x, &y);
-		y = llclamp(y - (S32)((inc + previousInc) * 150.f), 0, gViewerWindow->getWindowHeightRaw());
+
+		// Start out linear for fine control but then ramp up more quickly for faster movement.
+		F32 nudge = inc > 0.f ? 1.f : -1.f;
+		F32 linear = inc + previousInc;
+		F32 square = 0.f;
+		if (abs(linear) > 0.2f)
+		{
+			square = linear > 0.f ? linear - 0.2f : linear + 0.2f;
+			square = square * abs(square);
+		}
+
+		S32 delta = (S32)(nudge + linear * 25.f + square * 300.f);
+
+		y = llclamp(y - delta, 0, gViewerWindow->getWindowHeightRaw());
 		LLUI::setMousePositionScreen(x, y);
+
+		previousInc = inc;
 	}
 }
 // </CV:David>
@@ -639,7 +674,6 @@ void LLViewerJoystick::cursorZoom(F32 inc)
 		}
 	}
 }
-	// </CV:David>
 // </CV:David>
 
 // -----------------------------------------------------------------------------
@@ -849,7 +883,10 @@ void LLViewerJoystick::moveAvatar(bool reset)
 		{
 			if (!gAgent.getFlying())
 			{
-				gAgent.moveUp(1);
+				// <CV:David>
+				//gAgent.moveUp(1);
+				gAgent.moveJump();
+				// </CV:David>
 			}
 			else if (!button_held)
 			{
@@ -1644,6 +1681,7 @@ void LLViewerJoystick::scanJoystick()
 			// Mouse clicks ...
 			static long left_mouse_down = 0;
 			static long right_mouse_down = 0;
+			static long last_mouse_down = 0;
 
 			S32 x, y;
 			LLUI::getMousePositionScreen(&x, &y);
@@ -1666,6 +1704,15 @@ void LLViewerJoystick::scanJoystick()
 			{
 				gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), coord, mask);
 				left_mouse_down = 1;
+				if (last_mouse_down == left_mouse_button && mDoubleClickTimer.getElapsedTimeF32() < DOUBLE_CLICK_INTERVAL)
+				{
+					gViewerWindow->handleDoubleClick(gViewerWindow->getWindow(), coord, mask);
+				}
+				else
+				{
+					last_mouse_down = left_mouse_button;
+					mDoubleClickTimer.start();
+				}
 			}
 			else if (mBtn[left_mouse_button] == 0 && left_mouse_down == 1)
 			{
@@ -1677,6 +1724,7 @@ void LLViewerJoystick::scanJoystick()
 			{
 				gViewerWindow->handleRightMouseDown(gViewerWindow->getWindow(), coord, mask);
 				right_mouse_down = 1;
+				last_mouse_down = right_mouse_button;
 			}
 			else if (mBtn[right_mouse_button] == 0 && right_mouse_down == 1)
 			{
