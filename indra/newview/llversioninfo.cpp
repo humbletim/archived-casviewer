@@ -29,6 +29,7 @@
 #include <iostream>
 #include <sstream>
 #include "llversioninfo.h"
+#include "llviewercontrol.h"  // <CV:David>
 
 // <FS:TS> Use configured file instead of compile time definitions to avoid
 //         rebuilding the world with every Mercurial pull
@@ -197,3 +198,11 @@ const std::string& LLVersionInfo::getBuildPlatform()
 	return strPlatform;
 }
 // [/SL:KB]
+
+// <CV:David>
+const std::string& LLVersionInfo::getBaseFirestormVersion()
+{
+	static std::string strShortFirestormVersion = gSavedSettings.getString("BaseFirestormVersion");
+	return strShortFirestormVersion;
+}
+// </CV:David>

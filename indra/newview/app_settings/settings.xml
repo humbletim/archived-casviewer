@@ -2,6 +2,19 @@
 <llsd xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:noNamespaceSchemaLocation="llsd.xsd">
 <map>
+  <!-- <CV:David> -->
+  <key>BaseFirestormVersion</key>
+  <map>
+    <key>Comment</key>
+    <string>Firestorm version that this viewer is based on.</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string>4.6.5</string>
+  </map>
+  <!-- </CV:David> -->
   <key>FSFloaterBlacklistSortColumn</key>
   <map>
     <key>Comment</key>

@@ -78,6 +78,11 @@ public:
 	/// Return the platform the viewer was built for
 	static const std::string& getBuildPlatform();
 // [/SL:KB]
+
+	// <CV:David>
+	/// return the Firestorm version that this viewer is based on.
+	static const std::string& getBaseFirestormVersion();
+	// </CV:David>
 };
 
 #endif
