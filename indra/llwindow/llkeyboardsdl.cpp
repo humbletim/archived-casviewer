@@ -310,17 +310,17 @@ void LLKeyboardSDL::scanKeyboard()
 }
 
 // <CV:David>
-void LLKeyboardWin32::setKeyDown(KEY key, BOOL down)
+void LLKeyboardSDL::setKeyDown(KEY key, BOOL down)
 {
 	mKeyDown[key] = down;
 }
 
-void LLKeyboardWin32::setKeyLevel(KEY key, BOOL level)
+void LLKeyboardSDL::setKeyLevel(KEY key, BOOL level)
 {
 	mKeyLevel[key] = level;
 }
 
-void LLKeyboardWin32::setKeyUp(KEY key, BOOL up)
+void LLKeyboardSDL::setKeyUp(KEY key, BOOL up)
 {
 	mKeyUp[key] = up;
 }

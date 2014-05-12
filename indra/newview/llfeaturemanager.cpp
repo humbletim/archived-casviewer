@@ -304,7 +304,7 @@ bool LLFeatureManager::loadFeatureTables()
 	filename = FEATURE_TABLE_FILENAME;
 	// <CV:David>
 	//http_filename = llformat(FEATURE_TABLE_VER_FILENAME, LLVersionInfo::getShortVersion().c_str()); // <FS:Techwolf Lupindo> use getShortVersion instead of getVersion.
-	http_filename = llformat(FEATURE_TABLE_VER_FILENAME, LLVersionInfo::getBaseFiresstormVersion().c_str());
+	http_filename = llformat(FEATURE_TABLE_VER_FILENAME, LLVersionInfo::getBaseFirestormVersion().c_str());
 	// </CV:David>
 #endif
 

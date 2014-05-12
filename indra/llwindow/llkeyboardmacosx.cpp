@@ -305,17 +305,17 @@ void LLKeyboardMacOSX::scanKeyboard()
 }
 
 // <CV:David>
-void LLKeyboardWin32::setKeyDown(KEY key, BOOL down)
+void LLKeyboardMacOSX::setKeyDown(KEY key, BOOL down)
 {
 	mKeyDown[key] = down;
 }
 
-void LLKeyboardWin32::setKeyLevel(KEY key, BOOL level)
+void LLKeyboardMacOSX::setKeyLevel(KEY key, BOOL level)
 {
 	mKeyLevel[key] = level;
 }
 
-void LLKeyboardWin32::setKeyUp(KEY key, BOOL up)
+void LLKeyboardMacOSX::setKeyUp(KEY key, BOOL up)
 {
 	mKeyUp[key] = up;
 }
