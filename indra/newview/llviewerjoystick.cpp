@@ -297,7 +297,7 @@ void LLViewerJoystick::init(bool autoenable)
 			}
 		}
 		// <CV:David>
-		if (isLikeXboxController())
+		else if (isLikeXboxController())
 		{
 			mController = XBOX_CONTROLLER;
 
@@ -1818,7 +1818,7 @@ bool LLViewerJoystick::isLikeSpaceNavigator() const
 bool LLViewerJoystick::isLikeXboxController() const
 {
 #if LIB_NDOF	
-	return (isJoystickInitialized() && (getDescription().find("Xbox") == 0));
+	return (isJoystickInitialized() && boost::regex_match(getDescription(), boost::regex("^.*Xbox.*$", boost::regex::icase)));
 #else
 	return false;
 #endif
