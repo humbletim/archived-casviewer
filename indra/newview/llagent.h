@@ -588,15 +588,20 @@ private:
 	// Direction is either positive, zero, or negative
 public:
 	void			moveAt(S32 direction, bool reset_view = true);
-	void			moveAtNudge(S32 direction);
-	void			moveLeft(S32 direction);
-	void			moveLeftNudge(S32 direction);
+	// <CV:David>
+	//void			moveAtNudge(S32 direction);
+	//void			moveLeft(S32 direction);
+	//void			moveLeftNudge(S32 direction);
+	void			moveAtNudge(S32 direction, bool reset_view = true);
+	void			moveLeft(S32 direction, bool reset_view = true);
+	void			moveLeftNudge(S32 direction, bool reset_view = true);
+	// </CV:David>
 	void			moveUp(S32 direction);
 	void			moveYaw(F32 mag, bool reset_view = true);
 	void			movePitch(F32 mag);
 	// <CV:David>
-	void			moveAt(F32 velocity);	// velocity: -1.0 .. +1.0
-	void			moveLeft(F32 velocity);	// ""
+	void			moveAt(F32 velocity, bool reset_view = true);	// velocity: -1.0 .. +1.0
+	void			moveLeft(F32 velocity, bool reset_view = true);	// ""
 	void			moveUp(F32 velocity);	// ""
 	void			moveJump();
 private:
