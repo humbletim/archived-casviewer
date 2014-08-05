@@ -1200,7 +1200,7 @@
          follows="left|top"
          height="16"
          layout="topleft"
-         left_delta="406"
+         left_delta="408"
          name="PrecachingDelayText"
          top_delta="0"
          width="50">
@@ -1257,6 +1257,17 @@
          tool_tip="Floating text fades towards and stops being displayed once it's at this distance"
          top_pad="3"
          width="415" />
+        <text
+         type="string"
+         follows="left|top"
+         height="16"
+         layout="topleft"
+         left_delta="408"
+         name="FloatingTextFadeDistanceUnits"
+         top_delta="0"
+         width="50">
+            m
+        </text>
     </panel>
 
 <!--Depth of Field-->
