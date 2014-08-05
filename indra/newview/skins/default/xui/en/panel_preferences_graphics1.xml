@@ -1240,6 +1240,23 @@
          tool_tip="Determines scale of terrain textures - lower is more compressed (requires viewer restart)"
          top_pad="3"
          width="405" />
+        <slider
+         control_name="FloatingTextFadeDistance"
+         decimal_digits="1"
+         follows="left|top"
+         height="16"
+         increment="0.5"
+         initial_value="8.0"
+         label="Floating text fades to stop displaying at distance"
+         label_width="300"
+         layout="topleft"
+         left="10"
+         max_val="32"
+         min_val="0"
+         name="FloatingTextFadeDistance"
+         tool_tip="Floating text fades towards and stops being displayed once it's at this distance"
+         top_pad="3"
+         width="415" />
     </panel>
 
 <!--Depth of Field-->

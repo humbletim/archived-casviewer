@@ -129,6 +129,8 @@ void LLHUDText::renderText()
 		return;
 	}
 
+	static LLCachedControl<F32> mFadeDistance(gSavedSettings, "FloatingTextFadeDistance");  // <CV:David>
+
 	gGL.getTexUnit(0)->enable(LLTexUnit::TT_TEXTURE);
 
 	LLGLState gls_blend(GL_BLEND, TRUE);
@@ -442,6 +444,8 @@ void LLHUDText::updateVisibility()
 	*/
 
 	mLastDistance = (mPositionAgent - LLViewerCamera::getInstance()->getOrigin()).magVec();
+
+	static LLCachedControl<F32> mFadeDistance(gSavedSettings, "FloatingTextFadeDistance");  // <CV:David>
 
 	if (!mTextSegments.size() || (mDoFade && (mLastDistance > mFadeDistance + mFadeRange)))
 	{
