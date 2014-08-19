@@ -35,8 +35,20 @@
 #include <boost/optional.hpp>
 
 // <CV:David>
+#include "OVR_Version.h"
+
+#if LL_WINDOWS
+#pragma warning(push)
+#pragma warning(disable: 4265) // Disable warning C4265: 'OVR::SensorFusion' : class has virtual functions, but destructor is not virtual
+#endif
+
 #include "OVR.h"
-#include "OVRVersion.h"
+
+#if LL_WINDOWS
+#pragma warning(pop)
+#endif
+
+#include "OVR_CAPI_GL.h"
 // </CV:David>
 
 // <CV:David>
@@ -230,6 +242,7 @@ protected:
 
 private:
 
+	void initRift();  // <CV:David>
 	void initMaxHeapSize();
 	bool initThreads(); // Initialize viewer threads, return false on failure.
 	bool initConfiguration(); // Initialize settings from the command line/config file.
@@ -435,27 +448,33 @@ extern BOOL gRandomizeFramerate;
 extern BOOL gPeriodicSlowFrame;
 
 // <CV:David>
-extern OVR::Ptr<OVR::DeviceManager> gRiftManager;
-extern OVR::Ptr<OVR::HMDDevice> gRiftHMD;
-extern OVR::Ptr<OVR::SensorDevice> gRiftSensor;
-extern OVR::SensorFusion* gRiftFusionResult;
-extern OVR::HMDInfo gRiftHMDInfo;
+extern ovrHmd gRiftHMD;
+extern ovrFrameTiming gRiftFrameTiming;
+extern ovrGLConfig gRiftConfig;
+extern ovrFovPort gRiftEyeFov[2];
+extern ovrGLTexture gRiftEyeTextures[2];
+
+extern bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
+extern bool gDoSetRiftlookValue;  // DJRTODO: Temporarily use while using DK2 extended mode
+
 extern U32 gRiftHResolution;
 extern U32 gRiftVResolution;
-extern F32 gRiftHScreenSize;
-extern F32 gRiftVScreenSize;
 extern F32 gRiftAspect;
-extern F32 gRiftLensSeparation;
-extern F32 gRiftProjectionOffset;
-extern F32 gRiftEyeToScreen;
-extern F32 gRiftDistortionScale;
+extern F32 gRiftProjection00[2];
+extern F32 gRiftProjection02[2];
+extern F32 gRiftProjection11[2];
 extern F32 gRiftFOV;
 extern U32 gRiftHFrame;
 extern U32 gRiftVFrame;
 extern U32 gRiftHSample;
 extern U32 gRiftVSample;
-extern F32 gRiftDistortionK[4];
-extern F32 gRiftLensOffset;
+extern U32 gRiftHBuffer;
+extern U32 gRiftVBuffer;
+extern S32 gRiftLensOffset;
+extern F32 gRiftEyeDeltaL;
+extern F32 gRiftEyeDeltaR;
+extern F32 gRiftCullCameraDelta;
+extern bool gRiftHSWEnabled;
 // </CV:David>
 
 // <CV:David>

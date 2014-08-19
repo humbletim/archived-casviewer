@@ -1031,6 +1031,49 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		}
         
 		if (!mScreen.allocate(resX, resY, screenFormat, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
+		// <CV:David>
+		llinfos << "gRift3DEnabled = " << gRift3DEnabled << llendl;
+		if (true || gRift3DEnabled)  // DJRTODO: "true" needed at present because setRiftSDKRendering() call is in wrong place/
+		{
+			llinfos << "Oculus Rift: Rift FBOs allocation requested at " << resX << " x " << resY << llendl;
+			if (!mRiftLScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
+			llinfos << "Oculus Rift: L FBO resolution used: " << mRiftLScreen.getWidth() << " x " << mRiftLScreen.getHeight() << llendl;
+			if (!mRiftRScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
+			llinfos << "Oculus Rift: R FBO resolution used: " << mRiftRScreen.getWidth() << " x " << mRiftRScreen.getHeight() << llendl;
+			if (mRiftLScreen.getWidth() != mRiftRScreen.getWidth() || mRiftLScreen.getHeight() != mRiftRScreen.getHeight())
+			{
+				llwarns << "Oculus Rift: Left and right FBOs not the same size!" << llendl;
+				return false;
+			}
+			gRiftHBuffer = mRiftLScreen.getWidth();   // Actual render target size might be different from that requested.
+			gRiftVBuffer = mRiftLScreen.getHeight();
+
+			// DJRTODO: Use minimum of requested and provided size as render size?
+
+			ovrSizei textureSize;
+			textureSize.h = gRiftVSample;
+			textureSize.w = gRiftHSample;
+
+			ovrRecti renderSize;
+			renderSize.Pos.x = 0;
+			renderSize.Pos.y = 0;
+			renderSize.Size.h = gRiftVBuffer;
+			renderSize.Size.w = gRiftHBuffer;
+			
+			gRiftEyeTextures[0].OGL.Header.API = ovrRenderAPI_OpenGL;
+			gRiftEyeTextures[0].OGL.Header.TextureSize = textureSize;
+			gRiftEyeTextures[0].OGL.Header.RenderViewport = renderSize;
+			gRiftEyeTextures[0].OGL.TexId = mRiftLScreen.getTexture();
+
+			gRiftEyeTextures[1].OGL.Header.API = ovrRenderAPI_OpenGL;
+			gRiftEyeTextures[1].OGL.Header.TextureSize = textureSize;
+			gRiftEyeTextures[1].OGL.Header.RenderViewport = renderSize;
+			gRiftEyeTextures[1].OGL.TexId = mRiftRScreen.getTexture();
+
+		}
+
+		//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the correct place for this but with buggy 0.4.1 having it here causes viewer to crash.
+		// </CV:David>
 		if (samples > 0)
 		{
 			if (!mFXAABuffer.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, FALSE, samples)) return false;
@@ -1107,6 +1150,10 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		}
 		mFXAABuffer.release();
 		mScreen.release();
+		// <CV:David>
+		mRiftLScreen.release();
+		mRiftRScreen.release();
+		// </CV:David>
 		mDeferredScreen.release(); //make sure to release any render targets that share a depth buffer with mDeferredScreen first
 		mDeferredDepth.release();
 		mOcclusionDepth.release();
@@ -1315,6 +1362,10 @@ void LLPipeline::releaseScreenBuffers()
 {
 	mUIScreen.release();
 	mScreen.release();
+	// <CV:David>
+	mRiftLScreen.release();
+	mRiftRScreen.release();
+	// </CV:David>
 	mFXAABuffer.release();
 	mPhysicsDisplay.release();
 	mDeferredScreen.release();
@@ -8043,7 +8094,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			// <CV:David>
 			else if (gRift3DEnabled)
 			{
-				mScreen.bindTarget();  // Reuse mScreen FBO.
+				gRiftCurrentEye ? mRiftRScreen.bindTarget() : mRiftLScreen.bindTarget();
 			}
 			// </CV:David>
 			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
@@ -8125,7 +8176,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			// <CV:David>
 			if (gRift3DEnabled)
 			{
-				mScreen.bindTarget();  // Reuse mScreen FBO.
+				gRiftCurrentEye ? mRiftRScreen.bindTarget() : mRiftLScreen.bindTarget();
 			}
 			// </CV:David>
 
@@ -8305,64 +8356,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkTextureChannels();
 
 }
-
-// <CV:David>
-void LLPipeline:: riftDistort()
-{
-	gGL.matrixMode(LLRender::MM_PROJECTION);
-	gGL.pushMatrix();
-	gGL.loadIdentity();
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	gGL.pushMatrix();
-	gGL.loadIdentity();
-
-	LLGLDisable blend(GL_BLEND);
-	LLGLDisable test(GL_ALPHA_TEST);
-
-	LLGLSLShader* shader = &gRiftDistortProgram;
-	shader->bind();
-	
-	S32 channel = shader->enableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
-	if (channel > -1)
-	{
-		mScreen.bindTexture(0, channel);
-		gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
-	}
-
-	gGLViewport[0] = gRiftCurrentEye * gRiftHFrame;
-	gGLViewport[1] = 0;
-	gGLViewport[2] = gRiftHFrame;
-	gGLViewport[3] = gRiftVFrame;
-	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-
-	F32 lensOffset = (1 - gRiftCurrentEye * 2) * gRiftLensOffset;
-	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
-	F32 lensCenterV = gRiftVFrame / 2.f;
-
-	shader->uniform2f(LLShaderMgr::RIFT_FRAME_SIZE, gRiftHFrame, gRiftVFrame);
-	shader->uniform2f(LLShaderMgr::RIFT_SAMPLE_SIZE, gRiftHSample, gRiftVSample);
-	shader->uniform2f(LLShaderMgr::RIFT_SCALE_IN, 2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
-	shader->uniform2f(LLShaderMgr::RIFT_SCALE_OUT, gRiftHFrame / 2.f, gRiftAspect * gRiftVFrame / 2.f);
-	shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_IN, lensCenterH, lensCenterV);
-	shader->uniform2f(LLShaderMgr::RIFT_LENS_CENTER_OUT, lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
-	shader->uniform4f(LLShaderMgr::RIFT_WARP_PARAMS, gRiftDistortionK[0], gRiftDistortionK[1], gRiftDistortionK[2], gRiftDistortionK[3]);
-
-	gGL.begin(LLRender::TRIANGLE_STRIP);
-		gGL.vertex2f(-1,-1);
-		gGL.vertex2f(-1,3);
-		gGL.vertex2f(3,-1);
-	gGL.end();
-	gGL.flush();
-
-	shader->disableTexture(LLShaderMgr::DEFERRED_DIFFUSE, mScreen.getUsage());
-	shader->unbind();
-
-	gGL.matrixMode(LLRender::MM_PROJECTION);
-	gGL.popMatrix();
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	gGL.popMatrix();
-}
-// </CV:David>
 
 static LLFastTimer::DeclareTimer FTM_BIND_DEFERRED("Bind Deferred");
 

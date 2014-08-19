@@ -3263,6 +3263,12 @@ void LLWindowWin32::openFile(const std::string& file_name )
 	sei.lpFile = url_utf16.c_str();
 	ShellExecuteEx( &sei );
 }
+
+void* LLWindowWin32::getHwnd()
+{
+	return mWindowHandle;
+}
+
 void LLWindowWin32::spawnWebBrowser(const std::string& escaped_url, bool async)
 {
 	bool found = false;

@@ -66,7 +66,7 @@
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 // <CV:David>
-F32 mEyeSeparation;  // Distance between stereo eyes.
+F32 mEyeSeparation[2];  // Distance L and R of stereo eyes.
 F32 mScreenDistance = 1.f;  // Distance of rendering screen from camera.
 F32 mCameraOffset = 0.f;  // Offset from default camera position for left(-ve) /right(+ve) eye.
 F32 mRiftProjectionOffset;
@@ -104,12 +104,20 @@ glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloa
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
 
 	// <CV:David>
-	GLfloat p02 = 0.f, p03 = 0.f;
+	GLfloat p00 = f/aspect, p11 = f, p02 = 0.f, p03 = 0.f;
 	if (display)
 	{
 		if (gRift3DEnabled)
 		{
+			p00 = gRiftProjection00[gRiftCurrentEye];
+			p11 = gRiftProjection11[gRiftCurrentEye];
 			p02 = mRiftProjectionOffset;
+			/*
+			llinfos << "Oculus Rift: gl_perspective = " << p00 << "  " << 0   << "  " << p02 << "  " << p03 << llendl;
+			llinfos << "                              " << 0   << "  " << p11 << "  " << 0 << "  " << 0 << llendl;
+			llinfos << "                              " << 0   << "  " << 0   << "  " << (zFar+zNear)/(zNear-zFar) << "  " << (2.f*zFar*zNear)/(zNear-zFar) << llendl;
+			llinfos << "                              " << 0   << "  " << 0   << "  " << -1.f << "  " << 0 << llendl;
+			*/
 		}
 		else
 		{
@@ -119,8 +127,8 @@ glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloa
 	}
 	// </CV:David>
 
-	return glh::matrix4f(f/aspect, 0, p02, p03,
-						 0, f, 0, 0,
+	return glh::matrix4f(p00, 0, p02, p03,
+						 0, p11, 0, 0,
 						 0, 0, (zFar+zNear)/(zNear-zFar), (2.f*zFar*zNear)/(zNear-zFar),
 						 0, 0, -1.f, 0);
 }
@@ -156,7 +164,8 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 	mAverageAngularSpeed = 0.f;
 	gSavedSettings.getControl("CameraAngle")->getCommitSignal()->connect(boost::bind(&LLViewerCamera::updateCameraAngle, this, _2));
 	// <CV:David>
-	mEyeSeparation = 0.065f;
+	mEyeSeparation[0] = -0.0325f;  // L
+	mEyeSeparation[1] = 0.0325f;  // R
 	mScreenDistance = 1.6f;
 	mCameraOffset = 0.f;
 	// </CV:David>
@@ -1000,14 +1009,15 @@ void LLViewerCamera::calcStereoValues()
 	if (gOutputType == OUTPUT_TYPE_STEREO)
 	{
 		mStereoCameraAspect = getAspect();
-		mEyeSeparation = gSavedSettings.getF32("EyeSeparation");
+		mEyeSeparation[0] = -gSavedSettings.getF32("EyeSeparation") / 2.f;
+		mEyeSeparation[1] = -mEyeSeparation[0];
 		mScreenDistance = gSavedSettings.getF32("ScreenDistance");
 
 		// Stereo culling frustum camera parameters.
 		F32 aspect, width, separation, deltaZ;
 		aspect = mStereoCameraAspect;
 		width = 2.0f * aspect * tan(mStereoCameraFOV*0.5f) * mScreenDistance;
-		separation = mEyeSeparation / width;
+		separation = gSavedSettings.getF32("EyeSeparation") / width;
 		deltaZ = mScreenDistance / (1 + 1 / separation);
 		mStereoCullCameraDeltaForwards = deltaZ * mXAxis;
 		mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
@@ -1015,27 +1025,27 @@ void LLViewerCamera::calcStereoValues()
 	}
 	else
 	{
-		mEyeSeparation = gSavedSettings.getF32("RiftEyeSeparation") / 1000.f;
+		mEyeSeparation[0] = -gRiftEyeDeltaL;
+		mEyeSeparation[1] = gRiftEyeDeltaR;
 		mStereoCameraAspect = gRiftAspect;
 
 		// Stereo culling frustum camera parameters.
-		F32 deltaZ;
-		deltaZ = gRiftEyeToScreen * gRiftLensSeparation / (gRiftHScreenSize - gRiftLensSeparation);  // Use lens rather than eye separation because it's collimated light.
-		mStereoCullCameraDeltaForwards = -deltaZ * mXAxis;
+		mStereoCullCameraDeltaForwards = -gRiftCullCameraDelta * mXAxis;
 		mStereoCullCameraFOV = mStereoCameraFOV;
-		mStereoCullCameraAspect = gRiftVScreenSize / (gRiftHScreenSize - gRiftLensSeparation);
+		mStereoCullCameraAspect = gRiftAspect;
 	}
 
 	// Delta position for left camera.
-	mStereoCameraDeltaLeft = mEyeSeparation / 2 * mYAxis;
+	mStereoCameraDeltaL = mEyeSeparation[0] * mYAxis;
+	mStereoCameraDeltaR = mEyeSeparation[1] * mYAxis;
 }
 
 void LLViewerCamera::moveToLeftEye()
 {
 	// Move both camera and POI so that left and rights views are parallel.
-	mCameraOffset = -mEyeSeparation / 2;
-	mRiftProjectionOffset = -gRiftProjectionOffset;
-	LLVector3 new_position = mStereoCameraPosition + mStereoCameraDeltaLeft;
+	mCameraOffset = mEyeSeparation[0];
+	mRiftProjectionOffset = gRiftProjection02[0];
+	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaL;
 	setView(mStereoCameraFOV, FALSE);
 	setAspect(mStereoCameraAspect);
 	setOrigin(new_position);
@@ -1044,9 +1054,9 @@ void LLViewerCamera::moveToLeftEye()
 void LLViewerCamera::moveToRightEye()
 {
 	// Move both camera and POI so that left and rights views are parallel.
-	mCameraOffset = mEyeSeparation / 2;
-	mRiftProjectionOffset = gRiftProjectionOffset;
-	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaLeft;
+	mCameraOffset = mEyeSeparation[1];
+	mRiftProjectionOffset = gRiftProjection02[1];
+	LLVector3 new_position = mStereoCameraPosition - mStereoCameraDeltaR;
 	setView(mStereoCameraFOV, FALSE);
 	setAspect(mStereoCameraAspect);
 	setOrigin(new_position);

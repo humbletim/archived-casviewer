@@ -276,7 +276,6 @@ extern LLGLSLShader			gWLCloudProgram;
 // Post Process Shaders
 extern LLGLSLShader			gPostColorFilterProgram;
 extern LLGLSLShader			gPostNightVisionProgram;
-extern LLGLSLShader			gRiftDistortProgram;  // <CV:David>
 
 
 // Deferred rendering shaders

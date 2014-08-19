@@ -1571,97 +1571,6 @@
          function="Pref.ResetScreenDistance" />
       </button>
 
-      <slider
-       control_name="RiftEyeSeparation"
-       decimal_digits="0"
-       label="Eye separation:"
-       follows="left|top"
-       height="16"
-       increment="1"
-       initial_value="65"
-       layout="topleft"
-       top_pad="10"
-       top="138"
-       left="54"
-       max_val="80"
-       min_val="50"
-       name="RiftEyeSeparation"
-       width="314"
-       label_width="100"
-       tool_tip="Distance between pupils of left and right eyes."/>
-      <text
-       type="string"
-       length="1"
-       follows="left|top"
-       height="12"
-       layout="topleft"
-       left_delta="324"
-       name="RiftEyeSeparationUnitsText"
-       top_delta="0"
-       width="32">
-        mm
-      </text>
-      <button
-       follows="left|top"
-       height="18"
-       label="Reset"
-       label_selected="Reset"
-       layout="topleft"
-       left_pad="8"
-       name="ResetRiftEyeSeparation"
-       top_delta="-2"
-       bottom_pad="2"
-       width="60">
-        <button.commit_callback
-         function="Pref.ResetRiftEyeSeparation" />
-      </button>
-
-      <slider
-       control_name="RiftPredictionDelta"
-       decimal_digits="0"
-       label="Prediction delta:"
-       follows="left|top"
-       height="16"
-       increment="5"
-       initial_value="20"
-       layout="topleft"
-       left="54"
-       max_val="50"
-       min_val="0"
-       name="RiftPredictionDelta"
-       width="314"
-       label_width="100"
-       tool_tip="How far into the future to predict the Rift's orientation.">
-        <slider.commit_callback
-         function="Pref.ChangeRiftPredictionDelta" />
-      </slider>
-      <text
-       type="string"
-       length="1"
-       follows="left|top"
-       height="12"
-       layout="topleft"
-       left_delta="324"
-       name="RiftPreductionDeltaUnitsText"
-       top_delta="0"
-       width="32">
-        ms
-      </text>
-      <button
-       follows="left|top"
-       height="18"
-       label="Reset"
-       label_selected="Reset"
-       layout="topleft"
-       left_pad="8"
-       name="ResetRiftPredictionDelta"
-       top_delta="-2"
-       bottom_pad="2"
-       width="60">
-        <button.commit_callback
-         function="Pref.ResetRiftPredictionDelta" />
-      </button>
-
       <radio_group
       control_name="RiftOperationMode"
       follows="left|top"
@@ -1670,6 +1579,7 @@
       name="RiftOperationMode"
       left="54"
       top_pad="4"
+      top="132"
       width="440">
         <radio_group.commit_callback
           function="Pref.ChangeRiftOperationMode" />
@@ -1688,7 +1598,7 @@
           name="RiftStanding"
           tool_tip="'Forwards' is the direction that your Rift is pointing as you turn your head."
           value="1"
-          top_pad="62"
+          top_pad="64"
           width="50" />
       </radio_group>
       <check_box
@@ -1699,7 +1609,7 @@
        layout="topleft"
        left="74"
        name="RiftStrafe"
-       top="202"
+       top="156"
        width="180">
         <check_box.commit_callback
            function="Pref.RiftStrafeEnable" />
@@ -1768,7 +1678,7 @@
        increment="1"
        initial_value="5"
        layout="topleft"
-       top="242"
+       top="196"
        left="94"
        max_val="10"
        min_val="1"
@@ -1803,7 +1713,7 @@
        layout="topleft"
        left="54"
        name="RiftMouseHorizontal"
-       top_pad="24"
+       top_pad="26"
        width="50">
         <check_box.commit_callback
            function="Pref.RiftMouseHorizontalEnable" />
@@ -1886,14 +1796,11 @@
        width="50" />
       <check_box
        control_name="RiftAvatar"
-       height="14"
+       height="16"
        initial_value="true"
        label="Show avatar"
-       layout="topleft"
-       top="390"
-       left="270"
+       left="54"
        name="RiftAvatar"
-       top_pad="6"
        width="50" />
     </panel>
   </tab_container>

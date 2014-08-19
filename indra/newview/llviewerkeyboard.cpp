@@ -739,6 +739,15 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 
 BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL repeated)
 {
+	// <CV:David>
+	if (gRift3DEnabled && gRiftHSWEnabled)
+	{
+		ovrHmd_DismissHSWDisplay(gRiftHMD);
+		//ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);  // DJRTODO: This SDK method is not available yet
+		gRiftHSWEnabled = false;
+	}
+	// </CV:David>
+
 	// check for re-map
 	EKeyboardMode mode = gViewerKeyboard.getMode();
 	U32 keyidx = (translated_mask<<16) | translated_key;

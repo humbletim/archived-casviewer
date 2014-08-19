@@ -553,9 +553,6 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.UpdateOutputType",		boost::bind(&LLFloaterPreference::onChangeOutputType, this));
 	mCommitCallbackRegistrar.add("Pref.ResetEyeSeparation",		boost::bind(&LLFloaterPreference::onClickResetEyeSeparation, this));
 	mCommitCallbackRegistrar.add("Pref.ResetScreenDistance",	boost::bind(&LLFloaterPreference::onClickResetScreenDistance, this));
-	mCommitCallbackRegistrar.add("Pref.ResetRiftEyeSeparation",	boost::bind(&LLFloaterPreference::onClickResetRiftEyeSeparation, this));
-	mCommitCallbackRegistrar.add("Pref.ChangeRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onChangeRiftPredictionDelta, this));
-	mCommitCallbackRegistrar.add("Pref.ResetRiftPredictionDelta",	boost::bind(&LLFloaterPreference::onClickResetRiftPredictionDelta, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftOperationMode", boost::bind(&LLFloaterPreference::onChangeRiftOperationMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftStrafeEnable",	boost::bind(&LLFloaterPreference::onRiftStrafeEnable, this));
 	mCommitCallbackRegistrar.add("Pref.RiftHeadReorientsEnable",	boost::bind(&LLFloaterPreference::onRiftHeadReorientsEnable, this));
@@ -1069,7 +1066,8 @@ void LLFloaterPreference::onVertexShaderEnable()
 	{
 		// Temporarily set VertexShaderEnable so that setRiftlook() reshapes the window correctly.
 		gSavedSettings.setBOOL("VertexShaderEnable", TRUE);
-		CVToggle3D::setRiftlook(false);
+		//CVToggle3D::setRiftlook(false);
+		CVToggle3D::setFullscreenThenRiftlook(false);  // DJRTDODO: Temporarily use while using DK2 extended mode
 		gSavedSettings.setBOOL("VertexShaderEnable", FALSE);
 	}
 	// </CV:David>
@@ -4120,28 +4118,6 @@ void LLFloaterPreference::onClickResetEyeSeparation()
 void LLFloaterPreference::onClickResetScreenDistance()
 {
 	gSavedSettings.setF32("ScreenDistance", 1.6f);
-}
-
-void LLFloaterPreference::onClickResetRiftEyeSeparation()
-{
-	gSavedSettings.setF32("RiftEyeSeparation", 65.0f);
-}
-
-void LLFloaterPreference::onChangeRiftPredictionDelta()
-{
-	if (gRift3DEnabled)
-	{
-		gRiftFusionResult->SetPrediction(getChild<LLSliderCtrl>("RiftPredictionDelta")->getValue().asReal() / 1000.f);
-	}
-}
-
-void LLFloaterPreference::onClickResetRiftPredictionDelta()
-{
-	gSavedSettings.setF32("RiftPredictionDelta", 35.0f);
-	if (gRift3DEnabled)
-	{
-		gRiftFusionResult->SetPrediction(0.02f);
-	}
 }
 
 void LLFloaterPreference::onChangeRiftOperationMode()

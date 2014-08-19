@@ -91,6 +91,8 @@ public:
 	/*virtual*/ void *getPlatformWindow() { return 0; };
 	/*virtual*/ void bringToFront() {};
 	
+	/*virtual*/ void* getHwnd() { return 0; };  // <CV:David>
+
 	// <CV:David> Added output_type parameter.
 	LLWindowHeadless(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name,

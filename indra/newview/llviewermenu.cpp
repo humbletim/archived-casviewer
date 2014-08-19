@@ -4953,7 +4953,8 @@ void handle_reset_view()
 	{
 		if (gAgentCamera.cameraMouselook())
 		{
-			CVToggle3D::setRiftlook(FALSE);
+			//CVToggle3D::setRiftlook(FALSE);
+			CVToggle3D::setFullscreenThenRiftlook(FALSE);  // DJRTODO: Temporarily use while using DK2 extended mode.
 		}
 		else
 		{
@@ -10409,7 +10410,8 @@ void CVToggle3D::toggle3D()
 	}
 	else if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DConfigured)
 	{
-		setRiftlook(!gRift3DEnabled);
+		//setRiftlook(!gRift3DEnabled);
+		setFullscreenThenRiftlook(!gRift3DEnabled);  // DJRTDODO: Temporarily use while using DK2 extended mode.
 	}
 }
 
@@ -10418,6 +10420,51 @@ void CVToggle3D::setStereoscopic(bool on)
 	gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
 	llinfos << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << llendl;
+}
+
+// DJRTDODO: Temporarily use while using DK2 extended mode
+void CVToggle3D::setFullscreenThenRiftlook(bool on)
+{
+	gDoSetRiftlookValue = on;
+
+	#ifdef LL_WINDOWS
+		static RECT normal_rect;
+		static DWORD normal_style;
+		static DWORD normal_ex_style;
+		HWND hwnd = (HWND)gViewerWindow->getPlatformWindow();
+
+		if (!gSavedSettings.getBOOL("FullScreen") & gDoSetRiftlookValue)
+		{
+			GetWindowRect(hwnd, &normal_rect);
+			normal_style = GetWindowLong(hwnd, GWL_STYLE);
+			normal_ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
+		}
+
+		if (gDoSetRiftlookValue)
+		{
+			if (!gSavedSettings.getBOOL("FullScreen"))
+			{
+				mWindowHResolution = gViewerWindow->getWindowWidthRaw();
+				mWindowVResolution = gViewerWindow->getWindowHeightRaw();
+
+				SetWindowLong(hwnd, GWL_STYLE, normal_style & ~(WS_CAPTION | WS_THICKFRAME));
+				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+				SendMessage((HWND)gViewerWindow->getPlatformWindow(), WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+			}
+		}
+		else
+		{
+			if (!gSavedSettings.getBOOL("FullScreen"))
+			{
+				SendMessage((HWND)gViewerWindow->getPlatformWindow(), WM_SYSCOMMAND, SC_RESTORE, 0);
+				SetWindowLong(hwnd, GWL_STYLE, normal_style);
+				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style);
+			}
+		}
+
+	#endif
+
+	gDoSetRiftlook = true;
 }
 
 void CVToggle3D::setRiftlook(bool on)
@@ -10434,11 +10481,14 @@ void CVToggle3D::setRiftlook(bool on)
 	if (gRift3DEnabled)
 	{
 		llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
+
 		if (!gSavedSettings.getBOOL("FullScreen"))
 		{
-			mWindowHResolution = gViewerWindow->getWindowWidthRaw();
-			mWindowVResolution = gViewerWindow->getWindowHeightRaw();
+			// DJRTODO: Temporarily moved into setFullscreenThenRiftlook while use DK2 extended mode
+			//mWindowHResolution = gViewerWindow->getWindowWidthRaw();
+			//mWindowVResolution = gViewerWindow->getWindowHeightRaw();
 		}
+
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
 			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
@@ -10446,12 +10496,13 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 		gSavedSettings.setF32("CameraAngle", gRiftFOV);
-		gAgentCamera.changeCameraToMouselook(TRUE);
+		gAgentCamera.changeCameraToMouselook(FALSE);  // Don't animate camera so that screen and FBO are correctly sized immediately
 		gAgentCamera.resetRotatingView();
 	}
 	else
 	{
 		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
+
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
 			if (gSavedSettings.getBOOL("FullScreen"))
@@ -10468,6 +10519,7 @@ void CVToggle3D::setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
+	//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 
 	if (was_in_flycam)
 	{
@@ -10477,6 +10529,10 @@ void CVToggle3D::setRiftlook(bool on)
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
+
+	//ms_sleep(1000);  // DJRTODO: Delete
+
+	setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 }
 	
 bool CVToggle3D::handleEvent(const LLSD& userdata)

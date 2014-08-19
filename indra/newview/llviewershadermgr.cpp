@@ -175,7 +175,6 @@ LLGLSLShader			gGlowExtractProgram;
 LLGLSLShader			gPostColorFilterProgram;
 LLGLSLShader			gPostNightVisionProgram;
 LLGLSLShader			gVignettePost;	// <FS:CR> Import Vignette from Exodus
-LLGLSLShader			gRiftDistortProgram;  // <CV:David>
 
 // Deferred rendering shaders
 LLGLSLShader			gDeferredImpostorProgram;
@@ -773,7 +772,6 @@ void LLViewerShaderMgr::unloadShaders()
 	gPostColorFilterProgram.unload();
 	gPostNightVisionProgram.unload();
 	gVignettePost.unload();
-	gRiftDistortProgram.unload();  // <CV:David>
 
 	gDeferredDiffuseProgram.unload();
 	gDeferredDiffuseAlphaMaskProgram.unload();
@@ -1101,18 +1099,6 @@ BOOL LLViewerShaderMgr::loadShadersEffects()
 	}
 // </FS:CR>
 	
-// <CV:David>
-	if (success)
-	{
-		gRiftDistortProgram.mName = "Rift Barrel Distortion";
-		gRiftDistortProgram.mShaderFiles.clear();
-		gRiftDistortProgram.mShaderFiles.push_back(make_pair("post/riftDistortV.glsl", GL_VERTEX_SHADER_ARB));
-		gRiftDistortProgram.mShaderFiles.push_back(make_pair("post/riftDistortF.glsl", GL_FRAGMENT_SHADER_ARB));
-		gRiftDistortProgram.mShaderLevel = mVertexShaderLevel[SHADER_EFFECT];
-		success = gRiftDistortProgram.createShader(NULL, NULL);
-	}
-// </CV:David>
-
 	return success;
 
 }
