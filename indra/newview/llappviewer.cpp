@@ -396,7 +396,7 @@ U32 gRiftHSample;
 U32 gRiftVSample;
 U32 gRiftHBuffer;			// Size of the buffer rendered into.
 U32 gRiftVBuffer;			// ""
-U32 gRiftLensOffset;		// Pixels offset from centre of screen to centre of FOV.
+S32 gRiftLensOffset;		// Pixels offset from centre of screen to centre of FOV.
 F32 gRiftEyeDeltaL;			// Distance to offset camera for eye.
 F32 gRiftEyeDeltaR;			// ""
 F32 gRiftCullCameraDelta;	// Distance back to move cull frustum camera.
@@ -892,6 +892,10 @@ bool LLAppViewer::init()
 	//
 	// OK to write stuff to logs now, we've now crash reported if necessary
 	//
+
+	gOutputType = gSavedSettings.getU32("OutputType");
+	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
+	//initRift();  // DJRTODO: initRift() here causes application to crash at start-up.
 	
 // <FS>
 	// SJ/AO:  Reset Configuration here, if our marker file exists. Configuration needs to be reset before settings files 
@@ -1186,129 +1190,6 @@ bool LLAppViewer::init()
 	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
 	gRift3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
-
-	if (gRift3DConfigured)
-	{
-		gRiftStanding = gSavedSettings.getU32("RiftOperationMode") == RIFT_OPERATE_STANDING;
-		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
-		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
-		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
-		gRiftHeadReorients = gSavedSettings.getBOOL("RiftHeadReorients") && !gRiftStanding;
-		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar = " << gRiftHeadReorients << LL_ENDL;
-		gRiftHeadReorientsAfter = gSavedSettings.getU32("RiftHeadReorientsAfter");
-		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar after = " << gRiftHeadReorientsAfter << LL_ENDL;
-		gRiftHeadReorientsSpeed = gSavedSettings.getU32("RiftHeadReorientsSpeed");
-		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar speed = " << gRiftHeadReorientsSpeed << LL_ENDL;
-		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
-		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
-		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");
-		LL_INFOS("InitInfo") << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << LL_ENDL;
-
-		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
-
-		ovr_Initialize();
-		gRiftHMD = ovrHmd_Create(0);
-
-		if (gRiftHMD)
-		{
-			LL_INFOS("InitInfo") << "Oculus Rift: HMD found" << LL_ENDL;
-		}
-		else
-		{
-			// DJRTDODO: Alert user
-			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found; simulated device used" << LL_ENDL;
-			gRiftHMD = ovrHmd_CreateDebug(ovrHmd_DK1);
-		}
-
-		// Support DK1 and DK2-style HDMs
-		ovrHmd_ConfigureTracking(gRiftHMD, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
-		if ((ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags & (ovrStatus_OrientationTracked | ovrStatus_PositionTracked)))
-		{
-			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
-		}
-		else
-		{
-			// Log a warning but tracking state may change during operation so just continue afterwards
-			LL_INFOS("InitInfo") << "Oculus Rift: Sensor not found at start-up" << LL_ENDL;
-		}
-
-		LL_INFOS("InitInfo") << "Oculus Rift: Type = " << gRiftHMD->Type << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: Product name = " << gRiftHMD->ProductName << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: Manufacturer = " << gRiftHMD->Manufacturer << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: VendorId = " << gRiftHMD->VendorId << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: ProductId = " << gRiftHMD->ProductId << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: SerialNumber = " << gRiftHMD->SerialNumber << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: FirmwareMajor = " << gRiftHMD->FirmwareMajor << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: FirmwareMinor = " << gRiftHMD->FirmwareMinor << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumVFovInRadians = " << gRiftHMD->CameraFrustumVFovInRadians << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumHFovInRadians = " << gRiftHMD->CameraFrustumHFovInRadians << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumNearZInMeters = " << gRiftHMD->CameraFrustumNearZInMeters << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumFarZInMeters = " << gRiftHMD->CameraFrustumFarZInMeters << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: HmdCaps = " << gRiftHMD->HmdCaps << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: TrackingCaps = " << gRiftHMD->TrackingCaps << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DistortionCaps = " << gRiftHMD->DistortionCaps << LL_ENDL;
-		gRiftHResolution = gRiftHMD->Resolution.w;  // Physical resolution of the display incl. both eyes.
-		gRiftVResolution = gRiftHMD->Resolution.h;
-		LL_INFOS("InitInfo") << "Oculus Rift: Full resolution = " << gRiftHResolution << " x " << gRiftVResolution << LL_ENDL;
-		gRiftHFrame = gRiftHResolution / 2;
-		gRiftVFrame = gRiftVResolution;
-		gRiftAspect = gRiftHFrame / gRiftVFrame;
-		llinfos << "Oculus Rift: Eye display aspect = " << std::setprecision(3) << gRiftAspect << std::setprecision(2) << llendl;
-		// DJRTODO: Use WindowsPos ...
-		LL_INFOS("InitInfo") << "Oculus Rift: WindowsPos = " << gRiftHMD->WindowsPos.x << ", " << gRiftHMD->WindowsPos.y << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan L = " << gRiftHMD->DefaultEyeFov[0].UpTan << ", " << gRiftHMD->DefaultEyeFov[0].DownTan << ", " << gRiftHMD->DefaultEyeFov[0].LeftTan << ", " << gRiftHMD->DefaultEyeFov[0].RightTan << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan R = " << gRiftHMD->DefaultEyeFov[1].UpTan << ", " << gRiftHMD->DefaultEyeFov[1].DownTan << ", " << gRiftHMD->DefaultEyeFov[1].LeftTan << ", " << gRiftHMD->DefaultEyeFov[1].RightTan << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan L = " << gRiftHMD->MaxEyeFov[0].UpTan << ", " << gRiftHMD->MaxEyeFov[0].DownTan << ", " << gRiftHMD->MaxEyeFov[0].LeftTan << ", " << gRiftHMD->MaxEyeFov[0].RightTan << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan R = " << gRiftHMD->MaxEyeFov[1].UpTan << ", " << gRiftHMD->MaxEyeFov[1].DownTan << ", " << gRiftHMD->MaxEyeFov[1].LeftTan << ", " << gRiftHMD->MaxEyeFov[1].RightTan << LL_ENDL;
-		// DJRTODO: Use EyeRenderOrder consistently
-		LL_INFOS("InitInfo") << "Oculus Rift: EyeRenderOrder = " << gRiftHMD->EyeRenderOrder[0] << ", " << gRiftHMD->EyeRenderOrder[1] << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DisplayDeviceName = " << gRiftHMD->DisplayDeviceName << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DisplayId = " << gRiftHMD->DisplayId << LL_ENDL;
-
-		LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << llendl;
-		LL_INFOS("InitInfo") << "Oculus Rift: Name = " << ovrHmd_GetString(gRiftHMD, "Name", "Name") << llendl;
-
-		ovrSizei recommendedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftHMD->DefaultEyeFov[0], 1.f);
-		ovrSizei recommendedRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftHMD->DefaultEyeFov[1], 1.f);
-		LL_INFOS("InitInfo") << "Oculus Rift: Recommended texture size L = " << recommendedLSize.w << " x " << recommendedLSize.h  << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: Recommended texture size R = " << recommendedRSize.w << " x " << recommendedRSize.h  << LL_ENDL;
-		ovrSizei maximumLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftHMD->MaxEyeFov[0], 1.f);
-		ovrSizei maximumRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftHMD->MaxEyeFov[1], 1.f);
-		LL_INFOS("InitInfo") << "Oculus Rift: Maximum texture size L = " << maximumLSize.w << " x " << maximumLSize.h  << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: Maximum texture size R = " << maximumRSize.w << " x " << maximumRSize.h  << LL_ENDL;
-
-		// Explicitly control FOV so that viewer's existing camera and projection setup works:
-		// - Up and down FOVs the same.
-		// - Left and right eyes the same except mirrored.
-		float verticalTan = llmax(gRiftHMD->DefaultEyeFov[0].UpTan, gRiftHMD->DefaultEyeFov[0].DownTan, gRiftHMD->DefaultEyeFov[1].UpTan, gRiftHMD->DefaultEyeFov[1].DownTan);
-		float horizontalTanOut = llmax(gRiftHMD->DefaultEyeFov[0].LeftTan, gRiftHMD->DefaultEyeFov[1].RightTan);
-		float horizontalTanIn = llmax(gRiftHMD->DefaultEyeFov[0].RightTan, gRiftHMD->DefaultEyeFov[1].LeftTan);
-
-		gRiftEyeFov[0].UpTan = verticalTan;
-		gRiftEyeFov[0].DownTan = verticalTan;
-		gRiftEyeFov[0].LeftTan = horizontalTanOut;
-		gRiftEyeFov[0].RightTan = horizontalTanIn;
-
-		gRiftEyeFov[1].UpTan = verticalTan;
-		gRiftEyeFov[1].DownTan = verticalTan;
-		gRiftEyeFov[1].LeftTan = horizontalTanIn;
-		gRiftEyeFov[1].RightTan = horizontalTanOut;
-
-		gRiftFOV = atan(2.f * verticalTan);
-		LL_INFOS("InitInfo") << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(2) << LL_ENDL;
-
-		ovrSizei usedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftEyeFov[0], 1.f);
-		ovrSizei usedRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftEyeFov[1], 1.f);
-		LL_INFOS("InitInfo") << "Oculus Rift: Requested texture size L = " << usedLSize.w << " x " << usedLSize.h  << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: Requested texture size R = " << usedRSize.w << " x " << usedRSize.h  << LL_ENDL;
-		gRiftHSample = usedLSize.w;
-		gRiftVSample = usedLSize.h;
-		// Note: Actual size used by FBOs is stored in gRiftHBuffer and gRiftVBuffer when the FBOs are allocated.
-		gRiftLensOffset = llround(gRiftHSample * (1 - horizontalTanIn) / (2.f * horizontalTanOut));
-		LL_INFOS("InitInfo") << "Oculus Rift: Lens offset = " << std::setprecision(3) << gRiftLensOffset << std::setprecision(2) << LL_ENDL;
-
-		// DJRTODO: Check none of the above values are zero.
-	}
 	// </CV:David>
 
 	// Prepare for out-of-memory situations, during which we will crash on
@@ -1567,6 +1448,8 @@ bool LLAppViewer::init()
 		LLStringOps::sPM = LLTrans::getString("dateTimePM");
 	}
 
+	initRift();  // <CV:David> Need to do after rest of graphics is set up.  // DJRTODO: initRift() here doesn't cause direct HMD to kick in when toggle.
+
 	LLAgentLanguage::init();
 
 	// initializing the settings sanity checker
@@ -1574,6 +1457,152 @@ bool LLAppViewer::init()
 
 	return true;
 }
+
+// <CV:David>
+void LLAppViewer::initRift()
+{
+	LL_INFOS("InitInfo") << "initRift()..." << LL_ENDL;
+	if (gRift3DConfigured)
+	{
+		gRiftStanding = gSavedSettings.getU32("RiftOperationMode") == RIFT_OPERATE_STANDING;
+		LL_INFOS("InitInfo") << "Oculus Rift: Operation mode = " << gSavedSettings.getU32("RiftOperationMode") << LL_ENDL;
+		gRiftStrafe = gSavedSettings.getBOOL("RiftStrafe") && !gRiftStanding;
+		LL_INFOS("InitInfo") << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
+		gRiftHeadReorients = gSavedSettings.getBOOL("RiftHeadReorients") && !gRiftStanding;
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar = " << gRiftHeadReorients << LL_ENDL;
+		gRiftHeadReorientsAfter = gSavedSettings.getU32("RiftHeadReorientsAfter");
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar after = " << gRiftHeadReorientsAfter << LL_ENDL;
+		gRiftHeadReorientsSpeed = gSavedSettings.getU32("RiftHeadReorientsSpeed");
+		LL_INFOS("InitInfo") << "Oculus Rift: Head turns avatar speed = " << gRiftHeadReorientsSpeed << LL_ENDL;
+		gRiftMouseCursor = gSavedSettings.getU32("RiftMouseMode") == RIFT_MOUSE_CURSOR;
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse mode = " << gSavedSettings.getU32("RiftMouseMode") << LL_ENDL;
+		gRiftMouseHorizontal = gSavedSettings.getBOOL("RiftMouseHorizontal");
+		LL_INFOS("InitInfo") << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << LL_ENDL;
+
+		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
+
+		ovr_Initialize();
+		//ovr_InitializeRenderingShim();  // Causes Rift not to be found with ovrHmd_Create() and then a crash at ovrHmd_CreateDebug().
+		gRiftHMD = ovrHmd_Create(0);
+
+		if (gRiftHMD)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD found" << LL_ENDL;
+		}
+		else
+		{
+			// DJRTDODO: Alert user
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found; simulated device used" << LL_ENDL;
+			gRiftHMD = ovrHmd_CreateDebug(ovrHmd_DK1);
+		}
+
+		// Support DK1 and DK2-style HDMs
+		// DJRTODO: Don't try to configure sensor if did ovrHmd_CreateDebug(ovrHmd_DK1)? Or does the following handle things automatically?
+		ovrHmd_ConfigureTracking(gRiftHMD, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
+		int statusFlags = ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags;
+		if (statusFlags & ovrStatus_HmdConnected)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
+			if (statusFlags & ovrStatus_PositionConnected)
+			{
+				LL_INFOS("InitInfo") << "Oculus Rift: Camera found" << LL_ENDL;
+			}
+			else
+			{
+				LL_INFOS("InitInfo") << "Oculus Rift: Camera NOT found" << LL_ENDL;
+				// DJRTODO: What to do? Don't try to use Rift position if camera not found? Note: It may be plugged in after the fact, so perhaps warn user?
+			}
+		}
+		else
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Sensor NOT found" << LL_ENDL;
+			// DJRTODO: What to do? Don't try to use Rift orientation if sensor not found?
+			LL_INFOS("InitInfo") << "Oculus Rift: StatusFlags = " << ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags << LL_ENDL;
+		}
+		// DJRTODO: Check to see if camera is connected too
+
+		LL_INFOS("InitInfo") << "Oculus Rift: Type = " << gRiftHMD->Type << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Product name = " << gRiftHMD->ProductName << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Manufacturer = " << gRiftHMD->Manufacturer << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: VendorId = " << gRiftHMD->VendorId << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: ProductId = " << gRiftHMD->ProductId << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: SerialNumber = " << gRiftHMD->SerialNumber << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: FirmwareMajor = " << gRiftHMD->FirmwareMajor << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: FirmwareMinor = " << gRiftHMD->FirmwareMinor << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumVFovInRadians = " << gRiftHMD->CameraFrustumVFovInRadians << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumHFovInRadians = " << gRiftHMD->CameraFrustumHFovInRadians << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumNearZInMeters = " << gRiftHMD->CameraFrustumNearZInMeters << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumFarZInMeters = " << gRiftHMD->CameraFrustumFarZInMeters << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: HmdCaps = " << gRiftHMD->HmdCaps << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: TrackingCaps = " << gRiftHMD->TrackingCaps << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: DistortionCaps = " << gRiftHMD->DistortionCaps << LL_ENDL;
+		gRiftHResolution = gRiftHMD->Resolution.w;  // Physical resolution of the display incl. both eyes.
+		gRiftVResolution = gRiftHMD->Resolution.h;
+		LL_INFOS("InitInfo") << "Oculus Rift: Full resolution = " << gRiftHResolution << " x " << gRiftVResolution << LL_ENDL;
+		gRiftHFrame = gRiftHResolution / 2;
+		gRiftVFrame = gRiftVResolution;
+		gRiftAspect = (F32)gRiftHFrame / (F32)gRiftVFrame;
+		LL_INFOS("InitInfo") << "Oculus Rift: Eye resolution = " << gRiftHFrame << " x " << gRiftVFrame << LL_ENDL;
+		llinfos << "Oculus Rift: Eye display aspect = " << std::setprecision(3) << gRiftAspect << llendl;
+		
+		// DJRTODO: Use WindowsPos ...
+		LL_INFOS("InitInfo") << "Oculus Rift: WindowsPos = " << gRiftHMD->WindowsPos.x << ", " << gRiftHMD->WindowsPos.y << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan L = " << std::setprecision(6) << gRiftHMD->DefaultEyeFov[0].UpTan << ", " << gRiftHMD->DefaultEyeFov[0].DownTan << ", " << gRiftHMD->DefaultEyeFov[0].LeftTan << ", " << gRiftHMD->DefaultEyeFov[0].RightTan << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan R = " << gRiftHMD->DefaultEyeFov[1].UpTan << ", " << gRiftHMD->DefaultEyeFov[1].DownTan << ", " << gRiftHMD->DefaultEyeFov[1].LeftTan << ", " << gRiftHMD->DefaultEyeFov[1].RightTan << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan L = " << gRiftHMD->MaxEyeFov[0].UpTan << ", " << gRiftHMD->MaxEyeFov[0].DownTan << ", " << gRiftHMD->MaxEyeFov[0].LeftTan << ", " << gRiftHMD->MaxEyeFov[0].RightTan << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan R = " << gRiftHMD->MaxEyeFov[1].UpTan << ", " << gRiftHMD->MaxEyeFov[1].DownTan << ", " << gRiftHMD->MaxEyeFov[1].LeftTan << ", " << gRiftHMD->MaxEyeFov[1].RightTan << std::setprecision(3) << LL_ENDL;
+		// DJRTODO: Use EyeRenderOrder consistently
+		LL_INFOS("InitInfo") << "Oculus Rift: EyeRenderOrder = " << gRiftHMD->EyeRenderOrder[0] << ", " << gRiftHMD->EyeRenderOrder[1] << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: DisplayDeviceName = " << gRiftHMD->DisplayDeviceName << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: DisplayId = " << gRiftHMD->DisplayId << LL_ENDL;  // DJRTODO: Why is it -1? Perhaps if direct mode?
+
+		// DJRTODO: Comment out ...
+		LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << llendl;
+		LL_INFOS("InitInfo") << "Oculus Rift: Name = " << ovrHmd_GetString(gRiftHMD, "Name", "Name") << llendl;
+
+		ovrSizei recommendedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftHMD->DefaultEyeFov[0], 1.f);
+		ovrSizei recommendedRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftHMD->DefaultEyeFov[1], 1.f);
+		LL_INFOS("InitInfo") << "Oculus Rift: Recommended texture size L = " << recommendedLSize.w << " x " << recommendedLSize.h  << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Recommended texture size R = " << recommendedRSize.w << " x " << recommendedRSize.h  << LL_ENDL;
+		ovrSizei maximumLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftHMD->MaxEyeFov[0], 1.f);
+		ovrSizei maximumRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftHMD->MaxEyeFov[1], 1.f);
+		LL_INFOS("InitInfo") << "Oculus Rift: Maximum texture size L = " << maximumLSize.w << " x " << maximumLSize.h  << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Maximum texture size R = " << maximumRSize.w << " x " << maximumRSize.h  << LL_ENDL;
+
+		// Explicitly control FOV so that viewer's existing camera and projection setup works:
+		// - Up and down FOVs the same.
+		// - Left and right eyes the same except mirrored.
+		float verticalTan = llmax(gRiftHMD->DefaultEyeFov[0].UpTan, gRiftHMD->DefaultEyeFov[0].DownTan, gRiftHMD->DefaultEyeFov[1].UpTan, gRiftHMD->DefaultEyeFov[1].DownTan);
+		float horizontalTanOut = llmax(gRiftHMD->DefaultEyeFov[0].LeftTan, gRiftHMD->DefaultEyeFov[1].RightTan);
+		float horizontalTanIn = llmax(gRiftHMD->DefaultEyeFov[0].RightTan, gRiftHMD->DefaultEyeFov[1].LeftTan);
+
+		gRiftEyeFov[0].UpTan = verticalTan;
+		gRiftEyeFov[0].DownTan = verticalTan;
+		gRiftEyeFov[0].LeftTan = horizontalTanOut;
+		gRiftEyeFov[0].RightTan = horizontalTanIn;
+
+		gRiftEyeFov[1].UpTan = verticalTan;
+		gRiftEyeFov[1].DownTan = verticalTan;
+		gRiftEyeFov[1].LeftTan = horizontalTanIn;
+		gRiftEyeFov[1].RightTan = horizontalTanOut;
+
+		gRiftFOV = atan(2.f * verticalTan);
+		LL_INFOS("InitInfo") << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(3) << LL_ENDL;
+
+		ovrSizei usedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftEyeFov[0], 1.f);
+		ovrSizei usedRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftEyeFov[1], 1.f);
+		LL_INFOS("InitInfo") << "Oculus Rift: Requested texture size L = " << usedLSize.w << " x " << usedLSize.h  << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Requested texture size R = " << usedRSize.w << " x " << usedRSize.h  << LL_ENDL;
+		gRiftHSample = usedLSize.w;
+		gRiftVSample = usedLSize.h;
+		// Note: Actual size used by FBOs is stored in gRiftHBuffer and gRiftVBuffer when the FBOs are allocated. DJROTOD: Use gRiftHBuffer and gRiftVBuffer?
+		// DJRTODO: Which of the following to use? ...
+		gRiftLensOffset = llround((F32)gRiftHSample * (1 - horizontalTanIn) / (2.f * horizontalTanOut));
+		gRiftLensOffset = llround((F32)gRiftHSample * (0.5f - horizontalTanIn / (horizontalTanIn + horizontalTanOut)));
+		LL_INFOS("InitInfo") << "Oculus Rift: Lens offset = " << gRiftLensOffset << LL_ENDL;
+	}
+}
+// </CV:David>
 
 void LLAppViewer::initMaxHeapSize()
 {
@@ -2200,8 +2229,9 @@ bool LLAppViewer::cleanup()
 	if (gRift3DConfigured)
 	{
 		ovrHmd_Destroy(gRiftHMD);
-		gRiftHMD = 0;
 		ovr_Shutdown();
+
+		gRiftHMD = 0;
 
 		llinfos << "Oculus Rift: Cleaned up" << llendflush;
 	}

@@ -1032,19 +1032,20 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
         
 		if (!mScreen.allocate(resX, resY, screenFormat, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
 		// <CV:David>
-		if (gRift3DConfigured)
+		llinfos << "gRift3DEnabled = " << gRift3DEnabled << llendl;
+		if (true || gRift3DEnabled)  // DJRTODO: "true" needed at present because setRiftSDKRendering() call is in wrong place/
 		{
 			llinfos << "Oculus Rift: Rift FBOs allocation requested at " << resX << " x " << resY << llendl;
 			if (!mRiftLScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
-			llinfos << "Oculus Rift: L FBO resolution: " << mRiftLScreen.getWidth() << " x " << mRiftLScreen.getHeight() << llendl;
+			llinfos << "Oculus Rift: L FBO resolution used: " << mRiftLScreen.getWidth() << " x " << mRiftLScreen.getHeight() << llendl;
 			if (!mRiftRScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
-			llinfos << "Oculus Rift: R FBO resolution: " << mRiftRScreen.getWidth() << " x " << mRiftRScreen.getHeight() << llendl;
+			llinfos << "Oculus Rift: R FBO resolution used: " << mRiftRScreen.getWidth() << " x " << mRiftRScreen.getHeight() << llendl;
 			if (mRiftLScreen.getWidth() != mRiftRScreen.getWidth() || mRiftLScreen.getHeight() != mRiftRScreen.getHeight())
 			{
 				llwarns << "Oculus Rift: Left and right FBOs not the same size!" << llendl;
 				return false;
 			}
-			gRiftHBuffer = mRiftLScreen.getWidth();
+			gRiftHBuffer = mRiftLScreen.getWidth();   // Actual render target size might be different from that requested.
 			gRiftVBuffer = mRiftLScreen.getHeight();
 
 			// DJRTODO: Use minimum of requested and provided size as render size?
@@ -1068,7 +1069,10 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 			gRiftEyeTextures[1].OGL.Header.TextureSize = textureSize;
 			gRiftEyeTextures[1].OGL.Header.RenderViewport = renderSize;
 			gRiftEyeTextures[1].OGL.TexId = mRiftRScreen.getTexture();
+
 		}
+
+		//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the correct place for this but with buggy 0.4.1 having it here causes viewer to crash.
 		// </CV:David>
 		if (samples > 0)
 		{

@@ -10441,13 +10441,12 @@ void CVToggle3D::setRiftlook(bool on)
 		}
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
-			// DJRTODO: Are gRiftHSample and gRiftVSample set correctly?
 			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
 		}
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 		gSavedSettings.setF32("CameraAngle", gRiftFOV);
-		gAgentCamera.changeCameraToMouselook(TRUE);
+		gAgentCamera.changeCameraToMouselook(FALSE);  // Don't animate camera so that screen and FBO are correctly sized immediately
 		gAgentCamera.resetRotatingView();
 	}
 	else
@@ -10469,7 +10468,7 @@ void CVToggle3D::setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
-	setRiftSDKRendering(gRift3DEnabled);
+	setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 
 	if (was_in_flycam)
 	{

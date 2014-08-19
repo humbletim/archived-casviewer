@@ -242,6 +242,7 @@ protected:
 
 private:
 
+	void initRift();  // <CV:David>
 	void initMaxHeapSize();
 	bool initThreads(); // Initialize viewer threads, return false on failure.
 	bool initConfiguration(); // Initialize settings from the command line/config file.
@@ -466,7 +467,7 @@ extern U32 gRiftHSample;
 extern U32 gRiftVSample;
 extern U32 gRiftHBuffer;
 extern U32 gRiftVBuffer;
-extern U32 gRiftLensOffset;
+extern S32 gRiftLensOffset;
 extern F32 gRiftEyeDeltaL;
 extern F32 gRiftEyeDeltaR;
 extern F32 gRiftCullCameraDelta;

@@ -299,7 +299,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		LLFastTimer t(FTM_RESIZE_WINDOW);
 		gGL.flush();
 		glClear(GL_COLOR_BUFFER_BIT);
-		gViewerWindow->getWindow()->swapBuffers();
+		if (!gRift3DEnabled)
+		{
+			gViewerWindow->getWindow()->swapBuffers();
+		}
 		LLPipeline::refreshCachedSettings();
 		gPipeline.resizeScreenTexture();
 		gResizeScreenTexture = FALSE;
@@ -734,7 +737,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		// <CV:David>
 		if (gRift3DEnabled)
 		{
-			gAgentCamera.calcRiftValues();
+			gAgentCamera.calcRiftValues();  // DJRTODO: Do separately for each eye?
 		}
 
 		if ((gOutputType == OUTPUT_TYPE_NORMAL) 
@@ -765,7 +768,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gRiftCurrentEye = 0;
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
 			headPose[eye] = ovrHmd_GetEyePose(gRiftHMD, eye);
-			// DJRTODO: Use eyePose to calculate better left eye stereo projection etc. values?
+			// DJRTODO: Use headPose to calculate better left eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
@@ -776,7 +779,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			gRiftCurrentEye = 1;
 			eye = gRiftHMD->EyeRenderOrder[1];
 			headPose[eye] = ovrHmd_GetEyePose(gRiftHMD, eye);
-			// DJRTODO: Use eyePose to calculate better right eye stereo projection etc. values?
+			// DJRTODO: Use headPose to calculate better right eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
@@ -1984,13 +1987,20 @@ void setRiftSDKRendering(bool on)
 		renderTargetSize.w = gRiftHBuffer;
 		renderTargetSize.h = gRiftVBuffer;
 
-		LLWindow* window = (LLWindow*)gViewerWindow->getWindow()->getHwnd();
+		//LLWindow* window = (LLWindow*)gViewerWindow->getWindow()->getHwnd();
+		HWND window = (HWND)gViewerWindow->getPlatformWindow();  // DJRTODO: Try this.
+		//HGLRC test;
+		//DC = llwindowwin32.h's mhRC, I think.
 
 		gRiftConfig.OGL.Header.API = ovrRenderAPI_OpenGL;
 		gRiftConfig.OGL.Header.RTSize = renderTargetSize;
 		gRiftConfig.OGL.Header.Multisample = 1;
-		gRiftConfig.OGL.Window = (HWND)window;
-		//gRiftConfig.OGL.DC = ???;  // DJRTODO: Needed?
+		// DJRTDODO ...
+		//gRiftConfig.OGL.Window = (HWND)window;  // Optional according to pop-up text
+		//gRiftConfig.OGL.DC = ???;  // Optional according to pop-up text  // OculusWorldDemo doesn't use it.
+		gRiftConfig.OGL.Window = window;
+		gRiftConfig.OGL.DC = GetDC(window);
+		//HDC mhDC = GetDC(mWindowHandle)
 
 		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, eyeRenderDesc))
 		{
@@ -2026,7 +2036,7 @@ void setRiftSDKRendering(bool on)
 
 			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
 
-			ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle
+			ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 		}
 		else
 		{

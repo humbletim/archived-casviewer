@@ -2217,11 +2217,20 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
 		{
+			llinfos << "Oculus Rift: Sensor found toggling into Riftlook" << llendl;  // DJRTODO: Delete? No, if can cope with sensor being plugged in at runtime.
+
 			float yaw, pitch, roll;
 			OVR::Posef pose = trackingState.HeadPose.ThePose;
 			pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
 			mLastRiftYaw = yaw;
 			mEyeYaw = 0.f;
+
+			// DJRTODO: Check for and start using camera, similarly, with log message too.
+		}
+		else
+		{
+			llinfos << "Oculus Rift: Sensor NOT found toggling into Riftlook" << llendl;
+			// DJTDODO: What to do?
 		}
 	}
 	// </CV:David>
@@ -3005,6 +3014,10 @@ void LLAgentCamera::loadCameraPosition()
 void LLAgentCamera::calcRiftValues()
 {
 	ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
+	// DJRTODO: Is this the correct timing to use? See SDK doc 8.2.4.
+	if (!(trackingState.StatusFlags & ovrStatus_OrientationTracked)) {
+		//DJRTODO: What to do?!
+	}
 
 	float yaw, roll, pitch;
 	OVR::Posef pose = trackingState.HeadPose.ThePose;
