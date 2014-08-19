@@ -2214,11 +2214,15 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	// <CV:David>
 	if (gRift3DEnabled)
 	{
-		OVR::Quatf hmdOrientation = gRiftFusionResult->GetPredictedOrientation();
-		float yaw, pitch, roll;
-		hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
-		mLastRiftYaw = yaw;
-		mEyeYaw = 0.f;
+		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
+		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
+		{
+			float yaw, pitch, roll;
+			OVR::Posef pose = trackingState.HeadPose.ThePose;
+			pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+			mLastRiftYaw = yaw;
+			mEyeYaw = 0.f;
+		}
 	}
 	// </CV:David>
 }
@@ -3000,9 +3004,11 @@ void LLAgentCamera::loadCameraPosition()
 
 void LLAgentCamera::calcRiftValues()
 {
-	OVR::Quatf hmdOrientation = gRiftFusionResult->GetPredictedOrientation();
+	ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
+
 	float yaw, roll, pitch;
-	hmdOrientation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+	OVR::Posef pose = trackingState.HeadPose.ThePose;
+	pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
 
 	F32 deltaYaw = yaw - mLastRiftYaw;
 	if (gRiftStanding)

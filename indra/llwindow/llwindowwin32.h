@@ -115,6 +115,9 @@ public:
 //-TT Window Title Access
 	/*virtual*/ void setTitle(const std::string& win_title);
 //-TT
+	
+	/*virtual*/ void* getHwnd();
+
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
 	static std::vector<std::string> getDynamicFallbackFontList();

@@ -133,10 +133,12 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 	// <CV:David>
 	if (gRift3DEnabled)
 	{
-		S32 delta_x = llround((gSavedSettings.getF32("RiftEyeSeparation") / (2000.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
-		x = x + ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? delta_x : -delta_x);
+		bool leftEye = (gViewerWindow->getCurrentMouseX() < gRiftHFrame);
+		//S32 delta_x = llround(((leftEye ? gRiftEyeDeltaL : gRiftEyeDeltaR) / (2.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
+		S32 delta_x = llround(((leftEye ? gRiftEyeDeltaL : gRiftEyeDeltaR) / (2.f * gRiftHSample)) * gRiftHFrame);  // DJRTODO
+		x = x + (leftEye ? -delta_x : delta_x);
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		x = x - ((gViewerWindow->getCurrentMouseX() > gRiftHFrame) ? uiDepth : -uiDepth);
+		x = x - (leftEye ? -uiDepth : uiDepth);
 	}
 	// </CV:David>
 

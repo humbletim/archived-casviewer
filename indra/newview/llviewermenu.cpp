@@ -10441,6 +10441,7 @@ void CVToggle3D::setRiftlook(bool on)
 		}
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
+			// DJRTODO: Are gRiftHSample and gRiftVSample set correctly?
 			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
 		}
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
@@ -10468,6 +10469,7 @@ void CVToggle3D::setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
+	setRiftSDKRendering(gRift3DEnabled);
 
 	if (was_in_flycam)
 	{

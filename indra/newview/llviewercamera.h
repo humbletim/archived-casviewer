@@ -160,7 +160,8 @@ protected:
 	F32 mStereoCameraFOV;
 	F32 mStereoCameraAspect;
 	LLVector3 mStereoCameraPosition;
-	LLVector3 mStereoCameraDeltaLeft;
+	LLVector3 mStereoCameraDeltaL;
+	LLVector3 mStereoCameraDeltaR;
 	F32 mStereoCullCameraFOV;
 	F32 mStereoCullCameraAspect;
 	LLVector3 mStereoCullCameraDeltaForwards;

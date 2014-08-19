@@ -1815,7 +1815,8 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	
 	// <CV:David>
 	//mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
-	F32 pixel_aspect_ratio = gRift3DConfigured && p.fullscreen ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	//F32 pixel_aspect_ratio = gRift3DConfigured && p.fullscreen ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	F32 pixel_aspect_ratio = gRift3DConfigured && p.fullscreen ? 1.f : mWindow->getPixelAspectRatio();  // Assumes Rift has square pixels
 	mDisplayScale.setVec(llmax(1.f / pixel_aspect_ratio, 1.f), llmax(pixel_aspect_ratio, 1.f));
 	// </CV:David>
 	mDisplayScale *= ui_scale_factor;
@@ -3264,9 +3265,8 @@ void LLViewerWindow::moveCursorToCenter()
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
 		// <CV:David>
-		//S32 x = getWorldViewWidthScaled() / 2;
-		//S32 y = getWorldViewHeightScaled() / 2;
-		S32 x = gRift3DEnabled ? gRiftHFrame / 2 + llround(gRiftLensOffset) : getWindowWidthScaled() / 2;
+		// DJRTDODO: Confirm operation
+		S32 x = gRift3DEnabled ? gRiftHFrame / 2 + gRiftLensOffset : getWindowWidthScaled() / 2;
 		S32 y = gRift3DEnabled ? gRiftVFrame / 2 : getWindowHeightScaled() / 2;
 		// <CV:David>
 	
@@ -5732,7 +5732,8 @@ void LLViewerWindow::calcDisplayScale()
 	LLVector2 display_scale;
 	// <CV:David>
 	//mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
-	F32 pixel_aspect_ratio = gRift3DConfigured && mWindow->getFullscreen() ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	//F32 pixel_aspect_ratio = gRift3DConfigured && mWindow->getFullscreen() ? ((F32)gRiftHResolution / (F32)gRiftVResolution) * (gRiftVScreenSize / gRiftHScreenSize) : mWindow->getPixelAspectRatio();
+	F32 pixel_aspect_ratio = gRift3DConfigured && mWindow->getFullscreen() ? 1.f : mWindow->getPixelAspectRatio();  // Assumes Rift has square pixels
 	display_scale.setVec(llmax(1.f / pixel_aspect_ratio, 1.f), llmax(pixel_aspect_ratio, 1.f));
 	// </CV:David>
 	display_scale *= ui_scale_factor;
@@ -5871,6 +5872,9 @@ LLRect LLViewerWindow::getChatConsoleRect()
 // <CV:David>
 LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
 {
+	// DJRTODO ...
+	return LLVector2(x, y);
+	/*
 	// Convert screen coordinate in Rift distorted image to sample coordinate in undistorted sample frame buffer.
 
 	LLVector2 coord((F32)(x % gRiftHFrame) + 0.5, (F32)y + 0.5);
@@ -5896,6 +5900,7 @@ LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
 	coord = lens_center_out + LLVector2(rVector[0] * scale_out[0], rVector[1] * scale_out[1]); 
 
 	return LLVector2((U32)llclamp(llround(coord[0]), 0, (S32)gRiftHSample), (U32)llclamp(llround(coord[1]), 0, (S32)gRiftVSample));
+	*/
 }
 // </CV:David>
 
