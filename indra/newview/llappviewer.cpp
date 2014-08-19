@@ -84,6 +84,7 @@
 #include "lllocationhistory.h"
 #include "llfasttimerview.h"
 #include "llvector4a.h"
+#include "llviewermenu.h"  // <CV:David> DJRTODO: Temporarily needed for going fullscreen with DK2 in extended mode
 #include "llviewermenufile.h"
 #include "llvoicechannel.h"
 #include "llvoavatarself.h"
@@ -382,6 +383,9 @@ ovrFrameTiming gRiftFrameTiming;
 ovrGLConfig gRiftConfig;
 ovrFovPort gRiftEyeFov[2];
 ovrGLTexture gRiftEyeTextures[2];
+
+bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
+bool gDoSetRiftlookValue;  // DJRTODO: Temporarily use while using DK2 extended mode
 
 U32 gRiftHResolution;
 U32 gRiftVResolution;
@@ -5038,7 +5042,8 @@ void LLAppViewer::userQuit()
 	// <CV:David>
 	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
 	{
-		CVToggle3D::setRiftlook(FALSE);
+		// CVToggle3D::setRiftlook(FALSE);
+		CVToggle3D::setFullscreenThenRiftlook(FALSE);  // DJRTODO: Temporarily use while using DK2 extended mode
 	}
 	// </CV:David>
 	

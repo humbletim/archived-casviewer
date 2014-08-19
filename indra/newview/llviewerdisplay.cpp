@@ -81,6 +81,7 @@
 #include "rlvhandler.h"
 #include "rlvlocks.h"
 // [/RLVa:KB]
+#include "llviewermenu.h"  // <CV:David> DJRTODO: Temporarily needed for going fullscreen with DK2 in extended mode
 
 extern LLPointer<LLViewerTexture> gStartTexture;
 extern bool gShiftFrame;
@@ -862,6 +863,14 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		gShaderProfileFrame = FALSE;
 		LLGLSLShader::finishProfile();
 	}
+	
+	// <CV:David>
+	// Temporary coded needed when going fullscreen when toggling into Riftlook so that Rift driver picks up full screen resolution.
+	if (gDoSetRiftlook) {
+		CVToggle3D::setRiftlook(gDoSetRiftlookValue);
+	}
+	gDoSetRiftlook = false;
+	// </CV:David>
 }
 
 void render_frame(U32 render_type)  // <CV:David> Frame rendering refactored for use in stereoscopic 3D.
@@ -1987,20 +1996,24 @@ void setRiftSDKRendering(bool on)
 		renderTargetSize.w = gRiftHBuffer;
 		renderTargetSize.h = gRiftVBuffer;
 
+		// Both the following appear to work ...
+		HWND window = (HWND)gViewerWindow->getPlatformWindow();
 		//LLWindow* window = (LLWindow*)gViewerWindow->getWindow()->getHwnd();
-		HWND window = (HWND)gViewerWindow->getPlatformWindow();  // DJRTODO: Try this.
-		//HGLRC test;
-		//DC = llwindowwin32.h's mhRC, I think.
+
+		// DJRTODO: Where to do the following? ... Here or below?
+		ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle
 
 		gRiftConfig.OGL.Header.API = ovrRenderAPI_OpenGL;
 		gRiftConfig.OGL.Header.RTSize = renderTargetSize;
 		gRiftConfig.OGL.Header.Multisample = 1;
-		// DJRTDODO ...
-		//gRiftConfig.OGL.Window = (HWND)window;  // Optional according to pop-up text
-		//gRiftConfig.OGL.DC = ???;  // Optional according to pop-up text  // OculusWorldDemo doesn't use it.
+
+		// Optional according to pop-up text ...
+		// Both the following seem to work.
 		gRiftConfig.OGL.Window = window;
-		gRiftConfig.OGL.DC = GetDC(window);
-		//HDC mhDC = GetDC(mWindowHandle)
+		//gRiftConfig.OGL.Window = (HWND)window;
+
+		// Optional according to pop-up text; OculusWorldDemo doesn't use it ...
+		//gRiftConfig.OGL.DC = GetDC(window);
 
 		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, eyeRenderDesc))
 		{
@@ -2036,7 +2049,8 @@ void setRiftSDKRendering(bool on)
 
 			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
 
-			ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
+			// DJRTODO: Where to do the following? ... Here or above?
+			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 		}
 		else
 		{

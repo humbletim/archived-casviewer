@@ -1528,7 +1528,8 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 		// <CV:David>
 		if (gRift3DEnabled)
 		{
-			CVToggle3D::setRiftlook(false);
+			//CVToggle3D::setRiftlook(false);
+			CVToggle3D::setFullscreenThenRiftlook(false);  // DJRTODO: Temporarily use while using DK2 extended mode
 		}
 		else
 		// </CV:David>

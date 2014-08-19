@@ -454,6 +454,9 @@ extern ovrGLConfig gRiftConfig;
 extern ovrFovPort gRiftEyeFov[2];
 extern ovrGLTexture gRiftEyeTextures[2];
 
+extern bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
+extern bool gDoSetRiftlookValue;  // DJRTODO: Temporarily use while using DK2 extended mode
+
 extern U32 gRiftHResolution;
 extern U32 gRiftVResolution;
 extern F32 gRiftAspect;
