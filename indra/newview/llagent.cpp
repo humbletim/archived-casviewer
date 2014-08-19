@@ -681,7 +681,7 @@ void LLAgent::decreaseWalkSpeed()
 // moveAt()
 //-----------------------------------------------------------------------------
 // <CV:David>
-void LLAgent::moveAt(F32 velocity)
+void LLAgent::moveAt(F32 velocity, bool reset)
 {
 	// Moves at variable speed.
 
@@ -690,7 +690,7 @@ void LLAgent::moveAt(F32 velocity)
 	U32 speed = llmin(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
 	mWalkSpeedFlag = mWalkSpeedFlags[speed];
 
-	moveAt(direction);
+	moveAt(direction, reset);
 }
 // </CV:David>
 
@@ -739,7 +739,10 @@ void LLAgent::moveAt(S32 direction, bool reset)
 //-----------------------------------------------------------------------------
 // moveAtNudge()
 //-----------------------------------------------------------------------------
-void LLAgent::moveAtNudge(S32 direction)
+// <CV:David>
+//void LLAgent::moveAtNudge(S32 direction)
+void LLAgent::moveAtNudge(S32 direction, bool reset)
+// </CV:David>
 {
 	mMoveTimer.reset();
 	LLFirstUse::notMoving(false);
@@ -758,17 +761,20 @@ void LLAgent::moveAtNudge(S32 direction)
 		setControlFlags(AGENT_CONTROL_NUDGE_AT_NEG);
 	}
 
+	if (reset)  // <CV:David>
+	{
 // <FS:CR> FIRE-8798: Option to prevent camera reset on movement
-	//gAgentCamera.resetView();
-	gAgentCamera.resetView(TRUE, FALSE, TRUE);
+		//gAgentCamera.resetView();
+		gAgentCamera.resetView(TRUE, FALSE, TRUE);
 // </FS:CR>
+	}
 }
 
 //-----------------------------------------------------------------------------
 // moveLeft()
 //-----------------------------------------------------------------------------
 // <CV:David>
-void LLAgent::moveLeft(F32 velocity)
+void LLAgent::moveLeft(F32 velocity, bool reset)
 {
 	// Moves at variable speed.
 
@@ -777,11 +783,14 @@ void LLAgent::moveLeft(F32 velocity)
 	U32 speed = llmin(llfloor(abs(velocity) * (F32)mWalkSpeed), (S32)mWalkSpeed);  // 0.1..1.0 => 0..mWalkSpeed
 	mWalkSpeedFlag = mWalkSpeedFlags[speed];
 
-	moveLeft(direction);
+	moveLeft(direction, reset);
 }
 // </CV:David>
 
-void LLAgent::moveLeft(S32 direction)
+// <CV:David>
+//void LLAgent::moveLeft(S32 direction)
+void LLAgent::moveLeft(S32 direction, bool reset)
+// </CV:David>
 {
 	mMoveTimer.reset();
 	LLFirstUse::notMoving(false);
@@ -814,16 +823,22 @@ void LLAgent::moveLeft(S32 direction)
 	}
 	// </CV:David>
 
+	if (reset)  // <CV:David>
+	{
 // <FS:CR> FIRE-8798: Option to prevent camera reset on movement
-	//gAgentCamera.resetView();
-	gAgentCamera.resetView(TRUE, FALSE, TRUE);
+		//gAgentCamera.resetView();
+		gAgentCamera.resetView(TRUE, FALSE, TRUE);
 // </FS:CR>
+	}
 }
 
 //-----------------------------------------------------------------------------
 // moveLeftNudge()
 //-----------------------------------------------------------------------------
-void LLAgent::moveLeftNudge(S32 direction)
+// <CV:David>
+//void LLAgent::moveLeftNudge(S32 direction)
+void LLAgent::moveLeftNudge(S32 direction, bool reset)
+// </CV:David>
 {
 	mMoveTimer.reset();
 	LLFirstUse::notMoving(false);
@@ -842,10 +857,13 @@ void LLAgent::moveLeftNudge(S32 direction)
 		setControlFlags(AGENT_CONTROL_NUDGE_LEFT_NEG);
 	}
 
+	if (reset)  // <CV:David>
+	{
 // <FS:CR> FIRE-8798: Option to prevent camera reset on movement
-	//gAgentCamera.resetView();
-	gAgentCamera.resetView(TRUE, FALSE, TRUE);
+		//gAgentCamera.resetView();
+		gAgentCamera.resetView(TRUE, FALSE, TRUE);
 // </FS:CR>
+	}
 }
 
 // <CV:David>
