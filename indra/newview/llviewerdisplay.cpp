@@ -2051,6 +2051,12 @@ void setRiftSDKRendering(bool on)
 
 			// DJRTODO: Where to do the following? ... Here or above?
 			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
+
+			// Automatically dismiss ASAP ... DJRTODO: Can remove when ovrhmd_EnableHSWDisplaySDKRender() becomes available.
+			if (!gRiftHSWEnabled)
+			{
+				ovrHmd_DismissHSWDisplay(gRiftHMD);
+			}
 		}
 		else
 		{

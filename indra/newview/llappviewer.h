@@ -474,6 +474,7 @@ extern S32 gRiftLensOffset;
 extern F32 gRiftEyeDeltaL;
 extern F32 gRiftEyeDeltaR;
 extern F32 gRiftCullCameraDelta;
+extern bool gRiftHSWEnabled;
 // </CV:David>
 
 // <CV:David>

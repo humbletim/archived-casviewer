@@ -404,6 +404,7 @@ S32 gRiftLensOffset;		// Pixels offset from centre of screen to centre of FOV.
 F32 gRiftEyeDeltaL;			// Distance to offset camera for eye.
 F32 gRiftEyeDeltaR;			// ""
 F32 gRiftCullCameraDelta;	// Distance back to move cull frustum camera.
+bool gRiftHSWEnabled;
 // </CV:David>
 
 // <CV:David>
@@ -899,6 +900,8 @@ bool LLAppViewer::init()
 
 	gOutputType = gSavedSettings.getU32("OutputType");
 	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
+	gDoSetRiftlook = false;
+	gRiftHSWEnabled = true;
 	//initRift();  // DJRTODO: initRift() here causes application to crash at start-up.
 	
 // <FS>
