@@ -6767,18 +6767,21 @@ void LLAppViewer::handleLoginComplete()
 
 	// <CV:David>
 	// Rift camera takes a while to initialize so check camera here rather than at start-up.
-	int statusFlags = ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags;
-	if (statusFlags & ovrStatus_HmdConnected && gRiftHMD->Type >= ovrHmd_DK2)
+	if (gRift3DConfigured)
 	{
-		if (statusFlags & ovrStatus_PositionConnected)
+		int statusFlags = ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags;
+		if (statusFlags & ovrStatus_HmdConnected && gRiftHMD->Type >= ovrHmd_DK2)
 		{
-			LL_INFOS("InitInfo") << "Oculus Rift: Camera found" << LL_ENDL;
-		}
-		else
-		{
-			LL_INFOS("InitInfo") << "Oculus Rift: Camera NOT found" << LL_ENDL;
-			LLNotificationsUtil::add("AlertRiftCameraNotFound", LLSD());
-			// DJRTODO: What to do? Don't try to use Rift position if camera not found? Note: It may be plugged in after the fact, so perhaps warn user?
+			if (statusFlags & ovrStatus_PositionConnected)
+			{
+				LL_INFOS("InitInfo") << "Oculus Rift: Camera found" << LL_ENDL;
+			}
+			else
+			{
+				LL_INFOS("InitInfo") << "Oculus Rift: Camera NOT found" << LL_ENDL;
+				LLNotificationsUtil::add("AlertRiftCameraNotFound", LLSD());
+				// DJRTODO: What to do? Don't try to use Rift position if camera not found? Note: It may be plugged in after the fact, so perhaps warn user?
+			}
 		}
 	}
 	// </CV:David>
