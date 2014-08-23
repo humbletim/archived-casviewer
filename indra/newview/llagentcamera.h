@@ -404,7 +404,7 @@ public:
 	LLQuaternion	getRiftPitch()	{ return mRiftPitch; }
 	LLQuaternion	getRiftRoll()	{ return mRiftRoll; }
 	LLQuaternion	getRiftYaw()	{ return mRiftYaw; }
-	void			resetRotatingView() { mRotatingView = 0; }
+	void			zeroSensors();
 
 private:
 	LLQuaternion	mRiftYaw;

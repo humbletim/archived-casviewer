@@ -2232,6 +2232,8 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 			llinfos << "Oculus Rift: Sensor NOT found toggling into Riftlook" << llendl;
 			// DJTDODO: What to do?
 		}
+
+		mRotatingView = 0;
 	}
 	// </CV:David>
 }
@@ -3057,6 +3059,27 @@ void LLAgentCamera::calcRiftValues()
 		if (!root_object->flagCameraDecoupled())
 		{
 			mAgentRot *= ((LLViewerObject*)(gAgentAvatarp->getParent()))->getRenderRotation();
+		}
+	}
+}
+
+void LLAgentCamera::zeroSensors()
+{
+	if (gRift3DEnabled)
+	{
+		llinfos << "LLAgentCamera::zeroSensors()" << llendl;
+
+		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
+		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
+		{
+			gAgent.rotate(mEyeYaw, LLVector3::z_axis);
+
+			float yaw, pitch, roll;
+			OVR::Posef pose = trackingState.HeadPose.ThePose;
+			pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
+			mLastRiftYaw = yaw;
+			mEyeYaw = 0.f;
+			mRotatingView = 0;
 		}
 	}
 }
