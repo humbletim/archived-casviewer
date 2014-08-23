@@ -1495,38 +1495,29 @@ void LLAppViewer::initRift()
 		if (gRiftHMD)
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: HMD found" << LL_ENDL;
-		}
-		else
-		{
-			// DJRTDODO: Alert user
-			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found; simulated device used" << LL_ENDL;
-			gRiftHMD = ovrHmd_CreateDebug(ovrHmd_DK1);
-		}
 
-		// Support DK1 and DK2-style HDMs
-		// DJRTODO: Don't try to configure sensor if did ovrHmd_CreateDebug(ovrHmd_DK1)? Or does the following handle things automatically?
-		ovrHmd_ConfigureTracking(gRiftHMD, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
-		int statusFlags = ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags;
-		if (statusFlags & ovrStatus_HmdConnected)
-		{
-			LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
-			if (statusFlags & ovrStatus_PositionConnected)
+			// Support DK1 and DK2-style HDMs
+			ovrHmd_ConfigureTracking(gRiftHMD, ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position, 0);
+			int statusFlags = ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags;
+			if (statusFlags & ovrStatus_HmdConnected)
 			{
-				LL_INFOS("InitInfo") << "Oculus Rift: Camera found" << LL_ENDL;
+				LL_INFOS("InitInfo") << "Oculus Rift: Sensor found" << LL_ENDL;
 			}
 			else
 			{
-				LL_INFOS("InitInfo") << "Oculus Rift: Camera NOT found" << LL_ENDL;
-				// DJRTODO: What to do? Don't try to use Rift position if camera not found? Note: It may be plugged in after the fact, so perhaps warn user?
+				LL_INFOS("InitInfo") << "Oculus Rift: Sensors NOT found" << LL_ENDL;
+				LLNotificationsUtil::add("AlertRiftSensorsNotFound", LLSD());
+				// DJRTODO: What to do? Don't try to use Rift orientation if sensor not found?
+				LL_INFOS("InitInfo") << "Oculus Rift: StatusFlags = " << ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags << LL_ENDL;
 			}
 		}
 		else
 		{
-			LL_INFOS("InitInfo") << "Oculus Rift: Sensor NOT found" << LL_ENDL;
-			// DJRTODO: What to do? Don't try to use Rift orientation if sensor not found?
-			LL_INFOS("InitInfo") << "Oculus Rift: StatusFlags = " << ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags << LL_ENDL;
+			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found; simulated device used" << LL_ENDL;
+			LLNotificationsUtil::add("AlertRiftHMDNotFound", LLSD());
+			gRiftHMD = ovrHmd_CreateDebug(ovrHmd_DK1);
+			ovrHmd_ConfigureTracking(gRiftHMD, 0, 0);
 		}
-		// DJRTODO: Check to see if camera is connected too
 
 		LL_INFOS("InitInfo") << "Oculus Rift: Type = " << gRiftHMD->Type << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: Product name = " << gRiftHMD->ProductName << LL_ENDL;
@@ -6773,6 +6764,24 @@ void LLAppViewer::handleLoginComplete()
 	// we logged in successfully, so save settings on logout
 	lldebugs << "Login successful, per account settings will be saved on logout." << llendl;
 	mSavePerAccountSettings=true;
+
+	// <CV:David>
+	// Rift camera takes a while to initialize so check camera here rather than at start-up.
+	int statusFlags = ovrHmd_GetTrackingState(gRiftHMD, ovr_GetTimeInSeconds()).StatusFlags;
+	if (statusFlags & ovrStatus_HmdConnected && gRiftHMD->Type >= ovrHmd_DK2)
+	{
+		if (statusFlags & ovrStatus_PositionConnected)
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Camera found" << LL_ENDL;
+		}
+		else
+		{
+			LL_INFOS("InitInfo") << "Oculus Rift: Camera NOT found" << LL_ENDL;
+			LLNotificationsUtil::add("AlertRiftCameraNotFound", LLSD());
+			// DJRTODO: What to do? Don't try to use Rift position if camera not found? Note: It may be plugged in after the fact, so perhaps warn user?
+		}
+	}
+	// </CV:David>
 }
 
 void LLAppViewer::launchUpdater()
