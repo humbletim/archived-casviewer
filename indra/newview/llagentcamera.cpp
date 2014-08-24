@@ -1800,11 +1800,22 @@ LLVector3d LLAgentCamera::calcCameraPositionTargetGlobal(BOOL *hit_limit)
 		}
 		else
 		{
-			head_offset.mdV[VZ] = gAgentAvatarp->mHeadOffset.mV[VZ];
-			if (gAgentAvatarp->isSitting())
+			if (gRift3DEnabled)
 			{
-				head_offset.mdV[VZ] += 0.1;
+				gAgentAvatarp->updateHeadOffset();
+				gRiftHeadOffset = llmax(gRiftHeadOffset, gAgentAvatarp->mHeadOffset.mV[VZ]);
+				head_offset.mdV[VZ] = gRiftHeadOffset;
 			}
+			else
+			{
+				head_offset.mdV[VZ] = gAgentAvatarp->mHeadOffset.mV[VZ];
+
+				if (gAgentAvatarp->isSitting())
+				{
+					head_offset.mdV[VZ] += 0.1;
+				}
+			}
+
 			camera_position_global = gAgent.getPosGlobalFromAgent(gAgentAvatarp->getRenderPosition());//frame_center_global;
 			head_offset = head_offset * gAgentAvatarp->getRenderRotation();
 			camera_position_global = camera_position_global + head_offset;
@@ -2219,10 +2230,8 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 		{
 			llinfos << "Oculus Rift: Sensor found toggling into Riftlook" << llendl;  // DJRTODO: Delete? No, if can cope with sensor being plugged in at runtime.
 
-			float yaw, pitch, roll;
-			OVR::Posef pose = trackingState.HeadPose.ThePose;
-			pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
-			mLastRiftYaw = yaw;
+			ovrHmd_RecenterPose(gRiftHMD);
+			mLastRiftYaw = 0.f;
 			mEyeYaw = 0.f;
 
 			// DJRTODO: Check for and start using camera, similarly, with log message too.
@@ -3053,6 +3062,7 @@ void LLAgentCamera::calcRiftValues()
 	mRiftRoll = LLQuaternion(-roll, LLVector3::x_axis);
 
 	mAgentRot = gAgent.getFrameAgent().getQuaternion();
+
 	if (isAgentAvatarValid() && gAgentAvatarp->getParent())
 	{
 		LLViewerObject* root_object = (LLViewerObject*)gAgentAvatarp->getRoot();
@@ -3061,6 +3071,8 @@ void LLAgentCamera::calcRiftValues()
 			mAgentRot *= ((LLViewerObject*)(gAgentAvatarp->getParent()))->getRenderRotation();
 		}
 	}
+
+	mRiftPositionDelta = LLVector3(-pose.Translation.z, -pose.Translation.x, pose.Translation.y) * mAgentRot;
 }
 
 void LLAgentCamera::zeroSensors()
@@ -3074,10 +3086,8 @@ void LLAgentCamera::zeroSensors()
 		{
 			gAgent.rotate(mEyeYaw, LLVector3::z_axis);
 
-			float yaw, pitch, roll;
-			OVR::Posef pose = trackingState.HeadPose.ThePose;
-			pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
-			mLastRiftYaw = yaw;
+			ovrHmd_RecenterPose(gRiftHMD);
+			mLastRiftYaw = 0.f;
 			mEyeYaw = 0.f;
 			mRotatingView = 0;
 		}
