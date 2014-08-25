@@ -10497,7 +10497,10 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 		gSavedSettings.setF32("CameraAngle", gRiftFOV);
 		gAgentCamera.changeCameraToMouselook(FALSE);  // Don't animate camera so that screen and FBO are correctly sized immediately
-		gAgentCamera.resetRotatingView();
+
+		gAgentAvatarp->updateHeadOffset();
+		gRiftHeadOffset = gAgentAvatarp->mHeadOffset.mV[VZ];
+		llinfos << "gRiftHeadOffset = " << std::setprecision(6) << gRiftHeadOffset << llendl;  // DJRTDODO: Delete
 	}
 	else
 	{
@@ -10574,6 +10577,23 @@ class CVAllowStereoscopic3D: public view_listener_t
 	{
 		bool new_value = (gOutputType == OUTPUT_TYPE_STEREO);
 		return new_value;
+	}
+};
+
+class CVZeroSensors: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		gAgentCamera.zeroSensors();
+		return true;
+	}
+};
+
+class CVEnableZeroSensors: public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		return gRift3DConfigured;
 	}
 };
 // </CV:David>
@@ -10807,6 +10827,8 @@ void initialize_menus()
 	view_listener_t::addMenu(new CVAllow3D(), "World.Allow3D");
 	enable.add("World.EnableViewer3D", boost::bind(&viewer_3d_enabled));
 	enable.add("World.ConfigureViewer3D", boost::bind(&viewer_3d_configured));
+	view_listener_t::addMenu(new CVZeroSensors(), "World.ZeroSensors");
+	view_listener_t::addMenu(new CVEnableZeroSensors(), "World.EnableZeroSensors");
 	// </CV:David>
 
 	// Tools menu

@@ -11878,4 +11878,39 @@ Enter a domain name to be added to the [LIST]:
     </form>
   </notification>
 
+  <!-- <CV:David> -->
+  <notification
+   icon="notifymodal.tga"
+   name="AlertRiftHMDNotFound"
+   type="alertmodal">
+    Rift HMD display not found. Please check connections and restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
+  <notification
+   icon="notifymodal.tga"
+   name="AlertRiftSensorsNotFound"
+   type="alertmodal">
+    Rift HMD sensors not found. Please check connections and restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+  <!-- <CV:David> -->
+
+  <notification
+   icon="notifymodal.tga"
+   name="AlertRiftCameraNotFound"
+   type="alertmodal">
+    Rift camera not found. Please check connections and restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
 </notifications>

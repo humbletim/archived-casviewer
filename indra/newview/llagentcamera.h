@@ -404,7 +404,8 @@ public:
 	LLQuaternion	getRiftPitch()	{ return mRiftPitch; }
 	LLQuaternion	getRiftRoll()	{ return mRiftRoll; }
 	LLQuaternion	getRiftYaw()	{ return mRiftYaw; }
-	void			resetRotatingView() { mRotatingView = 0; }
+	LLVector3		getRiftPositionDelta() { return mRiftPositionDelta; }
+	void			zeroSensors();
 
 private:
 	LLQuaternion	mRiftYaw;
@@ -414,6 +415,7 @@ private:
 	LLQuaternion	mAgentRot;
 	F32				mEyeYaw;
 	S32				mRotatingView;  // 0: not rotating; +/-1 rotating in +/- direction
+	LLVector3		mRiftPositionDelta;
 // </CV:David>
 };
 
