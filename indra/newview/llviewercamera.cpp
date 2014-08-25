@@ -1033,9 +1033,6 @@ void LLViewerCamera::calcStereoValues()
 		mStereoCullCameraDeltaForwards = -gRiftCullCameraDelta * mXAxis;
 		mStereoCullCameraFOV = mStereoCameraFOV;
 		mStereoCullCameraAspect = gRiftAspect;
-
-		LLVector3 deltaPosition = gAgentCamera.getRiftPositionDelta();
-		mStereoCameraPosition = mStereoCameraPosition + deltaPosition;
 	}
 
 	// Delta position for left camera.

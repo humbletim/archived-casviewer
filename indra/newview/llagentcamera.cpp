@@ -1467,6 +1467,8 @@ void LLAgentCamera::updateCamera()
 		focusRotation.getEulerAngles(&focusRoll, &focusPitch, &focusYaw);
 		LLQuaternion focusPitchAndYaw = LLQuaternion(focusPitch, LLVector3::y_axis) * LLQuaternion(focusYaw, LLVector3::z_axis);
 
+		mCameraPositionAgent = mCameraPositionAgent + mRiftPositionDelta * mAgentRot;
+
 		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * focusPitchAndYaw;
 
 		LLVector3 rift_focus_agent = mCameraPositionAgent + LLVector3::x_axis * mRiftPitch * mRiftYaw * focusPitchAndYaw;
@@ -3072,7 +3074,7 @@ void LLAgentCamera::calcRiftValues()
 		}
 	}
 
-	mRiftPositionDelta = LLVector3(-pose.Translation.z, -pose.Translation.x, pose.Translation.y) * mAgentRot;
+	mRiftPositionDelta = LLVector3(-pose.Translation.z, -pose.Translation.x, pose.Translation.y);
 }
 
 void LLAgentCamera::zeroSensors()
@@ -3084,8 +3086,14 @@ void LLAgentCamera::zeroSensors()
 		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
 		{
-			gAgent.rotate(mEyeYaw, LLVector3::z_axis);
-
+			if (LLViewerJoystick::getInstance()->getOverrideCamera())
+			{
+				LLViewerJoystick::getInstance()->moveFlycam(true);
+			}
+			else
+			{
+				gAgent.rotate(mEyeYaw, LLVector3::z_axis);
+			}
 			ovrHmd_RecenterPose(gRiftHMD);
 			mLastRiftYaw = 0.f;
 			mEyeYaw = 0.f;

@@ -1291,22 +1291,29 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	// <CV:David>
 	//	LLMatrix3 mat(sFlycamRotation);
 	LLMatrix3 mat;
+	LLVector3 deltaPosition;
 	if (gRift3DEnabled)
 	{
 		LLQuaternion riftPitch = gAgentCamera.getRiftPitch();
 		LLQuaternion riftRoll = gAgentCamera.getRiftRoll();
 		LLQuaternion riftYaw = gAgentCamera.getRiftYaw();
-		LLQuaternion riftRotation = riftPitch * riftRoll * riftYaw * sFlycamRotation;
+		LLQuaternion riftRotation = riftRoll * riftPitch * riftYaw * sFlycamRotation;
 		mat = LLMatrix3(riftRotation);
+
+		deltaPosition = gAgentCamera.getRiftPositionDelta() * sFlycamRotation;
 	}
 	else
 	{
 		mat = LLMatrix3(sFlycamRotation);
+		deltaPosition = LLVector3(0.f, 0.f, 0.f);
 	}
 	// </CV:David>
 
 	LLViewerCamera::getInstance()->setView(sFlycamZoom);
-	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition);
+	// <CV:David>
+	//LLViewerCamera::getInstance()->setOrigin(sFlycamPosition);
+	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition + deltaPosition);
+	// </CV:David>
 	LLViewerCamera::getInstance()->mXAxis = LLVector3(mat.mMatrix[0]);
 	LLViewerCamera::getInstance()->mYAxis = LLVector3(mat.mMatrix[1]);
 	LLViewerCamera::getInstance()->mZAxis = LLVector3(mat.mMatrix[2]);
