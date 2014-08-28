@@ -458,12 +458,12 @@ void LLViewerJoystick::agentSlide(F32 inc)
 
 		if (mMovingNudges < 2)
 		{
-			gAgent.moveLeftNudge(slide < 0 ? -1 : 1);
+			gAgent.moveLeftNudge(slide < 0 ? -1 : 1, false);
 			mMovingNudges += 1;
 		}
 		else
 		{
-			gAgent.moveLeft(slide);
+			gAgent.moveLeft(slide, false);
 		}
 	}
 
@@ -494,12 +494,12 @@ void LLViewerJoystick::agentPush(F32 inc)
 
 		if (mMovingNudges < 2)
 		{
-			gAgent.moveAtNudge(push < 0 ? -1 : 1);
+			gAgent.moveAtNudge(push < 0 ? -1 : 1, false);
 			mMovingNudges += 1;
 		}
 		else
 		{
-			gAgent.moveAt(push);
+			gAgent.moveAt(push, false);
 		}
 	}
 
