@@ -8094,7 +8094,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			// <CV:David>
 			else if (gRift3DEnabled)
 			{
-				gRiftCurrentEye ? mRiftRScreen.bindTarget() : mRiftLScreen.bindTarget();
+				mScreen.bindTarget();
 			}
 			// </CV:David>
 			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
@@ -8176,7 +8176,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			// <CV:David>
 			if (gRift3DEnabled)
 			{
-				gRiftCurrentEye ? mRiftRScreen.bindTarget() : mRiftLScreen.bindTarget();
+				mScreen.bindTarget();
 			}
 			// </CV:David>
 

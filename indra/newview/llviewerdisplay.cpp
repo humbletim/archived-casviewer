@@ -1607,7 +1607,15 @@ void render_ui(F32 zoom_factor, int subfield)
 		// <CV:David>
 		if (gRift3DEnabled)
 		{
-			gRiftCurrentEye ? gPipeline.mRiftRScreen.flush() : gPipeline.mRiftLScreen.flush();
+			gPipeline.mScreen.flush();
+			if (gRiftCurrentEye)
+			{
+				gPipeline.mRiftRScreen.copyContents(gPipeline.mScreen, 0, 0,  gRiftHBuffer, gRiftVBuffer, 0, 0,  gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
+			else
+			{
+				gPipeline.mRiftLScreen.copyContents(gPipeline.mScreen, 0, 0,  gRiftHBuffer, gRiftVBuffer, 0, 0,  gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
 		}
 		// </CV:David>
 	}
