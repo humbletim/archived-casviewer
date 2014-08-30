@@ -1585,7 +1585,7 @@ void LLAppViewer::initRift()
 		gRiftEyeFov[1].LeftTan = horizontalTanIn;
 		gRiftEyeFov[1].RightTan = horizontalTanOut;
 
-		gRiftFOV = atan(2.f * verticalTan);
+		gRiftFOV = 2.f * atan(verticalTan);
 		LL_INFOS("InitInfo") << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(3) << LL_ENDL;
 
 		ovrSizei usedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftEyeFov[0], 1.f);
