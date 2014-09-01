@@ -2057,6 +2057,15 @@ void setRiftSDKRendering(bool on)
 
 			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
 
+			// Set up mouse cursor positioning ...
+			ovrDistortionMesh meshData;
+			for (int eye = 0; eye < 2; eye += 1)
+			{
+				ovrHmd_CreateDistortionMesh(gRiftHMD, eyeRenderDesc[eye].Eye, eyeRenderDesc[eye].Fov, ovrDistortionCap_Chromatic, &meshData);
+				gViewerWindow->initializeRiftUndistort(&meshData, eye);
+				ovrHmd_DestroyDistortionMesh(&meshData);
+			}
+
 			// DJRTODO: Where to do the following? ... Here or above?
 			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 

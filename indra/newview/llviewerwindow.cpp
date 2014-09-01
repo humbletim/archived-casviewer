@@ -1721,7 +1721,8 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	mCurrResolutionIndex(0),
 	mProgressView(NULL),
 	mMouseVelocityStat(new LLStat("Mouse Velocity")),
-	mProgressViewMini(NULL)
+	mProgressViewMini(NULL),
+	mRiftUndistortCache(NULL)  // <CV:David>
 {
 	// gKeyboard is still NULL, so it doesn't do LLWindowListener any good to
 	// pass its value right now. Instead, pass it a nullary function that
@@ -5871,37 +5872,115 @@ LLRect LLViewerWindow::getChatConsoleRect()
 }
 
 // <CV:David>
+LLVector2 LLViewerWindow::riftUndistortCalc(ovrDistortionMesh* mesh, U32 x, U32 y, U32 eye)
+{
+	// x: 0 .. gRiftHFrame
+	// y: 0 .. gRiveVFrame
+	// eye: 0 | 1
+
+	//typedef struct ovrDistortionMesh_
+	//{
+	//    ovrDistortionVertex* pVertexData;
+	//    unsigned short*      pIndexData;
+	//    unsigned int         VertexCount;
+	//    unsigned int         IndexCount;
+	//} ovrDistortionMesh;
+
+	//typedef struct ovrDistortionVertex_
+	//{
+	//    ovrVector2f ScreenPosNDC;    // [-1,+1],[-1,+1] over the entire framebuffer.
+	//    float       TimeWarpFactor;  // Lerp factor between time-warp matrices. Can be encoded in Pos.z.
+	//    float       VignetteFactor;  // Vignette fade factor. Can be encoded in Pos.w.
+	//    ovrVector2f TanEyeAnglesR;
+	//    ovrVector2f TanEyeAnglesG;
+	//    ovrVector2f TanEyeAnglesB;    
+	//} ovrDistortionVertex;
+
+	const int SIZE_X = 65;  // DK2 distortion mesh vertices are in matrix, 0..64 x 0..64.
+	const int SIZE_Y = 65;
+	if (SIZE_X * SIZE_Y != mesh->VertexCount)
+	{
+		llerrs << "Rift distortion mesh unexpected size!" << llendl;
+	}
+
+	// Search for quad that contains the normalized coordinates, centre out ...
+	F32 xNormalized = (F32)eye + ((F32)x - (F32)gRiftHFrame) / (F32)gRiftHFrame;  // L screen goes from -1 to 0, R screen from 0 to +1
+	F32 yNormalized = ((F32)y - (F32)gRiftVFrame / 2.f) / ((F32)gRiftVFrame / 2.f);
+	ovrDistortionVertex* v;
+	int i = (SIZE_X - 1) / 2;
+	int j = (SIZE_Y - 1) / 2;
+	bool found = false;
+	while (!found)
+	{
+		v = mesh->pVertexData + (j * SIZE_X + i);
+
+		if (xNormalized < v->ScreenPosNDC.x && i > 0)
+		{
+			i -= 1;
+		}
+		else if (xNormalized > (v + 1)->ScreenPosNDC.x && i < SIZE_X - 1)
+		{
+			i += 1;
+		}
+		else if (yNormalized > v->ScreenPosNDC.y && j > 0)
+		{
+			j -= 1;
+		}
+		else if (yNormalized < (v + SIZE_X)->ScreenPosNDC.y && j < SIZE_Y - 1)
+		{
+			j += 1;
+		}
+		else
+		{
+			found = true;
+		}
+	}
+	v = mesh->pVertexData + (j * SIZE_X + i);
+
+	// Interpolate coordinate values ...
+	ovrDistortionVertex* v00 = v;
+	ovrDistortionVertex* v01 = v + 1;
+	ovrDistortionVertex* v10 = v + SIZE_X;
+	ovrDistortionVertex* v11 = v + SIZE_X + 1;
+
+	F32 uu = (xNormalized - v00->ScreenPosNDC.x) / (v01->ScreenPosNDC.x - v00->ScreenPosNDC.x);
+	F32 vv = (yNormalized - v00->ScreenPosNDC.y) / (v10->ScreenPosNDC.y - v00->ScreenPosNDC.y);
+
+	F32 tanEyeAngleX = lerp2d(v00->TanEyeAnglesG.x, v01->TanEyeAnglesG.x, v10->TanEyeAnglesG.x, v11->TanEyeAnglesG.x, uu, vv);
+	F32 tanEyeAngleY = lerp2d(v00->TanEyeAnglesG.y, v01->TanEyeAnglesG.y, v10->TanEyeAnglesG.y, v11->TanEyeAnglesG.y, uu, vv);
+	
+	F32 riftTanFOV = tan(gRiftFOV / 2);
+	F32 xCorrected = (tanEyeAngleX / riftTanFOV * (F32)gRiftVSample + (F32)gRiftHSample) / 2.f;
+	F32 yCorrected = (-tanEyeAngleY / riftTanFOV * (F32)gRiftVSample + (F32)gRiftVSample) / 2.f;
+
+	xCorrected += eye ? -gRiftLensOffset : +gRiftLensOffset;
+
+	return LLVector2(xCorrected, yCorrected);
+}
+
+void LLViewerWindow::initializeRiftUndistort(ovrDistortionMesh* mesh, int eye)
+{
+	// Precalculate all coordinate values for use in riftUndistort().
+
+	if (mRiftUndistortCache == NULL)
+	{
+		mRiftUndistortCache = new LLVector2[2 * gRiftHFrame * gRiftVFrame];
+	}
+
+	for (int y = 0; y < gRiftVFrame; y += 1)
+	{
+		for (int x = 0; x < gRiftHFrame; x += 1)
+		{
+			mRiftUndistortCache[(eye * gRiftVFrame + y) * gRiftHFrame + x] = LLVector2(riftUndistortCalc(mesh, x, y, eye));
+		}
+	}
+}
+
 LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
 {
-	// DJRTODO ...
-	return LLVector2(x, y);
-	/*
-	// Convert screen coordinate in Rift distorted image to sample coordinate in undistorted sample frame buffer.
+	int eye = x < gRiftHFrame ? 0 : 1;
 
-	LLVector2 coord((F32)(x % gRiftHFrame) + 0.5, (F32)y + 0.5);
-
-	F32 lensOffset = (x > gRiftHFrame) ? -gRiftLensOffset : gRiftLensOffset;
-	F32 lensCenterH = gRiftHFrame / 2.f + lensOffset;
-	F32 lensCenterV = gRiftVFrame / 2.f;
-
-	LLVector2 scale_in, scale_out, lens_center_in, lens_center_out;
-	scale_in = LLVector2(2.f / gRiftHFrame, 2.f / (gRiftAspect * gRiftVFrame));
-	scale_out = LLVector2(gRiftHFrame / 2.f, (gRiftAspect * gRiftVFrame) / 2.f);
-	lens_center_in = LLVector2(lensCenterH, lensCenterV);
-	lens_center_out = LLVector2(lensCenterH * gRiftHSample / gRiftHFrame, lensCenterV * gRiftHSample / gRiftHFrame);
-
-	LLVector2 theta = (coord - lens_center_in);
-	theta[0] = theta[0] * scale_in[0];
-	theta[1] = theta[1] * scale_in[1];  // Scales to [-1, 1]
-
-	F32 rSq =  theta * theta;
-
-	LLVector2 rVector = theta * (gRiftDistortionK[0] + gRiftDistortionK[1] * rSq + gRiftDistortionK[2] * rSq * rSq + gRiftDistortionK[3] * rSq * rSq * rSq);
-
-	coord = lens_center_out + LLVector2(rVector[0] * scale_out[0], rVector[1] * scale_out[1]); 
-
-	return LLVector2((U32)llclamp(llround(coord[0]), 0, (S32)gRiftHSample), (U32)llclamp(llround(coord[1]), 0, (S32)gRiftVSample));
-	*/
+	return mRiftUndistortCache[(eye * gRiftVFrame + y) * gRiftHFrame + (x % gRiftHFrame)];
 }
 // </CV:David>
 
