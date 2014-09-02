@@ -10447,8 +10447,8 @@ void CVToggle3D::setFullscreenThenRiftlook(bool on)
 				mWindowHResolution = gViewerWindow->getWindowWidthRaw();
 				mWindowVResolution = gViewerWindow->getWindowHeightRaw();
 
-				SetWindowLong(hwnd, GWL_STYLE, normal_style & ~(WS_CAPTION | WS_THICKFRAME));
-				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+				SetWindowLong(hwnd, GWL_STYLE, normal_style & ~(WS_CAPTION | WS_THICKFRAME) | WS_POPUP);
+				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) | WS_EX_APPWINDOW);
 				SendMessage((HWND)gViewerWindow->getPlatformWindow(), WM_SYSCOMMAND, SC_MAXIMIZE, 0);
 			}
 		}
