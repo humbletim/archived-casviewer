@@ -139,6 +139,12 @@ U32 gRiftHeadReorientsSpeed = RIFT_HEAD_REORIENTS_SPEED_DEFAULT;
 BOOL gRiftMouseCursor = TRUE;
 BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
+
+// DJRTODO: Remove when function is exposed in API ...
+extern "C"
+{
+	void ovrhmd_EnableHSWDisplaySDKRender(ovrHmd hmd, ovrBool enabled);
+}
 // </CV:David>
 
 void display_startup()
@@ -2075,10 +2081,10 @@ void setRiftSDKRendering(bool on)
 			// DJRTODO: Where to do the following? ... Here or above?
 			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 
-			// Automatically dismiss ASAP ... DJRTODO: Can remove when ovrhmd_EnableHSWDisplaySDKRender() becomes available.
+			// Don't show HSW second and subsequent times into Riftlook ... 
 			if (!gRiftHSWEnabled)
 			{
-				ovrHmd_DismissHSWDisplay(gRiftHMD);
+				ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);
 			}
 		}
 		else
