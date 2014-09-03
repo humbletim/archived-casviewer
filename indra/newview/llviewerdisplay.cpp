@@ -2023,7 +2023,14 @@ void setRiftSDKRendering(bool on)
 		// Optional according to pop-up text; OculusWorldDemo doesn't use it ...
 		//gRiftConfig.OGL.DC = GetDC(window);
 
-		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, eyeRenderDesc))
+		unsigned distortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic
+															| ovrDistortionCap_TimeWarp
+															| ovrDistortionCap_Vignette
+															| ovrDistortionCap_NoRestore
+															| ovrDistortionCap_SRGB
+															| ovrDistortionCap_Overdrive);
+
+		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, distortionCaps, gRiftEyeFov, eyeRenderDesc))
 		{
 			llinfos << "Started Rift rendering" << llendl;
 
@@ -2061,7 +2068,7 @@ void setRiftSDKRendering(bool on)
 			ovrDistortionMesh meshData;
 			for (int eye = 0; eye < 2; eye += 1)
 			{
-				ovrHmd_CreateDistortionMesh(gRiftHMD, eyeRenderDesc[eye].Eye, eyeRenderDesc[eye].Fov, ovrDistortionCap_Chromatic, &meshData);
+				ovrHmd_CreateDistortionMesh(gRiftHMD, eyeRenderDesc[eye].Eye, eyeRenderDesc[eye].Fov, distortionCaps, &meshData);
 				gViewerWindow->initializeRiftUndistort(&meshData, eye);
 				ovrHmd_DestroyDistortionMesh(&meshData);
 			}
