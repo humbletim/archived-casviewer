@@ -2027,7 +2027,6 @@ void setRiftSDKRendering(bool on)
 															| ovrDistortionCap_TimeWarp
 															| ovrDistortionCap_Vignette
 															| ovrDistortionCap_NoRestore
-															| ovrDistortionCap_SRGB
 															| ovrDistortionCap_Overdrive);
 
 		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, distortionCaps, gRiftEyeFov, eyeRenderDesc))
