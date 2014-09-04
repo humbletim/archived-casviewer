@@ -1802,10 +1802,11 @@ LLVector3d LLAgentCamera::calcCameraPositionTargetGlobal(BOOL *hit_limit)
 		}
 		else
 		{
-			if (gRift3DEnabled)
+			if (gRift3DEnabled && !gAgent.getFlying())
 			{
 				gAgentAvatarp->updateHeadOffset();
-				head_offset.mdV[VZ] = gAgentAvatarp->mHeadOffset.mV[VZ];
+				gRiftHeadOffset = llmax(gRiftHeadOffset, gAgentAvatarp->mHeadOffset.mV[VZ]);
+				head_offset.mdV[VZ] = gRiftHeadOffset;
 			}
 			else
 			{
