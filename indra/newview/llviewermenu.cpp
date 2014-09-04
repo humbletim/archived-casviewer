@@ -10520,7 +10520,6 @@ void CVToggle3D::setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
-	//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 
 	if (was_in_flycam)
 	{
@@ -10530,8 +10529,6 @@ void CVToggle3D::setRiftlook(bool on)
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
-
-	//ms_sleep(1000);  // DJRTODO: Delete
 
 	setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 }
