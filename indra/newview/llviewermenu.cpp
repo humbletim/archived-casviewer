@@ -10447,8 +10447,8 @@ void CVToggle3D::setFullscreenThenRiftlook(bool on)
 				mWindowHResolution = gViewerWindow->getWindowWidthRaw();
 				mWindowVResolution = gViewerWindow->getWindowHeightRaw();
 
-				SetWindowLong(hwnd, GWL_STYLE, normal_style & ~(WS_CAPTION | WS_THICKFRAME));
-				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+				SetWindowLong(hwnd, GWL_STYLE, normal_style & ~(WS_CAPTION | WS_THICKFRAME) | WS_POPUP);
+				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) | WS_EX_APPWINDOW);
 				SendMessage((HWND)gViewerWindow->getPlatformWindow(), WM_SYSCOMMAND, SC_MAXIMIZE, 0);
 			}
 		}
@@ -10499,8 +10499,6 @@ void CVToggle3D::setRiftlook(bool on)
 		gAgentCamera.changeCameraToMouselook(FALSE);  // Don't animate camera so that screen and FBO are correctly sized immediately
 
 		gAgentAvatarp->updateHeadOffset();
-		gRiftHeadOffset = gAgentAvatarp->mHeadOffset.mV[VZ];
-		llinfos << "gRiftHeadOffset = " << std::setprecision(6) << gRiftHeadOffset << llendl;  // DJRTDODO: Delete
 	}
 	else
 	{
@@ -10522,7 +10520,6 @@ void CVToggle3D::setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 	}
-	//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 
 	if (was_in_flycam)
 	{
@@ -10532,8 +10529,6 @@ void CVToggle3D::setRiftlook(bool on)
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
-
-	//ms_sleep(1000);  // DJRTODO: Delete
 
 	setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 }

@@ -139,6 +139,12 @@ U32 gRiftHeadReorientsSpeed = RIFT_HEAD_REORIENTS_SPEED_DEFAULT;
 BOOL gRiftMouseCursor = TRUE;
 BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
+
+// DJRTODO: Remove when function is exposed in API ...
+extern "C"
+{
+	void ovrhmd_EnableHSWDisplaySDKRender(ovrHmd hmd, ovrBool enabled);
+}
 // </CV:David>
 
 void display_startup()
@@ -1607,7 +1613,15 @@ void render_ui(F32 zoom_factor, int subfield)
 		// <CV:David>
 		if (gRift3DEnabled)
 		{
-			gRiftCurrentEye ? gPipeline.mRiftRScreen.flush() : gPipeline.mRiftLScreen.flush();
+			gPipeline.mScreen.flush();
+			if (gRiftCurrentEye)
+			{
+				gPipeline.mRiftRScreen.copyContents(gPipeline.mScreen, 0, 0,  gRiftHBuffer, gRiftVBuffer, 0, 0,  gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
+			else
+			{
+				gPipeline.mRiftLScreen.copyContents(gPipeline.mScreen, 0, 0,  gRiftHBuffer, gRiftVBuffer, 0, 0,  gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
 		}
 		// </CV:David>
 	}
@@ -2015,7 +2029,13 @@ void setRiftSDKRendering(bool on)
 		// Optional according to pop-up text; OculusWorldDemo doesn't use it ...
 		//gRiftConfig.OGL.DC = GetDC(window);
 
-		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, eyeRenderDesc))
+		unsigned distortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic
+															| ovrDistortionCap_TimeWarp
+															| ovrDistortionCap_Vignette
+															| ovrDistortionCap_NoRestore
+															| ovrDistortionCap_Overdrive);
+
+		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, distortionCaps, gRiftEyeFov, eyeRenderDesc))
 		{
 			llinfos << "Started Rift rendering" << llendl;
 
@@ -2049,13 +2069,22 @@ void setRiftSDKRendering(bool on)
 
 			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
 
+			// Set up mouse cursor positioning ...
+			ovrDistortionMesh meshData;
+			for (int eye = 0; eye < 2; eye += 1)
+			{
+				ovrHmd_CreateDistortionMesh(gRiftHMD, eyeRenderDesc[eye].Eye, eyeRenderDesc[eye].Fov, distortionCaps, &meshData);
+				gViewerWindow->initializeRiftUndistort(&meshData, eye);
+				ovrHmd_DestroyDistortionMesh(&meshData);
+			}
+
 			// DJRTODO: Where to do the following? ... Here or above?
 			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 
-			// Automatically dismiss ASAP ... DJRTODO: Can remove when ovrhmd_EnableHSWDisplaySDKRender() becomes available.
+			// Don't show HSW second and subsequent times into Riftlook ... 
 			if (!gRiftHSWEnabled)
 			{
-				ovrHmd_DismissHSWDisplay(gRiftHMD);
+				ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);
 			}
 		}
 		else

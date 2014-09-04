@@ -45,6 +45,7 @@
 #include "llnotifications.h"
 #include "llhandle.h"
 #include "llinitparam.h"
+#include "llappviewer.h"  // <CV:David>
 
 #include <boost/function.hpp>
 #include <boost/signals2.hpp>
@@ -422,6 +423,7 @@ public:
 //-TT Window Title Access
 	void			setTitle(const std::string& win_title);
 //-TT
+	void			initializeRiftUndistort(ovrDistortionMesh* mesh, int eye);  // <CV:David>
 
 private:
 	bool                    shouldShowToolTipFor(LLMouseHandler *mh);
@@ -437,6 +439,8 @@ private:
 	LLRect			getChatConsoleRect(); // Get optimal cosole rect.
 	// <CV:David>
 	LLVector2		riftUndistort(U32 x, U32 y);
+	LLVector2		riftUndistortCalc(ovrDistortionMesh* mesh, U32 x, U32 y, U32 eye);
+	LLVector2*		mRiftUndistortCache;
 	// </CV:David>
 
 private:

@@ -404,7 +404,6 @@ S32 gRiftLensOffset;		// Pixels offset from centre of screen to centre of FOV.
 F32 gRiftEyeDeltaL;			// Distance to offset camera for eye.
 F32 gRiftEyeDeltaR;			// ""
 F32 gRiftCullCameraDelta;	// Distance back to move cull frustum camera.
-F32 gRiftHeadOffset;		// Head offset when toggled into Riftlook.
 bool gRiftHSWEnabled;
 // </CV:David>
 
@@ -1585,7 +1584,7 @@ void LLAppViewer::initRift()
 		gRiftEyeFov[1].LeftTan = horizontalTanIn;
 		gRiftEyeFov[1].RightTan = horizontalTanOut;
 
-		gRiftFOV = atan(2.f * verticalTan);
+		gRiftFOV = 2.f * atan(verticalTan);
 		LL_INFOS("InitInfo") << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(3) << LL_ENDL;
 
 		ovrSizei usedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftEyeFov[0], 1.f);

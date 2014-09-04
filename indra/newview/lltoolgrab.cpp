@@ -130,18 +130,6 @@ BOOL LLToolGrab::handleDoubleClick(S32 x, S32 y, MASK mask)
 
 BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 {
-	// <CV:David>
-	if (gRift3DEnabled)
-	{
-		bool leftEye = (gViewerWindow->getCurrentMouseX() < gRiftHFrame);
-		//S32 delta_x = llround(((leftEye ? gRiftEyeDeltaL : gRiftEyeDeltaR) / (2.f * gRiftDistortionScale * gRiftHScreenSize)) * gRiftHFrame);
-		S32 delta_x = llround(((leftEye ? gRiftEyeDeltaL : gRiftEyeDeltaR) / (2.f * gRiftHSample)) * gRiftHFrame);  // DJRTODO
-		x = x + (leftEye ? -delta_x : delta_x);
-		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		x = x - (leftEye ? -uiDepth : uiDepth);
-	}
-	// </CV:David>
-
 	if (gDebugClicks)
 	{
 		llinfos << "LLToolGrab handleMouseDown" << llendl;

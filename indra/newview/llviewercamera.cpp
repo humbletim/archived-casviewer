@@ -1020,7 +1020,7 @@ void LLViewerCamera::calcStereoValues()
 		separation = gSavedSettings.getF32("EyeSeparation") / width;
 		deltaZ = mScreenDistance / (1 + 1 / separation);
 		mStereoCullCameraDeltaForwards = deltaZ * mXAxis;
-		mStereoCullCameraFOV = 2 * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
+		mStereoCullCameraFOV = 2.f * atan(tan(mStereoCameraFOV*0.5f) * mScreenDistance / (mScreenDistance - deltaZ));
 		mStereoCullCameraAspect = mStereoCameraAspect;
 	}
 	else
