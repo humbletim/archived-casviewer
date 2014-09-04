@@ -404,7 +404,6 @@ S32 gRiftLensOffset;		// Pixels offset from centre of screen to centre of FOV.
 F32 gRiftEyeDeltaL;			// Distance to offset camera for eye.
 F32 gRiftEyeDeltaR;			// ""
 F32 gRiftCullCameraDelta;	// Distance back to move cull frustum camera.
-F32 gRiftHeadOffset;		// Head offset when toggled into Riftlook.
 bool gRiftHSWEnabled;
 // </CV:David>
 

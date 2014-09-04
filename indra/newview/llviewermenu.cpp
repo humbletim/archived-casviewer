@@ -10499,8 +10499,6 @@ void CVToggle3D::setRiftlook(bool on)
 		gAgentCamera.changeCameraToMouselook(FALSE);  // Don't animate camera so that screen and FBO are correctly sized immediately
 
 		gAgentAvatarp->updateHeadOffset();
-		gRiftHeadOffset = gAgentAvatarp->mHeadOffset.mV[VZ];
-		llinfos << "gRiftHeadOffset = " << std::setprecision(6) << gRiftHeadOffset << llendl;  // DJRTDODO: Delete
 	}
 	else
 	{

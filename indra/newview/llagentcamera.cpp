@@ -1805,8 +1805,7 @@ LLVector3d LLAgentCamera::calcCameraPositionTargetGlobal(BOOL *hit_limit)
 			if (gRift3DEnabled)
 			{
 				gAgentAvatarp->updateHeadOffset();
-				gRiftHeadOffset = llmax(gRiftHeadOffset, gAgentAvatarp->mHeadOffset.mV[VZ]);
-				head_offset.mdV[VZ] = gRiftHeadOffset;
+				head_offset.mdV[VZ] = gAgentAvatarp->mHeadOffset.mV[VZ];
 			}
 			else
 			{
