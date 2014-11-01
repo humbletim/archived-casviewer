@@ -774,7 +774,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Left eye ...
 			gRiftCurrentEye = 0;
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
-			headPose[eye] = ovrHmd_GetEyePose(gRiftHMD, eye);
+			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better left eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_LEFT);
@@ -785,7 +785,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			gRiftCurrentEye = 1;
 			eye = gRiftHMD->EyeRenderOrder[1];
-			headPose[eye] = ovrHmd_GetEyePose(gRiftHMD, eye);
+			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better right eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_RIGHT);
@@ -2039,8 +2039,8 @@ void setRiftSDKRendering(bool on)
 		{
 			llinfos << "Started Rift rendering" << llendl;
 
-			gRiftEyeDeltaL = eyeRenderDesc[0].ViewAdjust.x;  // Positive value
-			gRiftEyeDeltaR = -eyeRenderDesc[1].ViewAdjust.x;  // Positive value
+			gRiftEyeDeltaL = eyeRenderDesc[0].HmdToEyeViewOffset.x;  // Positive value
+			gRiftEyeDeltaR = -eyeRenderDesc[1].HmdToEyeViewOffset.x;  // Positive value
 
 			llinfos << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust L = " << gRiftEyeDeltaL << ", " << llendl;
 			llinfos << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust R = " << gRiftEyeDeltaR << ", " << llendl;
