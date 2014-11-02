@@ -1896,6 +1896,17 @@ BOOL LLToolPie::handleRightClickPick()
 	S32 y = mPick.mMousePt.mY;
 	MASK mask = mPick.mKeyMask;
 
+	// <CV:David>
+	// Apply UI offset to get context menu in correct location in Riftlook.
+	S32 uiDelta = 0;
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		x = x + uiDelta;
+	}
+	// <CV:David>
+
 	if (mPick.mPickType != LLPickInfo::PICK_LAND)
 	{
 		LLViewerParcelMgr::getInstance()->deselectLand();
@@ -2100,6 +2111,14 @@ BOOL LLToolPie::handleRightClickPick()
 			gMenuMuteParticle->show(x,y);
 		}
 	}
+
+	// <CV:David>
+	// Unapply UI offset.
+	if (gRift3DEnabled)
+	{
+		x = x - uiDelta;
+	}
+	// <CV:David>
 
 	LLTool::handleRightMouseDown(x, y, mask);
 	// We handled the event.
