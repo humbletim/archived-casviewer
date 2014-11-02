@@ -48,6 +48,9 @@ extern F32 gLastDrawDistanceStep;
 
 // <CV:David>
 void setRiftSDKRendering(bool on);
+void updateRiftSettings();
+void calculateRiftHmdCaps();
+void calculateRiftDistortionCaps();
 
 extern U32 gOutputType;
 const U32 OUTPUT_TYPE_NORMAL = 0;
@@ -57,6 +60,8 @@ extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
 extern BOOL gRift3DConfigured;
 extern BOOL gRift3DEnabled;
+extern unsigned gRiftHmdCaps;
+extern unsigned gRiftDistortionCaps;
 const U32 RIFT_OPERATE_SEATED = 0;
 const U32 RIFT_OPERATE_STANDING = 1;
 extern BOOL gRiftStanding;

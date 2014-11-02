@@ -563,6 +563,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
+	mCommitCallbackRegistrar.add("Pref.RiftHmdSettingsChanged",	boost::bind(&LLFloaterPreference::onRiftHmdSettingsChanged, this));
 	// </CV:David>
 
 	// <CV:David>
@@ -4177,6 +4178,11 @@ void LLFloaterPreference::onRiftMouseHorizontalEnable()
 {
 	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
 	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
+}
+
+void LLFloaterPreference::onRiftHmdSettingsChanged()
+{
+	updateRiftSettings();
 }
 // </CV:David>
 

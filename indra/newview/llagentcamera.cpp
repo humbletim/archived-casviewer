@@ -1467,7 +1467,7 @@ void LLAgentCamera::updateCamera()
 		focusRotation.getEulerAngles(&focusRoll, &focusPitch, &focusYaw);
 		LLQuaternion focusPitchAndYaw = LLQuaternion(focusPitch, LLVector3::y_axis) * LLQuaternion(focusYaw, LLVector3::z_axis);
 
-		mCameraPositionAgent = mCameraPositionAgent + mRiftPositionDelta * mAgentRot;
+		mCameraPositionAgent = mCameraPositionAgent + mRiftPositionDelta * focusPitchAndYaw;
 
 		mCameraUpVector = LLVector3::z_axis * mRiftRoll * mRiftYaw * focusPitchAndYaw;
 

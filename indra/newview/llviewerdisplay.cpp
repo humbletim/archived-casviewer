@@ -131,6 +131,8 @@ BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
 BOOL gRift3DEnabled = FALSE;
 BOOL gRift3DConfigured = FALSE;
+unsigned gRiftHmdCaps = 0;
+unsigned gRiftDistortionCaps = 0;
 BOOL gRiftStanding = FALSE;
 BOOL gRiftStrafe = FALSE;
 BOOL gRiftHeadReorients = FALSE;
@@ -774,7 +776,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Left eye ...
 			gRiftCurrentEye = 0;
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
-			headPose[eye] = ovrHmd_GetEyePose(gRiftHMD, eye);
+			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better left eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_LEFT);
@@ -785,7 +787,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			gRiftCurrentEye = 1;
 			eye = gRiftHMD->EyeRenderOrder[1];
-			headPose[eye] = ovrHmd_GetEyePose(gRiftHMD, eye);
+			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better right eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_RIGHT);
@@ -2002,10 +2004,11 @@ void display_cleanup()
 // <CV:David>
 void setRiftSDKRendering(bool on)
 {
-	ovrEyeRenderDesc eyeRenderDesc[2];
-
 	if (on)
 	{
+		calculateRiftHmdCaps();
+		ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
+
 		ovrSizei renderTargetSize;
 		renderTargetSize.w = gRiftHBuffer;
 		renderTargetSize.h = gRiftVBuffer;
@@ -2029,24 +2032,20 @@ void setRiftSDKRendering(bool on)
 		// Optional according to pop-up text; OculusWorldDemo doesn't use it ...
 		//gRiftConfig.OGL.DC = GetDC(window);
 
-		unsigned distortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic
-															| ovrDistortionCap_TimeWarp
-															| ovrDistortionCap_Vignette
-															| ovrDistortionCap_NoRestore
-															| ovrDistortionCap_Overdrive);
+		calculateRiftDistortionCaps();
 
-		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, distortionCaps, gRiftEyeFov, eyeRenderDesc))
+		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, gRiftDistortionCaps, gRiftEyeFov, gRiftEyeRenderDesc))
 		{
 			llinfos << "Started Rift rendering" << llendl;
 
-			gRiftEyeDeltaL = eyeRenderDesc[0].ViewAdjust.x;  // Positive value
-			gRiftEyeDeltaR = -eyeRenderDesc[1].ViewAdjust.x;  // Positive value
+			gRiftEyeDeltaL = gRiftEyeRenderDesc[0].HmdToEyeViewOffset.x;  // Positive value
+			gRiftEyeDeltaR = -gRiftEyeRenderDesc[1].HmdToEyeViewOffset.x;  // Positive value
 
 			llinfos << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust L = " << gRiftEyeDeltaL << ", " << llendl;
 			llinfos << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust R = " << gRiftEyeDeltaR << ", " << llendl;
 
-			ovrMatrix4f projL = ovrMatrix4f_Projection(eyeRenderDesc[0].Fov, 0.01f, 10000.f, true);
-			ovrMatrix4f projR = ovrMatrix4f_Projection(eyeRenderDesc[1].Fov, 0.01f, 10000.f, true);
+			ovrMatrix4f projL = ovrMatrix4f_Projection(gRiftEyeRenderDesc[0].Fov, 0.01f, 10000.f, true);
+			ovrMatrix4f projR = ovrMatrix4f_Projection(gRiftEyeRenderDesc[1].Fov, 0.01f, 10000.f, true);
 			/*
 			llinfos << "Oculus Rift: L projection =  " << projL.M[0][0] << "  " << projL.M[0][1] << "  " << projL.M[0][2] << "  " << projL.M[0][3] << llendl;
 			llinfos << "                             " << projL.M[1][0] << "  " << projL.M[1][1] << "  " << projL.M[1][2] << "  " << projL.M[1][3] << llendl;
@@ -2073,7 +2072,7 @@ void setRiftSDKRendering(bool on)
 			ovrDistortionMesh meshData;
 			for (int eye = 0; eye < 2; eye += 1)
 			{
-				ovrHmd_CreateDistortionMesh(gRiftHMD, eyeRenderDesc[eye].Eye, eyeRenderDesc[eye].Fov, distortionCaps, &meshData);
+				ovrHmd_CreateDistortionMesh(gRiftHMD, gRiftEyeRenderDesc[eye].Eye, gRiftEyeRenderDesc[eye].Fov, gRiftDistortionCaps, &meshData);
 				gViewerWindow->initializeRiftUndistort(&meshData, eye);
 				ovrHmd_DestroyDistortionMesh(&meshData);
 			}
@@ -2095,7 +2094,7 @@ void setRiftSDKRendering(bool on)
 	}
 	else
 	{
-		if (ovrHmd_ConfigureRendering(gRiftHMD, NULL, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, eyeRenderDesc))
+		if (ovrHmd_ConfigureRendering(gRiftHMD, NULL, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, gRiftEyeRenderDesc))
 		{
 			// DJRTODO: Need to undo ovrHmd_AttachToWindow()? Perhaps ovrHmd_Release()?
 
@@ -2105,6 +2104,62 @@ void setRiftSDKRendering(bool on)
 		{
 			LL_WARNS("InitInfo") << "Could not end Rift rendering!" << LL_ENDL;
 			// DJRTODO: What to do if cannot end Rift rendering?
+		}
+	}
+}
+
+void calculateRiftHmdCaps()
+{
+	gRiftHmdCaps = 0;
+
+	llinfos << "RiftVSync = " << gSavedSettings.getBOOL("RiftVSync") << llendl;
+	if (!gSavedSettings.getBOOL("RiftVSync"))
+	{
+		gRiftHmdCaps |= ovrHmdCap_NoVSync;
+	}
+	llinfos << "RiftLowPersistence = " << gSavedSettings.getBOOL("RiftLowPersistence") << llendl;
+	if (gSavedSettings.getBOOL("RiftLowPersistence"))
+	{
+		gRiftHmdCaps |= ovrHmdCap_LowPersistence;
+	}
+	llinfos << "RiftDynamicPrediction = " << gSavedSettings.getBOOL("RiftDynamicPrediction") << llendl;
+	if (gSavedSettings.getBOOL("RiftDynamicPrediction"))
+	{
+		gRiftHmdCaps |= ovrHmdCap_DynamicPrediction;
+	}
+}
+
+void calculateRiftDistortionCaps()
+{
+	llinfos << "RiftTimewarp = " << gSavedSettings.getBOOL("RiftTimewarp") << llendl;
+	unsigned timewarp = gSavedSettings.getBOOL("RiftTimewarp") ? ovrDistortionCap_TimeWarp : 0;
+
+	llinfos << "RiftTimewarpWaits = " << gSavedSettings.getBOOL("RiftTimewarpWaits") << llendl;
+	unsigned noSpinwaits = !gSavedSettings.getBOOL("RiftTimewarpWaits") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
+
+	llinfos << "RiftOverdrive = " << gSavedSettings.getBOOL("RiftOverdrive") << llendl;
+	unsigned overdrive = gSavedSettings.getBOOL("RiftOverdrive") ? ovrDistortionCap_Overdrive : 0;
+
+	gRiftDistortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic
+													| ovrDistortionCap_Vignette
+													| ovrDistortionCap_NoRestore
+													| timewarp
+													| overdrive 
+													| noSpinwaits );
+}
+
+void updateRiftSettings()
+{
+	if (gRift3DEnabled)
+	{
+		calculateRiftHmdCaps();
+		ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
+
+		calculateRiftDistortionCaps();
+		if (!ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, gRiftDistortionCaps, gRiftEyeFov, gRiftEyeRenderDesc))
+		{
+			LL_WARNS("InitInfo") << "Could not update Rift rendering!" << LL_ENDL;
+			// DJRTODO: What to do if cannot update Rift rendering?
 		}
 	}
 }

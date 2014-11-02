@@ -1146,10 +1146,11 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 	// <CV:David>
 	//x = llround((F32)x / mDisplayScale.mV[VX]);
 	//y = llround((F32)y / mDisplayScale.mV[VY]);
+	S32 uiDelta = 0;
 	if (gRift3DEnabled)
 	{
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
 		LLVector2 fboXY = riftUndistort(x, y);
 		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
 		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
@@ -1173,7 +1174,10 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 		// If the current tool didn't process the click, we should show
 		// the pie menu.  This can be done by passing the event to the pie
 		// menu tool.
-		LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
+		// <CV:David>
+		//LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
+		LLToolPie::getInstance()->handleRightMouseDown(x - uiDelta, y, mask);
+		// </CV:David>
 		// show_context_menu( x, y, mask );
 	}
 
@@ -3357,10 +3361,11 @@ void LLViewerWindow::updateUI()
 	S32 y = mCurrentMousePoint.mY;
 
 	//<CV:David>
+	S32 uiDelta = 0;
 	if (gRift3DEnabled)
 	{
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
 		LLVector2 fboXY = riftUndistort(x, y);
 		x = fboXY[0] + uiDelta;
 		y = fboXY[1];
@@ -3613,7 +3618,10 @@ void LLViewerWindow::updateUI()
 
 				if(mMouseInWindow && tool)
 				{
-					handled = tool->handleHover(x, y, mask);
+					// <CV:David>
+					//handled = tool->handleHover(x, y, mask);
+					handled = tool->handleHover(x - uiDelta, y, mask);
+					// </CV:David>
 				}
 			}
 		}
@@ -3715,7 +3723,10 @@ void LLViewerWindow::updateUI()
 
 		if(mMouseInWindow && tool)
 		{
-			handled = tool->handleHover(x, y, mask);
+			// <CV:David>
+			//handled = tool->handleHover(x, y, mask);
+			handled = tool->handleHover(x - uiDelta, y, mask);
+			// </CV:David>
 		}
 	}
 
