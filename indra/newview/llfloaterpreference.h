@@ -247,6 +247,7 @@ public:
 	void onClickResetRiftUIDepth();
 	void onChangeRiftMouseMode();
 	void onRiftMouseHorizontalEnable();
+	void onRiftHmdSettingsChanged();
 	// </CV:David>
 
 	// <CV:David>

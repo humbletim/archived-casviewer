@@ -381,6 +381,7 @@ BOOL gLogoutInProgress = FALSE;
 ovrHmd gRiftHMD;
 ovrFrameTiming gRiftFrameTiming;
 ovrGLConfig gRiftConfig;
+ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 ovrFovPort gRiftEyeFov[2];
 ovrGLTexture gRiftEyeTextures[2];
 

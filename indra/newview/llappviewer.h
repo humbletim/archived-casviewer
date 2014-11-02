@@ -451,6 +451,7 @@ extern BOOL gPeriodicSlowFrame;
 extern ovrHmd gRiftHMD;
 extern ovrFrameTiming gRiftFrameTiming;
 extern ovrGLConfig gRiftConfig;
+extern ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 extern ovrFovPort gRiftEyeFov[2];
 extern ovrGLTexture gRiftEyeTextures[2];
 
