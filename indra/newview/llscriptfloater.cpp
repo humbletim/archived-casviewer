@@ -49,6 +49,7 @@
 #include "dialogstack.h"
 #include "llbutton.h"
 // </FS:Zi>
+#include "llviewerdisplay.h"  // <CV:David>
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -881,6 +882,22 @@ LLScriptFloater* LLScriptFloater::show(const LLUUID& notification_id)
 
 	LLRect pos = floater->getRect();
 
+	// <CV:David>
+	if (gRift3DEnabled)
+	{
+		S32 width = pos.getWidth();
+		S32 height = pos.getHeight();
+
+		pos.setOriginAndSize((gViewerWindow->getWorldViewWidthScaled() - width) / 2,
+							(gViewerWindow->getWorldViewHeightScaled() - height) / 2,
+							width, height);
+
+		llinfos << "LLScriptFloater::show() @ " << width << ", " << height << llendl;
+	}
+	else
+	{
+	// </CV:David>
+
 	// <FS:PP> FIRE-12037: Inventory Offer Dialog boxes hidden
 	// They should be ALWAYS visible on screen, all of them, not only the most recent one - so use the ScriptDialogsPosition detection as well
 	// Otherwise (after accepting/declining that most recent one) user may not notice, that still has something to click (with chiclets hidden, or just too many of them visible on screen), relog and lost pending inventory offer items
@@ -996,10 +1013,17 @@ LLScriptFloater* LLScriptFloater::show(const LLUUID& notification_id)
 		}
 	}
 
+	// <CV:David>
+	}
+	// </CV:David>
+
 	//LLDialog(LLGiveInventory and LLLoadURL) should no longer steal focus (see EXT-5445)
 	LLFloaterReg::showTypedInstance<LLScriptFloater>("script_floater", notification_id, FALSE);
 
-	if(!floater->isDocked())
+	// <CV:David>
+	//if(!floater->isDocked())
+	if(gRift3DEnabled || !floater->isDocked())
+	// </CV:David>
 	{
 		// reposition the floater which might have been shifted to cascade
 		floater->setRect(pos);
