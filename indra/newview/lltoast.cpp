@@ -32,6 +32,7 @@
 #include "llfocusmgr.h"
 #include "llnotifications.h"
 #include "llviewercontrol.h"
+#include "llviewerdisplay.h"  // <CV:David>
 
 using namespace LLNotificationsUI;
 
@@ -459,7 +460,10 @@ void LLToast::updateHoveredState()
 		// Started timer means the mouse had left the toast previously.
 		// If toast is hovered in the current frame we should handle
 		// a mouse enter event.
-		if(timer->getStarted() && mIsHovered)
+		// <CV:David>
+		//if(timer->getStarted() && mIsHovered)
+		if(timer->getStarted() && (mIsHovered || gRift3DEnabled))
+		// </CV:David>
 		{
 			mOnToastHoverSignal(this, MOUSE_ENTER);
 			

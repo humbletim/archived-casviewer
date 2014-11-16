@@ -47,6 +47,8 @@
 
 #include "llrootview.h"
 
+#include "llviewerdisplay.h"  // <CV:David>
+
 using namespace LLNotificationsUI;
 
 bool LLScreenChannel::mWasStartUpToastShown = false;
@@ -85,6 +87,17 @@ LLRect LLScreenChannelBase::getChannelRect()
 
 	mFloaterSnapRegion->localRectToScreen(mFloaterSnapRegion->getLocalRect(), &channel_rect);
 	mChicletRegion->localRectToScreen(mChicletRegion->getLocalRect(), &chiclet_rect);
+
+	// <CV:David>
+	// Modify channel rectangle positions assuming TopRight display.
+	if (gRift3DEnabled)
+	{
+		S32 delta_left = chiclet_rect.mLeft;
+		S32 delta_top = chiclet_rect.mTop * 2 / 5;
+		chiclet_rect.setLeftTopAndSize(chiclet_rect.mLeft - delta_left, chiclet_rect.mTop - delta_top, chiclet_rect.getWidth(), chiclet_rect.getHeight());
+		channel_rect.setLeftTopAndSize(channel_rect.mLeft - delta_left, channel_rect.mTop - delta_top, channel_rect.getWidth(), channel_rect.getHeight() / 2);
+	}
+	// </CV:David>
 
 	// <FS:Ansariel> Group notices, IMs and chiclets position
 	//channel_rect.mTop = chiclet_rect.mBottom;
