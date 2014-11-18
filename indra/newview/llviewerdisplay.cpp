@@ -773,10 +773,13 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			LLViewerCamera::getInstance()->calcStereoValues();
 
+			ovrTrackingState hmdState;
+			ovrVector3f hmdToEyeViewOffset[2] = { gRiftEyeRenderDesc[0].HmdToEyeViewOffset, gRiftEyeRenderDesc[1].HmdToEyeViewOffset };
+			ovrHmd_GetEyePoses(gRiftHMD, 0, hmdToEyeViewOffset, headPose, &hmdState);
+
 			// Left eye ...
 			gRiftCurrentEye = 0;
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
-			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better left eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_LEFT);
@@ -787,7 +790,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			gRiftCurrentEye = 1;
 			eye = gRiftHMD->EyeRenderOrder[1];
-			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better right eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_RIGHT);
