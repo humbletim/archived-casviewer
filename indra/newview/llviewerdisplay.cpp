@@ -798,8 +798,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLSpatialGroup::sNoDelete = FALSE;
 
 			// Distort and display ...
-			ovrTexture* eyeTexture = const_cast<ovrTexture*>(reinterpret_cast<const ovrTexture*>(gRiftEyeTextures));
-			ovrHmd_EndFrame(gRiftHMD, headPose, eyeTexture);
+			ovrHmd_EndFrame(gRiftHMD, headPose, &gRiftEyeTextures[0].Texture);
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
