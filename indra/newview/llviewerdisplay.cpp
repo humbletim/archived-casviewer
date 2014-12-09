@@ -2022,7 +2022,7 @@ void setRiftSDKRendering(bool on)
 		ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle
 
 		gRiftConfig.OGL.Header.API = ovrRenderAPI_OpenGL;
-		gRiftConfig.OGL.Header.RTSize = renderTargetSize;
+		gRiftConfig.OGL.Header.BackBufferSize = renderTargetSize;
 		gRiftConfig.OGL.Header.Multisample = 1;
 
 		// Optional according to pop-up text ...
