@@ -1490,7 +1490,14 @@ bool LLViewerJoystick::toggleCursor()
 // <CV:David>
 bool LLViewerJoystick::toggle3d()
 {
-	CVToggle3D::toggle3D();
+	if (!gRift3DEnabled)
+	{
+		CVToggle3D::toggle3D();
+	}
+	else
+	{
+		gAgentCamera.zeroSensors();
+	}
 
 	return true;
 }

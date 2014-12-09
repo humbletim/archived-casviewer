@@ -773,10 +773,13 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			LLViewerCamera::getInstance()->calcStereoValues();
 
+			ovrTrackingState hmdState;
+			ovrVector3f hmdToEyeViewOffset[2] = { gRiftEyeRenderDesc[0].HmdToEyeViewOffset, gRiftEyeRenderDesc[1].HmdToEyeViewOffset };
+			ovrHmd_GetEyePoses(gRiftHMD, 0, hmdToEyeViewOffset, headPose, &hmdState);
+
 			// Left eye ...
 			gRiftCurrentEye = 0;
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
-			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better left eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_LEFT);
@@ -787,7 +790,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			// Right eye ...
 			gRiftCurrentEye = 1;
 			eye = gRiftHMD->EyeRenderOrder[1];
-			headPose[eye] = ovrHmd_GetHmdPosePerEye(gRiftHMD, eye);
 			// DJRTODO: Use headPose to calculate better right eye stereo projection etc. values?
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_RIGHT);
@@ -796,8 +798,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLSpatialGroup::sNoDelete = FALSE;
 
 			// Distort and display ...
-			ovrTexture* eyeTexture = const_cast<ovrTexture*>(reinterpret_cast<const ovrTexture*>(gRiftEyeTextures));
-			ovrHmd_EndFrame(gRiftHMD, headPose, eyeTexture);
+			ovrHmd_EndFrame(gRiftHMD, headPose, &gRiftEyeTextures[0].Texture);
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
@@ -2021,7 +2022,7 @@ void setRiftSDKRendering(bool on)
 		ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle
 
 		gRiftConfig.OGL.Header.API = ovrRenderAPI_OpenGL;
-		gRiftConfig.OGL.Header.RTSize = renderTargetSize;
+		gRiftConfig.OGL.Header.BackBufferSize = renderTargetSize;
 		gRiftConfig.OGL.Header.Multisample = 1;
 
 		// Optional according to pop-up text ...
