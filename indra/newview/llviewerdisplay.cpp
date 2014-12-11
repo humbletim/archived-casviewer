@@ -2014,9 +2014,11 @@ void setRiftSDKRendering(bool on)
 		renderTargetSize.w = gRiftHBuffer;
 		renderTargetSize.h = gRiftVBuffer;
 
-		// Both the following appear to work ...
+#if LL_WINDOWS
 		HWND window = (HWND)gViewerWindow->getPlatformWindow();
-		//LLWindow* window = (LLWindow*)gViewerWindow->getWindow()->getHwnd();
+#else
+		LLWindow* window = static_cast<LLWindow*>(gViewerWindow->getPlatformWindow());
+#endif
 
 		// DJRTODO: Where to do the following? ... Here or below?
 		ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle
@@ -2027,11 +2029,13 @@ void setRiftSDKRendering(bool on)
 
 		// Optional according to pop-up text ...
 		// Both the following seem to work.
+#if LL_WINDOWS
 		gRiftConfig.OGL.Window = window;
 		//gRiftConfig.OGL.Window = (HWND)window;
 
 		// Optional according to pop-up text; OculusWorldDemo doesn't use it ...
 		//gRiftConfig.OGL.DC = GetDC(window);
+#endif
 
 		calculateRiftDistortionCaps();
 

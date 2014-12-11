@@ -298,7 +298,7 @@ public:
 	//static BOOL	sVisibleInFirstPerson;
 	static BOOL		sVisibleInMouselook;
 	static BOOL		sVisibleInRiftlook;
-	static bool		visibleInFirstPerson() { return !gRift3DEnabled && LLVOAvatar::sVisibleInMouselook || gRift3DEnabled && LLVOAvatar::sVisibleInRiftlook; }
+	static bool		visibleInFirstPerson() { return ((!gRift3DEnabled && LLVOAvatar::sVisibleInMouselook) || (gRift3DEnabled && LLVOAvatar::sVisibleInRiftlook)); }
 	// </CV:David>
 	static S32		sNumLODChangesThisFrame;
 	static S32		sNumVisibleChatBubbles;
