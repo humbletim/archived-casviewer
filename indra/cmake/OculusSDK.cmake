@@ -14,9 +14,9 @@ else (STANDALONE)
       debug libovrd.lib
       optimized libovr.lib)
   elseif (DARWIN)
-    set(OCULUS_LIBRARY libovr.a)
+    set(OCULUS_LIBRARY ovr)
   elseif (LINUX)
-    set(OCULUS_LIBRARY libovr.a)
+    set(OCULUS_LIBRARY ovr)
   endif (WINDOWS)
   set(OCULUS_INCLUDE_DIRS 
     "${LIBS_PREBUILT_DIR}/include"
