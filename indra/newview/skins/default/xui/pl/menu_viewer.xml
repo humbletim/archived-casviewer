@@ -32,7 +32,6 @@
 			<menu_item_call label="Resetuj do domyślnego męskiego awatara (Character Test)" name="ResetDefaultAvM"/>
 			<menu_item_call label="Resetuj do domyślnego żeńskiego awatara (Character Test)" name="ResetDefaultAvF"/>
 			<menu_item_check label="Pokaż obciążenia renderowania dla awatarów (zamiennik ARC)" name="Avatar Rendering Cost"/>
-			<menu_item_call label="Miernik lagów" name="Lag Meter"/>
 			<menu_item_call label="Stwórz na nowo Most LSL" name="Recreate LSL Bridge"/>
 		</menu>
 		<menu_item_call label="Śledzenie napiwków" name="money_tracker"/>
@@ -43,10 +42,10 @@
 			<menu_item_call label="Animację ([COST])..." name="Upload Animation"/>
 			<menu_item_call label="Model meszowy..." name="Upload Model"/>
 			<menu_item_call label="Zbiór wielu plików..." name="Bulk Upload"/>
-			<menu_item_call label="Ustaw domyślne uprawnienia dla ładowania" name="perm prefs"/>
+			<menu_item_call label="Ustaw domyślne uprawnienia ładowania" name="perm prefs"/>
 			<menu_item_call label="Importuj zbiór części..." name="import linkset"/>
 		</menu>
-		<menu_item_call label="Uzyskaj status administratora" name="Request Admin Options"/>
+		<menu_item_call label="Zażądaj statusu administratora" name="Request Admin Options"/>
 		<menu_item_call label="Porzuć status administratora" name="Leave Admin Options"/>
 		<menu_item_check label="Pokaż dodatki HUD" name="Show HUD Attachments"/>
 		<menu_item_call label="Wyłącz [APP_NAME]" name="Quit"/>
@@ -61,7 +60,7 @@
 		</menu>
 		<menu_item_call label="Znajomi" name="My Friends"/>
 		<menu_item_check label="Kontakty" name="Contacts"/>
-		<menu_item_call label="Zestawy kontaktów" name="Contact Sets"/>
+		<menu_item_call label="Zestawy kontaktów" name="Contact Sets" shortcut=""/>
 		<menu_item_call label="Grupy" name="My Groups"/>
 		<menu_item_check label="Czat lokalny..." name="Nearby Chat"/>
 		<menu_item_check label="Ludzie" name="People"/>
@@ -92,7 +91,7 @@
 		<menu_item_call label="Moje działki" name="My Land"/>
 		<menu label="Pokaż więcej" name="LandShow">
 			<menu_item_check label="Linie zakazu" name="Ban Lines"/>
-			<menu_item_check label="Emitery" name="beacons"/>
+			<menu_item_check label="Emitery" name="beacons" shortcut=""/>
 			<menu_item_check label="Granice działek" name="Property Lines"/>
 			<menu_item_check label="Właściciele działek" name="Land Owners" shortcut="control|alt|W"/>
 			<menu_item_check label="Współrzędne" name="Coordinates"/>
@@ -102,11 +101,11 @@
 		<menu_item_call label="Teleportuj do Miejsca Startu" name="Teleport Home"/>
 		<menu_item_call label="Ustaw Miejsce Startu tu, gdzie stoję" name="Set Home to Here"/>
 		<menu label="Pozycja Słońca" name="Environment Settings">
-			<menu_item_call label="Wschód Słońca" name="Sunrise"/>
-			<menu_item_call label="Południe" name="Noon"/>
-			<menu_item_call label="Zachód Słońca" name="Sunset"/>
-			<menu_item_call label="Północ" name="Midnight"/>
-			<menu_item_call label="Używaj czasu Regionu" name="Revert to Region Default"/>
+			<menu_item_check label="Wschód Słońca" name="Sunrise"/>
+			<menu_item_check label="Południe" name="Noon"/>
+			<menu_item_check label="Zachód Słońca" name="Sunset"/>
+			<menu_item_check label="Północ" name="Midnight"/>
+			<menu_item_check label="Używaj czasu Regionu" name="Revert to Region Default"/>
 		</menu>
 		<menu label="Edytor środowiska" name="Environment Editor">
 			<menu_item_call label="Ustawienia środowiska" name="Environment Settings"/>
@@ -207,7 +206,7 @@
 			<menu_item_call label="Animację ([COST])..." name="Upload Animation"/>
 			<menu_item_call label="Model meszowy..." name="Upload Model"/>
 			<menu_item_call label="Zbiór wielu plików ([COST] za plik)..." name="Bulk Upload"/>
-			<menu_item_call label="Ustaw domyślne uprawnienia dla ładowania" name="perm prefs"/>
+			<menu_item_call label="Ustaw domyślne uprawnienia ładowania" name="perm prefs"/>
 			<menu_item_call label="Importuj zbiór części..." name="import linkset"/>
 		</menu>
 		<menu_item_call label="Cofnij" name="Undo"/>
@@ -219,16 +218,22 @@
 		<menu_item_call label="Dane z rynku L$" name="LindenXchange"/>
 		<menu_item_call label="Biblioteka skryptów" name="Script Library"/>
 		<menu_item_call label="Blog Firestorma" name="Firestorm Blog"/>
+<!--
 		<menu_item_call label="Flickr Firestorma" name="Firestorm Flickr"/>
 		<menu_item_call label="Kanał YouTube Firestorma" name="Firestorm YouTube"/>
-		<menu_item_call label="Twitter Firestorma" name="Firestorm Twitter"/>
+-->
+		<menu_item_call label="Twitter CtrlAltStudio" name="CtrlAltStudio Twitter"/>
+<!--
 		<menu_item_call label="Plurk Firestorma" name="Firestorm Plurk"/>
+		<menu_item_call label="Wiadomość dnia" name="Firestorm MoTD"/>
+-->
 	</menu>
 	<menu label="Pomoc" name="Help">
 		<menu_item_check label="Włącz podpowiedzi" name="Enable Hints"/>
 		<menu_item_call label="Wiki Firestorma" name="Firestorm Wiki"/>
 		<menu_item_call label="Rozwiązywanie problemów" name="Troubleshooting"/>
 		<menu_item_call label="Dołącz do Grupy Wsparcia Firestorma" name="firestorm_support_group"/>
+		<menu_item_call label="Harmonogram Lekcji Firestorma" name="Firestorm Classes Schedule"/>
 		<!-- <menu_item_call label="Pomoc Second Life" name="Second Life Help"/> -->
 		<menu_item_call label="Pomoc: [CURRENT_GRID]" name="current_grid_help"/>
 		<menu_item_call label="Na temat [CURRENT_GRID]" name="current_grid_about"/>
@@ -276,8 +281,8 @@
 		<menu_item_check label="Zdjęcie wysokiej jakości" name="HighResSnapshot"/>
 		<menu_item_check label="Wykonuj zdjęcia bez efektu dźwiękowego i animacji" name="QuietSnapshotsToDisk"/>
 		<menu label="Narzędzia wydajności" name="Performance Tools">
-			<menu_item_call label="Pomiar lagów" name="Lag Meter"/>
-			<menu_item_check label="Statystyki" name="Statistics Bar"/>
+			<menu_item_check label="Statystyki ogólne" name="Statistics Bar"/>
+			<menu_item_check label="Statystyki obciążenia sceny" name="Scene Load Statistics"/>
 			<menu_item_check label="Pokaż wartość renderowania awatara" name="Avatar Rendering Cost"/>
 		</menu>
 		<menu label="Podświetlanie i widoczność" name="Highlighting and Visibility">
@@ -345,7 +350,7 @@
 		</menu>
 		<menu_item_check label="Wymuszanie latania" name="Fly Override"/>
 		<menu_item_check label="API dla RestrainedLove" name="RLV API"/>
-		<menu_item_call label="Pokaż ustawienia debugowania" name="Debug Settings"/>
+		<menu_item_call label="Pokaż ustawienia debugowania" name="Debug Settings" shortcut=""/>
 		<menu_item_check label="Pokaż menu programisty" name="Debug Mode"/>
 	</menu>
 	<menu label="Programista" name="Develop">
@@ -356,6 +361,7 @@
 			<menu_item_check label="Podgląd procesów" name="Fast Timers"/>
 			<menu_item_check label="Pamięć" name="Memory"/>
 			<menu_item_check label="Statystyki sceny" name="Scene Statistics"/>
+			<menu_item_check label="Monitor obciążenia sceny" name="Scene Loading Monitor"/>
 			<menu_item_call label="Konsola debugowania dla ładowania tekstur" name="Texture Fetch Debug Console"/>
 			<menu_item_call label="Konsola debugowania regionu" name="Region Debug Console"/>
 			<menu_item_call label="Info o regionie do konsoli debugowania" name="Region Info to Debug Console"/>
@@ -419,7 +425,7 @@
 			<menu_item_check label="Promienie" name="Raycast"/>
 			<menu_item_check label="Wektory wiatru" name="Wind Vectors"/>
 			<menu_item_check label="Złożoność renderowania" name="rendercomplexity"/>
-			<menu_item_check label="Bajty załączników" name="attachment bytes"/>
+			<menu_item_check label="Bajty dodatków" name="attachment bytes"/>
 			<menu_item_check label="Skulpty" name="Sculpt"/>
 			<menu_item_check label="Rozmiar tekstury" name="Texture Size"/>
 			<menu label="Gęstość tekstur" name="Texture Density">
@@ -449,6 +455,7 @@
 			<menu_item_check label="Renderowania przyłączonego światła" name="Render Attached Lights"/>
 			<menu_item_check label="Renderowanie przyłączonych cząsteczek" name="Render Attached Particles"/>
 			<menu_item_check label="Wyświetlaj obiekty odblaskowe" name="Hover Glow Objects"/>
+			<menu_item_call label="Wyczyść natychmiast pamięć podręczną" name="Cache Clear"/>
 		</menu>
 		<menu label="Sieć" name="Network">
 			<menu_item_check label="Zatrzymaj awatara" name="AgentPause"/>
@@ -456,7 +463,7 @@
 			<menu_item_call label="Wyłącz logowanie" name="Disable Message Log"/>
 			<menu_item_check label="Prędkość interpolacji obiektów" name="Velocity Interpolate Objects"/>
 			<menu_item_check label="Pinguj pozycje interpolowanych obiektów" name="Ping Interpolate Object Positions"/>
-			<menu_item_call label="Zagub pakiet" name="Drop a Packet"/>
+			<menu_item_call label="Zagub pakiet" name="Drop a Packet" shortcut=""/>
 		</menu>
 		<menu_item_call label="Zrzut oskryptowanej kamery" name="Dump Scripted Camera"/>
 		<menu label="Nagrywanie" name="Recorder">
@@ -539,7 +546,7 @@
 			<menu_item_check label="Pokaż szkielet kolizji" name="Show Collision Skeleton"/>
 			<menu_item_check label="Wyświetl cel Agenta" name="Display Agent Target"/>
 			<menu_item_call label="Zrzut przyłączonych dodatków" name="Dump Attachments"/>
-			<menu_item_call label="Debugowanie tekstur awatara" name="Debug Avatar Textures"/>
+			<menu_item_call label="Debugowanie tekstur awatara" name="Debug Avatar Textures" shortcut=""/>
 			<menu_item_call label="Zrzut lokalnych tekstur" name="Dump Local Textures"/>
 			<menu_item_call label="Przeładuj chmurę cząsteczek awatara" name="Reload Avatar Cloud Particle"/>
 		</menu>
@@ -556,7 +563,7 @@
 			<menu_item_check label="Błędy" name="Error"/>
 			<menu_item_check label="Brak" name="None"/>
 		</menu>
-		<menu_item_call label="Uzyskaj status administratora" name="Request Admin Options"/>
+		<menu_item_call label="Zażądaj statusu administratora" name="Request Admin Options"/>
 		<menu_item_call label="Porzuć status administratora" name="Leave Admin Options"/>
 		<menu_item_check label="Pokaż menu administratora" name="View Admin Options"/>
 	</menu>

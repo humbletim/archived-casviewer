@@ -42,6 +42,7 @@
 
 #include "lldiriterator.h"
 #include "stringize.h"
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/range/begin.hpp>
 #include <boost/range/end.hpp>
@@ -49,6 +50,8 @@
 #include <boost/bind.hpp>
 #include <boost/ref.hpp>
 #include <algorithm>
+
+#include "indra_constants.h"
 
 using boost::assign::list_of;
 using boost::assign::map_list_of;
@@ -76,6 +79,7 @@ const char
 	*LLDir::SKINBASE = "";
 
 static const char* const empty = "";
+std::string LLDir::sDumpDir = "";
 
 LLDir::LLDir()
 :	mAppName(""),
@@ -101,7 +105,32 @@ LLDir::~LLDir()
 {
 }
 
-
+std::vector<std::string> LLDir::getFilesInDir(const std::string &dirname)
+{
+    //Returns a vector of fullpath filenames.
+    
+    boost::filesystem::path p (dirname);
+    std::vector<std::string> v;
+    
+    if (exists(p))
+    {
+        if (is_directory(p))
+        {
+            boost::filesystem::directory_iterator end_iter;
+            for (boost::filesystem::directory_iterator dir_itr(p);
+                 dir_itr != end_iter;
+                 ++dir_itr)
+            {
+                if (boost::filesystem::is_regular_file(dir_itr->status()))
+                {
+                    v.push_back(dir_itr->path().filename().string());
+                }
+            }
+        }
+    }
+    return v;
+}   
+            
 S32 LLDir::deleteFilesInDir(const std::string &dirname, const std::string &mask)
 {
 	if (!fileExists(dirname)) return 0;
@@ -114,7 +143,7 @@ S32 LLDir::deleteFilesInDir(const std::string &dirname, const std::string &mask)
 	// File masks starting with "/" will match nothing, so we consider them invalid.
 	if (LLStringUtil::startsWith(mask, getDirDelimiter()))
 	{
-		llwarns << "Invalid file mask: " << mask << llendl;
+		LL_WARNS() << "Invalid file mask: " << mask << LL_ENDL;
 		llassert(!"Invalid file mask");
 	}
 
@@ -137,12 +166,12 @@ S32 LLDir::deleteFilesInDir(const std::string &dirname, const std::string &mask)
 			{
 				retry_count++;
 				result = errno;
-				llwarns << "Problem removing " << fullpath << " - errorcode: "
-						<< result << " attempt " << retry_count << llendl;
+				LL_WARNS() << "Problem removing " << fullpath << " - errorcode: "
+						<< result << " attempt " << retry_count << LL_ENDL;
 
 				if(retry_count >= 5)
 				{
-					llwarns << "Failed to remove " << fullpath << llendl ;
+					LL_WARNS() << "Failed to remove " << fullpath << LL_ENDL ;
 					return count ;
 				}
 
@@ -152,7 +181,7 @@ S32 LLDir::deleteFilesInDir(const std::string &dirname, const std::string &mask)
 			{
 				if (retry_count)
 				{
-					llwarns << "Successfully removed " << fullpath << llendl;
+					LL_WARNS() << "Successfully removed " << fullpath << LL_ENDL;
 				}
 				break;
 			}			
@@ -160,6 +189,34 @@ S32 LLDir::deleteFilesInDir(const std::string &dirname, const std::string &mask)
 		count++;
 	}
 	return count;
+}
+
+U32 LLDir::deleteDirAndContents(const std::string& dir_name)
+{
+    //Removes the directory and its contents.  Returns number of files deleted.
+	
+	U32 num_deleted = 0;
+
+	try
+	{
+	   boost::filesystem::path dir_path(dir_name);
+	   if (boost::filesystem::exists (dir_path))
+	   {
+	      if (!boost::filesystem::is_empty (dir_path))
+		  {   // Directory has content
+		     num_deleted = boost::filesystem::remove_all (dir_path);
+		  }
+		  else
+		  {   // Directory is empty
+		     boost::filesystem::remove (dir_path);
+		  }
+	   }
+	}
+	catch (boost::filesystem::filesystem_error &er)
+	{ 
+		LL_WARNS() << "Failed to delete " << dir_name << " with error " << er.code().message() << LL_ENDL;
+	} 
+	return num_deleted;
 }
 
 const std::string LLDir::findFile(const std::string &filename, 
@@ -242,15 +299,40 @@ const std::string &LLDir::getLindenUserDir() const
 {
 	if (mLindenUserDir.empty())
 	{
-		lldebugs << "getLindenUserDir() called early, we don't have the user name yet - returning empty string to caller" << llendl;
+		LL_DEBUGS() << "getLindenUserDir() called early, we don't have the user name yet - returning empty string to caller" << LL_ENDL;
 	}
 
 	return mLindenUserDir;
 }
 
-const std::string &LLDir::getChatLogsDir() const
+const std::string& LLDir::getChatLogsDir() const
 {
 	return mChatLogsDir;
+}
+
+void LLDir::setDumpDir( const std::string& path )
+{
+    LLDir::sDumpDir = path;
+    if (! sDumpDir.empty() && sDumpDir.rbegin() == mDirDelimiter.rbegin() )
+    {
+        sDumpDir.erase(sDumpDir.size() -1);
+    }
+}
+
+const std::string &LLDir::getDumpDir() const
+{
+    if (sDumpDir.empty() )
+    {
+        LLUUID uid;
+        uid.generate();
+        
+        sDumpDir = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "")
+                    + "dump-" + uid.asString();
+
+        dir_exists_or_crash(sDumpDir);  
+    }
+
+	return LLDir::sDumpDir;
 }
 
 const std::string &LLDir::getPerAccountChatLogsDir() const
@@ -462,6 +544,10 @@ std::string LLDir::getExpandedFilename(ELLPath location, const std::string& subd
 		prefix = getCacheDir();
 		break;
 		
+    case LL_PATH_DUMP:
+        prefix=getDumpDir();
+        break;
+            
 	case LL_PATH_USER_SETTINGS:
 		prefix = add(getOSUserAppDir(), "user_settings");
 		break;
@@ -545,9 +631,9 @@ std::string LLDir::getExpandedFilename(ELLPath location, const std::string& subd
 
 	if (prefix.empty())
 	{
-		llwarns << ELLPathToString(location)
+		LL_WARNS() << ELLPathToString(location)
 				<< ", '" << subdir1 << "', '" << subdir2 << "', '" << in_filename
-				<< "': prefix is empty, possible bad filename" << llendl;
+				<< "': prefix is empty, possible bad filename" << LL_ENDL;
 	}
 
 	std::string expanded_filename = add(add(prefix, subdir1), subdir2);
@@ -886,7 +972,7 @@ void LLDir::setLindenUserDir(const std::string &username)
 	}
 	else
 	{
-		llerrs << "NULL name for LLDir::setLindenUserDir" << llendl;
+		LL_ERRS() << "NULL name for LLDir::setLindenUserDir" << LL_ENDL;
 	}
 
 	dumpCurrentDirectories();	
@@ -900,7 +986,7 @@ void LLDir::setChatLogsDir(const std::string &path)
 	}
 	else
 	{
-		llwarns << "Invalid name for LLDir::setChatLogsDir" << llendl;
+		LL_WARNS() << "Invalid name for LLDir::setChatLogsDir" << LL_ENDL;
 	}
 }
 
@@ -946,7 +1032,7 @@ void LLDir::setPerAccountChatLogsDir(const std::string &username)
 	}
 	else
 	{
-		llerrs << "NULL name for LLDir::setPerAccountChatLogsDir" << llendl;
+		LL_ERRS() << "NULL name for LLDir::setPerAccountChatLogsDir" << LL_ENDL;
 	}
 }
 
@@ -1084,7 +1170,7 @@ bool LLDir::setSoundCacheDir(const std::string& path)
 			result = true;
 		}
 	}
-	LL_INFOS2("AppInit", "Directories") << "Setting sound cache directory: " << mSoundCacheDir << LL_ENDL;
+	LL_INFOS("AppInit", "Directories") << "Setting sound cache directory: " << mSoundCacheDir << LL_ENDL;
 
 	return result;
 }
@@ -1092,24 +1178,24 @@ bool LLDir::setSoundCacheDir(const std::string& path)
 
 void LLDir::dumpCurrentDirectories()
 {
-	LL_DEBUGS2("AppInit","Directories") << "Current Directories:" << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "Current Directories:" << LL_ENDL;
 
-	LL_DEBUGS2("AppInit","Directories") << "  CurPath:               " << getCurPath() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  AppName:               " << getAppName() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  ExecutableFilename:    " << getExecutableFilename() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  ExecutableDir:         " << getExecutableDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  ExecutablePathAndName: " << getExecutablePathAndName() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  WorkingDir:            " << getWorkingDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  AppRODataDir:          " << getAppRODataDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  OSUserDir:             " << getOSUserDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  OSUserAppDir:          " << getOSUserAppDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  LindenUserDir:         " << getLindenUserDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  TempDir:               " << getTempDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  CAFile:				 " << getCAFile() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  SkinBaseDir:           " << getSkinBaseDir() << LL_ENDL;
-	LL_DEBUGS2("AppInit","Directories") << "  SkinDir:               " << getSkinDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  CurPath:               " << getCurPath() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  AppName:               " << getAppName() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  ExecutableFilename:    " << getExecutableFilename() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  ExecutableDir:         " << getExecutableDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  ExecutablePathAndName: " << getExecutablePathAndName() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  WorkingDir:            " << getWorkingDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  AppRODataDir:          " << getAppRODataDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  OSUserDir:             " << getOSUserDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  OSUserAppDir:          " << getOSUserAppDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  LindenUserDir:         " << getLindenUserDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  TempDir:               " << getTempDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  CAFile:				 " << getCAFile() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  SkinBaseDir:           " << getSkinBaseDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  SkinDir:               " << getSkinDir() << LL_ENDL;
 // [SL:KB] - Patch: Viewer-Skins | Checked: 2011-02-14 (Catznip-2.5)
-	LL_DEBUGS2("AppInit","Directories") << "  SkinThemeDir:          " << getSkinThemeDir() << LL_ENDL;
+	LL_DEBUGS("AppInit","Directories") << "  SkinThemeDir:          " << getSkinThemeDir() << LL_ENDL;
 // [/SL:KB]
 }
 
@@ -1180,13 +1266,13 @@ void dir_exists_or_crash(const std::string &dir_name)
 		{
 		   if(0 != LLFile::mkdir(dir_name, 0700))		// octal
 		   {
-			   llerrs << "Unable to create directory: " << dir_name << llendl;
+			   LL_ERRS() << "Unable to create directory: " << dir_name << LL_ENDL;
 		   }
 		}
 		else
 		{
-			llerrs << "Unable to stat: " << dir_name << " errno = " << stat_rv
-				   << llendl;
+			LL_ERRS() << "Unable to stat: " << dir_name << " errno = " << stat_rv
+				   << LL_ENDL;
 		}
 	}
 	else
@@ -1194,7 +1280,7 @@ void dir_exists_or_crash(const std::string &dir_name)
 		// data_dir exists, make sure it's a directory.
 		if(!S_ISDIR(dir_stat.st_mode))
 		{
-			llerrs << "Data directory collision: " << dir_name << llendl;
+			LL_ERRS() << "Data directory collision: " << dir_name << LL_ENDL;
 		}
 	}
 #endif

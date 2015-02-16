@@ -214,6 +214,7 @@ BOOL LLNetMap::postBuild()
 	enable_registrar.add("Minimap.CanMap", boost::bind(&LLNetMap::canMap, this));
 	enable_registrar.add("Minimap.CanShare", boost::bind(&LLNetMap::canShare, this));
 	enable_registrar.add("Minimap.CanOfferTeleport", boost::bind(&LLNetMap::canOfferTeleport, this));
+	enable_registrar.add("Minimap.CanRequestTeleport", boost::bind(&LLNetMap::canRequestTeleport, this));
 	enable_registrar.add("Minimap.IsBlocked", boost::bind(&LLNetMap::isBlocked, this));
 	enable_registrar.add("Minimap.CanBlock", boost::bind(&LLNetMap::canBlock, this));
 	enable_registrar.add("Minimap.VisibleFreezeEject", boost::bind(&LLNetMap::canFreezeEject, this));
@@ -311,7 +312,7 @@ void LLNetMap::draw()
 	static LLUICachedControl<bool> auto_center("MiniMapAutoCenter", true);
 	if (auto_center)
 	{
-		mCurPan = lerp(mCurPan, mTargetPan, LLCriticalDamp::getInterpolant(0.1f));
+		mCurPan = lerp(mCurPan, mTargetPan, LLSmoothInterpolation::getInterpolant(0.1f));
 	}
 
 	// Prepare a scissor region
@@ -1538,10 +1539,16 @@ BOOL LLNetMap::handleRightMouseDown(S32 x, S32 y, MASK mask)
 		mPopupMenu->setItemVisible("More Options", mClosestAgentsToCursor.size() == 1);
 		mPopupMenu->setItemVisible("View Profile", mClosestAgentsToCursor.size() == 1);
 
+		bool can_show_names = !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
+		mPopupMenu->setItemEnabled("Add to Set Multiple", can_show_names);
+		mPopupMenu->setItemEnabled("More Options", can_show_names);
+		mPopupMenu->setItemEnabled("View Profile", can_show_names);
+
 		LLMenuItemBranchGL* pProfilesMenu = mPopupMenu->getChild<LLMenuItemBranchGL>("View Profiles");
 		if (pProfilesMenu)
 		{
 			pProfilesMenu->setVisible(mClosestAgentsToCursor.size() > 1);
+			pProfilesMenu->setEnabled(can_show_names);
 
 			pProfilesMenu->getBranch()->empty();
 			for (uuid_vec_t::const_iterator itAgent = mClosestAgentsToCursor.begin(); itAgent != mClosestAgentsToCursor.end(); ++itAgent)
@@ -1579,8 +1586,10 @@ BOOL LLNetMap::handleRightMouseDown(S32 x, S32 y, MASK mask)
 		mPopupMenu->setItemVisible("Cam", LLAvatarActions::canZoomIn(mClosestAgentToCursor));
 		mPopupMenu->setItemVisible("MarkAvatar", mClosestAgentToCursor.notNull());
 		mPopupMenu->setItemVisible("Start Tracking", mClosestAgentToCursor.notNull());
-		mPopupMenu->setItemVisible("Profile Separator", (mClosestAgentsToCursor.size() >= 1
-								   || mClosestAgentToCursor.notNull()));
+		mPopupMenu->setItemVisible("Profile Separator", (mClosestAgentsToCursor.size() >= 1 || mClosestAgentToCursor.notNull()));
+		mPopupMenu->setItemEnabled("Place Profile", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC));
+		mPopupMenu->setItemEnabled("World Map", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWWORLDMAP));
+
 // [/SL:KB]
 		mPopupMenu->buildDrawLabels();
 		mPopupMenu->updateParent(LLMenuGL::sMenuContainer);
@@ -1919,6 +1928,13 @@ bool LLNetMap::canOfferTeleport()
 {
 	return FSCommon::checkIsActionEnabled(mClosestAgentRightClick, FS_RGSTR_ACT_OFFER_TELEPORT);
 }
+
+// <FS:Ansariel> Extra request teleport
+bool LLNetMap::canRequestTeleport()
+{
+	return FSCommon::checkIsActionEnabled(mClosestAgentRightClick, FS_RGSTR_ACT_REQUEST_TELEPORT);
+}
+// </FS:Ansariel>
 
 bool LLNetMap::canBlock()
 {

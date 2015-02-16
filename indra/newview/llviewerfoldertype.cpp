@@ -30,6 +30,9 @@
 #include "lldictionary.h"
 #include "llmemory.h"
 #include "llvisualparam.h"
+#include "llcontrol.h"
+
+extern LLControlGroup gSavedSettings;
 
 static const std::string empty_string;
 
@@ -133,8 +136,9 @@ LLViewerFolderDictionary::LLViewerFolderDictionary()
 	//addEntry(LLFolderType::FT_MY_OUTFITS, 			new ViewerFolderEntry("My Outfits",				"Inv_SysOpen",			"Inv_SysClosed",		TRUE,      true));
 	//addEntry(LLFolderType::FT_MESH, 				new ViewerFolderEntry("Meshes",					"Inv_SysOpen",			"Inv_SysClosed",		FALSE,     true));
 	//
-	//addEntry(LLFolderType::FT_INBOX, 				new ViewerFolderEntry("Inbox",					"Inv_SysOpen",			"Inv_SysClosed",		FALSE,     true));
-	//addEntry(LLFolderType::FT_OUTBOX, 				new ViewerFolderEntry("Outbox",					"Inv_SysOpen",			"Inv_SysClosed",		FALSE,     true));
+	//bool boxes_invisible = !gSavedSettings.getBOOL("InventoryOutboxMakeVisible");
+	//addEntry(LLFolderType::FT_INBOX, 				new ViewerFolderEntry("Inbox",					"Inv_SysOpen",			"Inv_SysClosed",		FALSE,     boxes_invisible));
+	//addEntry(LLFolderType::FT_OUTBOX, 				new ViewerFolderEntry("Merchant Outbox",		"Inv_SysOpen",			"Inv_SysClosed",		FALSE,     boxes_invisible));
 
 	addEntry(LLFolderType::FT_TEXTURE, 				new ViewerFolderEntry("Textures",				"Inv_TexturesOpen",		"Inv_TexturesClosed",	FALSE,     true));
 	addEntry(LLFolderType::FT_SOUND, 				new ViewerFolderEntry("Sounds",					"Inv_SoundOpen",		"Inv_SoundClosed",		FALSE,     true));
@@ -159,7 +163,7 @@ LLViewerFolderDictionary::LLViewerFolderDictionary()
 	addEntry(LLFolderType::FT_MESH, 				new ViewerFolderEntry("Meshes",					"Inv_MeshesOpen",		"Inv_MeshesClosed",		FALSE,     true));
 	
 	addEntry(LLFolderType::FT_INBOX, 				new ViewerFolderEntry("Inbox",					"Inv_InboxOpen",		"Inv_InboxClosed",		FALSE,     true));
-	addEntry(LLFolderType::FT_OUTBOX, 				new ViewerFolderEntry("Outbox",					"Inv_OutboxOpen",		"Inv_OutboxClosed",		FALSE,     true));
+	addEntry(LLFolderType::FT_OUTBOX, 				new ViewerFolderEntry("Merchant Outbox",		"Inv_OutboxOpen",		"Inv_OutboxClosed",		FALSE,     !gSavedSettings.getBOOL("InventoryOutboxMakeVisible")));
 	// </FS:Ansariel> Use individual icons for different folder types
 
 	addEntry(LLFolderType::FT_BASIC_ROOT, 			new ViewerFolderEntry("Basic Root",				"Inv_SysOpen",			"Inv_SysClosed",		FALSE,     true));
@@ -188,7 +192,7 @@ bool LLViewerFolderDictionary::initEnsemblesFromFile()
 	LLXmlTree folder_def;
 	if (!folder_def.parseFile(xml_filename))
 	{
-		llerrs << "Failed to parse folders file " << xml_filename << llendl;
+		LL_ERRS() << "Failed to parse folders file " << xml_filename << LL_ENDL;
 		return false;
 	}
 
@@ -199,7 +203,7 @@ bool LLViewerFolderDictionary::initEnsemblesFromFile()
 	{
 		if (!ensemble->hasName("ensemble"))
 		{
-			llwarns << "Invalid ensemble definition node " << ensemble->getName() << llendl;
+			LL_WARNS() << "Invalid ensemble definition node " << ensemble->getName() << LL_ENDL;
 			continue;
 		}
 
@@ -207,14 +211,14 @@ bool LLViewerFolderDictionary::initEnsemblesFromFile()
 		static LLStdStringHandle ensemble_num_string = LLXmlTree::addAttributeString("foldertype_num");
 		if (!ensemble->getFastAttributeS32(ensemble_num_string, ensemble_type))
 		{
-			llwarns << "No ensemble type defined" << llendl;
+			LL_WARNS() << "No ensemble type defined" << LL_ENDL;
 			continue;
 		}
 
 
 		if (ensemble_type < S32(LLFolderType::FT_ENSEMBLE_START) || ensemble_type > S32(LLFolderType::FT_ENSEMBLE_END))
 		{
-			llwarns << "Exceeded maximum ensemble index" << LLFolderType::FT_ENSEMBLE_END << llendl;
+			LL_WARNS() << "Exceeded maximum ensemble index" << LLFolderType::FT_ENSEMBLE_END << LL_ENDL;
 			break;
 		}
 
@@ -222,7 +226,7 @@ bool LLViewerFolderDictionary::initEnsemblesFromFile()
 		static LLStdStringHandle xui_name_string = LLXmlTree::addAttributeString("xui_name");
 		if (!ensemble->getFastAttributeString(xui_name_string, xui_name))
 		{
-			llwarns << "No xui name defined" << llendl;
+			LL_WARNS() << "No xui name defined" << LL_ENDL;
 			continue;
 		}
 
@@ -230,7 +234,7 @@ bool LLViewerFolderDictionary::initEnsemblesFromFile()
 		static LLStdStringHandle icon_name_string = LLXmlTree::addAttributeString("icon_name");
 		if (!ensemble->getFastAttributeString(icon_name_string, icon_name))
 		{
-			llwarns << "No ensemble icon name defined" << llendl;
+			LL_WARNS() << "No ensemble icon name defined" << LL_ENDL;
 			continue;
 		}
 

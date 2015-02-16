@@ -29,9 +29,8 @@
 
 #include "llassettype.h"
 #include "llfoldertype.h"
-#include "lldarray.h"
 #include "llframetimer.h"
-#include "llhttpclient.h"
+#include "llcurl.h"
 #include "lluuid.h"
 #include "llpermissionsflags.h"
 #include "llstring.h"
@@ -79,11 +78,11 @@ public:
 		CHILDREN_MAYBE
 	};
 
-	typedef LLDynamicArray<LLPointer<LLViewerInventoryCategory> > cat_array_t;
-	typedef LLDynamicArray<LLPointer<LLViewerInventoryItem> > item_array_t;
+	typedef std::vector<LLPointer<LLViewerInventoryCategory> > cat_array_t;
+	typedef std::vector<LLPointer<LLViewerInventoryItem> > item_array_t;
 	typedef std::set<LLUUID> changed_items_t;
 
-	class fetchInventoryResponder : public LLHTTPClient::Responder
+	class fetchInventoryResponder : public LLCurl::Responder
 	{
 	public:
 		fetchInventoryResponder(const LLSD& request_sd) : mRequestSD(request_sd) {};
@@ -137,7 +136,7 @@ private:
 // <FS:TT> ReplaceWornItemsOnly
 	item_array_t mItemArray;
 	item_array_t mObjArray;
-	LLDynamicArray<std::string> mAttPoints;
+	std::vector<std::string> mAttPoints;
 // </FS:TT>
 	
 	//--------------------------------------------------------------------
@@ -280,15 +279,20 @@ public:
 	// Get the inventoryID or item that this item points to, else just return object_id
 	const LLUUID& getLinkedItemID(const LLUUID& object_id) const;
 	LLViewerInventoryItem* getLinkedItem(const LLUUID& object_id) const;
+    
+    // Copy content of all folders of type "type" into folder "id" and delete/purge the empty folders
+    // Note : This method has been designed for FT_OUTBOX (aka Merchant Outbox) but can be used for other categories
+    void consolidateForType(const LLUUID& id, LLFolderType::EType type);
+    
 
 // <FS:TT> ReplaceWornItemsOnly
 	void wearItemsOnAvatar(LLInventoryCategory* category);
 	void wearAttachmentsOnAvatarCheckRemove(LLViewerObject *object, const LLViewerJointAttachment *attachment);
 
 private:
-	void wearWearablesOnAvatar(LLUUID category_id);
-	void wearAttachmentsOnAvatar(LLUUID category_id);
-	void wearGesturesOnAvatar(LLUUID category_id);
+	void wearWearablesOnAvatar(const LLUUID& category_id);
+	void wearAttachmentsOnAvatar(const LLUUID& category_id);
+	void wearGesturesOnAvatar(const LLUUID& category_id);
 // </FS:TT>
 private:
 	mutable LLPointer<LLViewerInventoryItem> mLastItem; // cache recent lookups	

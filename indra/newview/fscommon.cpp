@@ -36,7 +36,6 @@
 #include "llinventorymodel.h"
 #include "llnotificationmanager.h"
 #include "llnotificationsutil.h"	// <FS:CR> reportToNearbyChat
-#include "llpanel.h"
 #include "lltooldraganddrop.h"
 #include "llviewerinventory.h"
 #include "llviewernetwork.h"
@@ -140,16 +139,6 @@ std::string formatString(std::string text, const LLStringUtil::format_map_t& arg
 {
 	LLStringUtil::format(text, args);
 	return text;
-}
-
-LLPanelPeople* getPeoplePanel()
-{
-	LLPanel* panel_people = LLFloaterSidePanelContainer::getPanel("people", "panel_people");
-	if (panel_people)
-	{
-		return dynamic_cast<LLPanelPeople*>(panel_people);
-	}
-	return NULL;
 }
 
 S32 FSCommon::secondsSinceEpochFromString(const std::string& format, const std::string& str)
@@ -320,9 +309,13 @@ bool FSCommon::checkIsActionEnabled(const LLUUID& av_id, EFSRegistrarFunctionAct
 	{
 		return (!isSelf && LLAvatarActions::canZoomIn(av_id));
 	}
-	else if (action == FS_RGSTR_ACT_OFFER_TELEPORT || action == FS_RGSTR_ACT_REQUEST_TELEPORT)
+	else if (action == FS_RGSTR_ACT_OFFER_TELEPORT)
 	{
 		return (!isSelf && LLAvatarActions::canOfferTeleport(av_id));
+	}
+	else if (action == FS_RGSTR_ACT_REQUEST_TELEPORT)
+	{
+		return (!isSelf && LLAvatarActions::canRequestTeleport(av_id));
 	}
 	else if (action == FS_RGSTR_ACT_SHOW_PROFILE)
 	{
@@ -343,10 +336,29 @@ bool FSCommon::checkIsActionEnabled(const LLUUID& av_id, EFSRegistrarFunctionAct
 LLSD FSCommon::populateGroupCount()
 {
 	LLStringUtil::format_map_t args;
-	S32 groupcount = gAgent.mGroups.count();
+	S32 groupcount = gAgent.mGroups.size();
 	args["[COUNT]"] = llformat("%d", groupcount);
 	args["[REMAINING]"] = llformat("%d", gMaxAgentGroups - groupcount);
 	LLUIString groupcountstring = LLTrans::getString((gMaxAgentGroups ? "groupcountstring" : "groupcountunlimitedstring"), args);
 	return LLSD(groupcountstring);
 }
 
+std::string FSCommon::getAvatarNameByDisplaySettings(const LLAvatarName& av_name)
+{
+	std::string name;
+	static LLCachedControl<bool> NameTagShowUsernames(gSavedSettings, "NameTagShowUsernames");
+	static LLCachedControl<bool> UseDisplayNames(gSavedSettings, "UseDisplayNames");
+	if ((NameTagShowUsernames) && (UseDisplayNames))
+	{
+		name = av_name.getCompleteName();
+	}
+	else if (UseDisplayNames)
+	{
+		name = av_name.getDisplayName();
+	}
+	else
+	{
+		name = av_name.getUserNameForDisplay();
+	}
+	return name;
+}

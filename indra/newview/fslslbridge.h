@@ -28,15 +28,13 @@
 #ifndef FS_LSLBRIDGE_H
 #define FS_LSLBRIDGE_H
 
-#include "llviewerprecompiledheaders.h"
-#include "llchat.h"
 #include "llhttpclient.h"
 #include "llinventorymodel.h"
-#include "fslslbridgerequest.h"
 #include "llviewerinventory.h"
 #include "llinventoryobserver.h"
 #include "lleventtimer.h"
-#include "llvoinventorylistener.h"
+
+class FSLSLBridgeRequestResponder;
 
 //
 //-TT Client LSL Bridge File
@@ -44,11 +42,11 @@
 
 const std::string LIB_ROCK_NAME = "Rock - medium, round";
 const std::string FS_BRIDGE_NAME = "#Firestorm LSL Bridge v";
+const U8 FS_BRIDGE_POINT = 127;
+const std::string FS_BRIDGE_ATTACHMENT_POINT_NAME = "Bridge";
 
 class FSLSLBridge : public LLSingleton<FSLSLBridge>, public LLHTTPClient::Responder, public LLVOInventoryListener
 {
-	static const U8 BRIDGE_POINT = 127;
-
 	friend class FSLSLBridgeScriptCallback;
 	friend class FSLSLBridgeRezCallback;
 	friend class FSLSLBridgeInventoryObserver;
@@ -63,6 +61,7 @@ public:
 
 	bool updateBoolSettingValue(const std::string& msgVal);
 	bool updateBoolSettingValue(const std::string& msgVal, bool contentVal);
+	void updateIntegrations();
 	
 	void initBridge();
 	void recreateBridge();

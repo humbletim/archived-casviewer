@@ -132,7 +132,7 @@ void FloaterQuickPrefs::onOpen(const LLSD& key)
 		LLUICtrl* current_widget=entry.widget;
 		if(!current_widget)
 		{
-			llwarns << "missing widget for control " << it->first << llendl;
+			LL_WARNS() << "missing widget for control " << it->first << LL_ENDL;
 			continue;
 		}
 
@@ -446,11 +446,11 @@ void FloaterQuickPrefs::loadSavedSettingsFromFile(const std::string& settings_pa
 	
 	if(!LLXMLNode::parseFile(settings_path,root,NULL))
 	{
-		llwarns << "Unable to load quick preferences from file: " << settings_path << llendl;
+		LL_WARNS() << "Unable to load quick preferences from file: " << settings_path << LL_ENDL;
 	}
 	else if(!root->hasName("quickprefs"))
 	{
-		llwarns << settings_path << " is not a valid quick preferences definition file" << llendl;
+		LL_WARNS() << settings_path << " is not a valid quick preferences definition file" << LL_ENDL;
 	}
 	else
 	{
@@ -460,7 +460,7 @@ void FloaterQuickPrefs::loadSavedSettingsFromFile(const std::string& settings_pa
 		
 		if(!xml.validateBlock())
 		{
-			llwarns << "Unable to validate quick preferences from file: " << settings_path << llendl;
+			LL_WARNS() << "Unable to validate quick preferences from file: " << settings_path << LL_ENDL;
 		}
 		else
 		{
@@ -558,7 +558,15 @@ void FloaterQuickPrefs::selectDayCyclePreset(const std::string& preset_name)
 
 void FloaterQuickPrefs::onChangeUseRegionWindlight()
 {
-	LLEnvManagerNew::instance().setUseRegionSettings(mUseRegionWindlight->get(), (gSavedSettings.getBOOL("FSInterpolateSky") || gSavedSettings.getBOOL("FSInterpolateWater")));
+	LLEnvManagerNew &envmgr = LLEnvManagerNew::instance();
+	// reset all environmental settings to track the region defaults, make this reset 'sticky' like the other sun settings.
+	bool use_fixed_sky = !mUseRegionWindlight->get();
+	bool use_region_settings = !use_fixed_sky;
+	envmgr.setUserPrefs(envmgr.getWaterPresetName(),
+				envmgr.getSkyPresetName(),
+				envmgr.getDayCycleName(),
+				use_fixed_sky, use_region_settings,
+				(gSavedSettings.getBOOL("FSInterpolateSky") || gSavedSettings.getBOOL("FSInterpolateWater")));
 }
 
 void FloaterQuickPrefs::onChangeWaterPreset()
@@ -940,6 +948,9 @@ void FloaterQuickPrefs::enableWindlightButtons(BOOL enable)
 	childSetEnabled("DCPresetsCombo", enable);
 	childSetEnabled("DCPrevPreset", enable);
 	childSetEnabled("DCNextPreset", enable);
+	//<FS:TS> FIRE-13448: Quickprefs daycycle slider allows evading @setenv=n
+	childSetEnabled("WLSunPos", enable);
+	//</FS:TS> FIRE-13448
 
 	if (getIsPhototools())
 	{
@@ -1122,7 +1133,7 @@ void FloaterQuickPrefs::updateControl(const std::string& controlName,ControlEntr
 	}
 	else
 	{
-		llwarns << "Could not find control variable " << controlName << llendl;
+		LL_WARNS() << "Could not find control variable " << controlName << LL_ENDL;
 	}
 }
 
@@ -1132,7 +1143,7 @@ LLUICtrl* FloaterQuickPrefs::addControl(const std::string& controlName,const std
 	LLLayoutPanel* panel=LLUICtrlFactory::createFromFile<LLLayoutPanel>("panel_quickprefs_item.xml",NULL,LLLayoutStack::child_registry_t::instance());
 	if(!panel)
 	{
-		llwarns << "could not add panel" << llendl;
+		LL_WARNS() << "could not add panel" << LL_ENDL;
 		return NULL;
 	}
 
@@ -1196,7 +1207,7 @@ void FloaterQuickPrefs::removeControl(const std::string& controlName,BOOL remove
 	const control_list_t::iterator it=mControlsList.find(controlName);
 	if(it==mControlsList.end())
 	{
-		llwarns << "Couldn't find control entry " << controlName << llendl;
+		LL_WARNS() << "Couldn't find control entry " << controlName << LL_ENDL;
 		return;
 	}
 
@@ -1876,7 +1887,7 @@ void FloaterQuickPrefs::callbackRestoreDefaults(const LLSD& notification, const 
 	}
 	else
 	{
-		llinfos << "User cancelled the reset." << llendl;
+		LL_INFOS() << "User cancelled the reset." << LL_ENDL;
 	}
 }
 

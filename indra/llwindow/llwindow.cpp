@@ -39,7 +39,6 @@
 
 #include "llerror.h"
 #include "llkeyboard.h"
-#include "linked_lists.h"
 #include "llwindowcallbacks.h"
 
 
@@ -82,7 +81,7 @@ S32 OSMessageBox(const std::string& text, const std::string& caption, U32 type)
 
 	S32 result = 0;
 #if LL_MESA_HEADLESS // !!! *FIX: (???)
-	llwarns << "OSMessageBox: " << text << llendl;
+	LL_WARNS() << "OSMessageBox: " << text << LL_ENDL;
 	return OSBTN_OK;
 #elif LL_WINDOWS
 	result = OSMessageBoxWin32(text, caption, type);
@@ -426,6 +425,7 @@ LLWindow* LLWindowManager::createWindow(
 	BOOL use_gl,
 	BOOL ignore_pixel_depth,
 	U32 fsaa_samples,
+	BOOL useLegacyCursors, // <FS:LO> Legacy cursor setting from main program
 	U32 output_type)
 {
 	LLWindow* new_window;
@@ -439,15 +439,21 @@ LLWindow* LLWindowManager::createWindow(
 #elif LL_SDL
 		new_window = new LLWindowSDL(callbacks,
 			title, x, y, width, height, flags, 
-			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, output_type);
+			//fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples);
+			//fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, useLegacyCursors); // <FS:LO> Legacy cursor setting from main program
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, useLegacyCursors, output_type); // <CV:David>
 #elif LL_WINDOWS
 		new_window = new LLWindowWin32(callbacks,
 			title, name, x, y, width, height, flags, 
-			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, output_type);
+			//fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples);
+			//fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, useLegacyCursors); // <FS:LO> Legacy cursor setting from main program
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, useLegacyCursors, output_type); // <CV:David>
 #elif LL_DARWIN
 		new_window = new LLWindowMacOSX(callbacks,
 			title, name, x, y, width, height, flags, 
-			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, output_type);
+			//fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples);
+			//fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, useLegacyCursors); // <FS:LO> Legacy cursor setting from main program
+			fullscreen, clearBg, disable_vsync, use_gl, ignore_pixel_depth, fsaa_samples, useLegacyCursors, output_type); // <CV:David>
 #endif
 	}
 	else
@@ -460,7 +466,7 @@ LLWindow* LLWindowManager::createWindow(
 	if (FALSE == new_window->isValid())
 	{
 		delete new_window;
-		llwarns << "LLWindowManager::create() : Error creating window." << llendl;
+		LL_WARNS() << "LLWindowManager::create() : Error creating window." << LL_ENDL;
 		return NULL;
 	}
 	sWindowList.insert(new_window);
@@ -471,8 +477,8 @@ BOOL LLWindowManager::destroyWindow(LLWindow* window)
 {
 	if (sWindowList.find(window) == sWindowList.end())
 	{
-		llerrs << "LLWindowManager::destroyWindow() : Window pointer not valid, this window doesn't exist!" 
-			<< llendl;
+		LL_ERRS() << "LLWindowManager::destroyWindow() : Window pointer not valid, this window doesn't exist!" 
+			<< LL_ENDL;
 		return FALSE;
 	}
 

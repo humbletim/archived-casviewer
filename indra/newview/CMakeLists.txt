@@ -339,10 +339,12 @@ set(viewer_SOURCE_FILES
     llfloaterhelpbrowser.cpp
     llfloaterhud.cpp
     llfloaterimagepreview.cpp
+    llfloaterimsessiontab.cpp
+    llfloaterimsession.cpp
+    llfloaterimcontainer.cpp
     llfloaterinspect.cpp
     llfloaterinventory.cpp
     llfloaterjoystick.cpp
-    llfloaterlagmeter.cpp
     llfloaterland.cpp
     llfloaterlandholdings.cpp
     llfloatermap.cpp
@@ -368,6 +370,7 @@ set(viewer_SOURCE_FILES
     llfloaterregioninfo.cpp
     llfloaterreporter.cpp
     llfloaterregionrestarting.cpp
+    llfloatersceneloadstats.cpp
     llfloaterscriptdebug.cpp
     llfloaterscriptlimits.cpp
     llfloaterscriptrecover.cpp
@@ -425,9 +428,6 @@ set(viewer_SOURCE_FILES
     llhudrender.cpp
     llhudtext.cpp
     llhudview.cpp
-    llfloaterimsessiontab.cpp
-    llfloaterimsession.cpp
-    llfloaterimcontainer.cpp
     llimhandler.cpp
     llimview.cpp
     llinspect.cpp
@@ -594,6 +594,7 @@ set(viewer_SOURCE_FILES
     llremoteparcelrequest.cpp
     llsavedsettingsglue.cpp
     llsaveoutfitcombobtn.cpp
+    llscenemonitor.cpp
     llsceneview.cpp
     llscreenchannel.cpp
     llscriptfloater.cpp
@@ -716,6 +717,7 @@ set(viewer_SOURCE_FILES
     #llviewernetwork.cpp #<FS:AW optional opensim support>
     llviewerobject.cpp
     llviewerobjectlist.cpp
+    llvieweroctree.cpp
     llviewerparcelmedia.cpp
     llviewerparcelmediaautoplay.cpp
     llviewerparcelmgr.cpp
@@ -762,7 +764,6 @@ set(viewer_SOURCE_FILES
     llwearablelist.cpp
     llweb.cpp
     llwebprofile.cpp
-    llwebsharing.cpp
     llwind.cpp
     llwindowlistener.cpp
     llwlanimator.cpp
@@ -890,6 +891,7 @@ set(viewer_HEADER_FILES
     fsslurlcommand.h
     fswsassetblacklist.h
     groupchatlistener.h
+    llaccountingcost.h
     #growlmanager.h
     #growlnotifier.h
     kcwlinterface.h
@@ -1041,10 +1043,15 @@ set(viewer_HEADER_FILES
     llfloaterhelpbrowser.h
     llfloaterhud.h
     llfloaterimagepreview.h
+    llfloaterimnearbychat.h
+    llfloaterimnearbychathandler.h
+    llfloaterimnearbychatlistener.h
+    llfloaterimsessiontab.h
+    llfloaterimsession.h
+    llfloaterimcontainer.h
     llfloaterinspect.h
     llfloaterinventory.h
     llfloaterjoystick.h
-    llfloaterlagmeter.h
     llfloaterland.h
     llfloaterlandholdings.h
     llfloatermap.h
@@ -1070,6 +1077,7 @@ set(viewer_HEADER_FILES
     llfloaterregioninfo.h
     llfloaterreporter.h
     llfloaterregionrestarting.h
+    llfloatersceneloadstats.h
     llfloaterscriptdebug.h
     llfloaterscriptlimits.h
     llfloaterscriptrecover.h
@@ -1126,9 +1134,6 @@ set(viewer_HEADER_FILES
     llhudrender.h
     llhudtext.h
     llhudview.h
-    llfloaterimsessiontab.h
-    llfloaterimsession.h
-    llfloaterimcontainer.h
     llimview.h
     llinspect.h
     llinspectavatar.h
@@ -1180,9 +1185,6 @@ set(viewer_HEADER_FILES
     llnameeditor.h
     llnamelistctrl.h
     llnavigationbar.h
-    llfloaterimnearbychat.h
-    llfloaterimnearbychathandler.h
-    llfloaterimnearbychatlistener.h
     llnetmap.h
     llnotificationhandler.h
     llnotificationmanager.h
@@ -1286,6 +1288,7 @@ set(viewer_HEADER_FILES
     llrootview.h
     llsavedsettingsglue.h
     llsaveoutfitcombobtn.h
+    llscenemonitor.h
     llsceneview.h
     llscreenchannel.h
     llscriptfloater.h
@@ -1408,6 +1411,7 @@ set(viewer_HEADER_FILES
     llviewernetwork.h
     llviewerobject.h
     llviewerobjectlist.h
+    llvieweroctree.h
     llviewerparcelmedia.h
     llviewerparcelmediaautoplay.h
     llviewerparcelmgr.h
@@ -1444,7 +1448,6 @@ set(viewer_HEADER_FILES
     llvosky.h
     llvosurfacepatch.h
     llvotree.h
-    llvotreenew.h
     llvovolume.h
     llvowater.h
     llvowlsky.h
@@ -1455,7 +1458,6 @@ set(viewer_HEADER_FILES
     llwearablelist.h
     llweb.h
     llwebprofile.h
-    llwebsharing.h
     llwind.h
     llwindowlistener.h
     llwlanimator.h
@@ -1477,6 +1479,7 @@ set(viewer_HEADER_FILES
     pieseparator.h
     pieslice.h
     pipeline.h
+    roles_constants.h
     qtoolalign.h
     quickprefs.h
     rlvactions.h
@@ -1522,11 +1525,20 @@ source_group("CMake Rules" FILES ViewerInstall.cmake)
 # the viewer_version.txt file created here is for passing to viewer_manifest
 # the summary.json file is created for the benefit of the TeamCity builds, where
 #   it is used to provide descriptive information to the build results page
+# <CV:David> 12 Feb 2015: "printf" seems not to be working on Windows any more; use "echo" instead.
+if (WINDOWS)
+add_custom_target(generate_viewer_version ALL
+                  COMMAND echo ${VIEWER_SHORT_VERSION}.${VIEWER_VERSION_REVISION}>${CMAKE_CURRENT_BINARY_DIR}/viewer_version.txt
+                  COMMAND echo {"Type":"viewer","Version":"${VIEWER_SHORT_VERSION}.${VIEWER_VERSION_REVISION}"}>${CMAKE_BINARY_DIR}/summary.json
+                  COMMENT Generating viewer_version.txt for manifest processing
+                  )
+else (WINDOWS)
 add_custom_target(generate_viewer_version ALL
                   COMMAND printf '${VIEWER_SHORT_VERSION}.${VIEWER_VERSION_REVISION}' > ${CMAKE_CURRENT_BINARY_DIR}/viewer_version.txt
                   COMMAND printf '{"Type":"viewer","Version":"${VIEWER_SHORT_VERSION}.${VIEWER_VERSION_REVISION}"}' > ${CMAKE_BINARY_DIR}/summary.json
                   COMMENT Generating viewer_version.txt for manifest processing
                   )
+endif (WINDOWS)
 
 set_source_files_properties(
    llversioninfo.cpp tests/llversioninfo_test.cpp 
@@ -1549,6 +1561,8 @@ endif (LEAPMOTION)
 
 if (DARWIN)
   LIST(APPEND viewer_SOURCE_FILES llappviewermacosx.cpp)
+  LIST(APPEND viewer_SOURCE_FILES llappviewermacosx-objc.mm)
+  LIST(APPEND viewer_SOURCE_FILES llappviewermacosx-objc.h)
   LIST(APPEND viewer_SOURCE_FILES llfilepicker_mac.mm)
   LIST(APPEND viewer_HEADER_FILES llfilepicker_mac.h)
 
@@ -1737,6 +1751,10 @@ if (WINDOWS)
         res/toolbuy.cur
         res/toolopen.cur
         res/toolsit.cur
+        res/toolbuy-legacy.cur
+        res/toolopen-legacy.cur
+        res/toolsit-legacy.cur
+        res/toolpay-legacy.cur
         )
 
     set_source_files_properties(${viewer_RESOURCE_FILES}
@@ -2058,8 +2076,11 @@ if (WINDOWS)
       )
 
     if( ND_BUILD64BIT_ARCH )
+      if( PACKAGE AND NOT FS_UPGRADECODES )
+        message( FATAL_ERROR "No Upgradecodes specified")
+      endif( PACKAGE AND NOT FS_UPGRADECODES )
       set( VIEWERMANIFEST_FLAGS --m64 --copy_artwork )
-      set( VIEWERMANIFEST_PACKAGE_FLAGS --m64 )
+      set( VIEWERMANIFEST_PACKAGE_FLAGS --m64 --upgradecodes="${FS_UPGRADECODES}")
     else( ND_BUILD64BIT_ARCH )
       set( VIEWERMANIFEST_FLAGS "" )
       set( VIEWERMANIFEST_PACKAGE_FLAGS )
@@ -2358,7 +2379,7 @@ if (DARWIN)
   set(MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2013-2014 CtrlAltStudio")
   # <CV:David> Retain Firestorm filename
   set(MACOSX_BUNDLE_NSMAIN_NIB_FILE "Firestorm.nib")
-  set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "NSApplication")
+  set(MACOSX_BUNDLE_NSPRINCIPAL_CLASS "LLNSApplication")
 
   set_target_properties(
     ${VIEWER_BINARY_NAME}
@@ -2399,7 +2420,7 @@ if (DARWIN)
       generate_viewer_version
     )
 
-  add_dependencies(${VIEWER_BINARY_NAME} SLPlugin media_plugin_quicktime media_plugin_webkit mac-crash-logger)
+  add_dependencies(${VIEWER_BINARY_NAME} SLPlugin mac-crash-logger)
   
   if (ENABLE_SIGNING)
       set(SIGNING_SETTING "--signature=${SIGNING_IDENTITY}")
@@ -2472,7 +2493,7 @@ if (PACKAGE)
     set(VIEWER_COPY_MANIFEST copy_l_viewer_manifest)
   endif (LINUX)
 
-  if( (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) AND NOT (ND_BUILD64BIT_ARCH AND WINDOWS) )
+  if( (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) )
   if(CMAKE_CFG_INTDIR STREQUAL ".")
       set(LLBUILD_CONFIG ${CMAKE_BUILD_TYPE})
   else(CMAKE_CFG_INTDIR STREQUAL ".")
@@ -2496,7 +2517,7 @@ if (PACKAGE)
   add_custom_target(generate_breakpad_symbols DEPENDS "${VIEWER_SYMBOL_FILE}")
   add_dependencies(generate_breakpad_symbols "${VIEWER_BINARY_NAME}" "${VIEWER_COPY_MANIFEST}")
   add_dependencies(package generate_breakpad_symbols)
-  endif( (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) AND NOT (ND_BUILD64BIT_ARCH AND WINDOWS) )
+  endif( (RELEASE_CRASH_REPORTING OR NON_RELEASE_CRASH_REPORTING) )
 endif (PACKAGE)
 
 if (LL_TESTS)
@@ -2651,11 +2672,6 @@ if (LL_TESTS)
 
   LL_ADD_INTEGRATION_TEST(llviewernetwork
      llviewernetwork.cpp
-    "${test_libs}"
-    )
-
-  LL_ADD_INTEGRATION_TEST(llsimplestat
-    ""
     "${test_libs}"
     )
 

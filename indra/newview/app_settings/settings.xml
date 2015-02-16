@@ -1118,17 +1118,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-  <key>FSDontSendAvPhysicsParms</key>
-    <map>
-      <key>Comment</key>
-      <string>Don't send avatar physics parameters to server with shape for v1 compatibility</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
   <key>FSSortContactsByUserName</key>
     <map>
       <key>Comment</key>
@@ -2395,7 +2384,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-
     <key>BackgroundYieldTime</key>
     <map>
       <key>Comment</key>
@@ -3100,6 +3088,17 @@
         <real>0.0</real>
         <real>0.0</real>
       </array>
+    </map>
+    <key>RestoreCameraPosOnLogin</key>
+    <map>
+      <key>Comment</key>
+      <string>Reset camera position to location at logout</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+			<integer>0</integer>
     </map>
     <key>CameraPositionSmoothing</key>
     <map>
@@ -4108,7 +4107,29 @@
       <key>Value</key>
       <integer>-1</integer>
     </map>
+  <key>DebugStatModePTFPS</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
     <key>DebugStatModeBandwidth</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModePTBandwidth</key>
     <map>
       <key>Comment</key>
       <string>Mode of stat in Statistics floater</string>
@@ -4152,7 +4173,29 @@
       <key>Value</key>
       <integer>-1</integer>
     </map>
+    <key>DebugStatModePTKTrisDrawnFr</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
     <key>DebugStatModeKTrisDrawnSec</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModePTKTrisDrawnSec</key>
     <map>
       <key>Comment</key>
       <string>Mode of stat in Statistics floater</string>
@@ -4174,7 +4217,40 @@
       <key>Value</key>
       <integer>-1</integer>
     </map>
+    <key>DebugStatModePTTotalObjs</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
     <key>DebugStatModeNewObjs</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModePTNewObjs</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeCachedObjs</key>
     <map>
       <key>Comment</key>
       <string>Mode of stat in Statistics floater</string>
@@ -4219,6 +4295,17 @@
       <integer>-1</integer>
     </map>
     <key>DebugStatModeTextureCount</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModePTTextureCount</key>
     <map>
       <key>Comment</key>
       <string>Mode of stat in Statistics floater</string>
@@ -4768,6 +4855,204 @@
       <key>Value</key>
       <integer>-1</integer>
     </map>
+    <key>DebugStatModeOcclusionQueries</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeObjOccluded</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeObjUnoccluded</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemTrace</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemUI</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemFonts</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemInventory</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemObjects</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemOctreeGroupData</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemOctreeData</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemObjectCache</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemDrawable</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemFaceData</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemDrawInfo</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemTextureData</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemImageData</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemGLImageData</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
+    <key>DebugStatModeMemVertexBuffer</key>
+    <map>
+      <key>Comment</key>
+      <string>Mode of stat in Statistics floater</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>-1</integer>
+    </map>
     <key>DebugViews</key>
     <map>
       <key>Comment</key>
@@ -4815,6 +5100,17 @@
 	  <string>String</string>
 	  <key>Value</key>
 	  <string>Female Shape &amp; Outfit</string>
+	</map>
+	<key>DefaultLoginLocation</key>
+	<map>
+		<key>Comment</key>
+		<string>Startup destination default (if not specified on command line)</string>
+		<key>Persist</key>
+		<integer>0</integer>
+		<key>Type</key>
+		<string>String</string>
+		<key>Value</key>
+		<string/>
 	</map>
 	<key>DefaultMaleAvatar</key>
 	<map>
@@ -5318,7 +5614,7 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>1</integer>
+      <integer>0</integer>
     </map>
     <key>EnableAltZoom</key>
     <map>
@@ -6591,6 +6887,17 @@
 		<key>Value</key>
 		<integer>0</integer>
 		<key>Backup</key>
+		<integer>0</integer>
+	</map>
+	<key>InventoryOutboxMakeVisible</key>
+	<map>
+		<key>Comment</key>
+		<string>Enable making the Merchant Outbox visible in the inventory for debug purposes.</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>Boolean</string>
+		<key>Value</key>
 		<integer>0</integer>
 	</map>
     <key>InventoryOutboxMaxFolderCount</key>
@@ -8733,6 +9040,28 @@
       <key>Value</key>
       <integer>162</integer>
     </map>
+    <key>NewObjectCreationThrottle</key>
+    <map>
+      <key>Comment</key>
+      <string>maximum number of new objects created per frame, -1 to disable this throttle</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>200</integer>
+    </map>
+    <key>NewObjectCreationThrottleDelayTime</key>
+    <map>
+      <key>Comment</key>
+      <string>time in seconds NewObjectCreationThrottle to take effect after the progress screen is lifted</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>2.0</real>
+    </map>
     <key>NextOwnerCopy</key>
     <map>
       <key>Comment</key>
@@ -8837,6 +9166,17 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>NonvisibleObjectsInMemoryTime</key>
+    <map>
+      <key>Comment</key>
+      <string>Number of frames non-visible objects stay in memory before being removed. 0 means never to remove.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+			<integer>300</integer>
     </map>
     <key>NoPreload</key>
     <map>
@@ -9186,6 +9526,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>RequestFullRegionCache</key>
+    <map>
+      <key>Comment</key>
+      <string>If set, ask sim to send full region object cache. Needs to restart viewer.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>OpenDebugStatAdvanced</key>
     <map>
       <key>Comment</key>
@@ -9296,6 +9647,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>OpenDebugStatMemory</key>
+    <map>
+      <key>Comment</key>
+      <string>Expand Memory performance stats display</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>OutBandwidth</key>
     <map>
       <key>Comment</key>
@@ -9399,7 +9761,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <real>0.75</real>
     </array>
   </map>
-  
     <key>ParcelMediaAutoPlayEnable</key>
     <map>
       <key>Comment</key>
@@ -9735,6 +10096,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <real>6.0</real>
       <key>Backup</key>
       <integer>0</integer>
+    </map>
+    <key>ClothingLoadingDelay</key>
+    <map>
+      <key>Comment</key>
+      <string>Time to wait for avatar appearance to resolve before showing world (seconds)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>10.0</real>
     </map>
 	<key>PreferredMaturity</key>
     <map>
@@ -10333,7 +10705,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
-
   <key>OctreeMaxNodeCapacity</key>
   <map>
     <key>Comment</key>
@@ -12802,6 +13173,105 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>SceneLoadFrontPixelThreshold</key>
+    <map>
+      <key>Comment</key>
+      <string>in pixels, all objects in view frustum whose screen area is greater than this threshold will be loaded</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>100.0</real>
+    </map>
+    <key>SceneLoadHighMemoryBound</key>
+    <map>
+      <key>Comment</key>
+      <string>in MB, when total memory usage above this threshold, minimum invisible objects are kept in memory </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <real>1024</real>
+    </map>
+    <key>SceneLoadLowMemoryBound</key>
+    <map>
+      <key>Comment</key>
+      <string>in MB, when total memory usage above this threshold, start to reduce invisible objects kept in memory </string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <real>750</real>
+    </map>
+    <key>SceneLoadMinRadius</key>
+    <map>
+      <key>Comment</key>
+      <string>in meters, all objects (visible or invisible) within this radius will remain loaded in memory</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>32.0</real>
+    </map>
+  <key>SceneLoadRearMaxRadiusFraction</key>
+  <map>
+    <key>Comment</key>
+    <string>a percentage of draw distance beyond which all objects outside of view frustum will be unloaded, regardless of pixel threshold</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>75.0</real>
+  </map>
+    <key>SceneLoadRearPixelThreshold</key>
+    <map>
+      <key>Comment</key>
+      <string>in pixels, all objects out of view frustum whose screen area is greater than this threshold will remain loaded</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>400.0</real>
+    </map>
+	<key>SceneLoadingMonitorEnabled</key>
+	<map>
+		<key>Comment</key>
+		<string>Enabled scene loading monitor if set</string>
+		<key>Persist</key>
+		<integer>0</integer>
+		<key>Type</key>
+		<string>Boolean</string>
+		<key>Value</key>
+		<integer>0</integer>
+	</map>
+	<key>SceneLoadingMonitorSampleTime</key>
+	<map>
+		<key>Comment</key>
+		<string>Time between screen samples when monitor scene load (seconds)</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>F32</string>
+		<key>Value</key>
+		<real>0.25</real>
+	</map>
+	<key>SceneLoadingMonitorPixelDiffThreshold</key>
+	<map>
+		<key>Comment</key>
+		<string>Amount of pixels changed required to consider the scene as still loading (square root of fraction of pixels on screen)</string>
+		<key>Persist</key>
+		<integer>1</integer>
+		<key>Type</key>
+		<string>F32</string>
+		<key>Value</key>
+		<real>0.02</real>
+	</map>
     <key>ScriptDialogPerObject</key>
     <map>
       <key>Comment</key>
@@ -12835,6 +13305,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>SecondLifeEnterprise</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables Second Life Enterprise features</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>	
     <key>SelectMovableOnly</key>
     <map>
       <key>Comment</key>
@@ -13887,30 +14368,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>75</integer>
     </map>
-    <key>SnapshotSharingEnabled</key>
-    <map>
-      <key>Comment</key>
-      <string>Enable uploading of snapshots to a web service.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
-    <key>SnapshotConfigURL</key>
-    <map>
-      <key>Comment</key>
-      <string>URL to fetch Snapshot Sharing configuration data from.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>String</string>
-      <key>Value</key>
-      <string>http://photos.apps.staging.avatarsunited.com/viewer_config</string>
-      <key>Backup</key>
-      <integer>0</integer>
-    </map>
     <key>SpeedTest</key>
     <map>
       <key>Comment</key>
@@ -14578,50 +15035,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
-    </map>
-    <key>UIAvatariconctrlSymbolHPad</key>
-    <map>
-      <key>Comment</key>
-      <string>UI Avatar Icon Control Symbol Horizontal Pad</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>S32</string>
-      <key>Value</key>
-      <real>2</real>
-    </map>    
-    <key>UIAvatariconctrlSymbolVPad</key>
-    <map>
-      <key>Comment</key>
-      <string>UI Avatar Icon Control Symbol Vertical Pad</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>S32</string>
-      <key>Value</key>
-      <real>2</real>
-    </map>    
-    <key>UIAvatariconctrlSymbolSize</key>
-    <map>
-      <key>Comment</key>
-      <string>UI Avatar Icon Control Symbol Size</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>S32</string>
-      <key>Value</key>
-      <real>5</real>
-    </map>    
-    <key>UIAvatariconctrlSymbolPosition</key>
-    <map>
-      <key>Comment</key>
-      <string>UI Avatar Icon Control Symbol Position (TopLeft|TopRight|BottomLeft|BottomRight)</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>String</string>
-      <key>Value</key>
-      <string>BottomRight</string>
     </map>
     <key>UIButtonOrigHPad</key>
     <map>
@@ -15395,6 +15808,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <string>77a018af-098e-c037-51a6-178f05877c6f</string>
     </map>
+    <key>UISndMovelockToggle</key>
+    <map>
+      <key>Comment</key>
+      <string>Sound file for toggling movelock (uuid for sound asset)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>4174f859-0d3d-c517-c424-72923dc21f65</string>
+    </map>
     <key>UISndNewIncomingIMSession</key>
     <map>
       <key>Comment</key>
@@ -16135,6 +16559,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>SanityComment</key>
       <string>Disabling this option might lead to severely degraded viewer performance and increased rezzing time.</string>
     </map>
+  <key>UseObjectCacheOcclusion</key>
+  <map>
+    <key>Comment</key>
+    <string>Enable object cache level object culling based on occlusion (coverage) by other objects</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>1</integer>
+  </map>
   <key>RenderSynchronousOcclusion</key>
   <map>
     <key>Comment</key>
@@ -17652,6 +18087,17 @@ Change of this parameter will affect the layout of buttons in notification toast
 			<key>Value</key>
 			<string>cpcampos</string>
 		</map>
+		<key>FSCmdLineRollDice</key>
+		<map>
+			<key>Comment</key>
+			<string>Rolls dice - cmd [number of dice] [number of faces]. Example: cmd 1 20. Lack of parameters is equal to cmd 1 6 (standard die).</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>String</string>
+			<key>Value</key>
+			<string>rolld</string>
+		</map>
 <!--<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues-->  
     <key>FSCmdLineBandWidth</key>
     <map>
@@ -17731,7 +18177,7 @@ Change of this parameter will affect the layout of buttons in notification toast
 		  <key>Value</key>
 		  <integer>1</integer>
 		</map>
-		<key>UseLegacyCursors</key>
+		<key>FSUseLegacyCursors</key>
 		<map>
 		  <key>Comment</key>
 		  <string>Use 1.x style cursors instead</string>
@@ -18770,6 +19216,28 @@ Change of this parameter will affect the layout of buttons in notification toast
     <key>Value</key>
     <integer>0</integer>
   </map>
+  <key>TeleportArrivalDelay</key>
+  <map>
+    <key>Comment</key>
+    <string>Time to wait before displaying world during teleport (seconds)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>2</real>
+  </map>
+  <key>TeleportLocalDelay</key>
+  <map>
+    <key>Comment</key>
+    <string>Delay to prevent teleports after starting an in-sim teleport. (seconds)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>1</real>
+  </map>
   <key>FMODExProfilerEnable</key>
   <map>
     <key>Comment</key>
@@ -19715,7 +20183,6 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>0</integer>
     </map>
-
   <key>VersionChannelName</key>
     <map>
       <key>Comment</key>
@@ -19975,6 +20442,17 @@ Change of this parameter will affect the layout of buttons in notification toast
     <map>
       <key>Comment</key>
       <string>Holds state for Prefs &gt; Sound/Media &gt; UI Sounds - UISndMoneyChangeUp.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>PlayModeUISndMovelockToggle</key>
+    <map>
+      <key>Comment</key>
+      <string>Holds state for Prefs &gt; Sound/Media &gt; UI Sounds - UISndMovelockToggle.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -20815,19 +21293,6 @@ Change of this parameter will affect the layout of buttons in notification toast
 	  <integer>1</integer>
     </map>
     <!-- <FS:Zi> -->
-    <!-- <FS:Cron> FIRE-8882 -->
-    <key>FSSnapDomain</key>
-    <map>
-        <key>Comment</key>
-        <string>Direction of snap lines (0 = outside of boundary, 1 = inside boundary)</string>
-        <key>Persist</key>
-        <integer>1</integer>
-        <key>Type</key>
-        <string>U32</string>
-        <key>Value</key>
-        <real>0</real>
-    </map>
-    <!-- </FS:Cron> -->
     <key>FSLastSearchTab</key>
     <map>
 		<key>Comment</key>
@@ -21846,6 +22311,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>FSRadarEnhanceByBridge</key>
+    <map>
+      <key>Comment</key>
+      <string>Enhance radar functionality by using client LSL Bridge.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>FSSyncronizeTextureMaps</key>
       <map>
       <key>Comment</key>
@@ -22356,6 +22832,91 @@ Change of this parameter will affect the layout of buttons in notification toast
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
+    </map>
+    <key>FSRadarShowMutedAndDerendered</key>
+    <map>
+      <key>Comment</key>
+      <string>If enabled, show muted or derendered avatars in radar list</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <!-- <FS:Zi> Do not allow "Restore To Last Position" for no-copy items -->
+    <key>AllowNoCopyRezRestoreToWorld</key>
+    <map>
+      <key>Comment</key>
+      <string>Allow Restore to Last Position for no-copy objects on Second Life grids. This can lead to content loss, and is only meant to be used for testing a potential server side fix.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <!-- </FS:Zi> -->
+    <!-- <FS:Zi> Optionally disable the usage of timesteps - FIRE-3657 -->
+    <key>UseAnimationTimeSteps</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable the use of animation timesteps to reduce render load for distant avatars.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <!-- <FS:Zi> Optionally disable the usage of timesteps - FIRE-3657 -->
+	<!-- <FS:ND> Create a debyg log for octree insert -->
+	<key>FSCreateOctreeLog</key>
+	<map>
+      <key>Comment</key>
+      <string>Create a log of octree operation. This can cause huge frame stalls on edit</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+      <key>Backup</key>
+      <integer>0</integer>
+	</map>
+	<!-- <FS:ND/> -->
+    <key>FSStatbarLegacyMeanPerSec</key>
+    <map>
+      <key>Comment</key>
+      <string>Use legacy period mean per second display for stat bars.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>AutoQueryGridStatus</key>
+    <map>
+      <key>Comment</key>
+      <string>Query status.secondlifegrid.net for latest news at login.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>AutoQueryGridStatusURL</key>
+    <map>
+      <key>Comment</key>
+      <string>URL for AutoQueryGridStatus. WordPress RSS 2.0 format.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>http://phoenixviewer.com/app/loginV3/secondlifegrid.xml</string>
     </map>
     <!-- <CV:David> -->
     <key>FloatingTextFadeDistance</key>

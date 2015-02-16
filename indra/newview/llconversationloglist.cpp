@@ -404,6 +404,12 @@ bool LLConversationLogList::isActionEnabled(const LLSD& userdata)
 	{
 		return is_p2p && LLAvatarActions::canOfferTeleport(selected_id);
 	}
+	// <FS:Ansariel> Extra request teleport
+	else if("can_request_teleport" == command_name)
+	{
+		return is_p2p && LLAvatarActions::canRequestTeleport(selected_id);
+	}
+	// </FS:Ansariel>
 	else if ("can_show_on_map" == command_name)
 	{
 		return is_p2p && ((LLAvatarTracker::instance().isBuddyOnline(selected_id) && is_agent_mappable(selected_id)) || gAgent.isGodlike());
@@ -504,7 +510,7 @@ bool LLConversationLogListItemComparator::compare(const LLPanel* item1, const LL
 
 	if (!conversation_item1 || !conversation_item2)
 	{
-		llerror("conversation_item1 and conversation_item2 cannot be null", 0);
+		LL_ERRS() << "conversation_item1 and conversation_item2 cannot be null" << LL_ENDL;
 		return true;
 	}
 
@@ -532,8 +538,8 @@ bool LLConversationLogListNameComparator::doCompare(const LLConversationLogListI
 
 bool LLConversationLogListDateComparator::doCompare(const LLConversationLogListItem* conversation1, const LLConversationLogListItem* conversation2) const
 {
-	time_t date1 = conversation1->getConversation()->getTime();
-	time_t date2 = conversation2->getConversation()->getTime();
+	U64Seconds date1 = conversation1->getConversation()->getTime();
+	U64Seconds date2 = conversation2->getConversation()->getTime();
 	const LLUUID& id1 = conversation1->getConversation()->getParticipantID();
 	const LLUUID& id2 = conversation2->getConversation()->getParticipantID();
 

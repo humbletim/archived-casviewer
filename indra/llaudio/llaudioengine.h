@@ -88,7 +88,7 @@ public:
 	
 	enum LLAudioPlayState
 	{
-		// isInternetStreamPlaying() returns an *int*, with
+		// isInternetStreamPlaying() returns an *S32*, with
 		// 0 = stopped, 1 = playing, 2 = paused.
 		AUDIO_STOPPED = 0,
 		AUDIO_PLAYING = 1,
@@ -145,7 +145,7 @@ public:
 	void triggerSound(const LLUUID &sound_id, const LLUUID& owner_id, const F32 gain,
 					  const S32 type = LLAudioEngine::AUDIO_TYPE_NONE,
 					  const LLVector3d &pos_global = LLVector3d::zero,
-							  const LLUUID source_object = LLUUID::null);
+							  const LLUUID& source_object = LLUUID::null);
 	// NaCl End
 	void triggerSound(SoundData& soundData);
 
@@ -163,7 +163,7 @@ public:
 	// Internet stream methods - these will call down into the *mStreamingAudioImpl if it exists
 	void startInternetStream(const std::string& url);
 	void stopInternetStream();
-	void pauseInternetStream(int pause);
+	void pauseInternetStream(S32 pause);
 	void updateInternetStream(); // expected to be called often
 	LLAudioPlayState isInternetStreamPlaying();
 	// use a value from 0.0 to 1.0, inclusive

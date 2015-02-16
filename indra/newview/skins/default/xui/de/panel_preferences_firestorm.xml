@@ -27,7 +27,12 @@
 		<check_box label="Aktiviere progressives Draw-Distance-Stepping" name="FSRenderFarClipStepping" tool_tip="Falls aktiviert wird CtrlAltStudio Viewer nach einem Teleport die Draw Distance progressiv erhöhen." width="270"/>
 		<slider name="progressive_draw_distance_interval" tool_tip="Intervall in Sekunden zwischen den jeweiligen Erhöhungen der Draw Distance."/>
 		<check_box name="UseLSLBridge" label="LSL-Client-Brücke aktivieren" tool_tip="Erlaub dem Viewer die Nutzung eines geskripteten Objektes (Brücke), um weitergehende Funktionen anzubieten."/>
-		<check_box name="UseLSLFlightAssist" label="Flug-Assistent der Brücke aktivieren" tool_tip="Aktiviert ein Skript, dass Fliegen und Schweben in größeren Höhen ermöglicht."/>
+		<combo_box name="UseLSLFlightAssist" tool_tip="Aktiviert ein Skript, dass Fliegen und Schweben in größeren Höhen ermöglicht.">
+			<combo_box.item label="Flug-Assistent: Deaktiviert" name="flight_disabled"/>
+			<combo_box.item label="Flug-Assistent: Sanfter Boost" name="flight_mild"/>
+			<combo_box.item label="Flug-Assistent: Moderater Boost" name="flight_moderate"/>
+			<combo_box.item label="Flug-Assistent: Starker Boost" name="flight_strong"/>
+		</combo_box>
 	</panel>
 
 
@@ -91,7 +96,6 @@
 		<text name="note_lookat">
 			(Einstellungen für Avatar-Kamerafokus befinden sich auf dem Reiter &quot;Privatsphäre&quot;.)
 		</text>
-		<check_box label="Avatar-Physik nicht an Server senden (Ältere V1-Clientkompatibilität)" name="dontsendavphysics" tool_tip="Deaktiviert das Senden der eigenen Avatarphysikdaten an den Second-Life-Server aus Kompatibilitätsgründen mit älteren Version-1-Viewern."/>
 
 		<!-- LGG Color Beams -->
 		<text name="BeamPrefs">
@@ -110,6 +114,11 @@
 		<button name="custom_beam_btn" label="Erstellen" tool_tip="Eine neue Form erstellen."/>
 		<button name="refresh_beams" label="Aktualisieren" tool_tip="Aktualisiert die Liste mit Formen für den Auswahlstrahl."/>
 		<slider name="FSBeamShapeScale" label="Skalierung:" tool_tip="Ändert die Skalierung der Form für den Auswahlstrahl." label_width="60" width="175"/>
+		<text name="BridgeProtocols">
+			Integration externer Protokolle in LSL-Client-Brücke:
+		</text>
+		<check_box label="OpenCollar-Protokoll erlauben den integrierten AO zu aktiviere/deaktivieren" name="BridgeIntegrationOC"/>
+		<check_box label="LockMeister-Protokoll erlauben den integrierten AO zu aktiviere/deaktivieren" name="BridgeIntegrationLM"/>
 	</panel>
 
 	<!--CmdLine-->
@@ -152,6 +161,10 @@
 			Musikstream-URL setzen (Befehl: cmd URL)
 		</text>
 		<line_editor tool_tip="Setzt die Musikstream auf die angegebene URL und spielt ihn ab." name="FSCmdLineMusic"/>
+		<text name="FSCmdLineRollDice_txt">
+			Würfeln (Befehl: cmd Würfel Seiten)
+		</text>
+		<line_editor tool_tip="Würfelt - cmd [Anzahl Würfel] [Seiten pro Würfel]. Beispiel: cmd 1 20. Auslassen der Parameter entspricht cmd 1 6 (Standardwürfel)" name="FSCmdLineRollDice"/>
 	</panel>
 	<panel label="CmdLine 2" name="tab-CmdLine2">
 		<check_box label="Chat-Eingabezeile zur Kommandoeingabe verwenden" name="chat_cmd_toggle2"/>
@@ -187,8 +200,8 @@
 	<!--Windlight-->
 	<panel label="Windlight" name="WindlightTab">
 		<check_box label="Umgebung automatisch auf Regions-/Parzelleneinstellungen setzen" name="UseEnvironmentFromRegionAlways"/>
-		<check_box label="Umgebung bei Änderungen am Himmel in den Schnelleinstellungen überblenden" name="FSInterpolateSky" tool_tip="Kontrolliert den Überblendeffekt bei Änderung an der Voreinstellung zum Himmel. Dieser Effekt kann eine kurzzeitige Performanzminderung zur Folge haben. Deaktivieren, um die Änderung sofort anzuzeigen."/>
-		<check_box label="Umgebung bei Änderungen am Wasser in den Schnelleinstellungen überblenden" name="FSInterpolateWater" tool_tip="Kontrolliert den Überblendeffekt bei Änderung an der Voreinstellung zum Wasser. Dieser Effekt kann eine kurzzeitige Performanzminderung zur Folge haben. Deaktivieren, um die Änderung sofort anzuzeigen."/>
+		<check_box label="Umgebung beim Wechsel des Himmels in den Schnelleinstellungen interpolieren" name="FSInterpolateSky" tool_tip="Kontrolliert den Überblendeffekt bei Änderung an der Voreinstellung zum Himmel. Dieser Effekt kann eine kurzzeitige Performanzminderung zur Folge haben. Deaktivieren, um die Änderung sofort anzuzeigen."/>
+		<check_box label="Umgebung beim Wechsel des Wassers in den Schnelleinstellungen interpolieren" name="FSInterpolateWater" tool_tip="Kontrolliert den Überblendeffekt bei Änderung an der Voreinstellung zum Wasser. Dieser Effekt kann eine kurzzeitige Performanzminderung zur Folge haben. Deaktivieren, um die Änderung sofort anzuzeigen."/>
 		<text name="FSWLshare_txt">
 			Firestorm Windlight-Sharing:
 		</text>
@@ -196,9 +209,9 @@
 		<check_box label="WL-Einstellungen von Freunden automatisch übernehmen" name="FSWLWhitelistFriends"/>
 		<check_box label="WL-Einstellungen von Land im Besitz meiner Gruppen automatisch übernehmen" name="FSWLWhitelistGroups"/>
 		<check_box label="WL-Einstellungen von allen Parzellen automatisch übernehmen" name="FSWLWhitelistAll"/>
-		<check_box label="Änderungen an den Umgebungseinstellungen überblenden" name="FSInterpolateParcelWL" tool_tip="Aktiviert einen Überblendeffekt bei Änderungen an den Umgebungseinstellungen beim Windlight-Sharing für Parzellen."/>
+		<check_box label="Wechsel der Umgebungseinstellungen interpolieren" name="FSInterpolateParcelWL" tool_tip="Aktiviert einen Überblendeffekt bei Änderungen an den Umgebungseinstellungen beim Windlight-Sharing für Parzellen."/>
 		<text name="wl_crossfade_label">
-			Überblenddauer (Sekunden):
+			Interpolationsdauer (Sekunden):
 		</text>
 		<spinner name="FSWindlightInterpolateTime" tool_tip="Die Zeit, die für die Überblendung von einer Voreinstellung zu einer anderen benötigt wird. [Standard: 3]"/>
 		<text name="could_texture_text">
@@ -299,7 +312,7 @@
 		</text>
 		<spinner name="RotationStep" tool_tip="Alle Rotationen mittels des Rotationstools werden auf ein Vielfaches dieses Wertes beschränkt [Standard: 1.0]"/>
 		<text name="RotationStepText2" width="290">
-			Grad beschränken, fals „An Raster ausrichten“ deakt.
+			Grad beschränken, falls „An Raster ausrichten“ deakt.
 		</text>
 		<check_box label="Strg+Maus zum Greifen und Manipulieren von Objekten verwenden" tool_tip="Falls aktiviert, können Objekte durch Bewegen der Maus bei gleichzeitig gedrückter Strg-Taste gegriffen und bewegt werden." name="FSEnableGrab"/>
 		<check_box label="Aktiviere Klicken-Ziehen od. Klicken-Skalieren (mit Caps Lock) einer Texturfläche beim Bauen" tool_tip="Falls aktiviert, wird Klicken-Ziehen oder Klicken-Skalieren (mit Caps Lock) einer Texturfläche im Baumodus aktiviert. Dieses ist eine experimentelle Funktion und sollte mit Vorsicht benutzt werden." name="FSExperimentalDragTexture"/>

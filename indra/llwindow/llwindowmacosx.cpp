@@ -37,7 +37,6 @@
 #include "llstring.h"
 #include "lldir.h"
 #include "indra_constants.h"
-#include "../newview/llviewercontrol.h"
 
 #include <OpenGL/OpenGL.h>
 #include <CoreServices/CoreServices.h>
@@ -119,10 +118,13 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 							   BOOL fullscreen, BOOL clearBg,
 							   BOOL disable_vsync, BOOL use_gl,
 							   BOOL ignore_pixel_depth,
+							   //U32 fsaa_samples,) // <FS:LO> Legacy cursor setting from main program
 							   U32 fsaa_samples,
-							   U32 output_type)
+							   BOOL useLegacyCursors,
+							   U32 output_type)  // <CV:David>
 	: LLWindow(NULL, fullscreen, flags, output_type)
 {
+	mUseLegacyCursors = useLegacyCursors; // <FS:LO> Legacy cursor setting from main program
 	// *HACK: During window construction we get lots of OS events for window
 	// reshape, activate, etc. that the viewer isn't ready to handle.
 	// Route them to a dummy callback structure until the end of constructor.
@@ -192,7 +194,8 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 		}
 
 		//start with arrow cursor
-		initCursors();
+		//initCursors();
+		initCursors(mUseLegacyCursors); // <FS:LO> Legacy cursor setting from main program
 		setCursor( UI_CURSOR_ARROW );
 		
 		allowLanguageTextInput(NULL, FALSE);
@@ -794,7 +797,7 @@ BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 	}
 	else
 	{
-		llerrs << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << llendl;
+		LL_ERRS() << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << LL_ENDL;
 	}
 
 	return (err == noErr);
@@ -820,7 +823,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 	}
 	else
 	{
-		llerrs << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << llendl;
+		LL_ERRS() << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << LL_ENDL;
 	}
 
 	return (err == noErr);
@@ -846,7 +849,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 	}
 	else
 	{
-		llerrs << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << llendl;
+		LL_ERRS() << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << LL_ENDL;
 	}
 	
 	return (err == noErr);
@@ -1007,11 +1010,11 @@ void LLWindowMacOSX::setMouseClipping( BOOL b )
 
 	if(b)
 	{
-		//		llinfos << "setMouseClipping(TRUE)" << llendl;
+		//		LL_INFOS() << "setMouseClipping(TRUE)" << LL_ENDL;
 	}
 	else
 	{
-		//		llinfos << "setMouseClipping(FALSE)" << llendl;
+		//		LL_INFOS() << "setMouseClipping(FALSE)" << LL_ENDL;
 	}
 
 	adjustCursorDecouple();
@@ -1029,7 +1032,7 @@ BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
 
 	CGPoint newPosition;
 
-	//	llinfos << "setCursorPosition(" << screen_pos.mX << ", " << screen_pos.mY << ")" << llendl;
+	//	LL_INFOS() << "setCursorPosition(" << screen_pos.mX << ", " << screen_pos.mY << ")" << LL_ENDL;
 
 	newPosition.x = screen_pos.mX;
 	newPosition.y = screen_pos.mY;
@@ -1091,7 +1094,7 @@ void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
 			// The cursor should be decoupled.  Make sure it is.
 			if(!mCursorDecoupled)
 			{
-				//			llinfos << "adjustCursorDecouple: decoupling cursor" << llendl;
+				//			LL_INFOS() << "adjustCursorDecouple: decoupling cursor" << LL_ENDL;
 				CGAssociateMouseAndMouseCursorPosition(false);
 				mCursorDecoupled = true;
 				mCursorIgnoreNextDelta = TRUE;
@@ -1103,7 +1106,7 @@ void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
 		// The cursor should not be decoupled.  Make sure it isn't.
 		if(mCursorDecoupled)
 		{
-			//			llinfos << "adjustCursorDecouple: recoupling cursor" << llendl;
+			//			LL_INFOS() << "adjustCursorDecouple: recoupling cursor" << LL_ENDL;
 			CGAssociateMouseAndMouseCursorPosition(true);
 			mCursorDecoupled = false;
 		}
@@ -1323,7 +1326,6 @@ void LLWindowMacOSX::setupFailure(const std::string& text, const std::string& ca
 			// it is handled at a very low-level
 const char* cursorIDToName(int id)
 {
-	BOOL use_legacy_cursors = gSavedSettings.getBOOL("UseLegacyCursors");
 	switch (id)
 	{
 		case UI_CURSOR_ARROW:							return "UI_CURSOR_ARROW";
@@ -1359,19 +1361,24 @@ const char* cursorIDToName(int id)
 		case UI_CURSOR_TOOLPAUSE:						return "UI_CURSOR_TOOLPAUSE";
 		case UI_CURSOR_TOOLMEDIAOPEN:					return "UI_CURSOR_TOOLMEDIAOPEN";
 		case UI_CURSOR_PIPETTE:							return "UI_CURSOR_PIPETTE";
+		/* <FS:LO> Legacy cursor setting from main program
+		case UI_CURSOR_TOOLSIT:							return "UI_CURSOR_TOOLSIT";
+		case UI_CURSOR_TOOLBUY:							return "UI_CURSOR_TOOLBUY";
+		case UI_CURSOR_TOOLOPEN:						return "UI_CURSOR_TOOLOPEN";*/
+ 		case UI_CURSOR_TOOLSIT:							if (gWindowImplementation->mUseLegacyCursors) return "UI_CURSOR_TOOLSIT_LEGACY"; else return "UI_CURSOR_TOOLSIT";
+ 		case UI_CURSOR_TOOLBUY:							if (gWindowImplementation->mUseLegacyCursors) return "UI_CURSOR_TOOLBUY_LEGACY"; else return "UI_CURSOR_TOOLBUY";
+ 		case UI_CURSOR_TOOLOPEN:						if (gWindowImplementation->mUseLegacyCursors) return "UI_CURSOR_TOOLOPEN_LEGACY"; else return "UI_CURSOR_TOOLOPEN";
+ 		case UI_CURSOR_TOOLPAY:							if (gWindowImplementation->mUseLegacyCursors) return "UI_CURSOR_TOOLPAY_LEGACY"; else return "UI_CURSOR_TOOLBUY";
+		// </FS:LO>
 		case UI_CURSOR_TOOLPATHFINDING:					return "UI_CURSOR_PATHFINDING";
 		case UI_CURSOR_TOOLPATHFINDING_PATH_START:		return "UI_CURSOR_PATHFINDING_START";
 		case UI_CURSOR_TOOLPATHFINDING_PATH_START_ADD:	return "UI_CURSOR_PATHFINDING_START_ADD";
 		case UI_CURSOR_TOOLPATHFINDING_PATH_END:		return "UI_CURSOR_PATHFINDING_END";
 		case UI_CURSOR_TOOLPATHFINDING_PATH_END_ADD:	return "UI_CURSOR_PATHFINDING_END_ADD";
 		case UI_CURSOR_TOOLNO:							return "UI_CURSOR_NO";
-		case UI_CURSOR_TOOLSIT:							if (use_legacy_cursors) return "UI_CURSOR_TOOLSIT_LEGACY"; else return "UI_CURSOR_TOOLSIT";
-		case UI_CURSOR_TOOLBUY:							if (use_legacy_cursors) return "UI_CURSOR_TOOLBUY_LEGACY"; else return "UI_CURSOR_TOOLBUY";
-		case UI_CURSOR_TOOLOPEN:						if (use_legacy_cursors) return "UI_CURSOR_TOOLOPEN_LEGACY"; else return "UI_CURSOR_TOOLOPEN";
-		case UI_CURSOR_TOOLPAY:							if (use_legacy_cursors) return "UI_CURSOR_TOOLBUY_LEGACY"; else return "UI_CURSOR_TOOLPAY";
 	}
 
-	llerrs << "cursorIDToName: unknown cursor id" << id << llendl;
+	LL_ERRS() << "cursorIDToName: unknown cursor id" << id << LL_ENDL;
 
 	return "UI_CURSOR_ARROW";
 }
@@ -1499,7 +1506,9 @@ ECursorType LLWindowMacOSX::getCursor() const
 	return mCurrentCursor;
 }
 
-void LLWindowMacOSX::initCursors()
+// <FS:LO> Legacy cursor setting from main program
+//void LLWindowMacOSX::initCursors()
+void LLWindowMacOSX::initCursors(BOOL useLegacyCursors)
 {
 	initPixmapCursor(UI_CURSOR_NO, 8, 8);
 	initPixmapCursor(UI_CURSOR_WORKING, 1, 1);
@@ -1522,10 +1531,25 @@ void LLWindowMacOSX::initCursors()
 	initPixmapCursor(UI_CURSOR_TOOLPLAY, 1, 1);
 	initPixmapCursor(UI_CURSOR_TOOLPAUSE, 1, 1);
 	initPixmapCursor(UI_CURSOR_TOOLMEDIAOPEN, 1, 1);
+	/* <FS:LO> Legacy cursor setting from main program
 	initPixmapCursor(UI_CURSOR_TOOLSIT, 20, 15);
 	initPixmapCursor(UI_CURSOR_TOOLBUY, 20, 15);
-	initPixmapCursor(UI_CURSOR_TOOLOPEN, 20, 15);
-	initPixmapCursor(UI_CURSOR_TOOLPAY, 20, 15);
+	initPixmapCursor(UI_CURSOR_TOOLOPEN, 20, 15);*/
+	if (useLegacyCursors)
+	{
+		initPixmapCursor(UI_CURSOR_TOOLSIT, 0, 0);
+		initPixmapCursor(UI_CURSOR_TOOLBUY, 0, 0);
+		initPixmapCursor(UI_CURSOR_TOOLOPEN, 0, 0);
+		initPixmapCursor(UI_CURSOR_TOOLPAY, 0, 0);
+	}
+	else
+	{
+		initPixmapCursor(UI_CURSOR_TOOLSIT, 20, 15);
+		initPixmapCursor(UI_CURSOR_TOOLBUY, 20, 15);
+		initPixmapCursor(UI_CURSOR_TOOLOPEN, 20, 15);
+		initPixmapCursor(UI_CURSOR_TOOLPAY, 20, 15);
+	}
+	// </FS:LO>
 	initPixmapCursor(UI_CURSOR_TOOLPATHFINDING, 16, 16);
 	initPixmapCursor(UI_CURSOR_TOOLPATHFINDING_PATH_START, 16, 16);
 	initPixmapCursor(UI_CURSOR_TOOLPATHFINDING_PATH_START_ADD, 16, 16);
@@ -1556,14 +1580,14 @@ void LLWindowMacOSX::hideCursor()
 {
 	if(!mCursorHidden)
 	{
-		//		llinfos << "hideCursor: hiding" << llendl;
+		//		LL_INFOS() << "hideCursor: hiding" << LL_ENDL;
 		mCursorHidden = TRUE;
 		mHideCursorPermanent = TRUE;
 		hideNSCursor();
 	}
 	else
 	{
-		//		llinfos << "hideCursor: already hidden" << llendl;
+		//		LL_INFOS() << "hideCursor: already hidden" << LL_ENDL;
 	}
 
 	adjustCursorDecouple();
@@ -1573,14 +1597,14 @@ void LLWindowMacOSX::showCursor()
 {
 	if(mCursorHidden)
 	{
-		//		llinfos << "showCursor: showing" << llendl;
+		//		LL_INFOS() << "showCursor: showing" << LL_ENDL;
 		mCursorHidden = FALSE;
 		mHideCursorPermanent = FALSE;
 		showNSCursor();
 	}
 	else
 	{
-		//		llinfos << "showCursor: already visible" << llendl;
+		//		LL_INFOS() << "showCursor: already visible" << LL_ENDL;
 	}
 
 	adjustCursorDecouple();
@@ -1670,14 +1694,14 @@ void LLWindowMacOSX::spawnWebBrowser(const std::string& escaped_url, bool async)
 
 	if (!found)
 	{
-		llwarns << "spawn_web_browser called for url with protocol not on whitelist: " << escaped_url << llendl;
+		LL_WARNS() << "spawn_web_browser called for url with protocol not on whitelist: " << escaped_url << LL_ENDL;
 		return;
 	}
 
 	S32 result = 0;
 	CFURLRef urlRef = NULL;
 
-	llinfos << "Opening URL " << escaped_url << llendl;
+	LL_INFOS() << "Opening URL " << escaped_url << LL_ENDL;
 
 	CFStringRef	stringRef = CFStringCreateWithCString(NULL, escaped_url.c_str(), kCFStringEncodingUTF8);
 	if (stringRef)
@@ -1697,20 +1721,20 @@ void LLWindowMacOSX::spawnWebBrowser(const std::string& escaped_url, bool async)
 
 		if (result != noErr)
 		{
-			llinfos << "Error " << result << " on open." << llendl;
+			LL_INFOS() << "Error " << result << " on open." << LL_ENDL;
 		}
 
 		CFRelease(urlRef);
 	}
 	else
 	{
-		llinfos << "Error: couldn't create URL." << llendl;
+		LL_INFOS() << "Error: couldn't create URL." << LL_ENDL;
 	}
 }
 
 void LLWindowMacOSX::openFile(const std::string& file_name )
 {
-        llinfos << "Opening file " << file_name << llendl;
+        LL_INFOS() << "Opening file " << file_name << LL_ENDL;
 	FSRef appRef;
 	OSStatus os_result = FSPathMakeRef((UInt8*)file_name.c_str(),
 					   &appRef,NULL);
@@ -1769,7 +1793,7 @@ LLSD LLWindowMacOSX::getNativeKeyData()
 	}
 #endif
 
-	lldebugs << "native key data is: " << result << llendl;
+	LL_DEBUGS() << "native key data is: " << result << LL_ENDL;
 
 	return result;
 }
@@ -1880,7 +1904,7 @@ S16 LLWindowMacOSX::dragTrackingHandler(DragTrackingMessage message, WindowRef t
 	S16 result = 0;
 	LLWindowMacOSX *self = (LLWindowMacOSX*)handlerRefCon;
 
-	lldebugs << "drag tracking handler, message = " << message << llendl;
+	LL_DEBUGS() << "drag tracking handler, message = " << message << LL_ENDL;
 
 	switch(message)
 	{

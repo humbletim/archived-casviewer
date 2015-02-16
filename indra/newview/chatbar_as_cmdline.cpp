@@ -60,6 +60,7 @@
 #include "llworld.h"
 #include "llworldmap.h"
 
+
 // [RLVa:KB] - Checked by TM: 2013-11-10 (RLVa-1.4.9)
 #include "rlvhandler.h"
 #include "rlvactions.h"
@@ -245,8 +246,8 @@ public:
 						{
 							reportToNearbyChat("Phase 1 of the packager finished.");
 							std::stack<LLViewerInventoryItem*> lolstack;
-							LLDynamicArray<LLPointer<LLViewerInventoryItem> > lolinv = findInventoryInFolder(mFolderName);
-							for(LLDynamicArray<LLPointer<LLViewerInventoryItem> >::iterator it = lolinv.begin(); it != lolinv.end(); ++it)
+							std::vector<LLPointer<LLViewerInventoryItem> > lolinv = findInventoryInFolder(mFolderName);
+							for(std::vector<LLPointer<LLViewerInventoryItem> >::iterator it = lolinv.begin(); it != lolinv.end(); ++it)
 							{
 								LLViewerInventoryItem* item = *it;
 								lolstack.push(item);
@@ -428,12 +429,7 @@ void invrepair()
 	gInventory.collectDescendents(gInventory.getRootFolderID(),cats,items,FALSE);//,objectnamematches);
 }
 
-
-#ifdef JC_PROFILE_GSAVED
-std::map<std::string, int> get_gsaved_calls();
-#endif
-
-bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
+bool cmd_line_chat(const std::string& revised_text, EChatType type, bool from_gesture)
 {
 	static LLCachedControl<bool> sFSCmdLine(gSavedSettings, "FSCmdLine");
 	static LLCachedControl<std::string> sFSCmdLinePos(gSavedSettings,  "FSCmdLinePos");
@@ -454,6 +450,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
 	static LLCachedControl<std::string> sFSCmdLineMedia(gSavedSettings,  "FSCmdLineMedia");
 	static LLCachedControl<std::string> sFSCmdLineMusic(gSavedSettings,  "FSCmdLineMusic");
 	static LLCachedControl<std::string> sFSCmdLineCopyCam(gSavedSettings,  "FSCmdLineCopyCam");
+	static LLCachedControl<std::string> sFSCmdLineRollDice(gSavedSettings,  "FSCmdLineRollDice");
 	//<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues
 	static LLCachedControl<std::string> sFSCmdLineBandwidth(gSavedSettings,  "FSCmdLineBandWidth");
 	
@@ -723,15 +720,15 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
 			else if (command == std::string(sFSCmdLineOfferTp))
             {
                 std::string avatarKey;
-//				llinfos << "CMD DEBUG 0 " << command << " " << avatarName << llendl;
+//				LL_INFOS() << "CMD DEBUG 0 " << command << " " << avatarName << LL_ENDL;
                 if (i >> avatarKey)
                 {
-//				llinfos << "CMD DEBUG 0 afterif " << command << " " << avatarName << llendl;
+//				LL_INFOS() << "CMD DEBUG 0 afterif " << command << " " << avatarName << LL_ENDL;
                     LLUUID tempUUID;
                     if (LLUUID::parseUUID(avatarKey, &tempUUID))
                     {
                         char buffer[DB_IM_MSG_BUF_SIZE * 2];
-                        LLDynamicArray<LLUUID> ids;
+                        std::vector<LLUUID> ids;
                         ids.push_back(tempUUID);
                         std::string tpMsg="Join me!";
                         LLMessageSystem* msg = gMessageSystem;
@@ -743,7 +740,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
                         msg->addU8Fast(_PREHASH_LureType, (U8)0); 
 
                         msg->addStringFast(_PREHASH_Message, tpMsg);
-                        for (LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
+                        for (std::vector<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
                         {
                             msg->nextBlockFast(_PREHASH_TargetData);
                             msg->addUUIDFast(_PREHASH_TargetID, *itr);
@@ -910,8 +907,8 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
 										{
 											reportToNearbyChat("Verifying folder location...");
 											std::stack<LLViewerInventoryItem*> lolstack;
-											LLDynamicArray<LLPointer<LLViewerInventoryItem> > lolinv = findInventoryInFolder(lolfolder);
-											for (LLDynamicArray<LLPointer<LLViewerInventoryItem> >::iterator it = lolinv.begin(); it != lolinv.end(); ++it)
+											std::vector<LLPointer<LLViewerInventoryItem> > lolinv = findInventoryInFolder(lolfolder);
+											for (std::vector<LLPointer<LLViewerInventoryItem> >::iterator it = lolinv.begin(); it != lolinv.end(); ++it)
 											{
 												LLViewerInventoryItem* item = *it;
 												lolstack.push(item);
@@ -1181,6 +1178,51 @@ bool cmd_line_chat(std::string revised_text, EChatType type, bool from_gesture)
 				}
 				return false;
 			}
+			else if (command == std::string(sFSCmdLineRollDice))
+			{
+				S32 dice;
+				S32 faces;
+				S32 result = 0;
+				if (i >> dice && i >> faces)
+				{
+					if (dice > 0 && faces > 0 && dice < 101 && faces < 1001)
+					{
+						// For viewer performance - max 100 dice and 1000 faces per die at once
+						S32 result_per_die = 0;
+						S32 die_iter = 1;
+						while (die_iter <= dice)
+						{
+							// Each die may have a different value rolled
+							result_per_die = 1 + (rand() % faces);
+							result += result_per_die;
+							if (dice > 1)
+							{
+								// For more than one die show the ordinal number in front of the result
+								reportToNearbyChat(llformat("#%d 1d%d: %d.", die_iter, faces, result_per_die));
+							}
+							++die_iter;
+						}
+					}
+					else
+					{
+						reportToNearbyChat(LLTrans::getString("FSCmdLineRollDiceLimits"));
+						return false;
+					}
+				}
+				else
+				{
+					// Roll a default die, if no parameters were provided
+					dice = 1;
+					faces = 6;
+					result = 1 + (rand() % 6);
+				}
+				LLStringUtil::format_map_t args;
+				args["DICE"] = llformat("%d", dice);
+				args["FACES"] = llformat("%d", faces);
+				args["RESULT"] = llformat("%d", result);
+				reportToNearbyChat(LLTrans::getString("FSCmdLineRollDiceTotal", args));
+				return false;
+			}
 		}
 	}
 	return true;
@@ -1212,7 +1254,7 @@ LLUUID cmdline_partial_name2key(std::string partial_name)
 	return LLUUID::null;
 }
 
-void cmdline_tp2name(std::string target)
+void cmdline_tp2name(const std::string& target)
 {
 	LLUUID avkey = cmdline_partial_name2key(target);
 	if (avkey.notNull())

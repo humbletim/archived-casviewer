@@ -126,6 +126,7 @@
 #include "lltoolgrab.h"
 #include "llwindow.h"
 #include "llpathfindingmanager.h"
+#include "llstartup.h"
 #include "boost/unordered_map.hpp"
 
 // Firestorm includes
@@ -149,7 +150,7 @@
 #include "piemenu.h"	// ## Zi: Pie Menu
 #include "llfloaterpreference.h"	//<FS:KC> Volume controls prefs
 #include "llcheckboxctrl.h"			//<FS:KC> Volume controls prefs
-
+#include "llscenemonitor.h"
 
 using namespace LLAvatarAppearanceDefines;
 
@@ -409,13 +410,18 @@ void LLMenuParcelObserver::changed()
 	//gMenuHolder->childSetEnabled("Buy Land...", buyable);
 
 	static LLView* land_buy_pass = gMenuHolder->getChildView("Land Buy Pass");
+	static LLView* land_buy_pass_pie = gMenuHolder->getChildView("Land Buy Pass Pie");
 	static LLView* land_buy = gMenuHolder->getChildView("Land Buy");
+	static LLView* land_buy_pie = gMenuHolder->getChildView("Land Buy Pie");
 	static LLView* buy_land = gMenuHolder->getChildView("Buy Land...");
 
-	land_buy_pass->setEnabled(LLPanelLandGeneral::enableBuyPass(NULL) && !(parcel->getOwnerID()== gAgent.getID()));
+	BOOL pass_buyable = LLPanelLandGeneral::enableBuyPass(NULL) && parcel->getOwnerID() != gAgentID;
+	land_buy_pass->setEnabled(pass_buyable);
+	land_buy_pass_pie->setEnabled(pass_buyable);
 
 	BOOL buyable = enable_buy_land(NULL);
 	land_buy->setEnabled(buyable);
+	land_buy_pie->setEnabled(buyable);
 	buy_land->setEnabled(buyable);
 	// </FS:Ansariel> FIRE-4454: Cache controls because of performance reasons
 }
@@ -607,14 +613,12 @@ void init_menus()
 	gAttachSubMenu = gMenuBarView->findChildMenuByName("Attach Object", TRUE);
 	gDetachSubMenu = gMenuBarView->findChildMenuByName("Detach Object", TRUE);
 
-#if !MEM_TRACK_MEM
 	// Don't display the Memory console menu if the feature is turned off
 	LLMenuItemCheckGL *memoryMenu = gMenuBarView->getChild<LLMenuItemCheckGL>("Memory", TRUE);
 	if (memoryMenu)
 	{
 		memoryMenu->setVisible(FALSE);
 	}
-#endif
 
 	gMenuBarView->createJumpKeys();
 
@@ -654,19 +658,19 @@ class LLAdvancedToggleConsole : public view_listener_t
 		}
 		else if ("fast timers" == console_type)
 		{
-			LLFloaterReg::toggleInstance("fast_timers");
+			LLFloaterReg::toggleInstance("block_timers");
 		}
 		else if ("scene view" == console_type)
 		{
 			toggle_visibility( (void*)gSceneView);
 		}
-
-#if MEM_TRACK_MEM
-		else if ("memory view" == console_type)
+		// <FS:Ansariel> Scene monitor view not working
+		else if ("scene monitor" == console_type)
 		{
-			toggle_visibility( (void*)gDebugView->mMemoryView );
+			toggle_visibility( (void*)gSceneMonitorView);
 		}
-#endif
+		// </FS:Ansariel>
+
 		return true;
 	}
 };
@@ -686,18 +690,18 @@ class LLAdvancedCheckConsole : public view_listener_t
 		}
 		else if ("fast timers" == console_type)
 		{
-			new_value = LLFloaterReg::instanceVisible("fast_timers");
+			new_value = LLFloaterReg::instanceVisible("block_timers");
 		}
 		else if ("scene view" == console_type)
 		{
 			new_value = get_visibility( (void*) gSceneView);
 		}
-#if MEM_TRACK_MEM
-		else if ("memory view" == console_type)
+		// <FS:Ansariel> Scene monitor view not working
+		else if ("scene monitor" == console_type)
 		{
-			new_value = get_visibility( (void*)gDebugView->mMemoryView );
+			new_value = get_visibility( (void*) gSceneMonitorView);
 		}
-#endif
+		// </FS:Ansariel>
 		
 		return new_value;
 	}
@@ -762,6 +766,12 @@ class LLAdvancedToggleHUDInfo : public view_listener_t
 		{
 			reportToNearbyChat("Cookies!");
 		}
+		// <FS:PP>
+		else if ("motd" == info_type)
+		{
+			reportToNearbyChat(gAgent.mMOTD);
+		}
+		// </FS:PP>
 		return true;
 	}
 };
@@ -1833,7 +1843,7 @@ class LLAdvancedAnimTenFaster : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		//llinfos << "LLAdvancedAnimTenFaster" << llendl;
+		//LL_INFOS() << "LLAdvancedAnimTenFaster" << LL_ENDL;
 		F32 time_factor = LLMotionController::getCurrentTimeFactor();
 		time_factor = llmin(time_factor + 0.1f, 2.f);	// Upper limit is 200% speed
 		set_all_animation_time_factors(time_factor);
@@ -1845,7 +1855,7 @@ class LLAdvancedAnimTenSlower : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		//llinfos << "LLAdvancedAnimTenSlower" << llendl;
+		//LL_INFOS() << "LLAdvancedAnimTenSlower" << LL_ENDL;
 		F32 time_factor = LLMotionController::getCurrentTimeFactor();
 		time_factor = llmax(time_factor - 0.1f, 0.1f);	// Lower limit is at 10% of normal speed
 		set_all_animation_time_factors(time_factor);
@@ -2229,9 +2239,9 @@ class LLAdvancedViewerEventRecorder : public view_listener_t
 		std::string command = userdata.asString();
 		if ("start playback" == command)
 		{
-			llinfos << "Event Playback starting" << llendl;
+			LL_INFOS() << "Event Playback starting" << LL_ENDL;
 			LLViewerEventRecorder::instance().playbackRecording();
-			llinfos << "Event Playback completed" << llendl;
+			LL_INFOS() << "Event Playback completed" << LL_ENDL;
 		}
 		else if ("stop playback" == command)
 		{
@@ -2240,12 +2250,12 @@ class LLAdvancedViewerEventRecorder : public view_listener_t
 		else if ("start recording" == command)
 		{
 			LLViewerEventRecorder::instance().setEventLoggingOn();
-			llinfos << "Event recording started" << llendl;
+			LL_INFOS() << "Event recording started" << LL_ENDL;
 		}
 		else if ("stop recording" == command)
 		{
 			LLViewerEventRecorder::instance().setEventLoggingOff();
-			llinfos << "Event recording stopped" << llendl;
+			LL_INFOS() << "Event recording stopped" << LL_ENDL;
 		} 
 
 		return true;
@@ -2817,7 +2827,11 @@ void derenderObject(bool permanent)
 			}
 
 			select_mgr->deselectObjectOnly(objp);
-			gObjectList.killObject(objp);
+
+			// <FS:ND> Pass true to make sure this object stays dead.
+			// gObjectList.killObject(objp);
+			gObjectList.killObject(objp, true);
+			// </FS:ND>
 		}
 		else if( (objp) && (gAgentID != objp->getID()) && ((rlv_handler_t::isEnabled()) || (objp->isAttachment()) || (objp->permYouOwner())) )
 		{
@@ -2888,7 +2902,7 @@ class LLEditParticleSource : public view_listener_t
 };
 
 // ## Zi: Texture Refresh
-void destroy_texture(LLUUID id)		// will be used by the texture refresh functions below
+void destroy_texture(const LLUUID& id)		// will be used by the texture refresh functions below
 {
 	LLViewerFetchedTexture* tx=LLViewerTextureManager::getFetchedTexture(id);
 	if (tx)
@@ -2900,8 +2914,8 @@ void destroy_texture(LLUUID id)		// will be used by the texture refresh function
 
 class LLObjectTexRefresh : public view_listener_t
 {
-    bool handleEvent(const LLSD& userdata)
-    {
+	bool handleEvent(const LLSD& userdata)
+	{
 		// partly copied from the texture info code in handle_selected_texture_info()
 		for (LLObjectSelection::valid_iterator iter = LLSelectMgr::getInstance()->getSelection()->valid_begin();
 			iter != LLSelectMgr::getInstance()->getSelection()->valid_end(); iter++)
@@ -2912,24 +2926,31 @@ class LLObjectTexRefresh : public view_listener_t
 			// map from texture ID to list of faces using it
 			typedef std::map< LLUUID, std::vector<U8> > map_t;
 			map_t faces_per_texture;
-			for (U8 i = 0; i < te_count; i++)
+			for (U8 i = 0; i < te_count; ++i)
 			{
 				if (!node->isTESelected(i)) continue;
 
 				LLViewerTexture* img = node->getObject()->getTEImage(i);
-				LLUUID image_id = img->getID();
-				faces_per_texture[image_id].push_back(i);
+				faces_per_texture[img->getID()].push_back(i);
+
+				LLViewerTexture* norm_img = node->getObject()->getTENormalMap(i);
+				faces_per_texture[norm_img->getID()].push_back(i);
+
+				LLViewerTexture* spec_img = node->getObject()->getTESpecularMap(i);
+				faces_per_texture[spec_img->getID()].push_back(i);
 			}
 
 			map_t::iterator it;
 			for (it = faces_per_texture.begin(); it != faces_per_texture.end(); ++it)
+			{
 				destroy_texture(it->first);
+			}
 
 			// Refresh sculpt texture
-			if(node->getObject()->isSculpted())
+			if (node->getObject()->isSculpted())
 			{
 				LLSculptParams *sculpt_params = (LLSculptParams *)node->getObject()->getParameterEntry(LLNetworkData::PARAMS_SCULPT);
-				if(sculpt_params)
+				if (sculpt_params)
 				{
 					LLUUID sculpt_uuid = sculpt_params->getSculptTexture();
 
@@ -2945,15 +2966,17 @@ class LLObjectTexRefresh : public view_listener_t
 						{
 							LLVOVolume* pVolume = pVolumeList->at(idxVolume);
 							if (pVolume)
+							{
 								pVolume->notifyMeshLoaded();
+							}
 						}
 					}
 				}
 			}
 		}
 
-        return true;
-    }
+		return true;
+	}
 };
 
 void avatar_tex_refresh()
@@ -2974,12 +2997,12 @@ void avatar_tex_refresh()
 
 class LLAvatarTexRefresh : public view_listener_t
 {
-    bool handleEvent(const LLSD& userdata)
-    {
+	bool handleEvent(const LLSD& userdata)
+	{
 		avatar_tex_refresh();
 
-        return true;
-    }
+		return true;
+	}
 };
 // ## Zi: Texture Refresh
 
@@ -3079,11 +3102,11 @@ bool enable_object_touch(LLUICtrl* ctrl)
 	LLSelectNode* node = LLSelectMgr::getInstance()->getSelection()->getFirstRootNode();
 	if (node && node->mValid && !node->mTouchName.empty())
 	{
-		gMenuHolder->childSetText(item_name, node->mTouchName);
+		gMenuHolder->childSetValue(item_name, node->mTouchName);
 	}
 	else
 	{
-		gMenuHolder->childSetText(item_name, get_default_item_label(item_name));
+		gMenuHolder->childSetValue(item_name, get_default_item_label(item_name));
 	}
 
 	return new_value;
@@ -3813,7 +3836,7 @@ class LLAvatarDebug : public view_listener_t
 			{
 				((LLVOAvatarSelf *)avatar)->dumpLocalTextures();
 			}
-			llinfos << "Dumping temporary asset data to simulator logs for avatar " << avatar->getID() << llendl;
+			LL_INFOS() << "Dumping temporary asset data to simulator logs for avatar " << avatar->getID() << LL_ENDL;
 			// <FS:Ansariel> Disable message - spawns error "generic request failed"
 			//std::vector<std::string> strings;
 			//strings.push_back(avatar->getID().asString());
@@ -4175,7 +4198,7 @@ void handle_buy_contents(LLSaleInfo sale_info)
 
 void handle_region_dump_temp_asset_data(void*)
 {
-	llinfos << "Dumping temporary asset data to simulator logs" << llendl;
+	LL_INFOS() << "Dumping temporary asset data to simulator logs" << LL_ENDL;
 	std::vector<std::string> strings;
 	LLUUID invoice;
 	send_generic_message("dumptempassetdata", strings, invoice);
@@ -4183,7 +4206,7 @@ void handle_region_dump_temp_asset_data(void*)
 
 void handle_region_clear_temp_asset_data(void*)
 {
-	llinfos << "Clearing temporary asset data" << llendl;
+	LL_INFOS() << "Clearing temporary asset data" << LL_ENDL;
 	std::vector<std::string> strings;
 	LLUUID invoice;
 	send_generic_message("cleartempassetdata", strings, invoice);
@@ -4194,14 +4217,14 @@ void handle_region_dump_settings(void*)
 	LLViewerRegion* regionp = gAgent.getRegion();
 	if (regionp)
 	{
-		llinfos << "Damage:    " << (regionp->getAllowDamage() ? "on" : "off") << llendl;
-		llinfos << "Landmark:  " << (regionp->getAllowLandmark() ? "on" : "off") << llendl;
-		llinfos << "SetHome:   " << (regionp->getAllowSetHome() ? "on" : "off") << llendl;
-		llinfos << "ResetHome: " << (regionp->getResetHomeOnTeleport() ? "on" : "off") << llendl;
-		llinfos << "SunFixed:  " << (regionp->getSunFixed() ? "on" : "off") << llendl;
-		llinfos << "BlockFly:  " << (regionp->getBlockFly() ? "on" : "off") << llendl;
-		llinfos << "AllowP2P:  " << (regionp->getAllowDirectTeleport() ? "on" : "off") << llendl;
-		llinfos << "Water:     " << (regionp->getWaterHeight()) << llendl;
+		LL_INFOS() << "Damage:    " << (regionp->getAllowDamage() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "Landmark:  " << (regionp->getAllowLandmark() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "SetHome:   " << (regionp->getAllowSetHome() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "ResetHome: " << (regionp->getResetHomeOnTeleport() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "SunFixed:  " << (regionp->getSunFixed() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "BlockFly:  " << (regionp->getBlockFly() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "AllowP2P:  " << (regionp->getAllowDirectTeleport() ? "on" : "off") << LL_ENDL;
+		LL_INFOS() << "Water:     " << (regionp->getWaterHeight()) << LL_ENDL;
 	}
 }
 
@@ -4232,7 +4255,7 @@ void handle_dump_focus()
 {
 	LLUICtrl *ctrl = dynamic_cast<LLUICtrl*>(gFocusMgr.getKeyboardFocus());
 
-	llinfos << "Keyboard focus " << (ctrl ? ctrl->getName() : "(none)") << llendl;
+	LL_INFOS() << "Keyboard focus " << (ctrl ? ctrl->getName() : "(none)") << LL_ENDL;
 }
 
 class LLSelfStandUp : public view_listener_t
@@ -4312,15 +4335,16 @@ class FSSelfToggleMoveLock : public view_listener_t
         {
 			if (LLGridManager::getInstance()->isInSecondLife())
 			{
+				make_ui_sound("UISndMovelockToggle");
 				bool new_value = !gSavedPerAccountSettings.getBOOL("UseMoveLock");
 				gSavedPerAccountSettings.setBOOL("UseMoveLock", new_value);
 				if (new_value)
 				{
-					reportToNearbyChat(LLTrans::getString("MovelockEnabled"));
+					reportToNearbyChat(LLTrans::getString("MovelockEnabling"));
 				}
 				else
 				{
-					reportToNearbyChat(LLTrans::getString("MovelockDisabled"));
+					reportToNearbyChat(LLTrans::getString("MovelockDisabling"));
 				}
 			}
 #ifdef OPENSIM
@@ -4674,7 +4698,7 @@ void process_grant_godlike_powers(LLMessageSystem* msg, void**)
 	}
 	else
 	{
-		llwarns << "Grant godlike for wrong agent " << agent_id << llendl;
+		LL_WARNS() << "Grant godlike for wrong agent " << agent_id << LL_ENDL;
 	}
 }
 
@@ -5117,7 +5141,7 @@ class LLEditEnableDuplicate : public view_listener_t
 
 void handle_duplicate_in_place(void*)
 {
-	llinfos << "handle_duplicate_in_place" << llendl;
+	LL_INFOS() << "handle_duplicate_in_place" << LL_ENDL;
 
 	LLVector3 offset(0.f, 0.f, 0.f);
 	LLSelectMgr::getInstance()->selectDuplicate(offset, TRUE);
@@ -5288,13 +5312,16 @@ static bool get_derezzable_objects(
 	EDeRezDestination dest,
 	std::string& error,
 	LLViewerRegion*& first_region,
-	LLDynamicArray<LLViewerObjectPtr>* derez_objectsp,
+	std::vector<LLViewerObjectPtr>* derez_objectsp,
 	bool only_check = false)
 {
 	bool found = false;
 
 	LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
 	
+	if (derez_objectsp)
+		derez_objectsp->reserve(selection->getRootObjectCount());
+
 	// Check conditions that we can't deal with, building a list of
 	// everything that we'll actually be derezzing.
 	for (LLObjectSelection::valid_root_iterator iter = selection->valid_root_begin();
@@ -5331,7 +5358,7 @@ static bool get_derezzable_objects(
 			&& dest != DRD_RETURN_TO_OWNER)
 		{
 			// this object is an asset container, derez its contents, not it
-			llwarns << "Attempt to derez deprecated AssetContainer object type not supported." << llendl;
+			LL_WARNS() << "Attempt to derez deprecated AssetContainer object type not supported." << LL_ENDL;
 			/*
 			object->requestInventory(container_inventory_arrived, 
 				(void *)(BOOL)(DRD_TAKE_INTO_AGENT_INVENTORY == dest));
@@ -5373,7 +5400,7 @@ static bool get_derezzable_objects(
 				break;
 
 			if (derez_objectsp)
-				derez_objectsp->put(object);
+				derez_objectsp->push_back(object);
 
 		}
 	}
@@ -5393,16 +5420,16 @@ static void derez_objects(
 	const LLUUID& dest_id,
 	LLViewerRegion*& first_region,
 	std::string& error,
-	LLDynamicArray<LLViewerObjectPtr>* objectsp)
+	std::vector<LLViewerObjectPtr>* objectsp)
 {
-	LLDynamicArray<LLViewerObjectPtr> derez_objects;
+	std::vector<LLViewerObjectPtr> derez_objects;
 
 	if (!objectsp) // if objects to derez not specified
 	{
 		// get them from selection
 		if (!get_derezzable_objects(dest, error, first_region, &derez_objects, false))
 		{
-			llwarns << "No objects to derez" << llendl;
+			LL_WARNS() << "No objects to derez" << LL_ENDL;
 			return;
 		}
 
@@ -5422,13 +5449,13 @@ static void derez_objects(
 	// satisfy anybody.
 	const S32 MAX_ROOTS_PER_PACKET = 250;
 	const S32 MAX_PACKET_COUNT = 254;
-	F32 packets = ceil((F32)objectsp->count() / (F32)MAX_ROOTS_PER_PACKET);
+	F32 packets = ceil((F32)objectsp->size() / (F32)MAX_ROOTS_PER_PACKET);
 	if(packets > (F32)MAX_PACKET_COUNT)
 	{
 		error = "AcquireErrorTooManyObjects";
 	}
 
-	if(error.empty() && objectsp->count() > 0)
+	if(error.empty() && objectsp->size() > 0)
 	{
 		U8 d = (U8)dest;
 		LLUUID tid;
@@ -5453,11 +5480,11 @@ static void derez_objects(
 			msg->addU8Fast(_PREHASH_PacketCount, packet_count);
 			msg->addU8Fast(_PREHASH_PacketNumber, packet_number);
 			objects_in_packet = 0;
-			while((object_index < objectsp->count())
+			while((object_index < objectsp->size())
 				  && (objects_in_packet++ < MAX_ROOTS_PER_PACKET))
 
 			{
-				LLViewerObject* object = objectsp->get(object_index++);
+				LLViewerObject* object = objectsp->at(object_index++);
 				msg->nextBlockFast(_PREHASH_ObjectData);
 				msg->addU32Fast(_PREHASH_ObjectLocalID, object->getLocalID());
 				// VEFFECT: DerezObject
@@ -5551,7 +5578,7 @@ private:
 
 	LLObjectSelectionHandle mObjectSelection;
 
-	LLDynamicArray<LLViewerObjectPtr> mReturnableObjects;
+	std::vector<LLViewerObjectPtr> mReturnableObjects;
 	std::string mError;
 	LLViewerRegion* mFirstRegion;
 };
@@ -5916,7 +5943,7 @@ bool callback_show_buy_currency(const LLSD& notification, const LLSD& response)
 	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
 	if (0 == option)
 	{
-		llinfos << "Loading page " << LLNotifications::instance().getGlobalString("BUY_CURRENCY_URL") << llendl;
+		LL_INFOS() << "Loading page " << LLNotifications::instance().getGlobalString("BUY_CURRENCY_URL") << LL_ENDL;
 		LLWeb::loadURL(LLNotifications::instance().getGlobalString("BUY_CURRENCY_URL"));
 	}
 	return false;
@@ -6454,7 +6481,7 @@ public:
 	};
 
 	LLObjectSelectionHandle mObjectSelection;
-	LLDynamicArray<LLViewerObjectPtr> mReturnableObjects;
+	std::vector<LLViewerObjectPtr> mReturnableObjects;
 	std::string mError;
 	LLViewerRegion *mFirstRegion;
 };
@@ -6622,7 +6649,7 @@ void print_agent_nvpairs(void*)
 {
 	LLViewerObject *objectp;
 
-	llinfos << "Agent Name Value Pairs" << llendl;
+	LL_INFOS() << "Agent Name Value Pairs" << LL_ENDL;
 
 	objectp = gObjectList.findObject(gAgentID);
 	if (objectp)
@@ -6631,10 +6658,10 @@ void print_agent_nvpairs(void*)
 	}
 	else
 	{
-		llinfos << "Can't find agent object" << llendl;
+		LL_INFOS() << "Can't find agent object" << LL_ENDL;
 	}
 
-	llinfos << "Camera at " << gAgentCamera.getCameraPositionGlobal() << llendl;
+	LL_INFOS() << "Camera at " << gAgentCamera.getCameraPositionGlobal() << LL_ENDL;
 }
 
 void show_debug_menus()
@@ -6691,7 +6718,7 @@ void toggle_debug_menus(void*)
 // 	{
 // 		return;
 // 	}
-// 	llinfos << "Exporting selected objects:" << llendl;
+// 	LL_INFOS() << "Exporting selected objects:" << LL_ENDL;
 
 // 	gExporterRequestID.generate();
 // 	gExportDirectory = "";
@@ -6710,7 +6737,7 @@ void toggle_debug_menus(void*)
 // 		LLViewerObject* object = node->getObject();
 // 		msg->nextBlockFast(_PREHASH_ObjectData);
 // 		msg->addUUIDFast(_PREHASH_ObjectID, object->getID());
-// 		llinfos << "Object: " << object->getID() << llendl;
+// 		LL_INFOS() << "Object: " << object->getID() << LL_ENDL;
 // 	}
 // 	msg->sendReliable(gAgent.getRegion()->getHost());
 
@@ -6974,7 +7001,7 @@ void handle_script_info()
 	if (LLSelectMgr::getInstance()->getSelection()->getPrimaryObject())
 	{
 		object_id = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject()->mID;
-		llinfos << "Reporting Script Info for object: " << object_id.asString() << llendl;
+		LL_INFOS() << "Reporting Script Info for object: " << object_id.asString() << LL_ENDL;
 		FSLSLBridge::instance().viewerToLSL("getScriptInfo|" + object_id.asString());
 	}
 }
@@ -7251,11 +7278,11 @@ bool enable_object_sit(LLUICtrl* ctrl)
 		LLSelectNode* node = LLSelectMgr::getInstance()->getSelection()->getFirstRootNode();
 		if (node && node->mValid && !node->mSitName.empty())
 		{
-			gMenuHolder->childSetText(item_name, node->mSitName);
+			gMenuHolder->childSetValue(item_name, node->mSitName);
 		}
 		else
 		{
-			gMenuHolder->childSetText(item_name, get_default_item_label(item_name));
+			gMenuHolder->childSetValue(item_name, get_default_item_label(item_name));
 		}
 	}
 
@@ -7382,7 +7409,7 @@ class LLShowHelp : public view_listener_t
 			{
 				LLWeb::loadURLInternal(url);
 			}
-			lldebugs << "grid_help " <<  help_topic << " url " << url << llendl;
+			LL_DEBUGS() << "grid_help " <<  help_topic << " url " << url << LL_ENDL;
 
 			return true;
 		}
@@ -7544,7 +7571,7 @@ class LLPromptShowURL : public view_listener_t
 		}
 		else
 		{
-			llinfos << "PromptShowURL invalid parameters! Expecting \"ALERT,URL\"." << llendl;
+			LL_INFOS() << "PromptShowURL invalid parameters! Expecting \"ALERT,URL\"." << LL_ENDL;
 		}
 		return true;
 	}
@@ -7577,7 +7604,7 @@ class LLPromptShowFile : public view_listener_t
 		}
 		else
 		{
-			llinfos << "PromptShowFile invalid parameters! Expecting \"ALERT,FILE\"." << llendl;
+			LL_INFOS() << "PromptShowFile invalid parameters! Expecting \"ALERT,FILE\"." << LL_ENDL;
 		}
 		return true;
 	}
@@ -7876,7 +7903,7 @@ void callback_attachment_drop(const LLSD& notification, const LLSD& response)
 	
 	if (!object)
 	{
-		llwarns << "handle_drop_attachment() - no object to drop" << llendl;
+		LL_WARNS() << "handle_drop_attachment() - no object to drop" << LL_ENDL;
 		return;
 	}
 
@@ -7893,13 +7920,13 @@ void callback_attachment_drop(const LLSD& notification, const LLSD& response)
 
 	if (!object)
 	{
-		llwarns << "handle_detach() - no object to detach" << llendl;
+		LL_WARNS() << "handle_detach() - no object to detach" << LL_ENDL;
 		return;
 	}
 
 	if (object->isAvatar())
 	{
-		llwarns << "Trying to detach avatar from avatar." << llendl;
+		LL_WARNS() << "Trying to detach avatar from avatar." << LL_ENDL;
 		return;
 	}
 	
@@ -7942,7 +7969,7 @@ class LLAttachmentDrop : public view_listener_t
 		}
 		else
 		{
-			llwarns << "Drop object not found" << llendl;
+			LL_WARNS() << "Drop object not found" << LL_ENDL;
 			return true;
 		}
 
@@ -8036,7 +8063,7 @@ class LLAttachmentDetach : public view_listener_t
 		LLViewerObject *object = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
 		if (!object)
 		{
-			llwarns << "handle_detach() - no object to detach" << llendl;
+			LL_WARNS() << "handle_detach() - no object to detach" << LL_ENDL;
 			return true;
 		}
 
@@ -8053,13 +8080,13 @@ class LLAttachmentDetach : public view_listener_t
 
 		if (!object)
 		{
-			llwarns << "handle_detach() - no object to detach" << llendl;
+			LL_WARNS() << "handle_detach() - no object to detach" << LL_ENDL;
 			return true;
 		}
 
 		if (object->isAvatar())
 		{
-			llwarns << "Trying to detach avatar from avatar." << llendl;
+			LL_WARNS() << "Trying to detach avatar from avatar." << LL_ENDL;
 			return true;
 		}
 
@@ -8398,14 +8425,14 @@ void queue_actions(LLFloaterScriptQueue* q, const std::string& msg)
 		}
 		else
 		{
-			llerrs << "Bad logic." << llendl;
+			LL_ERRS() << "Bad logic." << LL_ENDL;
 		}
 	}
 	else
 	{
 		if (!q->start())
 		{
-			llwarns << "Unexpected script compile failure." << llendl;
+			LL_WARNS() << "Unexpected script compile failure." << LL_ENDL;
 		}
 	}
 }
@@ -8479,7 +8506,7 @@ class LLToolsSelectedScriptAction : public view_listener_t
 		}
 		else
 		{
-			llwarns << "Failed to generate LLFloaterScriptQueue with action: " << action << llendl;
+			LL_WARNS() << "Failed to generate LLFloaterScriptQueue with action: " << action << LL_ENDL;
 		}
 		return true;
 	}
@@ -8631,12 +8658,12 @@ void handle_dump_attachments(void*)
 							!attached_object->mDrawable->isRenderType(0));
 			LLVector3 pos;
 			if (visible) pos = attached_object->mDrawable->getPosition();
-			llinfos << "ATTACHMENT " << key << ": item_id=" << attached_object->getAttachmentItemID()
+			LL_INFOS() << "ATTACHMENT " << key << ": item_id=" << attached_object->getAttachmentItemID()
 					<< (attached_object ? " present " : " absent ")
 					<< (visible ? "visible " : "invisible ")
 					<<  " at " << pos
 					<< " and " << (visible ? attached_object->getPosition() : LLVector3::zero)
-					<< llendl;
+					<< LL_ENDL;
 		}
 	}
 }
@@ -9121,7 +9148,7 @@ class FSStreamListExportXML :public view_listener_t
 			LLNotificationsUtil::add("StreamListExportSuccess", args);
 		}
 		else
-			llinfos << "User closed the filepicker. Aborting!" << llendl;
+			LL_INFOS() << "User closed the filepicker. Aborting!" << LL_ENDL;
 
 		return true;
 	}
@@ -9138,7 +9165,7 @@ class FSStreamListImportXML :public view_listener_t
 			llifstream stream_list(filename);
 			if(!stream_list.is_open())
 			{
-				llwarns << "Couldn't open the xml file for reading. Aborting import!" << llendl;
+				LL_WARNS() << "Couldn't open the xml file for reading. Aborting import!" << LL_ENDL;
 				return true;
 			}
 			LLSD stream_data;
@@ -9178,10 +9205,13 @@ class FSAddToContactSet : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		LLVOAvatar* avatarp = find_avatar_from_object(LLSelectMgr::getInstance()->getSelection()->getPrimaryObject());
-		if (avatarp)
+		if (!rlv_handler_t::isEnabled() || !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
 		{
-			LLFloaterReg::showInstance("fs_add_contact", LLSD(avatarp->getID()), TRUE);
+			LLVOAvatar* avatarp = find_avatar_from_object(LLSelectMgr::getInstance()->getSelection()->getPrimaryObject());
+			if (avatarp)
+			{
+				LLFloaterReg::showInstance("fs_add_contact", LLSD(avatarp->getID()), TRUE);
+			}
 		}
 		return true;
 	}
@@ -9312,7 +9342,7 @@ void handle_dump_avatar_local_textures(void*)
 
 void handle_dump_timers()
 {
-	LLFastTimer::dumpCurTimes();
+	LLTrace::BlockTimer::dumpCurTimes();
 }
 
 void handle_debug_avatar_textures(void*)
@@ -9330,7 +9360,7 @@ void handle_grab_baked_texture(void* data)
 	if (!isAgentAvatarValid()) return;
 
 	const LLUUID& asset_id = gAgentAvatarp->grabBakedTexture(baked_tex_index);
-	LL_INFOS("texture") << "Adding baked texture " << asset_id << " to inventory." << llendl;
+	LL_INFOS("texture") << "Adding baked texture " << asset_id << " to inventory." << LL_ENDL;
 	LLAssetType::EType asset_type = LLAssetType::AT_TEXTURE;
 	LLInventoryType::EType inv_type = LLInventoryType::IT_TEXTURE;
 	const LLUUID folder_id = gInventory.findCategoryUUIDForType(LLFolderType::assetTypeToFolderType(asset_type));
@@ -9386,7 +9416,7 @@ void handle_grab_baked_texture(void* data)
 	}
 	else
 	{
-		llwarns << "Can't find a folder to put it in" << llendl;
+		LL_WARNS() << "Can't find a folder to put it in" << LL_ENDL;
 	}
 }
 
@@ -9638,7 +9668,7 @@ void handle_buy_currency_test(void*)
 	replace["[LANGUAGE]"] = LLUI::getLanguage();
 	LLStringUtil::format(url, replace);
 
-	llinfos << "buy currency url " << url << llendl;
+	LL_INFOS() << "buy currency url " << url << LL_ENDL;
 
 	LLFloaterReg::showInstance("buy_currency_html", LLSD(url));
 }
@@ -10051,12 +10081,6 @@ class LLWorldEnvSettings : public view_listener_t
 		{
 			LLEnvManagerNew::instance().setUseSkyPreset("Midnight");
 		}
-// [RLVa:KB] - Checked: 2011-09-03 (RLVa-1.4.1a) | Added: RLVa-1.4.1a
-		else if ("default" == tod)
-		{
-			LLEnvManagerNew::instance().setUseRegionSettings(true);
-		}
-// [/RLVa:KB]
 		else
 		{
 			LLEnvManagerNew &envmgr = LLEnvManagerNew::instance();
@@ -10066,10 +10090,49 @@ class LLWorldEnvSettings : public view_listener_t
 			envmgr.setUserPrefs(envmgr.getWaterPresetName(),
 					    envmgr.getSkyPresetName(),
 					    envmgr.getDayCycleName(),
-					    use_fixed_sky, use_region_settings);
+					    use_fixed_sky, use_region_settings, false);
 		}
 
 		return true;
+	}
+};
+
+class LLWorldEnableEnvSettings : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool result = false;
+		std::string tod = userdata.asString();
+
+		if (tod == "region")
+		{
+			return LLEnvManagerNew::instance().getUseRegionSettings();
+		}
+
+		if (LLEnvManagerNew::instance().getUseFixedSky())
+		{
+			if (tod == "sunrise")
+			{
+				result = (LLEnvManagerNew::instance().getSkyPresetName() == "Sunrise");
+			}
+			else if (tod == "noon")
+			{
+				result = (LLEnvManagerNew::instance().getSkyPresetName() == "Midday");
+			}
+			else if (tod == "sunset")
+			{
+				result = (LLEnvManagerNew::instance().getSkyPresetName() == "Sunset");
+			}
+			else if (tod == "midnight")
+			{
+				result = (LLEnvManagerNew::instance().getSkyPresetName() == "Midnight");
+			}
+			else
+			{
+				LL_WARNS() << "Unknown item" << LL_ENDL;
+			}
+		}
+		return result;
 	}
 };
 
@@ -10117,7 +10180,7 @@ class LLWorldEnvPreset : public view_listener_t
 		}
 		else
 		{
-			llwarns << "Unknown item selected" << llendl;
+			LL_WARNS() << "Unknown item selected" << LL_ENDL;
 		}
 
 		return true;
@@ -10150,7 +10213,7 @@ class LLWorldEnableEnvPreset : public view_listener_t
 		}
 		else
 		{
-			llwarns << "Unknown item" << llendl;
+			LL_WARNS() << "Unknown item" << LL_ENDL;
 		}
 
 		return false;
@@ -10813,6 +10876,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLWorldCheckAlwaysRun(), "World.CheckAlwaysRun");
 	
 	view_listener_t::addMenu(new LLWorldEnvSettings(), "World.EnvSettings");
+	view_listener_t::addMenu(new LLWorldEnableEnvSettings(), "World.EnableEnvSettings");
 	view_listener_t::addMenu(new LLWorldEnvPreset(), "World.EnvPreset");
 	view_listener_t::addMenu(new LLWorldEnableEnvPreset(), "World.EnableEnvPreset");
 	view_listener_t::addMenu(new LLWorldPostProcess(), "World.PostProcess");

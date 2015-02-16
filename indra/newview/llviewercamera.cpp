@@ -55,6 +55,7 @@
 #include "llglheaders.h"
 #include "llquaternion.h"
 #include "llwindow.h"			// getPixelAspectRatio()
+#include "lltracerecording.h"
 
 // System includes
 #include <iomanip> // for setprecision
@@ -63,7 +64,10 @@
 #include "llviewerdisplay.h"
 // </CV:David>
 
-U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
+LLTrace::CountStatHandle<> LLViewerCamera::sVelocityStat("camera_velocity");
+LLTrace::CountStatHandle<> LLViewerCamera::sAngularVelocityStat("camera_angular_velocity");
+
+LLViewerCamera::eCameraID LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
 // <CV:David>
 F32 mEyeSeparation[2];  // Distance L and R of stereo eyes.
@@ -203,7 +207,7 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 
 	setOriginAndLookAt(origin, up_direction, point_of_interest);
 
-	mVelocityDir = center - last_position ; 
+	mVelocityDir = origin - last_position ; 
 	F32 dpos = mVelocityDir.normVec() ;
 	LLQuaternion rotation;
 	rotation.shortestArc(last_axis, getAtAxis());
@@ -212,11 +216,11 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 	F32 drot;
 	rotation.getAngleAxis(&drot, &x, &y, &z);
 
-	mVelocityStat.addValue(dpos);
-	mAngularVelocityStat.addValue(drot);
+	add(sVelocityStat, dpos);
+	add(sAngularVelocityStat, drot);
 	
-	mAverageSpeed = mVelocityStat.getMeanPerSec() ;
-	mAverageAngularSpeed = mAngularVelocityStat.getMeanPerSec() ;
+	mAverageSpeed = LLTrace::get_frame_recording().getPeriodMeanPerSec(sVelocityStat, 50);
+	mAverageAngularSpeed = LLTrace::get_frame_recording().getPeriodMeanPerSec(sAngularVelocityStat);
 	mCosHalfCameraFOV = cosf(0.5f * getView() * llmax(1.0f, getAspect()));
 
 	// update pixel meter ratio using default fov, not modified one

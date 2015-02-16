@@ -29,16 +29,16 @@
 
 #include "fsconsoleutils.h"
 
+#include "fscommon.h"
 #include "fsfloaternearbychat.h"
 #include "lggcontactsets.h"
 #include "llagent.h"
+#include "llavatarnamecache.h"
 #include "llconsole.h"
 #include "llfloaterreg.h"
 #include "llimview.h"
-#include "llnotificationhandler.h"
 #include "lltrans.h"
 #include "llviewercontrol.h"
-#include "rlvhandler.h"
 
 // static
 BOOL FSConsoleUtils::isNearbyChatVisible()
@@ -245,26 +245,7 @@ void FSConsoleUtils::onProccessInstantMessageNameLookup(const LLUUID& agent_id, 
 		message = message.substr(3);
 	}
 
-	static LLCachedControl<bool> nameTagShowUsernames(gSavedSettings, "NameTagShowUsernames");
-	static LLCachedControl<bool> useDisplayNames(gSavedSettings, "UseDisplayNames");
-	static LLCachedControl<bool> im_coloring(gSavedSettings, "FSColorIMsDistinctly");
-	if (nameTagShowUsernames && useDisplayNames)
-	{
-		senderName = av_name.getCompleteName();
-	}
-	else if (useDisplayNames)
-	{
-		senderName = av_name.getDisplayName();
-	}
-	else
-	{
-		senderName = av_name.getUserNameForDisplay();
-	}
-
-	if (rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
-	{
-		senderName = RlvStrings::getAnonym(senderName);
-	}
+	senderName = FSCommon::getAvatarNameByDisplaySettings(av_name);
 
 	// Replacing the "IM" in front of group chat messages with the actual group name
 	if (!group.empty())
@@ -272,6 +253,7 @@ void FSConsoleUtils::onProccessInstantMessageNameLookup(const LLUUID& agent_id, 
 		senderName = "[" + group + "] " + senderName;
 	}
 
+	static LLCachedControl<bool> im_coloring(gSavedSettings, "FSColorIMsDistinctly");
 	LLColor4 textColor = LLUIColorTable::instance().getColor( im_coloring ? "AgentIMColor" : "AgentChatColor" );
 	
 	// <FS:CR> FIRE-1061 - Color friends, lindens, muted, etc

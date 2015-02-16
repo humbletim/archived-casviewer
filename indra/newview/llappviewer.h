@@ -32,7 +32,6 @@
 #include "llsys.h"			// for LLOSInfo
 #include "lltimer.h"
 #include "llappcorehttp.h"
-#include <boost/optional.hpp>
 
 // <CV:David>
 #include "OVR_Version.h"
@@ -68,8 +67,7 @@ class LLUpdaterService;
 class LLViewerJoystick;
 class LLLeapMotionController;	// [FS:CR]
 
-extern LLFastTimer::DeclareTimer FTM_FRAME;
-
+extern LLTrace::BlockTimerStatHandle FTM_FRAME;
 
 class LLAppViewer : public LLApp
 {
@@ -105,8 +103,9 @@ public:
 
     bool quitRequested() { return mQuitRequested; }
     bool logoutRequestSent() { return mLogoutRequestSent; }
+	bool isSecondInstance() { return mSecondInstance; }
 
-	void writeDebugInfo();
+	void writeDebugInfo(bool isStatic=true);
 
 	const LLOSInfo& getOSInfo() const { return mSysOSInfo; }
 
@@ -119,7 +118,7 @@ public:
 
 	virtual bool restoreErrorTrap() = 0; // Require platform specific override to reset error handling mechanism.
 	                                     // return false if the error trap needed restoration.
-	virtual void handleCrashReporting(bool reportFreeze = false) = 0; // What to do with crash report?
+	virtual void initCrashReporting(bool reportFreeze = false) = 0; // What to do with crash report?
 	static void handleViewerCrash(); // Hey! The viewer crashed. Do this, soon.
     void checkForCrash();
     
@@ -147,8 +146,9 @@ public:
     void loadNameCache();
     void saveNameCache();
 
-	void removeMarkerFile(bool leave_logout_marker = false);
+	void removeMarkerFiles();
 	
+	void removeDumpDir();
     // LLAppViewer testing helpers.
     // *NOTE: These will potentially crash the viewer. Only for debugging.
     virtual void forceErrorLLError();
@@ -213,6 +213,8 @@ public:
 	void addOnIdleCallback(const boost::function<void()>& cb); // add a callback to fire (once) when idle
 
 	void purgeCache(); // Clear the local cache. 
+	void purgeCacheImmediate(); //clear local cache immediately.
+	S32  updateTextureThreads(F32 max_time);
 	
 	// mute/unmute the system's master audio
 	virtual void setMasterSystemAudioMute(bool mute);
@@ -331,7 +333,7 @@ private:
 	LLWatchdogTimeout* mMainloopTimeout;
 
 	// For performance and metric gathering
-	LLThread*	mFastTimerLogThread;
+	class LLThread*	mFastTimerLogThread;
 
 	// for tracking viewer<->region circuit death
 	bool mAgentRegionLastAlive;
@@ -399,12 +401,12 @@ extern U32 gForegroundFrameCount;
 
 extern LLPumpIO* gServicePump;
 
-extern U64      gFrameTime;					// The timestamp of the most-recently-processed frame
-extern F32		gFrameTimeSeconds;			// Loses msec precision after ~4.5 hours...
-extern F32		gFrameIntervalSeconds;		// Elapsed time between current and previous gFrameTimeSeconds
+extern U64MicrosecondsImplicit	gStartTime;
+extern U64MicrosecondsImplicit   gFrameTime;					// The timestamp of the most-recently-processed frame
+extern F32SecondsImplicit		gFrameTimeSeconds;			// Loses msec precision after ~4.5 hours...
+extern F32SecondsImplicit		gFrameIntervalSeconds;		// Elapsed time between current and previous gFrameTimeSeconds
 extern F32		gFPSClamped;				// Frames per second, smoothed, weighted toward last frame
 extern F32		gFrameDTClamped;
-extern U64		gStartTime;
 extern U32 		gFrameStalls;
 
 extern LLTimer gRenderStartTime;
@@ -432,7 +434,7 @@ class LLVFS;
 extern LLVFS	*gStaticVFS;
 
 extern LLMemoryInfo gSysMemory;
-extern U64 gMemoryAllocated;
+extern U64Bytes gMemoryAllocated;
 
 extern std::string gLastVersionChannel;
 

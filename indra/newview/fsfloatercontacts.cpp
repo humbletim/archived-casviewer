@@ -32,7 +32,6 @@
 
 // libs
 #include "llagent.h"
-#include "llavatarname.h"
 #include "llfloaterreg.h"
 #include "lltabcontainer.h"
 #include "llscrolllistctrl.h"
@@ -47,11 +46,11 @@
 #include "llgrouplist.h"
 #include "fsfloaterimcontainer.h"
 #include "llnotificationsutil.h"
-#include "llfloatersidepanelcontainer.h"
 #include "llstartup.h"
 #include "llviewercontrol.h"
 #include "llvoiceclient.h"
 #include "fscommon.h"
+#include "llviewermenu.h"
 
 //Maximum number of people you can select to do an operation on at once.
 const U32 MAX_FRIEND_SELECT = 20;
@@ -112,6 +111,7 @@ BOOL FSFloaterContacts::postBuild()
 {
 	mTabContainer = getChild<LLTabContainer>("friends_and_groups");
 	mFriendsTab = getChild<LLPanel>(FRIENDS_TAB_NAME);
+	mFriendListFontName = mFriendsTab->getString("FontName");
 
 	mFriendsList = mFriendsTab->getChild<LLScrollListCtrl>("friend_list");
 	mFriendsList->setMaxSelectable(MAX_FRIEND_SELECT);
@@ -140,6 +140,7 @@ BOOL FSFloaterContacts::postBuild()
 	mFriendsTab->childSetAction("im_btn",				boost::bind(&FSFloaterContacts::onImButtonClicked,				this));
 	mFriendsTab->childSetAction("profile_btn",			boost::bind(&FSFloaterContacts::onViewProfileButtonClicked,		this));
 	mFriendsTab->childSetAction("offer_teleport_btn",	boost::bind(&FSFloaterContacts::onTeleportButtonClicked,		this));
+	mFriendsTab->childSetAction("map_btn", 				boost::bind(&FSFloaterContacts::onMapButtonClicked,				this));
 	mFriendsTab->childSetAction("pay_btn",				boost::bind(&FSFloaterContacts::onPayButtonClicked,				this));
 	mFriendsTab->childSetAction("remove_btn",			boost::bind(&FSFloaterContacts::onDeleteFriendButtonClicked,	this));
 	mFriendsTab->childSetAction("add_btn",				boost::bind(&FSFloaterContacts::onAddFriendWizButtonClicked,	this));
@@ -164,6 +165,8 @@ BOOL FSFloaterContacts::postBuild()
 	mGroupsTab->childSetAction("invite_btn",	boost::bind(&FSFloaterContacts::onGroupInviteButtonClicked,		this));
 	mGroupsTab->setDefaultBtn("chat_btn");
 	
+	gRlvHandler.setBehaviourCallback(boost::bind(&FSFloaterContacts::updateRlvRestrictions, this, _1));
+
 	return TRUE;
 }
 
@@ -178,7 +181,7 @@ void FSFloaterContacts::updateGroupButtons()
 	getChildView("info_btn")->setEnabled(isGroup);
 	getChildView("activate_btn")->setEnabled(groupId != gAgent.getGroupID());
 	getChildView("leave_btn")->setEnabled(isGroup);
-	getChildView("create_btn")->setEnabled((!gMaxAgentGroups) || (gAgent.mGroups.count() < gMaxAgentGroups));
+	getChildView("create_btn")->setEnabled((!gMaxAgentGroups) || (gAgent.mGroups.size() < gMaxAgentGroups));
 	getChildView("invite_btn")->setEnabled(isGroup && gAgent.hasPowerInGroup(groupId, GP_MEMBER_INVITE));
 }
 
@@ -460,15 +463,20 @@ void FSFloaterContacts::getCurrentItemIDs(uuid_vec_t& selected_uuids) const
 
 	if (cur_tab == FRIENDS_TAB_NAME)
 	{
-		std::vector<LLScrollListItem*> selected = mFriendsList->getAllSelected();
-		for(std::vector<LLScrollListItem*>::iterator itr = selected.begin(); itr != selected.end(); ++itr)
-		{
-			selected_uuids.push_back((*itr)->getUUID());
-		}
+		getCurrentFriendItemIDs(selected_uuids);
 	}
 	else if (cur_tab == GROUP_TAB_NAME)
 	{
 		mGroupList->getSelectedUUIDs(selected_uuids);
+	}
+}
+
+void FSFloaterContacts::getCurrentFriendItemIDs(uuid_vec_t& selected_uuids) const
+{
+	std::vector<LLScrollListItem*> selected = mFriendsList->getAllSelected();
+	for(std::vector<LLScrollListItem*>::iterator itr = selected.begin(); itr != selected.end(); ++itr)
+	{
+		selected_uuids.push_back((*itr)->getUUID());
 	}
 }
 
@@ -582,12 +590,13 @@ void FSFloaterContacts::addFriend(const LLUUID& agent_id)
 	LLSD& friend_column					= element["columns"][LIST_FRIEND_NAME];
 	friend_column["column"]				= "full_name";
 	friend_column["value"]				= av_name.getCompleteName();
-	friend_column["font"]["name"]		= "SANSSERIF";
+	friend_column["font"]["name"]		= mFriendListFontName;
 	friend_column["font"]["style"]		= "NORMAL";
 
 	LLSD& online_status_column			= element["columns"][LIST_ONLINE_STATUS];
 	online_status_column["column"]		= "icon_online_status";
 	online_status_column["type"]		= "icon";
+	online_status_column["halign"]		= "center";
 	
 	if (isOnline)
 	{	
@@ -634,6 +643,14 @@ void FSFloaterContacts::addFriend(const LLUUID& agent_id)
 	mFriendsList->addElement(element, ADD_BOTTOM);
 }
 
+void FSFloaterContacts::onMapButtonClicked()
+{
+	LLUUID current_id = getCurrentItemID();
+	if (current_id.notNull() && is_agent_mappable(current_id))
+	{
+		LLAvatarActions::showOnMap(current_id);
+	}
+}
 
 // propagate actual relationship to UI.
 // Does not resort the UI list because it can be called frequently. JC
@@ -686,23 +703,32 @@ void FSFloaterContacts::updateFriendItem(const LLUUID& agent_id, const LLRelatio
 void FSFloaterContacts::refreshRightsChangeList()
 {
 	uuid_vec_t friends;
-	getCurrentItemIDs(friends);
+	getCurrentFriendItemIDs(friends);
 
-	S32 num_selected = friends.size();
+	size_t num_selected = friends.size();
 
 	bool can_offer_teleport = num_selected >= 1;
 	bool selected_friends_online = true;
 
 	const LLRelationship* friend_status = NULL;
-	for(std::vector<LLUUID>::iterator itr = friends.begin(); itr != friends.end(); ++itr)
+	for (uuid_vec_t::iterator itr = friends.begin(); itr != friends.end(); ++itr)
 	{
 		friend_status = LLAvatarTracker::instance().getBuddyInfo(*itr);
 		if (friend_status)
 		{
-			if(!friend_status->isOnline())
+			if (!friend_status->isOnline())
 			{
 				can_offer_teleport = false;
 				selected_friends_online = false;
+			}
+			else
+			{
+				if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC) &&
+					!gRlvHandler.isException(RLV_BHVR_TPLURE, *itr, RLV_CHECK_PERMISSIVE) &&
+					!friend_status->isRightGrantedTo(LLRelationship::GRANT_MAP_LOCATION))
+				{
+					can_offer_teleport = false;
+				}
 			}
 		}
 		else // missing buddy info, don't allow any operations
@@ -713,8 +739,8 @@ void FSFloaterContacts::refreshRightsChangeList()
 	
 	if (num_selected == 0)  // nothing selected
 	{
-		childSetEnabled("im_btn", FALSE);
-		childSetEnabled("offer_teleport_btn", FALSE);
+		childSetEnabled("im_btn", false);
+		childSetEnabled("offer_teleport_btn", false);
 	}
 	else // we have at least one friend selected...
 	{
@@ -730,16 +756,13 @@ void FSFloaterContacts::refreshUI()
 {
 	sortFriendList();
 
-	BOOL single_selected = FALSE;
-	BOOL multiple_selected = FALSE;
-	int num_selected = mFriendsList->getAllSelected().size();
-	if(num_selected > 0)
+	bool single_selected = false;
+	bool multiple_selected = false;
+	size_t num_selected = mFriendsList->getAllSelected().size();
+	if (num_selected > 0)
 	{
-		single_selected = TRUE;
-		if(num_selected > 1)
-		{
-			multiple_selected = TRUE;		
-		}
+		single_selected = true;
+		multiple_selected = (num_selected > 1);
 	}
 
 	//Options that can only be performed with one friend selected
@@ -751,10 +774,19 @@ void FSFloaterContacts::refreshUI()
 	childSetEnabled("remove_btn", single_selected);
 	childSetEnabled("im_btn", single_selected);
 
+	LLScrollListItem* selected_item = mFriendsList->getFirstSelected();
+	bool mappable = false;
+	if (selected_item)
+	{
+		LLUUID av_id = selected_item->getUUID();
+		mappable = (single_selected && !multiple_selected && av_id.notNull() && is_agent_mappable(av_id));
+	}
+	childSetEnabled("map_btn", mappable && !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWWORLDMAP));
+
 	// Set friend count
 	LLStringUtil::format_map_t args;
 	args["[COUNT]"] = llformat("%d", mFriendsList->getItemCount());
-	mFriendsTab->childSetText("friend_count", mFriendsTab->getString("FriendCount", args));
+	mFriendsTab->childSetValue("friend_count", LLSD( mFriendsTab->getString("FriendCount", args) ) );
 
 	refreshRightsChangeList();
 }
@@ -966,4 +998,19 @@ void FSFloaterContacts::sendRightsGrant(rights_map_t& ids)
 	gAgent.sendReliableMessage();
 }
 
+void FSFloaterContacts::childShowTab(const std::string& id, const std::string& tabname )
+{
+	LLTabContainer* child = findChild<LLTabContainer>(id);
+	if (child)
+		child->selectTabByName(tabname);
+}
+
+void FSFloaterContacts::updateRlvRestrictions(ERlvBehaviour behavior)
+{
+	if (behavior == RLV_BHVR_SHOWLOC ||
+		behavior == RLV_BHVR_SHOWWORLDMAP)
+	{
+		refreshUI();
+	}
+}
 // EOF

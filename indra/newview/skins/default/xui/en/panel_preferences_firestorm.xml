@@ -237,17 +237,34 @@
          left="15"
          width="270"
          tool_tip="Allows the Viewer to use a scripted attachment (Bridge) to extend its features"/>
-        <check_box
+        <combo_box
          control_name="UseLSLFlightAssist"
          enabled_control="UseLSLBridge"
          layout="topleft"
          left_delta="200"
-         height="16"
-         initial_value="false"
+         top_delta="0"
+         follows="left|top"
+         height="20"
          name="UseLSLFlightAssist"
-         label="Enable Bridge Flight Assist"
-         width="270"
-         tool_tip="Enables the script that assists flying and hovering at extended altitudes"/>
+         tool_tip="Enables the script that assists flying and hovering at extended altitudes"
+         width="200">
+            <combo_box.item
+             label="Flight Assist: Disabled"
+             name="flight_disabled"
+             value="0.0" />
+            <combo_box.item
+             label="Flight Assist: Mild boost"
+             name="flight_mild"
+             value="1.0" />
+            <combo_box.item
+             label="Flight Assist: Moderate boost"
+             name="flight_moderate"
+             value="3.0" />
+            <combo_box.item
+             label="Flight Assist: Strong boost"
+             name="flight_strong"
+             value="5.0" />
+        </combo_box>
 
     </panel>
 
@@ -350,6 +367,7 @@
          width="380"
          tool_tip="This protects you from objects with very large textures over large surface areas often designed to crash the viewer. Default is 5000 square meters, but if you find that some objects are not rendering and this option is enabled you may need to increase it."/>
         <spinner
+         enabled_control="RenderVolumeSAProtection"
          top_delta="-5"
          control_name="RenderVolumeSAFrameMax"
          decimal_digits="0"
@@ -386,6 +404,7 @@
            Max lines in a single message:
         </text>
         <spinner
+         enabled_control="UseAntiSpam"
          top_delta="-5"
          control_name="_NACL_AntiSpamNewlines"
          decimal_digits="0"
@@ -413,6 +432,7 @@
            Max events from same source:
         </text>
         <spinner
+         enabled_control="UseAntiSpam"
          top_delta="-5"
          control_name="_NACL_AntiSpamAmount"
          decimal_digits="0"
@@ -440,6 +460,7 @@
            Sound play requests multiplier:
         </text>
         <spinner
+         enabled_control="UseAntiSpam"
          top_delta="-5"
          control_name="_NACL_AntiSpamSoundMulti"
          decimal_digits="0"
@@ -467,6 +488,7 @@
            Sound preload requests multiplier:
         </text>
         <spinner
+         enabled_control="UseAntiSpam"
          top_delta="-5"
          control_name="_NACL_AntiSpamSoundPreloadMulti"
          decimal_digits="0"
@@ -482,6 +504,7 @@
          width="50"
          tool_tip="Event multiplier for sound preload requests [Default: 4]"/>
         <button
+         enabled_control="UseAntiSpam"
          layout="topleft"
          follows="left|top"
          top_pad="10"
@@ -639,17 +662,6 @@
              (Avatar look at target settings are on the Privacy tab.)
         </text>
 
-        <check_box
-         top_pad="10"
-         follows="left|top"
-         height="16"
-         label="Don't send avatar physics to server (old V1 client compatibility)"
-         left="10"
-         name="dontsendavphysics"
-         width="270"
-         control_name="FSDontSendAvPhysicsParms"
-         tool_tip="Disables sending your avatar physics information to the Second Life server, for compatibility with version 1 viewers"/>
-
         <!-- LGG Color Beams -->
         <text
          name="BeamPrefs"
@@ -669,6 +681,7 @@
          width="490" />
 
         <button
+         enabled_control="ShowSelectionBeam"
          name="BeamColor_delete"
          label="Delete"
          tool_tip="Remove this preset"
@@ -679,6 +692,7 @@
          follows="left|top" />
 
         <combo_box
+         enabled_control="ShowSelectionBeam"
          allow_text_entry="false"
          top_delta="0"
          left_delta="60"
@@ -691,6 +705,7 @@
          tool_tip="Select the color preset for the selection beam"/>
 
         <button
+         enabled_control="ShowSelectionBeam"
          name="BeamColor_new"
          label="Create New"
          tool_tip="Create a new color preset"
@@ -701,6 +716,7 @@
          follows="left|top" />
 
         <button
+         enabled_control="ShowSelectionBeam"
          name="BeamColor_refresh"
          label="Refresh List"
          tool_tip="Refresh the preset list"
@@ -711,6 +727,7 @@
          follows="left|top" />
 
         <button
+         enabled_control="ShowSelectionBeam"
          left="100"
          top_delta="-25"
          follows="left|top"
@@ -725,6 +742,7 @@
          image_hover_unselected="beam_rainbow.png" />
 
         <slider
+         enabled_control="ShowSelectionBeam"
          bottom_delta="25"
          left="15"
          name="FSMaxBeamsPerSecond"
@@ -779,6 +797,7 @@
          width="0" />
 
         <combo_box
+         enabled_control="ShowSelectionBeam"
          allow_text_entry="false"
          bottom_delta="-150"
          left="275"
@@ -791,6 +810,7 @@
          tool_tip="Select the shape for the particle beam" />
 
         <button
+         enabled_control="ShowSelectionBeam"
          name="delete_beam"
          label="Delete"
          tool_tip="Remove this beam"
@@ -801,6 +821,7 @@
          follows="left|top" />
 
         <button
+         enabled_control="ShowSelectionBeam"
          name="custom_beam_btn"
          label="Create New"
          tool_tip="Customize the beam shape"
@@ -811,6 +832,7 @@
          follows="left|top"/>
 
         <button
+         enabled_control="ShowSelectionBeam"
          name="refresh_beams"
          label="Refresh List"
          tool_tip="Refresh the beam list"
@@ -821,6 +843,7 @@
          follows="left|top" />
 
         <button
+         enabled_control="ShowSelectionBeam"
          left="290"
          top_delta="-25"
          follows="left|top"
@@ -835,6 +858,7 @@
          image_hover_unselected="beam_phoenix.png" />
 
         <slider
+         enabled_control="ShowSelectionBeam"
          bottom_delta="25"
          left_delta="-15"
          name="FSBeamShapeScale"
@@ -852,6 +876,39 @@
          show_text="true"
          width="150"
          tool_tip="Change the scale of the shape used for the Phoenix Shaped Beam" />
+
+        <text
+         type="string"
+         left="5"
+         top_pad="90"
+         length="1"
+         follows="left|top"
+         height="12"
+         layout="topleft"
+         name="BridgeProtocols"
+         width="500">
+            LSL-Client Bridge external protocols integration:
+        </text>
+        <check_box
+         follows="left|top"
+         height="16"
+         label="Allow OpenCollar protocol to enable or disable built in AO"
+         left="15"
+         top_pad="10"
+         name="BridgeIntegrationOC"
+         width="450"
+         enabled_control="UseLSLBridge"
+         control_name="BridgeIntegrationOC" />
+        <check_box
+         follows="left|top"
+         height="16"
+         label="Allow LockMeister protocol to enable or disable built in AO"
+         left="15"
+         top_pad="2"
+         name="BridgeIntegrationLM"
+         width="450"
+         enabled_control="UseLSLBridge"
+         control_name="BridgeIntegrationLM" />
 
     </panel>
 <!--<FS:HG> FIRE-6340, FIRE-6567 - Setting Bandwidth issues-->
@@ -885,6 +942,7 @@
       Calc. expressions (usage: cmd SIN(2+2))
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -903,6 +961,7 @@
       Change Draw Dist (usage: cmd meters)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -921,6 +980,7 @@
       Max. Bandwidth (usage: cmd kbps)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -939,6 +999,7 @@
       Copy camera position to clipboard
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -957,6 +1018,7 @@
       Rez a platform (usage: cmd 0 - 64)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -966,6 +1028,7 @@
       control_name="FSCmdLineRezPlatform"
       width="200"/>
     <slider
+      enabled_control="FSCmdLine"
       top_pad="4"
       name="FSCmdLinePlatformSize"
       control_name="FSCmdLinePlatformSize"
@@ -1002,6 +1065,7 @@
       Get avatar name from key (usage: cmd key)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1020,6 +1084,7 @@
       Turn AO on/off (usage: cmd on/off)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1038,6 +1103,7 @@
       Clear the chat transcript (usage: cmd)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1056,6 +1122,7 @@
       Set the media url (usage: cmd url type)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1074,6 +1141,7 @@
       Set the music stream url (usage: cmd url)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1081,6 +1149,25 @@
       tool_tip="sets and plays your music stream to the entered url"
       name="FSCmdLineMusic"
       control_name="FSCmdLineMusic"
+      width="200"/>
+    <!--dice-->
+    <text
+      top_pad="5"
+      follows="left|top"
+      height="16"
+      name="FSCmdLineRollDice_txt"
+      width="250">
+      Roll dice (usage: cmd dice faces)
+    </text>
+    <line_editor
+      enabled_control="FSCmdLine"
+      top_pad="0"
+      follows="left|top"
+      height="20"
+      max_length_chars="256"
+      tool_tip="Rolls dice - cmd [number of dice] [number of faces]. Example: cmd 1 20. Lack of parameters is equal to cmd 1 6 (standard die)."
+      name="FSCmdLineRollDice"
+      control_name="FSCmdLineRollDice"
       width="200"/>
   </panel>
 
@@ -1115,6 +1202,7 @@
       Teleport within sim (usage: cmd x y z)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1133,6 +1221,7 @@
       Teleport to ground (usage: cmd)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1151,6 +1240,7 @@
       Teleport to altitude (usage: cmd z)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1169,6 +1259,7 @@
       Teleport to sim x (usage: cmd simname)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1178,6 +1269,7 @@
       control_name="FSCmdLineMapTo"
       width="200"/>
     <check_box
+      enabled_control="FSCmdLine"
       top_pad="4"
       follows="left|top"
       height="16"
@@ -1206,6 +1298,7 @@
       Teleport to cam position (usage: cmd)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1224,6 +1317,7 @@
       Offer teleport to avatar (usage: cmd key)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1242,6 +1336,7 @@
       Teleport to avatar (usage: cmd name)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1260,6 +1355,7 @@
       Teleport home (usage: cmd)
     </text>
     <line_editor
+      enabled_control="FSCmdLine"
       top_pad="0"
       follows="left|top"
       height="20"
@@ -1324,7 +1420,6 @@
          top_pad="8"
          label="Use Firestorm Parcel Windlight Sharing"
          control_name="FSWLParcelEnabled"
-         enabled_control="UseEnvironmentFromRegionAlways"
          follows="left|top"
          height="16"
          name="FSWLParcelEnabled"
@@ -1334,7 +1429,7 @@
          left="15"
          label="Auto apply WL settings from friend's land"
          control_name="FSWLWhitelistFriends"
-         enabled_control="UseEnvironmentFromRegionAlways"
+         enabled_control="FSWLParcelEnabled"
          follows="left|top"
          height="16"
          name="FSWLWhitelistFriends"
@@ -1343,7 +1438,7 @@
          top_pad="5"
          label="Auto apply WL settings from my groups' land"
          control_name="FSWLWhitelistGroups"
-         enabled_control="UseEnvironmentFromRegionAlways"
+         enabled_control="FSWLParcelEnabled"
          follows="left|top"
          height="16"
          name="FSWLWhitelistGroups"
@@ -1352,7 +1447,7 @@
          top_pad="5"
          label="Auto apply WL settings from any parcel"
          control_name="FSWLWhitelistAll"
-         enabled_control="UseEnvironmentFromRegionAlways"
+         enabled_control="FSWLParcelEnabled"
          follows="left|top"
          height="16"
          name="FSWLWhitelistAll"
@@ -1361,7 +1456,7 @@
          top_pad="5"
          label="Crossfade region environment changes for Parcel WL"
          control_name="FSInterpolateParcelWL"
-         enabled_control="UseEnvironmentFromRegionAlways"
+         enabled_control="FSWLParcelEnabled"
          follows="left|top"
          height="16"
          name="FSInterpolateParcelWL"

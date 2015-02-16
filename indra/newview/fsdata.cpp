@@ -43,16 +43,17 @@
 #include "llagent.h"
 #include "llagentui.h"
 #include "llfloaterabout.h"
+#include "llhttpclient.h"
 #include "llimview.h"
 #include "llmutelist.h"
 #include "llnotifications.h"
-#include "llprimitive.h"
 #include "llsdserialize.h"
 #include "llversioninfo.h"
 #include "llviewercontrol.h"
 #include "llviewermedia.h"
 #include "llviewernetwork.h"
 #include "llxorcipher.h"
+#include "llvfs.h"
 
 const std::string LEGACY_CLIENT_LIST_URL = "http://phoenixviewer.com/app/client_tags/client_list_v2.xml";
 const LLUUID MAGIC_ID("3c115e51-04f4-523c-9fa6-98aff1034730");
@@ -763,14 +764,37 @@ LLSD FSData::allowedLogin()
 	}
 	else
 	{
-#if OPENSIM
-		// Don't disallow logins for OpenSim grids, the admins of the grid can disallow logins if they want to.
-		if (LLGridManager::getInstance()->isInOpenSim())
+		LLSD block = iter->second;
+		bool blocked = true; // default is to block all unless there is a gridtype or grids present.
+		if(block.has("gridtype"))
 		{
-			return LLSD();
-		}
+			blocked = false;
+#ifdef OPENSIM
+			if ((block["gridtype"].asString() == "opensim") && LLGridManager::getInstance()->isInOpenSim())
+			{
+				return block;
+			}
 #endif
-		return iter->second;
+			if ((block["gridtype"].asString() == "secondlife") && LLGridManager::getInstance()->isInSecondLife())
+			{
+				return block;
+			}
+		}
+		if(block.has("grids"))
+		{
+			blocked = false;
+			LLSD grids = block["grids"];
+			for (LLSD::array_iterator grid_iter = grids.beginArray();
+				grid_iter != grids.endArray();
+				++grid_iter)
+			{
+				if ((*grid_iter).asString() == LLGridManager::getInstance()->getGrid())
+				{
+					return block;
+				}
+			}
+		}
+		return blocked ? block : LLSD();
 	}
 }
 
@@ -890,7 +914,7 @@ void FSData::callbackReqInfo(const LLSD &notification, const LLSD &response)
 	LLUUID uid = subs["FROMUUID"].asUUID();
 	LLUUID sessionid = subs["SESSIONID"].asUUID();
 
-	llinfos << "the uuid is " << uid.asString().c_str() << llendl;
+	LL_INFOS() << "the uuid is " << uid.asString().c_str() << LL_ENDL;
 	LLAgentUI::buildFullname(my_name);
 
 	if ( option == 0 )//yes
@@ -960,7 +984,8 @@ LLSD FSData::getSystemInfo()
 	sysinfo2 += llformat("Bandwidth: %d kbit/s\n", info["BANDWIDTH"].asInteger());
 	sysinfo2 += llformat("LOD Factor: %.3f\n", info["LOD"].asReal());
 	sysinfo2 += llformat("Render quality: %s\n", info["RENDERQUALITY_FSDATA_ENGLISH"].asString().c_str()); // <FS:PP> FIRE-4785: Current render quality setting in sysinfo / about floater
-	sysinfo2 += llformat("Texture memory: %d MB (%.2f)", info["TEXTUREMEMORY"].asInteger(), info["TEXTUREMEMORYMULTIPLIER"].asReal());
+	sysinfo2 += llformat("Texture memory: %d MB (%.2f)\n", info["TEXTUREMEMORY"].asInteger(), info["TEXTUREMEMORYMULTIPLIER"].asReal());
+	sysinfo2 += "VFS (cache) creation time (UTC) " + info["VFS_DATE"].asString();
 
 	LLSD sysinfos;
 	sysinfos["Part1"] = sysinfo1;

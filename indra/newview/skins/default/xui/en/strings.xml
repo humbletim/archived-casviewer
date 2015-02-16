@@ -66,6 +66,7 @@ Bandwidth: [BANDWIDTH]
 LOD factor: [LOD]
 Render quality: [RENDERQUALITY]
 Texture memory: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
+VFS (cache) creation time (UTC): [VFS_DATE]
   </string>
   <string name="AboutTraffic">Packets Lost: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)</string>
 	<string name="ErrorFetchingServerReleaseNotesURL">Error fetching server release notes URL.</string>
@@ -302,7 +303,7 @@ Please try logging in again in a minute.</string>
 
 	<string name="ReleaseNotes">Release Notes</string>
 	<!-- Always mark translate="false" for strings that are nothing but URLs, as they don't need translation. -->
-	<string name="RELEASE_NOTES_BASE_URL" translate="false">http://wiki.secondlife.com/wiki/Release_Notes/</string>
+	<string name="RELEASE_NOTES_BASE_URL" translate="false">http://wiki.phoenixviewer.com/firestorm_change_log_</string>
 
 	<!-- Indicates something is being loaded. Maybe should be merged with RetrievingData -->
 	<string name="LoadingData">Loading...</string>
@@ -661,6 +662,16 @@ If you'd like to become a merchant, you'll need to [[MARKETPLACE_CREATE_STORE_UR
 	<string name="InventoryOutboxNoItems">
 Drag folders to this area and click "Send to Marketplace" to list them for sale on the [[MARKETPLACE_DASHBOARD_URL] Marketplace].
 	</string>
+	<string name="InventoryOutboxInitializingTitle">Initializing Marketplace.</string>
+	<string name="InventoryOutboxInitializingTooltip"></string>
+	<string name="InventoryOutboxInitializing">
+We are accessing your account on the [[MARKETPLACE_CREATE_STORE_URL] Marketplace store].
+	</string>
+	<string name="InventoryOutboxErrorTitle">Marketplace Errors.</string>
+	<string name="InventoryOutboxErrorTooltip"></string>
+	<string name="InventoryOutboxError">
+The [[MARKETPLACE_CREATE_STORE_URL] Marketplace store] is returning errors.
+	</string>
 
 	<string name="Marketplace Error None">No errors</string>
 	<string name="Marketplace Error Not Merchant">Error: Before sending items to the Marketplace you will need to set yourself up as a merchant (free of charge).</string>
@@ -673,6 +684,7 @@ Drag folders to this area and click "Send to Marketplace" to list them for sale 
 	<string name="Marketplace Error Internal Import">Error: There was a problem with this item.  Try again later.</string>
 
 	<string name="Open landmarks">Open landmarks</string>
+  <string name="Unconstrained">Unconstrained</string>
 
 	<!-- use value="" because they have preceding spaces -->
 	<string name="no_transfer" value=" (no transfer)" />
@@ -873,20 +885,21 @@ Drag folders to this area and click "Send to Marketplace" to list them for sale 
 
 	<!-- compile queue-->
 	<string name="CompileQueueDownloadedCompiling">Downloaded, now compiling</string>
+	<string name="CompileQueueServiceUnavailable">Script compilation service not available</string>
 	<string name="CompileQueueScriptNotFound">Script not found on server.</string>
 	<string name="CompileQueueProblemDownloading">Problem downloading</string>
 	<string name="CompileQueueInsufficientPermDownload">Insufficient permissions to download a script.</string>
 	<string name="CompileQueueInsufficientPermFor">Insufficient permissions for</string>
 	<string name="CompileQueueUnknownFailure">Unknown failure to download</string>
-	<string name="CompileQueueTitle">RECOMPILATION PROGRESS</string>
+	<string name="CompileQueueTitle">Recompilation Progress</string>
 	<string name="CompileQueueStart">recompile</string>
-	<string name="ResetQueueTitle">RESET PROGRESS</string>
+	<string name="ResetQueueTitle">Reset Progress</string>
 	<string name="ResetQueueStart">reset</string>
-	<string name="RunQueueTitle">SET RUNNING PROGRESS</string>
+	<string name="RunQueueTitle">Set Running Progress</string>
 	<string name="RunQueueStart">set running</string>
-	<string name="NotRunQueueTitle">SET NOT RUNNING PROGRESS</string>
+	<string name="NotRunQueueTitle">Set Not Running Progress</string>
 	<string name="NotRunQueueStart">set not running</string>
-	<string name="DeleteQueueTitle">DELETE PROGRESS</string>
+	<string name="DeleteQueueTitle">Delete Progress</string>
 	<string name="DeleteQueueStart">Deleting</string>
 
 	<!-- compile comment text-->
@@ -2552,6 +2565,8 @@ Try enclosing path to the editor with double quotes.
 
   <string name="MovelockEnabled">Movelock enabled</string>
   <string name="MovelockDisabled">Movelock disabled</string>
+  <string name="MovelockEnabling">Enabling movelock...</string>
+  <string name="MovelockDisabling">Disabling movelock...</string>
 
   <string name="BusyResponse">busy response</string>
   
@@ -2580,6 +2595,9 @@ Try enclosing path to the editor with double quotes.
   <string name="DrawDistanceSteppingGestureObsolete">Due to the changes in code, it is no longer necessary to use this gesture. Progressive Draw Distance stepping has been enabled.</string>
   <string name="FSCmdLineDrawDistanceSet">Draw Distance set to [DISTANCE]m.</string>
   <string name="FSCameraPositionCopied">Camera position [POS] copied to clipboard.</string>
+
+  <string name="FSCmdLineRollDiceTotal">Total result for [DICE]d[FACES]: [RESULT].</string>
+  <string name="FSCmdLineRollDiceLimits">You must provide positive values for dice (max 100) and faces (max 1000).</string>
 
   <!-- Build types for about floater -->
   <string name="FSWithHavok">with Havok support</string>
@@ -2622,6 +2640,12 @@ Try enclosing path to the editor with double quotes.
   <string name="fsbridge_warning_not_finished">The bridge has not finished creating, you may need to use the 'Avatar/Avatar Health/Recreate Bridge' menu option to recreate it before using.</string>
   <string name="fsbridge_detached">Bridge detached.</string>
   <string name="fsbridge_created">Bridge created.</string>
+  <string name="fsbridge_script_info">Script info: '[OBJECT_NAME]': [[OBJECT_RUNNING_SCRIPT_COUNT]/[OBJECT_TOTAL_SCRIPT_COUNT]] running scripts, [OBJECT_SCRIPT_MEMORY] KB allowed memory size limit, [OBJECT_SCRIPT_TIME] ms of CPU time consumed.[PATHFINDING_TEXT]</string>
+  <string name="fsbridge_script_info_pf">Average CPU time used for pathfinding navigation: [OBJECT_CHARACTER_TIME] ms.</string>
+  <string name="fsbridge_error_scriptinfonotfound">Script info: Object to check is invalid or out of range.</string>
+  <string name="fsbridge_error_scriptinfomalformed">Script info: Received malformed response from bridge. Try again.</string>
+  <string name="fsbridge_error_injection">NOTICE: One or more scripts have been added to your Firestorm bridge! If you did not expect this message, use the Firestorm 'Avatar/Avatar Health/Recreate Bridge' menu option to re-create your bridge now.</string>
+  <string name="fsbridge_error_wrongvm">NOTICE: Bridge script is using old LSO (16 KB memory limit) instead of new Mono (64 KB memory limit) virtual machine, which creates high probability of stack-heap collision and bridge failure by running out of memory. Please use the Firestorm 'Avatar/Avatar Health/Recreate Bridge' menu option to recreate the bridge. If you'll see this message again - please try again in a different region.</string>
 
   <!-- <FS:Zi> Quick preferences default options -->
   <string name="QP Draw Distance">Draw Distance</string>
@@ -2684,5 +2708,9 @@ Try enclosing path to the editor with double quotes.
 
   <string name="groupcountstring">You belong to [COUNT] groups ([REMAINING] remaining).</string>
   <string name="groupcountunlimitedstring">You belong to [COUNT] groups.</string>
+
+  <string name="SLGridStatusInvalidMsg">SL Grid Status error: Invalid message format. Try again later.</string>
+  <string name="SLGridStatusTimedOut">SL Grid Status error: Request timed out.</string>
+  <string name="SLGridStatusOtherError">SL Grid Status error: [STATUS] (https://en.wikipedia.org/wiki/List_of_HTTP_status_codes).</string>
 
 </strings>

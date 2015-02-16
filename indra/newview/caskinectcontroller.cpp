@@ -555,7 +555,7 @@ CASKinectHandler::EKinectGesture CASKinectHandler::getGesture(NUI_SKELETON_DATA*
 	else if ((mZeroPosition.y - position.y) > flyDownMin)
 	{
 		gesture = KG_FLY_DOWN;
-		mVerticalVelocity = -min((mZeroPosition.y - position.y - flyDownMin) * 10.0f , 1.f); 
+		mVerticalVelocity = -llmin((mZeroPosition.y - position.y - flyDownMin) * 10.0f , 1.f); 
 	}
 
 	return gesture;

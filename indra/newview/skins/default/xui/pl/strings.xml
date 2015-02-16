@@ -4,7 +4,7 @@
 		Portal Pomocy Second Life
 	</string>
 	<string name="StartupDetectingHardware">
-		Wykrywanie dysku twardego...
+		Detekcja konfiguracji sprzętowej...
 	</string>
 	<string name="StartupLoading">
 		Ładowanie [APP_NAME]...
@@ -19,17 +19,13 @@
 		Inicjowanie bufora danych tekstur...
 	</string>
 	<string name="StartupInitializingVFS">
-		Inicjowanie VFS...
+		Inicjowanie wirtualnego systemu plików...
 	</string>
 	<string name="StartupRequireDriverUpdate">
 		Nie można zainicjować grafiki. Zaktualizuj sterowniki!
 	</string>
-	<string name="AboutHeader">
-[APP_NAME] [VIEWER_VERSION_0].[VIEWER_VERSION_1].[VIEWER_VERSION_2] ([VIEWER_VERSION_3]) [BUILD_DATE] [BUILD_TIME] ([CHANNEL]) [BUILD_TYPE]
-[[VIEWER_RELEASE_NOTES_URL] [ReleaseNotes]]
-	</string>
 	<string name="AboutCompiler">
-		Zbudowane z [COMPILER] w wersji [COMPILER_VERSION]
+		Zbudowane za pomocą [COMPILER] w wersji [COMPILER_VERSION]
 	</string>
 	<string name="AboutPosition">
 Położenie [POSITION_LOCAL_0,number,1], [POSITION_LOCAL_1,number,1], [POSITION_LOCAL_2,number,1] w [REGION] zlokalizowanym w &lt;nolink&gt;[HOSTNAME]&lt;/nolink&gt; ([HOSTIP])
@@ -67,6 +63,7 @@ Przepustowość (Bandwidth): [BANDWIDTH]
 Mnożnik poziomu detali (LOD Factor): [LOD]
 Jakość wyświetlania (Render quality): [RENDERQUALITY]
 Pamięć tekstur (Texture memory): [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
+Czas utworzenia VFS (cache) w UTC: [VFS_DATE]
 	</string>
 	<string name="AboutTraffic">
 		Pakiety utracone: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)
@@ -156,7 +153,7 @@ Pamięć tekstur (Texture memory): [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER]
 		Termin ważności certyfikatu zwróconego przez siatkę minął. Proszę sprawdzić swój zegar systemowy lub skontaktować się z administratorem siatki.
 	</string>
 	<string name="CertKeyUsage">
-		Certyfikat zwrócony przez serwer nie może być użyty dla SSL.  Proszę skontaktuj się z administratorem siatki.
+		Certyfikat zwrócony przez serwer nie może być użyty dla SSL. Proszę skontaktuj się z administratorem siatki.
 	</string>
 	<string name="CertBasicConstraints">
 		Zbyt wiele certyfikatów w łańcuchu certyfikatów serwera. Proszę skontaktować się z administratorem siatki.
@@ -1388,6 +1385,9 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="InventoryNoTexture">
 		Nie posiadasz kopii tej tekstury w swojej Szafie.
 	</string>
+	<string name="Unconstrained">
+		Swobodny
+	</string>
 	<string name="InventoryInboxNoItems">
 		Przedmioty zakupione na Marketplace pojawią się tutaj. Możesz następnie przeciągnąć je do głównej części Szafy.
 	</string>
@@ -1402,6 +1402,18 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="InventoryOutboxNoItemsTitle">
 		Twoja skrzynka nadawcza kupca jest pusta.
+	</string>
+	<string name="InventoryOutboxInitializingTitle">
+		Inicjalizacja Marketplace.
+	</string>
+	<string name="InventoryOutboxInitializing">
+		Uzyskiwanie dostępu do Twojego konta [[MARKETPLACE_CREATE_STORE_URL] sklepu na Marketplace].
+	</string>
+	<string name="InventoryOutboxErrorTitle">
+		Błędy Marketplace.
+	</string>
+	<string name="InventoryOutboxError">
+		[[MARKETPLACE_CREATE_STORE_URL] Sklep na Marketplace] zwraca błędy.
 	</string>
 	<string name="InventoryOutboxNoItemsTooltip">
 		Umieść tutaj przedmioty, aby przygotować je do wysyłki na Marketplace.
@@ -1715,9 +1727,6 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="Invalid Attachment">
 		Nieprawidłowy punkt dodatku
 	</string>
-	<string name="YearsMonthsOld">
-		[AGEYEARS] [AGEMONTHS]
-	</string>
 	<string name="YearsOld">
 		[AGEYEARS]
 	</string>
@@ -1770,13 +1779,13 @@ Spróbuj zalogować się ponownie za minutę.
 		[COUNT] dni
 	</string>
 	<string name="GroupMembersA">
-		[COUNT] członek
+		[COUNT] osoba
 	</string>
 	<string name="GroupMembersB">
-		[COUNT] członków
+		[COUNT] osób
 	</string>
 	<string name="GroupMembersC">
-		[COUNT] członków
+		[COUNT] osób
 	</string>
 	<string name="AcctTypeResident">
 		Rezydent
@@ -1785,19 +1794,19 @@ Spróbuj zalogować się ponownie za minutę.
 		Próbne
 	</string>
 	<string name="AcctTypeCharterMember">
-		Członek założyciel
+		Założyciel
 	</string>
 	<string name="AcctTypeEmployee">
 		Pracownik Linden Lab
 	</string>
 	<string name="PaymentInfoUsed">
-		Dane konta używane
+		Płatności: Dane użyte
 	</string>
 	<string name="PaymentInfoOnFile">
-		Dane płatnicze na koncie
+		Płatności: Dane znane
 	</string>
 	<string name="NoPaymentInfoOnFile">
-		Brak danych na koncie
+		Płatności: Dane nieznane
 	</string>
 	<string name="AgeVerified">
 		Zweryfikowany wiekowo
@@ -1832,6 +1841,9 @@ Spróbuj zalogować się ponownie za minutę.
 	<string name="CompileQueueDownloadedCompiling">
 		Pobieranie zakończone, trwa kompilowanie
 	</string>
+	<string name="CompileQueueServiceUnavailable">
+		Usługa kompilacji skryptów nie jest w tej chwili dostępna
+	</string>
 	<string name="CompileQueueScriptNotFound">
 		Skrypt nie został odnaleziony na serwerze.
 	</string>
@@ -1848,34 +1860,34 @@ Spróbuj zalogować się ponownie za minutę.
 		Nieznany błąd podczas pobierania
 	</string>
 	<string name="CompileQueueTitle">
-		POSTĘP REKOMPILACJI
+		Postęp rekompilacji
 	</string>
 	<string name="CompileQueueStart">
-		rekompiluj
+		Rekompiluj
 	</string>
 	<string name="ResetQueueTitle">
-		POSTĘP RESETOWANIA
+		Postęp resetowania
 	</string>
 	<string name="ResetQueueStart">
-		zresetuj
+		Resetuj
 	</string>
 	<string name="RunQueueTitle">
-		POSTĘP WŁĄCZANIA
+		Postęp włączania
 	</string>
 	<string name="RunQueueStart">
-		włącz
+		Włącz
 	</string>
 	<string name="NotRunQueueTitle">
-		POSTĘP WYŁĄCZANIA
+		Postęp wyłączania
 	</string>
 	<string name="NotRunQueueStart">
-		wyłącz
+		Wyłącz
 	</string>
 	<string name="DeleteQueueTitle">
-		POSTĘP USUWANIA
+		Postęp usuwania
 	</string>
 	<string name="DeleteQueueStart">
-		Usuwanie
+		Usuń
 	</string>
 	<string name="Compiling">
 		Kompilowanie [NAME]
@@ -4528,16 +4540,7 @@ Jeśli problemy będą występowały nadal, proszę sprawdź sieć i ustawienia 
 		Styczeń:Luty:Marzec:Kwiecień:Maj:Czerwiec:Lipiec:Sierpień:Wrzesień:Październik:Listopad:Grudzień
 	</string>
 	<string name="dateTimeMonthShortNames">
-		St.:Lt.:Mrz.:Kw.:Maj:Cz.:Lp.:Sie.:Wrz.:Paź.:Li.:Gru.
-	</string>
-	<string name="dateTimeDayFormat">
-		[MDAY]
-	</string>
-	<string name="dateTimeAM">
-		AM
-	</string>
-	<string name="dateTimePM">
-		PM
+		Sty:Lut:Mar:Kwi:Maj:Cze:Lip:Sie:Wrz:Paź:Lis:Gru
 	</string>
 	<string name="LocalEstimateUSD">
 		US$ [AMOUNT]
@@ -4899,7 +4902,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Poszukaj obiektów na obszarze
 	</string>
 	<string name="Command_Settings_Debug_Tooltip">
-		Zmień ustawienia konfiguracji przeglądarki (CTRL+ALT+SHIFT+S)
+		Zmień ustawienia konfiguracji przeglądarki
 	</string>
 	<string name="Command_Statistics_Tooltip">
 		Pokaż statystyki przeglądarki (CTRL+SHIFT+1)
@@ -4923,7 +4926,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Zaawansowane ustawienia kamery fotograficznej (CTRL+SHIFT+C)
 	</string>
 	<string name="Command_Contact_Sets_Tooltip">
-		Otwiera interfejs Zestawów kontaktów (CTRL+ALT+SHIFT+C)
+		Otwiera interfejs Zestawów kontaktów
 	</string>
 	<string name="Command_Mouselook_Tooltip">
 		Wejście w tryb pierwszoosobowy, widoku z oczu awatara (M)
@@ -4944,7 +4947,7 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Otwiera radar z najbliższymi awatarami
 	</string>
 	<string name="Command_Conversation_Log_Tooltip">
-		Otwiera dziennik rozmów, aby zobaczyć przeszłe logi
+		Otwiera dziennik rozmów, aby zobaczyć listę konwersacji odbytych w przeszłości
 	</string>
 	<string name="Command_Move_Lock_Tooltip">
 		Blokuje Twojego awatara na obecnej pozycji (CTRL+ALT+P)
@@ -5150,6 +5153,12 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="MovelockDisabled">
 		Blokada pozycji została wyłączona
 	</string>
+	<string name="MovelockEnabling">
+		Włączanie blokady pozycji...
+	</string>
+	<string name="MovelockDisabling">
+		Wyłączanie blokady pozycji...
+	</string>
 	<string name="BusyResponse">
 		Wiadomość zajętości
 	</string>
@@ -5182,6 +5191,12 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="FSCameraPositionCopied">
 		Pozycja kamery [POS] została skopiowana do schowka.
+	</string>
+	<string name="FSCmdLineRollDiceTotal">
+		Wynik całkowity dla [DICE]d[FACES]: [RESULT].
+	</string>
+	<string name="FSCmdLineRollDiceLimits">
+		Musisz podać wartości dodatnie dla ilości kostek (maksymalnie 100) oraz ścianek (maksymalnie 1000).
 	</string>
 	<string name="FSWithHavok">
 		ze wsparciem dla Havoka
@@ -5284,6 +5299,24 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="fsbridge_created">
 		Most LSL został utworzony pomyślnie.
+	</string>
+	<string name="fsbridge_script_info">
+		Info o skryptach: '[OBJECT_NAME]': [[OBJECT_RUNNING_SCRIPT_COUNT]/[OBJECT_TOTAL_SCRIPT_COUNT]] działających skryptów, [OBJECT_SCRIPT_MEMORY] KB dozwolonego limitu pamięci, [OBJECT_SCRIPT_TIME] ms zużytego czasu CPU.[PATHFINDING_TEXT]
+	</string>
+	<string name="fsbridge_script_info_pf">
+		Średni czas CPU zużyty do obsługi nawigacji odnajdywania ścieżek: [OBJECT_CHARACTER_TIME] ms.
+	</string>
+	<string name="fsbridge_error_scriptinfonotfound">
+		Info o skryptach: Obiekt do sprawdzenia jest nieprawidłowy lub poza zasięgiem.
+	</string>
+	<string name="fsbridge_error_scriptinfomalformed">
+		Info o skryptach: Otrzymano uszkodzoną odpowiedź od Mostu LSL. Spróbuj ponownie.
+	</string>
+	<string name="fsbridge_error_injection">
+		UWAGA: Jeden lub więcej skryptów zostało dodanych do Twojego Mostu LSL Firestorma! Jeśli ta wiadomość jest niespodziewana, to stwórz teraz Most LSL na nowo ('Naprawa awatara' w menu 'Awatar' na górze).
+	</string>
+	<string name="fsbridge_error_wrongvm">
+		UWAGA: Skrypt Mostu LSL używa starej maszyny wirtualnej LSO (16 KB limitu pamięci) zamiast nowej Mono, co stwarza wysokie prawdopodobieństwo kolizji sterty i stosu oraz awarii Mostu poprzez wyczerpanie się pamięci. Spróbuj stworzyć go na nowo ('Naprawa awatara' w menu 'Awatar' na górze). Jeśli ten komunikat pojawi się ponownie spróbuj jeszcze raz w innym regionie.
 	</string>
 	<string name="QP Draw Distance">
 		Pole widzenia
@@ -5419,5 +5452,14 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="groupcountunlimitedstring">
 		Należysz do [COUNT] grup.
+	</string>
+	<string name="SLGridStatusInvalidMsg">
+		Błąd strony SL Grid Status: Nieprawidłowy format wiadomości. Spróbuj ponownie później.
+	</string>
+	<string name="SLGridStatusTimedOut">
+		Błąd strony SL Grid Status: Upłynął limit czasu żądania.
+	</string>
+	<string name="SLGridStatusOtherError">
+		Błąd strony SL Grid Status: [STATUS] (https://pl.wikipedia.org/wiki/Kod_odpowiedzi_HTTP).
 	</string>
 </strings>

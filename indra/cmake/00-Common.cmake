@@ -97,6 +97,7 @@ if (WINDOWS)
   else (USE_AVX_OPTIMIZATION)
     add_definitions(
         /DLL_WINDOWS=1
+      /DNOMINMAX
         /DDOM_DYNAMIC
         /DUNICODE
         /D_UNICODE 
@@ -263,6 +264,13 @@ if (LINUX)
 
   set(CMAKE_CXX_FLAGS_DEBUG "-fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
   set(CMAKE_CXX_FLAGS_RELEASE "-O2 ${CMAKE_CXX_FLAGS_RELEASE}")
+
+  # <FS:ND> Build without frame pointer if requested. Otherwise profiling might not work reliable. N.B. Win32 uses FP based calling by default.
+  if( NO_OMIT_FRAMEPOINTER )
+    set(CMAKE_CXX_FLAGS_RELEASE "-fno-omit-frame-pointer ${CMAKE_CXX_FLAGS_RELEASE}")
+  endif( NO_OMIT_FRAMEPOINTER )
+  # </FS:ND>
+
 endif (LINUX)
 
 
@@ -296,6 +304,12 @@ if (DARWIN)
     set(ENABLE_SIGNING TRUE)
     set(SIGNING_IDENTITY "Developer ID Application: Linden Research, Inc.")
   endif (XCODE_VERSION GREATER 4.2)
+  # <FS:ND> Build without frame pointer if requested. Otherwise profiling might not work reliable. N.B. Win32 uses FP based calling by default.
+  if( NO_OMIT_FRAMEPOINTER )
+    set(CMAKE_CXX_FLAGS_RELEASE "-fno-omit-frame-pointer ${CMAKE_CXX_FLAGS_RELEASE}")
+  endif( NO_OMIT_FRAMEPOINTER )
+  # </FS:ND>
+
 endif (DARWIN)
 
 
@@ -306,11 +320,12 @@ if (LINUX OR DARWIN)
     set(GCC_WARNINGS "${GCC_WARNINGS} -Werror")
   endif (NOT GCC_DISABLE_FATAL_WARNINGS)
 
-  if (XCODE_VERSION GREATER 4.9)
-    set(GCC_CXX_WARNINGS "$[GCC_WARNINGS] -Wno-reorder -Wno-non-virtual-dtor -Wno-format-extra-args -Wunused-function -Wunused-variable")
-  else (XCODE_VERSION GREATER 4.9)
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" AND DARWIN AND XCODE_VERSION GREATER 4.9)
+    set(GCC_CXX_WARNINGS "$[GCC_WARNINGS] -Wno-reorder -Wno-unused-const-variable -Wno-format-extra-args -Wno-unused-private-field -Wno-unused-function -Wno-tautological-compare -Wno-empty-body -Wno-unused-variable -Wno-unused-value")
+  else (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" AND DARWIN AND XCODE_VERSION GREATER 4.9)
+  #elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(GCC_CXX_WARNINGS "${GCC_WARNINGS} -Wno-reorder -Wno-non-virtual-dtor")
-  endif (XCODE_VERSION GREATER 4.9)
+  endif ()
 
   set(CMAKE_C_FLAGS "${GCC_WARNINGS} ${CMAKE_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${GCC_CXX_WARNINGS} ${CMAKE_CXX_FLAGS}")

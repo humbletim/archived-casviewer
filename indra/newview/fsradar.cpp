@@ -30,6 +30,7 @@
 
 // libs
 #include "llavatarnamecache.h"
+#include "llanimationstates.h"
 #include "llcommonutils.h"
 #include "llnotificationsutil.h"
 #include "lleventtimer.h"
@@ -37,11 +38,13 @@
 // newview
 #include "fscommon.h"
 #include "fslslbridge.h"
+#include "fslslbridgerequest.h"
+#include "fswsassetblacklist.h"
 #include "lggcontactsets.h"
 #include "lfsimfeaturehandler.h"
 #include "llagent.h"
 #include "llavataractions.h"
-#include "llavatarconstants.h"		// for range constants
+//#include "llavatarconstants.h"		// for range constants
 #include "llgroupactions.h"
 #include "llmutelist.h"
 #include "llnotificationmanager.h"
@@ -54,6 +57,7 @@
 #include "llworld.h"
 #include "llspeakers.h"
 #include "rlvhandler.h"
+#include "llviewerregion.h"
 
 using namespace boost;
 
@@ -147,6 +151,7 @@ void FSRadar::updateRadarList()
 	//Configuration
 	LLWorld* world = LLWorld::getInstance();
 	LLMuteList* mutelist = LLMuteList::getInstance();
+	FSWSAssetBlacklist* blacklist = FSWSAssetBlacklist::getInstance();
 
 	static const F32 chat_range_say = LFSimFeatureHandler::getInstance()->sayRange();
 	static const F32 chat_range_shout = LFSimFeatureHandler::getInstance()->shoutRange();
@@ -172,6 +177,8 @@ void FSRadar::updateRadarList()
 	static LLCachedControl<F32> RenderFarClip(gSavedSettings, "RenderFarClip");
 	static LLCachedControl<bool> sFSLegacyRadarFriendColoring(gSavedSettings, "FSLegacyRadarFriendColoring");
 	static LLCachedControl<bool> sRadarColorNamesByDistance(gSavedSettings, "FSRadarColorNamesByDistance", false);
+	static LLCachedControl<bool> RadarShowMutedAndDerendered(gSavedSettings, "FSRadarShowMutedAndDerendered");
+	static LLCachedControl<bool> sFSRadarEnhanceByBridge(gSavedSettings, "FSRadarEnhanceByBridge");
 	bool sUseLSLBridge = FSLSLBridge::instance().canUseBridge();
 
 	F32 drawRadius(RenderFarClip);
@@ -282,11 +289,21 @@ void FSRadar::updateRadarList()
 			}
 		}
 
+		bool is_muted = mutelist->isMuted(avId);
+		bool is_blacklisted = blacklist->isBlacklisted(avId, LLAssetType::AT_OBJECT);
+		bool should_be_ignored = is_muted || is_blacklisted;
+		ent->mIgnore = should_be_ignored;
+		if (!RadarShowMutedAndDerendered && should_be_ignored)
+		{
+			continue;
+		}
+
 		LLUUID avRegion;
 		if (reg)
 		{
 			avRegion = reg->getRegionID();
 		}
+		bool isInSameRegion = (avRegion == regionSelf);
 		S32 seentime = (S32)difftime(now, ent->mFirstSeen);
 		S32 hours = (S32)(seentime / 3600);
 		S32 mins = (S32)((seentime - hours * 3600) / 60);
@@ -315,7 +332,7 @@ void FSRadar::updateRadarList()
 			}
 			
 			//schedule offset requests, if needed
-			if (sUseLSLBridge && (now > (mRadarLastBulkOffsetRequestTime + FSRADAR_COARSE_OFFSET_INTERVAL)) && (now > lastZOffsetTime + FSRADAR_COARSE_OFFSET_INTERVAL))
+			if (sUseLSLBridge && sFSRadarEnhanceByBridge && (now > (mRadarLastBulkOffsetRequestTime + FSRADAR_COARSE_OFFSET_INTERVAL)) && (now > lastZOffsetTime + FSRADAR_COARSE_OFFSET_INTERVAL))
 			{
 				mRadarOffsetRequests.push_back(avId);
 				ent->mLastZOffsetTime = now;
@@ -349,7 +366,7 @@ void FSRadar::updateRadarList()
 				make_ui_sound("UISndRadarDrawEnter"); // <FS:PP> FIRE-6069: Radar alerts sounds
 				LLAvatarNameCache::get(avId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, message));
 			}
-			if (RadarReportSimRangeEnter && (avRegion == regionSelf))
+			if (RadarReportSimRangeEnter && isInSameRegion)
 			{
 				make_ui_sound("UISndRadarSimEnter"); // <FS:PP> FIRE-6069: Radar alerts sounds
 				if (avRange != AVATAR_UNKNOWN_RANGE) // Don't report an inaccurate range in localchat, if the true range is not known.
@@ -370,7 +387,7 @@ void FSRadar::updateRadarList()
 				// If Leave channel alerts are not set, restrict reports to same-sim only.
 				if (!RadarLeaveChannelAlert)
 				{
-					if (avRegion == regionSelf)
+					if (isInSameRegion)
 					{
 						mRadarEnterAlerts.push_back(avId);
 					}
@@ -385,7 +402,7 @@ void FSRadar::updateRadarList()
 		//
 		// 2c. Process previously detected avatars
 		//
-		else 
+		else
 		{
 			RadarFields rf = last_sweep_found_it->second;
 			if (RadarReportChatRangeEnter || RadarReportChatRangeLeave)
@@ -422,7 +439,7 @@ void FSRadar::updateRadarList()
 			}
 			if (RadarReportSimRangeEnter || RadarReportSimRangeLeave)
 			{
-				if (RadarReportSimRangeEnter && avRegion == regionSelf && avRegion != rf.lastRegion && rf.lastRegion.notNull())
+				if (RadarReportSimRangeEnter && isInSameRegion && avRegion != rf.lastRegion && rf.lastRegion.notNull())
 				{
 					make_ui_sound("UISndRadarSimEnter"); // <FS:PP> FIRE-6069: Radar alerts sounds
 					if (avRange != AVATAR_UNKNOWN_RANGE) // Don't report an inaccurate range in localchat, if the true range is not known.
@@ -437,7 +454,7 @@ void FSRadar::updateRadarList()
 						LLAvatarNameCache::get(avId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, str_region_entering));
 					}
 				}
-				else if (RadarReportSimRangeLeave && rf.lastRegion == regionSelf && avRegion != regionSelf && avRegion.notNull())
+				else if (RadarReportSimRangeLeave && rf.lastRegion == regionSelf && !isInSameRegion && avRegion.notNull())
 				{
 					make_ui_sound("UISndRadarSimLeave"); // <FS:PP> FIRE-6069: Radar alerts sounds
 					LLAvatarNameCache::get(avId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, str_region_leaving));
@@ -453,7 +470,7 @@ void FSRadar::updateRadarList()
 		//
 		//2d. Prepare data for presentation view for this avatar
 		//
-		if (regionSelf == avRegion)
+		if (isInSameRegion)
 		{
 			inSameRegion++;
 		}
@@ -463,11 +480,13 @@ void FSRadar::updateRadarList()
 
 		entry["id"] = avId;
 		entry["name"] = avName;
-		entry["in_region"] = (regionSelf == avRegion);
+		entry["in_region"] = isInSameRegion;
 		entry["flags"] = avFlag;
-		entry["age"] = (avAge > -1 ? llformat("%d", avAge) : "");
+		entry["age"] = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES) ? "---" : ( (avAge > -1 ? llformat("%d", avAge) : "") );
 		entry["seen"] = avSeenStr;
 		entry["range"] = (avRange > AVATAR_UNKNOWN_RANGE ? llformat("%3.2f", avRange) : llformat(">%3.2f", drawRadius));
+		entry["typing"] = (avVo && avVo->isTyping());
+		entry["sitting"] = (avVo && (avVo->getParent() || avVo->isMotionActive(ANIM_AGENT_SIT_GROUND) || avVo->isMotionActive(ANIM_AGENT_SIT_GROUND_CONSTRAINED)));
 
 		//AO: Set any range colors / styles
 		LLUIColor range_color;
@@ -506,11 +525,11 @@ void FSRadar::updateRadarList()
 		// Set friends colors / styles
 		LLFontGL::StyleFlags nameCellStyle = LLFontGL::NORMAL;
 		const LLRelationship* relation = LLAvatarTracker::instance().getBuddyInfo(avId);
-		if (relation && !sFSLegacyRadarFriendColoring)
+		if (relation && !sFSLegacyRadarFriendColoring && !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
 		{
 			nameCellStyle = (LLFontGL::StyleFlags)(nameCellStyle | LLFontGL::BOLD);
 		}
-		if (mutelist->isMuted(avId))
+		if (is_muted)
 		{
 			nameCellStyle = (LLFontGL::StyleFlags)(nameCellStyle | LLFontGL::ITALIC);
 		}
@@ -586,7 +605,7 @@ void FSRadar::updateRadarList()
 				msg = msg.substr(0, msg.size() - 1);
 				FSLSLBridgeRequestResponder* responder = new FSLSLBridgeRequestRadarPosResponder();
 				FSLSLBridge::instance().viewerToLSL(prefix + msg, responder);
-				//llinfos << " OFFSET REQUEST SEGMENT"<< prefix << msg << llendl;
+				//LL_INFOS() << " OFFSET REQUEST SEGMENT"<< prefix << msg << LL_ENDL;
 				msg = "";
 				updatesPerRequest = 0;
 			}
@@ -596,7 +615,7 @@ void FSRadar::updateRadarList()
 			msg = msg.substr(0, msg.size() - 1);
 			FSLSLBridgeRequestResponder* responder = new FSLSLBridgeRequestRadarPosResponder();
 			FSLSLBridge::instance().viewerToLSL(prefix + msg, responder);
-			//llinfos << " OFFSET REQUEST FINAL " << prefix << msg << llendl;
+			//LL_INFOS() << " OFFSET REQUEST FINAL " << prefix << msg << LL_ENDL;
 		}
 		
 		// clear out the dispatch queue
@@ -613,9 +632,9 @@ void FSRadar::updateRadarList()
 	for (radarfields_map_t::iterator i = mLastRadarSweep.begin(); i != rf_it_end; ++i)
 	{
 		LLUUID prevId = i->first;
-		if (mEntryList.find(prevId) == mEntryList.end())
+		RadarFields rf = i->second;
+		if ((RadarShowMutedAndDerendered || !rf.lastIgnore) && mEntryList.find(prevId) == mEntryList.end())
 		{
-			RadarFields rf = i->second;
 			if (RadarReportChatRangeLeave && (rf.lastDistance <= chat_range_say) && rf.lastDistance > AVATAR_UNKNOWN_RANGE)
 			{
 				make_ui_sound("UISndRadarChatLeave"); // <FS:PP> FIRE-6069: Radar alerts sounds
@@ -718,6 +737,7 @@ void FSRadar::updateRadarList()
 		FSRadarEntry* ent = em_it->second;
 		RadarFields rf;
 		rf.lastDistance = ent->mRange;
+		rf.lastIgnore = ent->mIgnore;
 		rf.lastRegion = LLUUID::null;
 		if (ent->mGlobalPos != LLVector3d(0.0f, 0.0f, 0.0f))
 		{

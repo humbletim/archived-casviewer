@@ -3,8 +3,7 @@ This is WIP. Please change/expand when seeing fit.
 1.1 Visual Studio 2010 Pro or better with installed 64 bit compiler.
 1.2 Or Visual Studio Express and 'Microsoft Windows SDK for Windows 7 and .NET Framework 4'. Make sure to install at least the header and compiler.
 2. autobuild from https://bitbucket.org/NickyD/autobuild
-3. M2Crypto from http://chandlerproject.org/Projects/MeTooCrypto You need it for the autobuild above
-4. FMOD, if you want sound, please see https://bitbucket.org/NickyD/3p-fmodex
+3. FMOD, if you want sound, please see https://bitbucket.org/NickyD/3p-fmodex
 
 You will find the urls to all 64 bit prebuild packages in <viewer_source_dir>/package_override.ini
 
@@ -18,8 +17,7 @@ Express + SDK location: "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv
 ).
 
 Configure/build is nearly the same as building a 32 bit version.
-autobuild -m64 configure -c ReleaseFS -- --package
+autobuild -m64 configure -c ReleaseFS -- --chan <channel> --package -DFS_UPGRADECODES='<MSI_UPGRADE_CODE>,<EXE_UPGRADE_CODE>'
 autobuild -m64 build -c ReleaseFS --no_configure
 
 The resulting installer/exe gets created in build-vc100_x64/newview/Release
-

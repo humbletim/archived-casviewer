@@ -69,13 +69,13 @@ Zobacz [[MARKETPLACE_IMPORTS_URL] log błędów] aby uzyskać więcej informacji
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="OutboxImportFailed">
-		Transfer nieudany
+		Transfer nieudany, błąd &apos;[ERROR_CODE]&apos;
 
 Foldery nie zostały wysłane na Marketplace z powodu błędu sieci lub systemu. Spróbuj później.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="OutboxInitFailed">
-		Inicjalizacja Marketplace nieudana
+		Inicjalizacja Marketplace nieudana, błąd &apos;[ERROR_CODE]&apos;
 
 Inicjalizacja Marketplace nieudana z powodu błędu sieci lub systemu. Spróbuj później.
 		<usetemplate name="okbutton" yestext="OK"/>
@@ -141,9 +141,9 @@ Czy chcesz dać prawa modyfikacji wybranym osobom?
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="AddGroupOwnerWarning">
-		Dodajesz członków do funkcji [ROLE_NAME].
+		Dodajesz osoby do funkcji [ROLE_NAME].
 Ta funkcja nie może być odebrana.
-Członkowie muszą sami zrezygnować z pełnienia tej funkcji.
+Osoby muszą same zrezygnować z pełnienia tej funkcji.
 Chcesz kontynuować?
 		<usetemplate ignoretext="Przed dodaniem nowego właściciela do grupy, proszę potwierdzić swoją decyzję." name="okcancelignore" notext="Nie" yestext="Tak"/>
 	</notification>
@@ -151,7 +151,7 @@ Chcesz kontynuować?
 		Dodajesz przywilej &apos;[ACTION_NAME]&apos; do funkcji &apos;[ROLE_NAME]&apos;.
 
 *UWAGA*
-Członek w funkcji z tym przywilejem może przypisać siebie i innych członków nie będących właścicielami do funkcji dających więcej przywilejów niż posiadane obecnie, potencjalnie dające możliwości zbliżone do możliwości właściciela.
+Osoba w funkcji z tym przywilejem może przypisać siebie i inne osoby, które nie są właścicielami do funkcji dających więcej przywilejów niż posiadane obecnie, potencjalnie dające możliwości zbliżone do możliwości właściciela.
 Udzielaj tego przywileju z rozwagą.
 
 Dodać ten przywilej do funkcji &apos;[ROLE_NAME]&apos;?
@@ -161,7 +161,7 @@ Dodać ten przywilej do funkcji &apos;[ROLE_NAME]&apos;?
 		Dodajesz przywilej &apos;[ACTION_NAME]&apos; do funkcji &apos;[ROLE_NAME]&apos;
 
 *UWAGA*
-Członek w funkcji z tym przywilejem może przypisać sobie i innym członkom nie będącymi właścicielami wszystkie przywileje potencjalnie dające możliwości zbliżone do możliwości właściciela.
+Osoba w funkcji z tym przywilejem może przypisać sobie i innym osobom, które nie są właścicielami wszystkie przywileje potencjalnie dające możliwości zbliżone do możliwości właściciela.
 Udzielaj tego przywileju z rozwagą.
 
 Dodać ten przywilej do funkcji &apos;[ROLE_NAME]&apos;?
@@ -169,11 +169,11 @@ Dodać ten przywilej do funkcji &apos;[ROLE_NAME]&apos;?
 	</notification>
 	<notification name="EjectGroupMemberWarning">
 		Zamierzasz wyrzucić [AVATAR_NAME] z grupy.
-		<usetemplate ignoretext="Potwierdź wyrzucenie członka z grupy" name="okcancelignore" notext="Anuluj" yestext="Wyrzuć"/>
+		<usetemplate ignoretext="Potwierdź wyrzucenie osoby z grupy" name="okcancelignore" notext="Anuluj" yestext="Wyrzuć"/>
 	</notification>
 	<notification name="EjectGroupMembersWarning">
-		Zamierzasz wyrzucić [COUNT] członków z grupy.
-		<usetemplate ignoretext="Potwierdź wyrzucenie kilku członków z grupy" name="okcancelignore" notext="Anuluj" yestext="Wyrzuć"/>
+		Zamierzasz wyrzucić [COUNT] osób z grupy.
+		<usetemplate ignoretext="Potwierdź wyrzucenie kilku osób z grupy" name="okcancelignore" notext="Anuluj" yestext="Wyrzuć"/>
 	</notification>
 	<notification name="AttachmentDrop">
 		Wybrałeś opcję upuszczenia swojego dodatku.
@@ -192,12 +192,12 @@ Czy chcesz kontynuować?
 	</notification>
 	<notification name="JoinGroupCannotAfford">
 		Członkostwo w tej grupie kosztuje [COST]L$
-Masz za mało L$ żeby zostać członkiem.
+Masz za mało L$ żeby do niej dołączyć.
 	</notification>
 	<notification name="CreateGroupCost">
 		Stworzenie tej grupy kosztuje [COST]L$.
-W grupie powinien być więcej niż jeden członek, albo zostanie na zawsze skasowana.
-Zaproś proszę członków w ciągu 48 godzin.
+W grupie powinna być więcej niż jedna osoba, w przeciwnym razie zostanie ona na zawsze skasowana.
+Zaproś kogoś w ciągu 48 godzin.
 		<usetemplate canceltext="Anuluj" name="okcancelbuttons" notext="Anuluj" yestext="Stwórz grupę za [COST]L$"/>
 	</notification>
 	<notification name="LandBuyPass">
@@ -1560,7 +1560,7 @@ Otwieranie stron internetowych z nieznanego źródła może narazić Twój kompu
 	</notification>
 	<notification name="GroupLeaveConfirmMember">
 		Jesteś członkiem grupy &lt;nolink&gt;[GROUP]&lt;/nolink&gt;.
-Chcesz opuścić grupę?
+Chcesz ją opuścić?
 		<usetemplate name="okcancelbuttons" notext="Anuluj" yestext="OK"/>
 	</notification>
 	<notification name="OwnerCannotLeaveGroup">
@@ -3186,7 +3186,7 @@ Zobacz log, aby dowiedzieć się więcej.
 
 następującym Rezydentom:
 
-[RESIDENTS]
+&lt;nolink&gt;[RESIDENTS]&lt;/nolink&gt;
 		<usetemplate ignoretext="Potwierdź, kiedy dzielę się przedmiotem" name="okcancelignore" notext="Anuluj" yestext="Ok"/>
 	</notification>
 	<notification name="ShareFolderConfirmation">
@@ -3198,7 +3198,7 @@ Czy na pewno chcesz udostępnić następujące obiekty:
 
 następującym Rezydentom:
 
-[RESIDENTS]
+&lt;nolink&gt;[RESIDENTS]&lt;/nolink&gt;
 		<usetemplate name="okcancelbuttons" notext="Anuluj" yestext="Ok"/>
 	</notification>
 	<notification name="ItemsShared">
@@ -3548,14 +3548,14 @@ W innym przypadku możesz poszukać na mapie miejsc oznaczonych jako &quot;Infoh
 		Nie możesz usunąć siatki [REMOVE_GRID], gdy jesteś z nią połączony/a.
 		<usetemplate ignoretext="Ostrzeżenie przed usuwaniem siatki z aktywnym połączeniem" name="okcancelignore" notext="Anuluj" yestext="OK"/>
 	</notification>
-	<notification name="FSWL">
+	<notification name="FSWL" label="Aplikowanie ustawień Windlight">
 		&apos;[PARCEL_NAME]&apos;, własność [OWNER_NAME], chce zmienić ustawienia otoczenia systemu Windlight.
 		<form name="form">
 			<button name="Allow" text="Zezwól"/>
 			<button name="Ignore" text="Ignoruj"/>
 		</form>
 	</notification>
-	<notification name="FSWLClear">
+	<notification name="FSWLClear" label="Reset ustawień Windlight">
 		Zresetować ustawienia WL dla &apos;[PARCEL_NAME]&apos; do domyślnych regionu?
 		<usetemplate name="okcancelbuttons" notext="Anuluj" yestext="Tak"/>
 	</notification>
@@ -3758,7 +3758,7 @@ Obecne ustawienie: [CURRENT_VALUE]
 	<notification name="FirstJoinSupportGroup">
 		Witaj w grupie wsparcia Phoenix/Firestorm!
 
-Abyśmy mogli pomóc Ci lepiej zalecamy, aby Twoja Przeglądarka automatycznie prezentowała swoją wersję - będzie ona wyświetlana przed każdą Twoją wypowiedzią na tym czacie grupowym. Nasi członkowie będą mogli dać Ci bardziej sensowne porady, jeśli będą znać wersję Twojej Przeglądarki od razu.
+Abyśmy mogli pomóc Ci lepiej zalecamy, aby Twoja Przeglądarka automatycznie prezentowała swoją wersję - będzie ona wyświetlana przed każdą Twoją wypowiedzią na tym czacie grupowym. Osoby z naszej załogi wsparcia będą mogły dać Ci bardziej sensowne porady, jeśli będą znać wersję Twojej Przeglądarki od razu.
 
 Możesz włączyć lub wyłączyć tą funkcję w każdej chwili w górnej części okna czatu.
 
@@ -4433,7 +4433,7 @@ Spróbuj zaznaczyć mniejszy obszar ziemi.
 		<usetemplate ignoretext="Potwierdź, zanim usunę dzienniki poprzednich rozmów." name="okcancelignore" notext="Anuluj" yestext="OK"/>
 	</notification>
 	<notification name="PreferenceChatDeleteTranscripts">
-		Ta opcja usunie logi wszystkich poprzednich rozmów. Nie będzie to miało wpływu na listę przeszłych rozmów. Wszystkie pliki z przyrostkami .txt oraz txt.backup w folderze [FOLDER] zostaną usunięte.
+		Ta opcja usunie logi wszystkich poprzednich rozmów. Nie będzie to miało wpływu na listę rozmów odbytych w przeszłości. Wszystkie pliki z przyrostkami .txt oraz txt.backup w folderze [FOLDER] zostaną usunięte.
 		<usetemplate ignoretext="Potwierdź, zanim usunę logi rozmów." name="okcancelignore" notext="Anuluj" yestext="OK"/>
 	</notification>
 	<notification name="PreferenceChatPathChanged">
@@ -4615,5 +4615,8 @@ Nie można tego cofnąć.
 			<button name="Add" text="Dodaj"/>
 			<button name="Cancel" text="Anuluj"/>
 		</form>
+	</notification>
+	<notification name="CantRestoreToWorldNoCopy">
+		Funkcjonalność przywracania na ostatnią pozycję nie jest dostępna dla obiektów bez praw kopiowania, aby zapobiec ewentualnej ich utracie.
 	</notification>
 </notifications>

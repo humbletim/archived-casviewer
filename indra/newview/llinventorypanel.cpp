@@ -143,7 +143,6 @@ LLInventoryPanel::LLInventoryPanel(const LLInventoryPanel::Params& p) :
 	LLPanel(p),
 	mInventoryObserver(NULL),
 	mCompletionObserver(NULL),
-	mFolderRoot(NULL),
 	mScroller(NULL),
 	mSortOrderSetting(p.sort_order_setting),
 	mInventory(p.inventory),
@@ -152,7 +151,8 @@ LLInventoryPanel::LLInventoryPanel(const LLInventoryPanel::Params& p) :
 	mShowItemLinkOverlays(p.show_item_link_overlays),
 	mShowEmptyMessage(p.show_empty_message),
 	mViewsInitialized(false),
-	mInvFVBridgeBuilder(NULL)
+	mInvFVBridgeBuilder(NULL),
+	mInventoryViewModel(p.name)
 {
 	mInvFVBridgeBuilder = &INVENTORY_BRIDGE_BUILDER;
 
@@ -209,6 +209,32 @@ LLFolderView * LLInventoryPanel::createFolderRoot(LLUUID root_id )
     return LLUICtrlFactory::create<LLFolderView>(p);
 }
 
+void LLInventoryPanel::clearFolderRoot()
+{
+	gIdleCallbacks.deleteFunction(idle, this);
+    gIdleCallbacks.deleteFunction(onIdle, this);
+    
+    if (mInventoryObserver)
+    {
+        mInventory->removeObserver(mInventoryObserver);
+        delete mInventoryObserver;
+        mInventoryObserver = NULL;
+    }
+    if (mCompletionObserver)
+    {
+        mInventory->removeObserver(mCompletionObserver);
+        delete mCompletionObserver;
+        mCompletionObserver = NULL;
+    }
+    
+    if (mScroller)
+    {
+        removeChild(mScroller);
+        delete mScroller;
+        mScroller = NULL;
+    }
+}
+
 void LLInventoryPanel::initFromParams(const LLInventoryPanel::Params& params)
 {
 	// save off copy of params
@@ -216,23 +242,23 @@ void LLInventoryPanel::initFromParams(const LLInventoryPanel::Params& params)
 	// Clear up the root view
 	// Note: This needs to be done *before* we build the new folder view 
 	LLUUID root_id = getRootFolderID();
-	if (mFolderRoot)
+	if (mFolderRoot.get())
 	{
 		removeItemID(root_id);
-		mFolderRoot->destroyView();
-		mFolderRoot = NULL;
+		mFolderRoot.get()->destroyView();
 	}
 
 	mCommitCallbackRegistrar.pushScope(); // registered as a widget; need to push callback scope ourselves
 	{
 		// Determine the root folder in case specified, and
 		// build the views starting with that folder.
-		mFolderRoot = createFolderRoot(root_id);
+        LLFolderView* folder_view = createFolderRoot(root_id);
+		mFolderRoot = folder_view->getHandle();
 	
-		addItemID(root_id, mFolderRoot);
+		addItemID(root_id, mFolderRoot.get());
 	}
 	mCommitCallbackRegistrar.popScope();
-	mFolderRoot->setCallbackRegistrar(&mCommitCallbackRegistrar);
+	mFolderRoot.get()->setCallbackRegistrar(&mCommitCallbackRegistrar);
 	
 	// Scroller
 		LLRect scroller_view_rect = getRect();
@@ -245,10 +271,10 @@ void LLInventoryPanel::initFromParams(const LLInventoryPanel::Params& params)
 		scroller_params.rect(scroller_view_rect);
 		mScroller = LLUICtrlFactory::create<LLFolderViewScrollContainer>(scroller_params);
 		addChild(mScroller);
-		mScroller->addChild(mFolderRoot);
-		mFolderRoot->setScrollContainer(mScroller);
-		mFolderRoot->setFollowsAll();
-		mFolderRoot->addChild(mFolderRoot->mStatusTextBox);
+		mScroller->addChild(mFolderRoot.get());
+		mFolderRoot.get()->setScrollContainer(mScroller);
+		mFolderRoot.get()->setFollowsAll();
+		mFolderRoot.get()->addChild(mFolderRoot.get()->mStatusTextBox);
 
 	// Set up the callbacks from the inventory we're viewing, and then build everything.
 	mInventoryObserver = new LLInventoryPanelObserver(this);
@@ -276,15 +302,20 @@ void LLInventoryPanel::initFromParams(const LLInventoryPanel::Params& params)
 	}
 
 	// hide inbox
+	if (!gSavedSettings.getBOOL("InventoryOutboxMakeVisible"))
+	{
+		// <FS:Ansariel> Optional hiding of Received Items folder aka Inbox
+		//getFilter().setFilterCategoryTypes(getFilter().getFilterCategoryTypes() & ~(1ULL << LLFolderType::FT_INBOX));
+		getFilter().setFilterCategoryTypes(getFilter().getFilterCategoryTypes() & ~(1ULL << LLFolderType::FT_OUTBOX));
+	}
+
 	// <FS:Ansariel> Optional hiding of Received Items folder aka Inbox
-	//getFilter().setFilterCategoryTypes(getFilter().getFilterCategoryTypes() & ~(1ULL << LLFolderType::FT_INBOX));
 	if (!gSavedSettings.getBOOL("FSShowInboxFolder"))
 	{
 		getFilter().setFilterCategoryTypes(getFilter().getFilterCategoryTypes() & ~(1ULL << LLFolderType::FT_INBOX));
 	}
 	gSavedSettings.getControl("FSShowInboxFolder")->getSignal()->connect(boost::bind(&LLInventoryPanel::updateShowInboxFolder, this, _2));
 	// </FS:Ansariel> Optional hiding of Received Items folder aka Inbox
-	getFilter().setFilterCategoryTypes(getFilter().getFilterCategoryTypes() & ~(1ULL << LLFolderType::FT_OUTBOX));
 
 	// set the filter for the empty folder if the debug setting is on
 	if (gSavedSettings.getBOOL("DebugHideEmptySystemFolders"))
@@ -304,23 +335,13 @@ void LLInventoryPanel::initFromParams(const LLInventoryPanel::Params& params)
 
 LLInventoryPanel::~LLInventoryPanel()
 {
-	gIdleCallbacks.deleteFunction(idle, this);
-
 	U32 sort_order = getFolderViewModel()->getSorter().getSortOrder();
-		if (mSortOrderSetting != INHERIT_SORT_ORDER)
-		{
-			gSavedSettings.setU32(mSortOrderSetting, sort_order);
-		}
-
-	gIdleCallbacks.deleteFunction(onIdle, this);
-
-	// LLView destructor will take care of the sub-views.
-	mInventory->removeObserver(mInventoryObserver);
-	mInventory->removeObserver(mCompletionObserver);
-	delete mInventoryObserver;
-	delete mCompletionObserver;
-
-	mScroller = NULL;
+    if (mSortOrderSetting != INHERIT_SORT_ORDER)
+    {
+        gSavedSettings.setU32(mSortOrderSetting, sort_order);
+    }
+    
+    clearFolderRoot();
 }
 
 void LLInventoryPanel::draw()
@@ -399,9 +420,9 @@ void LLInventoryPanel::setSortOrder(U32 order)
 	if (order != getFolderViewModel()->getSorter().getSortOrder())
 	{
 		getFolderViewModel()->setSorter(sorter);
-		mFolderRoot->arrangeAll();
+		mFolderRoot.get()->arrangeAll();
 		// try to keep selection onscreen, even if it wasn't to start with
-		mFolderRoot->scrollToShowSelection();
+		mFolderRoot.get()->scrollToShowSelection();
 	}
 }
 
@@ -443,10 +464,10 @@ LLInventoryFilter::EFolderShow LLInventoryPanel::getShowFolderState()
 }
 
 // Called when something changed in the global model (new item, item coming through the wire, rename, move, etc...) (CHUI-849)
+static LLTrace::BlockTimerStatHandle FTM_REFRESH("Inventory Refresh");
 void LLInventoryPanel::modelChanged(U32 mask)
 {
-	static LLFastTimer::DeclareTimer FTM_REFRESH("Inventory Refresh");
-	LLFastTimer t2(FTM_REFRESH);
+	LL_RECORD_BLOCK_TIME(FTM_REFRESH);
 
 	if (!mViewsInitialized) return;
 	
@@ -551,7 +572,7 @@ void LLInventoryPanel::modelChanged(U32 mask)
 				// Add the UI element for this item.
 				buildNewViews(item_id);
 				// Select any newly created object that has the auto rename at top of folder root set.
-				if(mFolderRoot->getRoot()->needsAutoRename())
+				if(mFolderRoot.get()->getRoot()->needsAutoRename())
 				{
 					setSelection(item_id, FALSE);
 				}
@@ -574,6 +595,14 @@ void LLInventoryPanel::modelChanged(U32 mask)
 							// Item is to be moved and we found its new parent in the panel's directory, so move the item's UI.
 							view_item->addToFolder(new_parent);
 							addItemID(viewmodel_item->getUUID(), view_item);
+							if (mInventory)
+							{
+								const LLUUID trash_id = mInventory->findCategoryUUIDForType(LLFolderType::FT_TRASH);
+								if (trash_id != model_item->getParentUUID() && (mask & LLInventoryObserver::INTERNAL) && new_parent->isOpen())
+								{
+									setSelection(item_id, FALSE);
+								}
+							}
 						}
 						else 
 						{
@@ -602,17 +631,11 @@ void LLInventoryPanel::modelChanged(U32 mask)
 	}
 }
 
-LLFolderView* LLInventoryPanel::getRootFolder() 
-{ 
-	return mFolderRoot; 
-}
-
 LLUUID LLInventoryPanel::getRootFolderID()
 {
-	if (mFolderRoot && mFolderRoot->getViewModelItem())
+	if (mFolderRoot.get() && mFolderRoot.get()->getViewModelItem())
 	{
-		return static_cast<LLFolderViewModelItemInventory*>(mFolderRoot->getViewModelItem())->getUUID();
-
+		return static_cast<LLFolderViewModelItemInventory*>(mFolderRoot.get()->getViewModelItem())->getUUID();
 	}
 	else
 	{
@@ -633,10 +656,13 @@ LLUUID LLInventoryPanel::getRootFolderID()
 			}
 			else if (preferred_type != LLFolderType::FT_NONE)
 			{
+                LLStringExplicit label(mParams.start_folder.name());
+                setLabel(label);
+                
 				root_id = gInventory.findCategoryUUIDForType(preferred_type, false);
 				if (root_id.isNull())
 				{
-					llwarns << "Could not find folder of type " << preferred_type << llendl;
+					LL_WARNS() << "Could not find folder of type " << preferred_type << LL_ENDL;
 					root_id.generateNewID();
 				}
 			}
@@ -692,24 +718,33 @@ void LLInventoryPanel::idle(void* user_data)
 
 	}
 
-	panel->mFolderRoot->update();
-	// while dragging, update selection rendering to reflect single/multi drag status
-	if (LLToolDragAndDrop::getInstance()->hasMouseCapture())
-	{
-		EAcceptance last_accept = LLToolDragAndDrop::getInstance()->getLastAccept();
-		if (last_accept == ACCEPT_YES_SINGLE || last_accept == ACCEPT_YES_COPY_SINGLE)
-		{
-			panel->mFolderRoot->setShowSingleSelection(TRUE);
-		}
-		else
-		{
-			panel->mFolderRoot->setShowSingleSelection(FALSE);
-		}
-}
-	else
-	{
-		panel->mFolderRoot->setShowSingleSelection(FALSE);
-	}
+    // Take into account the fact that the root folder might be invalidated
+    if (panel->mFolderRoot.get())
+    {
+        panel->mFolderRoot.get()->update();
+        // while dragging, update selection rendering to reflect single/multi drag status
+        if (LLToolDragAndDrop::getInstance()->hasMouseCapture())
+        {
+            EAcceptance last_accept = LLToolDragAndDrop::getInstance()->getLastAccept();
+            if (last_accept == ACCEPT_YES_SINGLE || last_accept == ACCEPT_YES_COPY_SINGLE)
+            {
+                panel->mFolderRoot.get()->setShowSingleSelection(TRUE);
+            }
+            else
+            {
+                panel->mFolderRoot.get()->setShowSingleSelection(FALSE);
+            }
+        }
+        else
+        {
+            panel->mFolderRoot.get()->setShowSingleSelection(FALSE);
+        }
+    }
+    else
+    {
+        LL_WARNS() << "Inventory : Deleted folder root detected on panel" << LL_ENDL;
+        panel->clearFolderRoot();
+    }
 }
 
 
@@ -760,7 +795,7 @@ LLFolderViewFolder * LLInventoryPanel::createFolderViewFolder(LLInvFVBridge * br
 	LLFolderViewFolder::Params params(mParams.folder);
 
 	params.name = bridge->getDisplayName();
-	params.root = mFolderRoot;
+	params.root = mFolderRoot.get();
 	params.listener = bridge;
 	//	params.tool_tip = params.name; // <ND/> Don't bother with tooltips in inventory
 
@@ -779,7 +814,7 @@ LLFolderViewItem * LLInventoryPanel::createFolderViewItem(LLInvFVBridge * bridge
 	
 	params.name = bridge->getDisplayName();
 	params.creation_date = bridge->getCreationDate();
-	params.root = mFolderRoot;
+	params.root = mFolderRoot.get();
 	params.listener = bridge;
 	params.rect = LLRect (0, 0, 0, 0);
 	//	params.tool_tip = params.name; // <ND/> Don't bother with tooltips in inventory
@@ -809,9 +844,9 @@ LLFolderViewItem* LLInventoryPanel::buildNewViews(const LLUUID& id)
   			if (objectp->getType() <= LLAssetType::AT_NONE ||
   				objectp->getType() >= LLAssetType::AT_COUNT)
   			{
-  				llwarns << "LLInventoryPanel::buildNewViews called with invalid objectp->mType : "
+  				LL_WARNS() << "LLInventoryPanel::buildNewViews called with invalid objectp->mType : "
   						<< ((S32) objectp->getType()) << " name " << objectp->getName() << " UUID " << objectp->getUUID()
-  						<< llendl;
+  						<< LL_ENDL;
   				return NULL;
   			}
   		
@@ -823,7 +858,7 @@ LLFolderViewItem* LLInventoryPanel::buildNewViews(const LLUUID& id)
   																				LLInventoryType::IT_CATEGORY,
   																				this,
 																			&mInventoryViewModel,
-  																				mFolderRoot,
+  																				mFolderRoot.get(),
   																				objectp->getUUID());
   				if (new_listener)
   				{
@@ -839,7 +874,7 @@ LLFolderViewItem* LLInventoryPanel::buildNewViews(const LLUUID& id)
   																				item->getInventoryType(),
   																				this,
 																			&mInventoryViewModel,
-  																				mFolderRoot,
+  																				mFolderRoot.get(),
   																				item->getUUID(),
   																				item->getFlags());
  
@@ -896,7 +931,7 @@ LLFolderViewItem* LLInventoryPanel::buildNewViews(const LLUUID& id)
 void LLInventoryPanel::openStartFolderOrMyInventory()
 {
 	// Find My Inventory folder and open it up by name
-	for (LLView *child = mFolderRoot->getFirstChild(); child; child = mFolderRoot->findNextSibling(child))
+	for (LLView *child = mFolderRoot.get()->getFirstChild(); child; child = mFolderRoot.get()->findNextSibling(child))
 	{
 		LLFolderViewFolder *fchild = dynamic_cast<LLFolderViewFolder*>(child);
 		if (fchild
@@ -911,12 +946,12 @@ void LLInventoryPanel::openStartFolderOrMyInventory()
 
 void LLInventoryPanel::onItemsCompletion()
 {
-	if (mFolderRoot) mFolderRoot->updateMenu();
+	if (mFolderRoot.get()) mFolderRoot.get()->updateMenu();
 }
 
 void LLInventoryPanel::openSelected()
 {
-	LLFolderViewItem* folder_item = mFolderRoot->getCurSelectedItem();
+	LLFolderViewItem* folder_item = mFolderRoot.get()->getCurSelectedItem();
 	if(!folder_item) return;
 	LLInvFVBridge* bridge = (LLInvFVBridge*)folder_item->getViewModelItem();
 	if(!bridge) return;
@@ -925,7 +960,7 @@ void LLInventoryPanel::openSelected()
 
 void LLInventoryPanel::unSelectAll()	
 { 
-	mFolderRoot->setSelection(NULL, FALSE, FALSE); 
+	mFolderRoot.get()->setSelection(NULL, FALSE, FALSE);
 }
 
 
@@ -967,14 +1002,14 @@ BOOL LLInventoryPanel::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 		// If folder view is empty the (x, y) point won't be in its rect
 		// so the handler must be called explicitly.
 		// but only if was not handled before. See EXT-6746.
-		if (!handled && !mFolderRoot->hasVisibleChildren())
+		if (!handled && !mFolderRoot.get()->hasVisibleChildren())
 		{
-			handled = mFolderRoot->handleDragAndDrop(x, y, mask, drop, cargo_type, cargo_data, accept, tooltip_msg);
+			handled = mFolderRoot.get()->handleDragAndDrop(x, y, mask, drop, cargo_type, cargo_data, accept, tooltip_msg);
 		}
 
 		if (handled)
 		{
-			mFolderRoot->setDragAndDropThisFrame();
+			mFolderRoot.get()->setDragAndDropThisFrame();
 		}
 	}
 
@@ -984,7 +1019,7 @@ BOOL LLInventoryPanel::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 void LLInventoryPanel::onFocusLost()
 {
 	// inventory no longer handles cut/copy/paste/delete
-	if (LLEditMenuHandler::gEditMenuHandler == mFolderRoot)
+	if (LLEditMenuHandler::gEditMenuHandler == mFolderRoot.get())
 	{
 		LLEditMenuHandler::gEditMenuHandler = NULL;
 	}
@@ -995,7 +1030,7 @@ void LLInventoryPanel::onFocusLost()
 void LLInventoryPanel::onFocusReceived()
 {
 	// inventory now handles cut/copy/paste/delete
-	LLEditMenuHandler::gEditMenuHandler = mFolderRoot;
+	LLEditMenuHandler::gEditMenuHandler = mFolderRoot.get();
 
 	LLPanel::onFocusReceived();
 }
@@ -1006,7 +1041,7 @@ bool LLInventoryPanel::addBadge(LLBadge * badge)
 
 	if (acceptsBadge())
 	{
-		badge_added = badge->addToView(mFolderRoot);
+		badge_added = badge->addToView(mFolderRoot.get());
 	}
 
 	return badge_added;
@@ -1014,14 +1049,14 @@ bool LLInventoryPanel::addBadge(LLBadge * badge)
 
 void LLInventoryPanel::openAllFolders()
 {
-	mFolderRoot->setOpenArrangeRecursively(TRUE, LLFolderViewFolder::RECURSE_DOWN);
-	mFolderRoot->arrangeAll();
+	mFolderRoot.get()->setOpenArrangeRecursively(TRUE, LLFolderViewFolder::RECURSE_DOWN);
+	mFolderRoot.get()->arrangeAll();
 }
 
 void LLInventoryPanel::closeAllFolders()
 {
-	mFolderRoot->setOpenArrangeRecursively(FALSE, LLFolderViewFolder::RECURSE_DOWN);
-	mFolderRoot->arrangeAll();
+	mFolderRoot.get()->setOpenArrangeRecursively(FALSE, LLFolderViewFolder::RECURSE_DOWN);
+	mFolderRoot.get()->arrangeAll();
 }
 
 void LLInventoryPanel::setSelection(const LLUUID& obj_id, BOOL take_keyboard_focus)
@@ -1037,9 +1072,9 @@ void LLInventoryPanel::setSelection(const LLUUID& obj_id, BOOL take_keyboard_foc
 
 void LLInventoryPanel::setSelectCallback(const boost::function<void (const std::deque<LLFolderViewItem*>& items, BOOL user_action)>& cb) 
 { 
-	if (mFolderRoot) 
+	if (mFolderRoot.get())
 	{
-		mFolderRoot->setSelectCallback(cb);
+		mFolderRoot.get()->setSelectCallback(cb);
 	}
 }
 
@@ -1063,7 +1098,7 @@ void LLInventoryPanel::onSelectionChange(const std::deque<LLFolderViewItem*>& it
 		}
 	}
 
-	LLFolderView* fv = getRootFolder();
+	LLFolderView* fv = mFolderRoot.get();
 	if (fv->needsAutoRename()) // auto-selecting a new user-created asset and preparing to rename
 	{
 		fv->setNeedsAutoRename(FALSE);
@@ -1082,11 +1117,11 @@ void LLInventoryPanel::doCreate(const LLSD& userdata)
 
 bool LLInventoryPanel::beginIMSession()
 {
-	std::set<LLFolderViewItem*> selected_items =   mFolderRoot->getSelectionList();
+	std::set<LLFolderViewItem*> selected_items =   mFolderRoot.get()->getSelectionList();
 
 	std::string name;
 
-//	LLDynamicArray<LLUUID> members;
+//	std::vector<LLUUID> members;
 //	EInstantMessage type = IM_SESSION_CONFERENCE_START;
 // [RLVa:KB] - Checked: 2011-04-11 (RLVa-1.3.0h) | Added: RLVa-1.3.0h
 	uuid_vec_t members;
@@ -1121,7 +1156,7 @@ bool LLInventoryPanel::beginIMSession()
 												item_array,
 												LLInventoryModel::EXCLUDE_TRASH,
 												is_buddy);
-				S32 count = item_array.count();
+				S32 count = item_array.size();
 				if(count > 0)
 				{
 					//*TODO by what to replace that?
@@ -1132,7 +1167,7 @@ bool LLInventoryPanel::beginIMSession()
 					LLUUID id;
 					for(S32 i = 0; i < count; ++i)
 					{
-						id = item_array.get(i)->getCreatorUUID();
+						id = item_array.at(i)->getCreatorUUID();
 // [RLVa:KB] - Checked: 2013-05-08 (RLVa-1.4.9)
 						if ( (at.isBuddyOnline(id)) && (members.end() == std::find(members.begin(), members.end(), id)) )
 						{
@@ -1215,7 +1250,7 @@ bool LLInventoryPanel::beginIMSession()
 bool LLInventoryPanel::attachObject(const LLSD& userdata)
 {
 	// Copy selected item UUIDs to a vector.
-	std::set<LLFolderViewItem*> selected_items = mFolderRoot->getSelectionList();
+	std::set<LLFolderViewItem*> selected_items = mFolderRoot.get()->getSelectionList();
 	uuid_vec_t items;
 	for (std::set<LLFolderViewItem*>::const_iterator set_iter = selected_items.begin();
 		 set_iter != selected_items.end(); 
@@ -1274,7 +1309,7 @@ void LLInventoryPanel::updateShowInboxFolder(const LLSD &data)
 void LLInventoryPanel::dumpSelectionInformation(void* user_data)
 {
 	LLInventoryPanel* iv = (LLInventoryPanel*)user_data;
-	iv->mFolderRoot->dumpSelectionInformation();
+	iv->mFolderRoot.get()->dumpSelectionInformation();
 }
 
 BOOL is_inventorysp_active()
@@ -1294,7 +1329,7 @@ LLInventoryPanel* LLInventoryPanel::getActiveInventoryPanel(BOOL auto_open)
 	LLFloater* floater_inventory = LLFloaterReg::getInstance("inventory");
 	if (!floater_inventory)
 	{
-		llwarns << "Could not find My Inventory floater" << llendl;
+		LL_WARNS() << "Could not find My Inventory floater" << LL_ENDL;
 		return FALSE;
 	}
 
@@ -1442,10 +1477,10 @@ void LLInventoryPanel::removeItemID(const LLUUID& id)
 	}
 }
 
-LLFastTimer::DeclareTimer FTM_GET_ITEM_BY_ID("Get FolderViewItem by ID");
+LLTrace::BlockTimerStatHandle FTM_GET_ITEM_BY_ID("Get FolderViewItem by ID");
 LLFolderViewItem* LLInventoryPanel::getItemByID(const LLUUID& id)
 {
-	LLFastTimer _(FTM_GET_ITEM_BY_ID);
+	LL_RECORD_BLOCK_TIME(FTM_GET_ITEM_BY_ID);
 
 	std::map<LLUUID, LLFolderViewItem*>::iterator map_it;
 	map_it = mItemMap.find(id);
@@ -1490,7 +1525,7 @@ void LLInventoryPanel::updateSelection()
 
 void LLInventoryPanel::doToSelected(const LLSD& userdata)
 {
-	LLInventoryAction::doToSelected(mInventory, mFolderRoot, userdata.asString());
+	LLInventoryAction::doToSelected(mInventory, mFolderRoot.get(), userdata.asString());
 
 	return;
 }
@@ -1504,7 +1539,7 @@ BOOL LLInventoryPanel::handleKeyHere( KEY key, MASK mask )
 		// Open selected items if enter key hit on the inventory panel
 		if (mask == MASK_NONE)
 		{
-			LLInventoryAction::doToSelected(mInventory, mFolderRoot, "open");
+			LLInventoryAction::doToSelected(mInventory, mFolderRoot.get(), "open");
 			handled = TRUE;
 		}
 		break;
@@ -1514,7 +1549,7 @@ BOOL LLInventoryPanel::handleKeyHere( KEY key, MASK mask )
 		// Note: on Mac laptop keyboards, backspace and delete are one and the same
 		if (isSelectionRemovable() && (mask == MASK_NONE))
 		{
-			LLInventoryAction::doToSelected(mInventory, mFolderRoot, "delete");
+			LLInventoryAction::doToSelected(mInventory, mFolderRoot.get(), "delete");
 			handled = TRUE;
 		}
 		break;
@@ -1525,9 +1560,9 @@ BOOL LLInventoryPanel::handleKeyHere( KEY key, MASK mask )
 bool LLInventoryPanel::isSelectionRemovable()
 {
 	bool can_delete = false;
-	if (mFolderRoot)
+	if (mFolderRoot.get())
 	{
-		std::set<LLFolderViewItem*> selection_set = mFolderRoot->getSelectionList();
+		std::set<LLFolderViewItem*> selection_set = mFolderRoot.get()->getSelectionList();
 		if (!selection_set.empty()) 
 		{
 			can_delete = true;

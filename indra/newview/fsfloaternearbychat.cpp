@@ -654,26 +654,19 @@ bool FSFloaterNearbyChat::isChatMultiTab()
 
 BOOL FSFloaterNearbyChat::getVisible()
 {
-	if (isChatMultiTab())
-	{
-		FSFloaterIMContainer* im_container = FSFloaterIMContainer::getInstance();
+	FSFloaterIMContainer* im_container = FSFloaterIMContainer::getInstance();
 		
-		// Treat inactive floater as invisible.
-		bool is_active = im_container->getActiveFloater() == this;
+	// Treat inactive floater as invisible.
+	bool is_active = im_container->getActiveFloater() == this;
 		
-		//torn off floater is always inactive
-		if (!is_active && getHost() != im_container)
-		{
-			return LLFloater::getVisible();
-		}
-		
-		// getVisible() returns TRUE when Tabbed IM window is minimized.
-		return is_active && !im_container->isMinimized() && im_container->getVisible();
-	}
-	else
+	//torn off floater is always inactive
+	if (!is_active && getHost() != im_container)
 	{
 		return LLFloater::getVisible();
 	}
+		
+	// getVisible() returns TRUE when Tabbed IM window is minimized.
+	return is_active && !im_container->isMinimized() && im_container->getVisible();
 }
 
 void FSFloaterNearbyChat::enableTranslationButton(bool enabled)
@@ -829,7 +822,7 @@ void FSFloaterNearbyChat::onChatBoxKeystroke()
 			{
 				suffix = wstring_to_utf8str(raw_text.substr(cur_pos)); // Text after search string
 			}
-			U32 last_space = prefix.rfind(" ");
+			size_t last_space = prefix.rfind(" ");
 			std::string pattern = prefix.substr(last_space + 1, prefix.length() - last_space - 1); // Search pattern
 			
 			prefix = prefix.substr(0, last_space + 1);
@@ -1133,22 +1126,22 @@ void FSFloaterNearbyChat::sendChatFromViewer(const LLWString &wtext, EChatType t
 	{
 		if (type == CHAT_TYPE_WHISPER)
 		{
-			lldebugs << "You whisper " << utf8_text << llendl;
+			LL_DEBUGS("FSFloaterNearbyChat") << "You whisper " << utf8_text << LL_ENDL;
 			gAgent.sendAnimationRequest(ANIM_AGENT_WHISPER, ANIM_REQUEST_START);
 		}
 		else if (type == CHAT_TYPE_NORMAL)
 		{
-			lldebugs << "You say " << utf8_text << llendl;
+			LL_DEBUGS("FSFloaterNearbyChat") << "You say " << utf8_text << LL_ENDL;
 			gAgent.sendAnimationRequest(ANIM_AGENT_TALK, ANIM_REQUEST_START);
 		}
 		else if (type == CHAT_TYPE_SHOUT)
 		{
-			lldebugs << "You shout " << utf8_text << llendl;
+			LL_DEBUGS("FSFloaterNearbyChat") << "You shout " << utf8_text << LL_ENDL;
 			gAgent.sendAnimationRequest(ANIM_AGENT_SHOUT, ANIM_REQUEST_START);
 		}
 		else
 		{
-			llinfos << "send_chat_from_viewer() - invalid volume" << llendl;
+			LL_INFOS("FSFloaterNearbyChat") << "send_chat_from_viewer() - invalid volume" << LL_ENDL;
 			return;
 		}
 	}
@@ -1156,7 +1149,7 @@ void FSFloaterNearbyChat::sendChatFromViewer(const LLWString &wtext, EChatType t
 	{
 		if (type != CHAT_TYPE_START && type != CHAT_TYPE_STOP)
 		{
-			lldebugs << "Channel chat: " << utf8_text << llendl;
+			LL_DEBUGS("FSFloaterNearbyChat") << "Channel chat: " << utf8_text << LL_ENDL;
 		}
 	}
 	
@@ -1346,7 +1339,7 @@ void send_chat_from_nearby_floater(std::string utf8_out_text, EChatType type, S3
 	}
 	
 	// moved here so we don't bump the count for every message segment
-	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_CHAT_COUNT);
+	add(LLStatViewer::CHAT_COUNT,1);
 	//</FS:TS> FIRE-787
 }
 

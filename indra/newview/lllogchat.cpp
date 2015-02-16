@@ -327,7 +327,7 @@ void LLLogChat::saveHistory(const std::string& filename,
 	if (tmp_filename.empty())
 	{
 		std::string warn = "Chat history filename [" + filename + "] is empty!";
-		llwarning(warn, 666);
+		LL_WARNS() << warn << LL_ENDL;
 		llassert(tmp_filename.size());
 		return;
 	}
@@ -335,7 +335,7 @@ void LLLogChat::saveHistory(const std::string& filename,
 	llofstream file (LLLogChat::makeLogFileName(filename), std::ios_base::app);
 	if (!file.is_open())
 	{
-		llwarns << "Couldn't open chat history log! - " + filename << llendl;
+		LL_WARNS() << "Couldn't open chat history log! - " + filename << LL_ENDL;
 		return;
 	}
 
@@ -605,7 +605,7 @@ void LLLogChat::findTranscriptFiles(std::string pattern, std::vector<std::string
 				//Add Nearby chat history to the list of transcriptions
 				list_of_transcriptions.push_back(gDirUtilp->add(dirname, filename));
 				LLFile::close(filep);
-				return;
+				continue;
 			}
 			char buffer[LOG_RECALL_SIZE];
 
@@ -782,15 +782,59 @@ void LLLogChat::deleteTranscripts()
 // static
 bool LLLogChat::isTranscriptExist(const LLUUID& avatar_id, bool is_group)
 {
-	std::vector<std::string> list_of_transcriptions;
-	LLLogChat::getListOfTranscriptFiles(list_of_transcriptions);
+	// <FS:Ansariel> FIRE-13725 / CHUIBUG-222: Viewer freezes when opening preferences or right-clicking on friends' names
+	//std::vector<std::string> list_of_transcriptions;
+	//LLLogChat::getListOfTranscriptFiles(list_of_transcriptions);
 
-	if (list_of_transcriptions.size() > 0)
+	//if (list_of_transcriptions.size() > 0)
+	//{
+	//	LLAvatarName avatar_name;
+	//	LLAvatarNameCache::get(avatar_id, &avatar_name);
+	//	// <FS:Ansariel> [Legacy IM logfile names]
+	//	//std::string avatar_user_name = avatar_name.getAccountName();
+	//	std::string avatar_user_name;
+	//	if (gSavedSettings.getBOOL("UseLegacyIMLogNames"))
+	//	{
+	//		avatar_user_name = avatar_name.getUserName();
+	//		avatar_user_name = avatar_user_name.substr(0, avatar_user_name.find(" Resident"));;
+	//	}
+	//	else
+	//	{
+	//		avatar_user_name = avatar_name.getAccountName();
+	//		std::replace(avatar_user_name.begin(), avatar_user_name.end(), '.', '_');
+	//	}
+	//	// <//FS:Ansariel> [Legacy IM logfile names]
+	//	if(!is_group)
+	//	{
+	//		//std::replace(avatar_user_name.begin(), avatar_user_name.end(), '.', '_');
+	//		BOOST_FOREACH(std::string& transcript_file_name, list_of_transcriptions)
+	//		{
+	//			if (std::string::npos != transcript_file_name.find(avatar_user_name))
+	//			{
+	//				return true;
+	//			}
+	//		}
+	//	}
+	//	else
+	//	{
+	//		std::string file_name;
+	//		gCacheName->getGroupName(avatar_id, file_name);
+	//		file_name = makeLogFileName(file_name);
+	//		BOOST_FOREACH(std::string& transcript_file_name, list_of_transcriptions)
+	//		{
+	//			if (transcript_file_name == file_name)
+	//			{
+	//				return true;
+	//			}
+	//		}
+	//	}
+
+	//}
+	std::string file_name;
+	if (!is_group)
 	{
 		LLAvatarName avatar_name;
 		LLAvatarNameCache::get(avatar_id, &avatar_name);
-		// <FS:Ansariel> [Legacy IM logfile names]
-		//std::string avatar_user_name = avatar_name.getAccountName();
 		std::string avatar_user_name;
 		if (gSavedSettings.getBOOL("UseLegacyIMLogNames"))
 		{
@@ -802,51 +846,43 @@ bool LLLogChat::isTranscriptExist(const LLUUID& avatar_id, bool is_group)
 			avatar_user_name = avatar_name.getAccountName();
 			std::replace(avatar_user_name.begin(), avatar_user_name.end(), '.', '_');
 		}
-		// <//FS:Ansariel> [Legacy IM logfile names]
-		if(!is_group)
-		{
-			//std::replace(avatar_user_name.begin(), avatar_user_name.end(), '.', '_');
-			BOOST_FOREACH(std::string& transcript_file_name, list_of_transcriptions)
-			{
-				if (std::string::npos != transcript_file_name.find(avatar_user_name))
-				{
-					return true;
-				}
-			}
-		}
-		else
-		{
-			std::string file_name;
-			gCacheName->getGroupName(avatar_id, file_name);
-			file_name = makeLogFileName(file_name);
-			BOOST_FOREACH(std::string& transcript_file_name, list_of_transcriptions)
-			{
-				if (transcript_file_name == file_name)
-				{
-					return true;
-				}
-			}
-		}
-
+		file_name = makeLogFileName(avatar_user_name);
 	}
+	else
+	{
+		gCacheName->getGroupName(avatar_id, file_name);
+		file_name = makeLogFileName(file_name);
+	}
+	if ( (!file_name.empty()) && (LLFile::isfile(file_name)) )
+	{
+		return true;
+	}
+	// </FS:Ansariel>
 
 	return false;
 }
 
 bool LLLogChat::isNearbyTranscriptExist()
 {
-	std::vector<std::string> list_of_transcriptions;
-	LLLogChat::getListOfTranscriptFiles(list_of_transcriptions);
+	// <FS:Ansariel> FIRE-13725 / CHUIBUG-222: Viewer freezes when opening preferences or right-clicking on friends' names
+	//std::vector<std::string> list_of_transcriptions;
+	//LLLogChat::getListOfTranscriptFiles(list_of_transcriptions);
 
-	std::string file_name;
-	file_name = makeLogFileName("chat");
-	BOOST_FOREACH(std::string& transcript_file_name, list_of_transcriptions)
+	//std::string file_name;
+	//file_name = makeLogFileName("chat");
+	//BOOST_FOREACH(std::string& transcript_file_name, list_of_transcriptions)
+	//{
+	//   	if (transcript_file_name == file_name)
+	//   	{
+	//		return true;
+	//	 }
+	//}
+	std::string strFilePath = makeLogFileName("chat");
+	if ( (!strFilePath.empty()) && (LLFile::isfile(strFilePath)) )
 	{
-	   	if (transcript_file_name == file_name)
-	   	{
-			return true;
-		 }
+		return true;
 	}
+	// </FS:Ansariel>
 	return false;
 }
 
@@ -857,7 +893,7 @@ void LLChatLogFormatter::format(const LLSD& im, std::ostream& ostr) const
 {
 	if (!im.isMap())
 	{
-		llwarning("invalid LLSD type of an instant message", 0);
+		LL_WARNS() << "invalid LLSD type of an instant message" << LL_ENDL;
 		return;
 	}
 
@@ -948,7 +984,7 @@ bool LLChatLogParser::parse(std::string& raw, LLSD& im, const LLSD& parse_params
 	// Ansariel: Handle the case an IM was stored in nearby chat history
 	if (name == "IM:")
 	{
-		U32 divider_pos = stuff.find(NAME_TEXT_DIVIDER, 3);
+		size_t divider_pos = stuff.find(NAME_TEXT_DIVIDER, 3);
 		if (divider_pos != std::string::npos && divider_pos < (stuff.length() - NAME_TEXT_DIVIDER.length()))
 		{
 			im[LL_IM_FROM] = stuff.substr(0, divider_pos);
@@ -1020,11 +1056,9 @@ LLDeleteHistoryThread::LLDeleteHistoryThread(std::list<LLSD>* messages, LLLoadHi
 	mLoadThread(loadThread)
 {
 }
-
 LLDeleteHistoryThread::~LLDeleteHistoryThread()
 {
 }
-
 void LLDeleteHistoryThread::run()
 {
 	if (mLoadThread != NULL)
@@ -1093,7 +1127,7 @@ void LLLoadHistoryThread::run()
 	{
 		loadHistory(mFileName, mMessages, mLoadParams);
 		int count = mMessages->size();
-		llinfos << "mMessages->size(): " << count << llendl;
+		LL_INFOS() << "mMessages->size(): " << count << LL_ENDL;
 		setFinished();
 	}
 }
@@ -1119,6 +1153,7 @@ void LLLoadHistoryThread::loadHistory(const std::string& file_name, std::list<LL
 			return;						//No previous conversation with this name.
 		}
 	}
+
 	char buffer[LOG_RECALL_SIZE];		/*Flawfinder: ignore*/
 
 	char *bptr;

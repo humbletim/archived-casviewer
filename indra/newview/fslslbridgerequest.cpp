@@ -28,51 +28,24 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "fslslbridgerequest.h"
-
-#include "fscommon.h"
-#include "fslslbridge.h"
-#include <string>
-#include <boost/tokenizer.hpp> // for radar 
 #include "fsradar.h"
 
-#ifdef LL_STANDALONE
-#include <expat.h>
-#else
-#include "expat/expat.h"
-#endif
+#include <boost/tokenizer.hpp>
 
-//
-//-TT Client LSL Bridge File
-//
-
-FSLSLBridgeRequestManager::FSLSLBridgeRequestManager()
-{
-}
-
-FSLSLBridgeRequestManager::~FSLSLBridgeRequestManager()
-{
-}
-
-void FSLSLBridgeRequestManager::initSingleton()
-{
-}
-void FSLSLBridgeRequestManager::processBridgeCall(const LLSD& content)
-{
-	std::string strContent = content.asString();
-	llinfos << "Got info: " << strContent << llendl;
-}
 
 FSLSLBridgeRequestResponder::FSLSLBridgeRequestResponder() 
-{ 
-	//FSLSLBridgeRequestManager::instance().initSingleton(); 
+{
+}
+
+FSLSLBridgeRequestResponder::~FSLSLBridgeRequestResponder()
+{
 }
 
 //If we get back a normal response, handle it here
 void FSLSLBridgeRequestResponder::result(const LLSD& content)
 {
-	//FSLSLBridgeRequestManager::instance().processBridgeCall(content);
 	std::string strContent = content.asString();
-	llinfos << "Got info: " << strContent << llendl;
+	LL_DEBUGS() << "Got info: " << strContent << LL_ENDL;
 
 	//do not use - infinite loop, only here for testing.
 	//FSLSLBridge::instance().viewerToLSL("Response_to_response|" + strContent);
@@ -81,21 +54,25 @@ void FSLSLBridgeRequestResponder::result(const LLSD& content)
 //If we get back an error (not found, etc...), handle it here
 void FSLSLBridgeRequestResponder::error(U32 status, const std::string& reason)
 {
-	llwarns << "FSLSLBridgeRequest::error("
-	<< status << ": " << reason << ")" << llendl;
+	LL_WARNS() << "FSLSLBridgeRequest::error(" << status << ": " << reason << ")" << LL_ENDL;
 }
 
 // AO: The below handler is used to parse return data from the bridge, requesting bulk ZOffset updates.
 FSLSLBridgeRequestRadarPosResponder::FSLSLBridgeRequestRadarPosResponder()
 {
 }
+
+FSLSLBridgeRequestRadarPosResponder::~FSLSLBridgeRequestRadarPosResponder()
+{
+}
+
 void FSLSLBridgeRequestRadarPosResponder::result(const LLSD& content)
 {
 	FSRadar* radar = FSRadar::getInstance();
 	if (radar)
 	{
 		std::string strContent = content.asString();
-		//llinfos << "Got info: " << strContent << llendl;	
+		//LL_INFOS() << "Got info: " << strContent << LL_ENDL;
 		// AO: parse content into pairs of [agent UUID,agent zHeight] , update our peoplepanel radar for each one
 		
 		LLUUID targetAv;
@@ -103,8 +80,8 @@ void FSLSLBridgeRequestRadarPosResponder::result(const LLSD& content)
 		
 		typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 		boost::char_separator<char> sep(", "); 
-		tokenizer tokens(strContent,sep);
-		for (tokenizer::iterator tok_iter=tokens.begin(); tok_iter != tokens.end();++tok_iter)
+		tokenizer tokens(strContent, sep);
+		for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter)
 		{
 			targetAv = LLUUID(*(tok_iter++));
 			targetZ = (F32)::atof((*tok_iter).c_str());
@@ -113,10 +90,9 @@ void FSLSLBridgeRequestRadarPosResponder::result(const LLSD& content)
 			if (entry)
 			{
 				entry->setZOffset((F32)(targetZ));
-				//llinfos << targetAv << " ::: " << targetZ << llendl;
+				//LL_INFOS() << targetAv << " ::: " << targetZ << LL_ENDL;
 			}
 		}
 	}
 }
-
 

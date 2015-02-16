@@ -32,7 +32,6 @@
 			<menu_item_call label="Auf männlichen Standard-Avatar zurücksetzen" name="ResetDefaultAvM"/>
 			<menu_item_call label="Auf weiblichen Standard-Avatar zurücksetzen" name="ResetDefaultAvF"/>
 			<menu_item_check label="Render-Weight für Avatare anzeigen (Ersatz für ARC)" name="Avatar Rendering Cost"/>
-			<menu_item_call label="Lag-Meter" name="Lag Meter"/>
 			<menu_item_call label="LSL-Brücke neu erstellen" name="Recreate LSL Bridge"/>
 		</menu>
 		<menu_item_call label="Tip-Tracker" name="money_tracker"/>
@@ -106,11 +105,11 @@
 		<menu_item_call label="Nach Hause teleportieren" name="Teleport Home"/>
 		<menu_item_call label="Diesen Ort als Zuhause festlegen" name="Set Home to Here"/>
 		<menu label="Sonne" name="Environment Settings">
-			<menu_item_call label="Sonnenaufgang" name="Sunrise"/>
-			<menu_item_call label="Mittag" name="Noon"/>
-			<menu_item_call label="Sonnenuntergang" name="Sunset"/>
-			<menu_item_call label="Mitternacht" name="Midnight"/>
-            <menu_item_call label="Grundbesitzzeit" name="Revert to Region Default"/>
+			<menu_item_check label="Sonnenaufgang" name="Sunrise"/>
+			<menu_item_check label="Mittag" name="Noon"/>
+			<menu_item_check label="Sonnenuntergang" name="Sunset"/>
+			<menu_item_check label="Mitternacht" name="Midnight"/>
+            <menu_item_check label="Grundbesitzzeit" name="Revert to Region Default"/>
 		</menu>
 		<menu label="Umgebungs-Editor" name="Environment Editor">
 			<menu_item_call label="Umgebungseinstellungen..." name="Environment Settings"/>
@@ -221,12 +220,14 @@
 		<menu_item_check label="SL-Marktplatz" name="SL Marketplace"/>
 		<menu_item_check label="L$-Markt-Kurse" name="LindenXchange"/>
 		<menu_item_check label="Skript-Datenbank" name="Script Library"/>
+		<menu_item_call label="Nachricht des Tages" name="Firestorm MoTD"/>
 	</menu>
 	<menu label="Hilfe" name="Help">
 		<menu_item_check label="Hinweise aktivieren" name="Enable Hints"/>
-		<menu_item_call label="Firestorm-Wiki" name="Firestorm Wiki"/>
+    <menu_item_call label="Firestorm-Wiki" name="Firestorm Wiki"/>
 		<menu_item_call label="Fehlerbehebung" name="Troubleshooting"/>
 		<menu_item_call label="Firestorm Support-Gruppe beitreten" name="firestorm_support_group"/>
+		<menu_item_call label="Stundenplan Firestorm-Klassen" name="Firestorm Classes Schedule"/>
         <menu_item_call label="[CURRENT_GRID]-Hilfe" name="current_grid_help"/>
         <menu_item_call label="Über [CURRENT_GRID]" name="current_grid_about"/>
 		<menu_item_call label="Grid-Status prüfen" name="Grid Status"/>
@@ -266,8 +267,8 @@
 		<menu_item_check label="Fotos in hoher Auflösung speichern" name="HighResSnapshot"/>
 		<menu_item_check label="Fotos leise speichern" name="QuietSnapshotsToDisk"/>
 		<menu label="Performance-Tools" name="Performance Tools">
-			<menu_item_call label="Lag-Anzeige" name="Lag Meter"/>
 			<menu_item_check label="Statistikleiste" name="Statistics Bar"/>
+			<menu_item_check label="Statistiken zum Laden von Szenen" name="Scene Load Statistics"/>
 			<menu_item_check label="Render-Weight für Avatare anzeigen (ARC-Ersatz)" name="Avatar Rendering Cost"/>
 		</menu>
 		<menu label="Hervorhebung und Sichtbarkeit" name="Highlighting and Visibility">
@@ -369,6 +370,7 @@
 			<menu_item_check label="Schnelle Timer" name="Fast Timers"/>
 			<menu_item_check label="Speicher" name="Memory"/>
 			<menu_item_check label="Szenestatistiken" name="Scene Statistics"/>
+			<menu_item_check label="Monitor zum Laden von Szenen" name="Scene Loading Monitor"/>
 			<menu_item_call label="Texture-Fetch-Debug-Konsole" name="Texture Fetch Debug Console"/>
 			<menu_item_check label="Region-Debug-Konsole" name="Region Debug Console"/>
 			<menu_item_call label="Info zu Region in Debug-Fenster" name="Region Info to Debug Console"/>
@@ -460,6 +462,7 @@
 			<menu_item_check label="Angehängte Lichter rendern" name="Render Attached Lights"/>
 			<menu_item_check label="Angehängte Partikel rendern" name="Render Attached Particles"/>
 			<menu_item_check label="Leucht-Objekte schweben lassen" name="Hover Glow Objects"/>
+			<menu_item_call label="Cache sofort leeren" name="Cache Clear"/>
 		</menu>
 		<menu label="Netzwerk" name="Network">
 			<menu_item_check label="Agent pausieren" name="AgentPause"/>

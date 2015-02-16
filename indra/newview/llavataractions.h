@@ -27,7 +27,6 @@
 #ifndef LL_LLAVATARACTIONS_H
 #define LL_LLAVATARACTIONS_H
 
-#include "lldarray.h"
 #include "llsd.h"
 #include "lluuid.h"
 
@@ -216,6 +215,9 @@ public:
 	 * @return a list of avatars that can be teleported from the input list
 	 */
 	static bool canOfferTeleport(const uuid_vec_t& ids);
+
+	// <FS:Ansariel> Extra request teleport
+	static bool canRequestTeleport(const LLUUID& id);
 
 	/**
 	 * Checks whether all items selected in the given inventory panel can be shared

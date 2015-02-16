@@ -31,6 +31,7 @@
 #include "llcoord.h"
 #include "llstring.h"
 #include "llcursortypes.h"
+#include "llinstancetracker.h"
 #include "llsd.h"
 
 class LLSplashScreen;
@@ -123,7 +124,7 @@ public:
 	virtual void swapBuffers() = 0;
 	virtual void bringToFront() = 0;
 	virtual void focusClient() { };		// this may not have meaning or be required on other platforms, therefore, it's not abstract
-	
+	virtual void setOldResize(bool oldresize) { };
 	// handy coordinate space conversion routines
 	// NB: screen to window and vice verse won't work on width/height coordinate pairs,
 	// as the conversion must take into account left AND right border widths, etc.
@@ -285,7 +286,9 @@ public:
 		BOOL use_gl = TRUE,
 		BOOL ignore_pixel_depth = FALSE,
 		U32 fsaa_samples = 0,
-		U32 output_type = 0);
+		BOOL useLegacyCursors = FALSE, // <FS:LO> Legacy cursor setting from main program
+		U32 output_type = 0);  // <CV:David>
+		
 	static BOOL destroyWindow(LLWindow* window);
 	static BOOL isWindowValid(LLWindow *window);
 };

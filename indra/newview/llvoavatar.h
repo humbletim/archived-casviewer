@@ -33,9 +33,8 @@
 #include <string>
 #include <vector>
 
-#include <boost/signals2.hpp>
+#include <boost/signals2/trackable.hpp>
 
-#include "imageids.h"			// IMG_INVISIBLE
 #include "llavatarappearance.h"
 #include "llchat.h"
 #include "lldrawpoolalpha.h"
@@ -77,6 +76,7 @@ struct LLVOAvatarChildJoint;
 //class LLViewerJoint;
 struct LLAppearanceMessageContents;
 struct LLVOAvatarSkeletonInfo;
+class LLViewerJointMesh;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // LLVOAvatar
@@ -100,12 +100,12 @@ public:
 public:
 	void* operator new(size_t size)
 	{
-		return ll_aligned_malloc_16(size);
+		return LLTrace::MemTrackable<LLViewerObject>::aligned_new<16>(size);
 	}
 
-	void operator delete(void* ptr)
+	void operator delete(void* ptr, size_t size)
 	{
-		ll_aligned_free_16(ptr);
+		LLTrace::MemTrackable<LLViewerObject>::aligned_delete<16>(ptr, size);
 	}
 
 	LLVOAvatar(const LLUUID &id, const LLPCode pcode, LLViewerRegion *regionp);
@@ -133,28 +133,28 @@ public:
 	/*virtual*/ void			updateGL();
 	/*virtual*/ LLVOAvatar*		asAvatar();
 	virtual U32    	 	 	processUpdateMessage(LLMessageSystem *mesgsys,
-												void **user_data,
-												U32 block_num,
-												const EObjectUpdateType update_type,
-												LLDataPacker *dp);
+													 void **user_data,
+													 U32 block_num,
+													 const EObjectUpdateType update_type,
+													 LLDataPacker *dp);
 	virtual void   	 	 	idleUpdate(LLAgent &agent, const F64 &time);
 	/*virtual*/ BOOL   	 	 	updateLOD();
 	BOOL  	 	 	 	 	updateJointLODs();
 	void					updateLODRiggedAttachments( void );
 	/*virtual*/ BOOL   	 	 	isActive() const; // Whether this object needs to do an idleUpdate.
-	S32 						totalTextureMemForUUIDS(std::set<LLUUID>& ids);
-	bool 					allTexturesCompletelyDownloaded(std::set<LLUUID>& ids) const;
-	bool 					allLocalTexturesCompletelyDownloaded() const;
-	bool 					allBakedTexturesCompletelyDownloaded() const;
-	void 					bakedTextureOriginCounts(S32 &sb_count, S32 &host_count,
-													 S32 &both_count, S32 &neither_count);
-	std::string 			bakedTextureOriginInfo();
-	void 					collectLocalTextureUUIDs(std::set<LLUUID>& ids) const;
-	void 					collectBakedTextureUUIDs(std::set<LLUUID>& ids) const;
-	void 					collectTextureUUIDs(std::set<LLUUID>& ids);
-	void					releaseOldTextures();
+	S32Bytes				totalTextureMemForUUIDS(std::set<LLUUID>& ids);
+	bool 						allTexturesCompletelyDownloaded(std::set<LLUUID>& ids) const;
+	bool 						allLocalTexturesCompletelyDownloaded() const;
+	bool 						allBakedTexturesCompletelyDownloaded() const;
+	void 						bakedTextureOriginCounts(S32 &sb_count, S32 &host_count,
+														 S32 &both_count, S32 &neither_count);
+	std::string 				bakedTextureOriginInfo();
+	void 						collectLocalTextureUUIDs(std::set<LLUUID>& ids) const;
+	void 						collectBakedTextureUUIDs(std::set<LLUUID>& ids) const;
+	void 						collectTextureUUIDs(std::set<LLUUID>& ids);
+	void						releaseOldTextures();
 	/*virtual*/ void   	 	 	updateTextures();
-	LLViewerFetchedTexture*	getBakedTextureImage(const U8 te, const LLUUID& uuid);
+	LLViewerFetchedTexture*		getBakedTextureImage(const U8 te, const LLUUID& uuid);
 	/*virtual*/ S32    	 	 	setTETexture(const U8 te, const LLUUID& uuid); // If setting a baked texture, need to request it from a non-local sim.
 	/*virtual*/ void   	 	 	onShift(const LLVector4a& shift_vector);
 	/*virtual*/ U32    	 	 	getPartitionType() const;
@@ -425,7 +425,7 @@ public:
 	VisualMuteSettings  getVisualMuteSettings()						{ return mVisuallyMuteSetting;	};
 
 	U32 		renderRigid();
-	U32 		renderSkinned(EAvatarRenderPass pass);
+	U32 		renderSkinned();
 	F32			getLastSkinTime() { return mLastSkinTime; }
 	U32 		renderTransparent(BOOL first_pass);
 	void 		renderCollisionVolumes();
@@ -829,6 +829,8 @@ public:
 	void	   		clearChat();
 	void	   		startTyping() { mTyping = TRUE; mTypingTimer.reset(); }
 	void			stopTyping() { mTyping = FALSE; }
+	// <FS:Ansariel> Get typing status
+	bool			isTyping() const { return mTyping; }
 private:
 	BOOL			mVisibleChat;
 	BOOL			mVisibleTyping;
@@ -921,8 +923,8 @@ public:
 	std::string		getFullname() const; // Returns "FirstName LastName"
 	std::string		avString() const; // Frequently used string in log messages "Avatar '<full name'"
 protected:
-	static void		getAnimLabels(LLDynamicArray<std::string>* labels);
-	static void		getAnimNames(LLDynamicArray<std::string>* names);	
+	static void		getAnimLabels(std::vector<std::string>* labels);
+	static void		getAnimNames(std::vector<std::string>* names);	
 private:
     bool            mNameIsSet;
 	LLSD			mClientTagData;

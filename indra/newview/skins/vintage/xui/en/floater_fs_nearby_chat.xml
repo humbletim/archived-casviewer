@@ -2,6 +2,7 @@
 <floater
   legacy_header_height="18"
   background_visible="true"
+  default_tab_group="1"
   follows="all"
   height="350"
   layout="topleft"
@@ -17,7 +18,6 @@
   save_rect="true"
   save_visibility="true"
   save_dock_state="true"
-  save_tearoff_state="true"
   visible="false"
   width="394"
   can_resize="true"
@@ -108,6 +108,7 @@
     
   </layout_stack>
   <layout_stack
+    tab_group="1"
     animate="false"
     follows="all"
     height="308"
@@ -126,6 +127,7 @@
       user_resize="true">
       <layout_stack
         animate="false"
+        default_tab_group="2"
         follows="all"
         height="308"
         width="394"
@@ -163,6 +165,7 @@
         </layout_panel>
         <layout_panel
           visibility_control="FSNearbyChatbar"
+          tab_group="2"
           top_delta="0"
           top="0"
           height="26"

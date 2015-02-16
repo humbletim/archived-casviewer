@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <panel label="Ogłoszenia" name="notices_tab">
 	<panel.string name="help_text">
-		Ogłoszenia to szybka droga do komunikowania się ze wszystkimi członkami grupy poprzez wysyłanie ich na grupowym kanale.
-Dodatkowo, do ogłoszenia można dołączać załączniki. Ogłoszenia docierają jedynie do członków grupy, którzy mają zdolność ich otrzymywania.
+		Ogłoszenia to szybka droga do komunikowania się ze wszystkimi osobami w grupie poprzez wysyłanie ich na grupowym kanale.
+Dodatkowo, do ogłoszenia można dołączać załączniki. Ogłoszenia docierają jedynie do tych osób, które mają zdolność ich otrzymywania.
 By nie otrzymywać ogłoszeń, w zakładce Ogólne pozostaw niezaznaczone &quot;Otrzymuj grupowe ogłoszenia&quot;.
 	</panel.string>
 	<panel.string name="no_notices_text">
-		Brak przeszłych ogłoszeń
+		Brak ogłoszeń
 	</panel.string>
 	<text name="lbl2">
 		Ogłoszenia przechowywane są przez 14 dni.
@@ -44,7 +44,7 @@ Limit dzienny ogłoszeń dla grupy wynosi 200.
 		
 		<group_drop_target name="drop_target" tool_tip="Przeciągnij załącznik ze swojej Szafy na to pole docelowe aby wysłać go z Ogłoszeniem. Musisz posiadać prawo do kopiowania i transferu załącznika aby go dodać do ogłoszenia."/>
 	</panel>
-	<panel label="Zobacz przeszłe Ogłoszenia" name="panel_view_past_notice">
+	<panel label="Zobacz ogłoszenia archiwalne" name="panel_view_past_notice">
 		<text name="lbl">
 			Ogłoszenia archiwalne
 		</text>

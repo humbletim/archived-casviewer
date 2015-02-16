@@ -2,6 +2,7 @@
 <toggleable_menu name="menu_group_plus">
 	<menu_item_check label="Pokaż minimapę ponad radarem" name="ShowRadarMinimap"/>
 	<menu_item_check label="Ogranicz wyniki do określonej odległości" name="LimitRadarByRange"/>
+	<menu_item_check label="Pokaż awatary zablokowane i z czarnej listy" name="FSRadarShowMutedAndDerendered"/>
 	<context_menu label="Format imion radaru" name="radarNameFormat">
 		<menu_item_check label="Wyświetlane" name="radarFmtDN"/>
 		<menu_item_check label="Nazwa konta" name="radarFmtUN"/>
@@ -22,5 +23,6 @@
 	<menu_item_check label="Powiadom o wyjściu osoby z zasięgu regionu" name="RadarReportSimRangeLeave"/>
 	<menu_item_check label="Wysyłaj alerty wejść do skryptów" name="RadarEnterChannelAlert"/>
 	<menu_item_check label="Wysyłaj alerty wyjść do skryptów" name="RadarLeaveChannelAlert"/>
+	<menu_item_check label="Wspomaganie radaru za pomocą Mostu LSL" name="FSRadarEnhanceByBridge"/>
 	<menu_item_call label="Pokaż zablokowanych Rezydentów i obiekty" name="show_blocked_list"/>
 </toggleable_menu>

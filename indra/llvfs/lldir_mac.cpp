@@ -94,14 +94,14 @@ LLDir_Mac::LLDir_Mac()
 		// MBW -- This keeps the mac application from finding other things.
 		// If this is really for skins, it should JUST apply to skins.
         
-		U32 build_dir_pos = mExecutableDir.rfind("/build-darwin-");
+		size_t build_dir_pos = mExecutableDir.rfind("/build-darwin-");
 		if (build_dir_pos != std::string::npos)
 		{
 			// ...we're in a dev checkout
 			mSkinBaseDir = mExecutableDir.substr(0, build_dir_pos)
 				+ "/indra/newview/skins";
-			llinfos << "Running in dev checkout with mSkinBaseDir "
-				<< mSkinBaseDir << llendl;
+			LL_INFOS() << "Running in dev checkout with mSkinBaseDir "
+				<< mSkinBaseDir << LL_ENDL;
 		}
 		else
 		{
@@ -134,7 +134,7 @@ LLDir_Mac::LLDir_Mac()
 		
 		{
             mOSCacheDir = *cachedir;
-            //Aura TODO:  This changes from ~/Library/Cache/Secondlife to ~/Library/Cache/com.app.secondlife/Secondlife.  Last dir level could go away.
+            //TODO:  This changes from ~/Library/Cache/Secondlife to ~/Library/Cache/com.app.secondlife/Secondlife.  Last dir level could go away.
             CreateDirectory(mOSCacheDir, secondLifeString, NULL);
 		}
 		
@@ -232,7 +232,7 @@ BOOL LLDir_Mac::getNextFileInDir(const std::string &dirname, const std::string &
 
                         if(mCurrentDirIndex < g.gl_pathc)
                         {
-//                              llinfos << "getNextFileInDir: returning number " << mCurrentDirIndex << ", path is " << g.gl_pathv[mCurrentDirIndex] << llendl;
+//                              LL_INFOS() << "getNextFileInDir: returning number " << mCurrentDirIndex << ", path is " << g.gl_pathv[mCurrentDirIndex] << LL_ENDL;
 
                                 // The API wants just the filename, not the full path.
                                 //fname = g.gl_pathv[mCurrentDirIndex];

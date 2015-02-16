@@ -94,7 +94,7 @@ const unsigned short *copyFromPBoard()
 	NSUInteger len = [str length];
 
 	// <FS:ND> add+1 for 0-terminator.
-	// unichar* buffer = (unichar*)calloc(len, sizeof(unichar));
+	// unichar* temp = (unichar*)calloc([str length]+1, sizeof(unichar));
 	unichar* buffer = (unichar*)calloc(len+1, sizeof(unichar));
 	// </FS:ND>
 
@@ -226,6 +226,11 @@ GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync)
 	LLOpenGLView *glview = [[LLOpenGLView alloc]initWithFrame:[(LLNSWindow*)window frame] withSamples:samples andVsync:vsync];
 	[(LLNSWindow*)window setContentView:glview];
 	return glview;
+}
+
+void setResizeMode(bool oldresize, void* glview)
+{
+    [(LLOpenGLView *)glview setOldResize:oldresize];
 }
 
 void glSwapBuffers(void* context)
@@ -385,7 +390,7 @@ void allowDirectMarkedTextInput(bool allow, GLViewRef glView)
 
 NSWindowRef getMainAppWindow()
 {
-	LLNSWindow *winRef = [(LLAppDelegate*)[[NSApplication sharedApplication] delegate] window];
+	LLNSWindow *winRef = [(LLAppDelegate*)[[LLNSApplication sharedApplication] delegate] window];
 	
 	[winRef setAcceptsMouseMovedEvents:TRUE];
 	return winRef;
@@ -398,7 +403,7 @@ void makeFirstResponder(NSWindowRef window, GLViewRef view)
 
 void requestUserAttention()
 {
-	[[NSApplication sharedApplication] requestUserAttention:NSInformationalRequest];
+	[[LLNSApplication sharedApplication] requestUserAttention:NSInformationalRequest];
 }
 
 long showAlert(std::string text, std::string title, int type)
@@ -448,7 +453,7 @@ long showAlert(std::string text, std::string title, int type)
 /*
  GLViewRef getGLView()
  {
- return [(LLAppDelegate*)[[NSApplication sharedApplication] delegate] glview];
+ return [(LLAppDelegate*)[[LLNSApplication sharedApplication] delegate] glview];
  }
  */
 

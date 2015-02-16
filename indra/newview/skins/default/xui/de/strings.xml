@@ -74,6 +74,7 @@ Bandbreite: [BANDWIDTH]
 LOD-Faktor: [LOD]
 Darstellungsqualität: [RENDERQUALITY]
 Texturspeicher: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
+VFS (Cache) Erstellungszeit: [VFS_DATE]
 	</string>
 	<string name="AboutTraffic">
 		Paketverlust: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)
@@ -592,9 +593,11 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="ReleaseNotes">
 		Versionshinweise
 	</string>
+	<!--
 	<string name="RELEASE_NOTES_BASE_URL">
 		http://wiki.secondlife.com/wiki/Release_Notes/
 	</string>
+	-->
 	<string name="LoadingData">
 		Wird geladen...
 	</string>
@@ -1414,7 +1417,7 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="InventoryNoTexture">
 		Sie haben keine Kopie dieser Textur in Ihrem Inventar.
 	</string>
-	<string name="InventoryInboxNoItems">
+  <string name="InventoryInboxNoItems">
 		Einkäufe aus dem Marktplatz erscheinen hier. Sie können diese dann zur Verwendung in Ihr Inventar ziehen.
 	</string>
 	<string name="MarketplaceURL">
@@ -1446,6 +1449,22 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="InventoryOutboxNoItems">
 		Ziehen Sie Ordner in dien Bereich und klicken Sie auf „In Marktplatz übertragen“, um sie im [[MARKETPLACE_DASHBOARD_URL] Marktplatz] zum Verkauf anzubieten.
 	</string>
+	<string name="InventoryOutboxInitializingTitle">
+		Initialisiere Marktplatz.
+	</string>
+	<string name="InventoryOutboxInitializingTooltip">
+	</string>
+	<string name="InventoryOutboxInitializing">
+		Wir greifen auf Ihre Konto im [[MARKETPLACE_CREATE_STORE_URL] Marktplatz-Shop] zu.
+	</string>
+	<string name="InventoryOutboxErrorTitle">
+		Marktplatz-Fehler
+	</string>
+	<string name="InventoryOutboxErrorTooltip">
+	</string>
+	<string name="InventoryOutboxError">
+		Der [[MARKETPLACE_CREATE_STORE_URL] Marktplatz-Shop] hat Fehler zurückgeliefert.
+	</string>
 	<string name="Marketplace Error None">
 		Keine Fehler
 	</string>
@@ -1472,6 +1491,9 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	</string>
 	<string name="Open landmarks">
 		Landmarken öffnen
+	</string>
+	<string name="Unconstrained">
+		Variabel
 	</string>
 	<string name="no_transfer" value=" (kein Transferieren)"/>
 	<string name="no_modify" value=" (kein Bearbeiten)"/>
@@ -1879,6 +1901,9 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="CompileQueueDownloadedCompiling">
 		Heruntergeladen, wird kompiliert
 	</string>
+	<string name="CompileQueueServiceUnavailable">
+		Kein Skriptkompilierungsdienst verfügbar
+	</string>
 	<string name="CompileQueueScriptNotFound">
 		Skript wurde auf Server nicht gefunden.
 	</string>
@@ -1895,31 +1920,31 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		Unbekannter Fehler beim Herunterladen
 	</string>
 	<string name="CompileQueueTitle">
-		SKRIPTE REKOMPILIEREN
+		Skripte rekompilieren
 	</string>
 	<string name="CompileQueueStart">
 		Rekompilieren
 	</string>
 	<string name="ResetQueueTitle">
-		SKRIPTE ZURÜCKSETZEN
+		Skripte zurücksetzen
 	</string>
 	<string name="ResetQueueStart">
 		Zurücksetzen
 	</string>
 	<string name="RunQueueTitle">
-		SKRIPTE AUSFÜHREN
+		Skripte ausführen
 	</string>
 	<string name="RunQueueStart">
 		Skript ausführen
 	</string>
 	<string name="NotRunQueueTitle">
-		SKRIPTE ANHALTEN
+		Skripte anhalten
 	</string>
 	<string name="NotRunQueueStart">
 		Skript anhalten
 	</string>
 	<string name="DeleteQueueTitle">
-		SKRIPTE LÖSCHEN
+		Skripte löschen
 	</string>
 	<string name="DeleteQueueStart">
 		Löschen
@@ -5645,6 +5670,12 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="MovelockDisabled">
 		Movelock deaktiviert.
 	</string>
+	<string name="MovelockEnabling">
+		Aktiviere Movelock...
+	</string>
+	<string name="MovelockDisabling">
+		Deaktiviere Movelock...
+	</string>
 	<string name="BusyResponse">
 		Beschäftigt-Nachricht
 	</string>
@@ -5665,7 +5696,12 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="FSCameraPositionCopied">
 		Kameraposition [POS] wurde in Zwischenablage kopiert.
 	</string>
-	
+	<string name="FSCmdLineRollDiceTotal">
+		Ergenis für [DICE]d[FACES]: [RESULT].
+	</string>
+	<string name="FSCmdLineRollDiceLimits">
+		Es müssen positive Werte für Würfel (max. 100) und Seiten (max. 1000) angegeben werden.
+	</string>
 	<string name="FSWithHavok">
 		mit Havok-Unterstützung
 	</string>
@@ -5772,6 +5808,24 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="fsbridge_created">
 		LSL-Brücke erstellt.
+	</string>
+	<string name="fsbridge_script_info">
+		Skript-Info: „[OBJECT_NAME]“: [[OBJECT_RUNNING_SCRIPT_COUNT]/[OBJECT_TOTAL_SCRIPT_COUNT]] aktive Skripte, [OBJECT_SCRIPT_MEMORY] KB Limit erlaubter Speicher, [OBJECT_SCRIPT_TIME] ms CPU-Zeit beansprucht.[PATHFINDING_TEXT]
+	</string>
+	<string name="fsbridge_script_info_pf">
+		Durchschnittlich beanspruchte CPU-Zeit für Pathfinding-Navigation: [OBJECT_CHARACTER_TIME] ms.
+	</string>
+	<string name="fsbridge_error_scriptinfonotfound">
+		Skript-Info: Zu prüfendes Objekt ungültig oder außer Reichweite.
+	</string>
+	<string name="fsbridge_error_scriptinfomalformed">
+		Skript-Info: Fehlerhafte Antwort von LSL-Brücke erhalten. Bitte erneut versuchen.
+	</string>
+	<string name="fsbridge_error_injection">
+		HINWEIS: Ein oder mehrere Skripte wurden zur Firestorm-LSL-Brücke hinzugefügt! Falls dieser Hinweis unerwartet aufgetreten ist, bitte die LSL-Brücke über die Menü-Option „Avatar“ &gt; „Avatar-Befinden“ &gt; „LSL-Brücke neu erstellen“ neu erstellen.
+	</string>
+	<string name="fsbridge_error_wrongvm">
+		HINWEIS: Das Skript der Firestorm-LSL-Brücke verwendet die alte LSO Virtuelle Maschine (16 KB Speicherlimit) anstelle von Mono (64 KB Speicherlimit), wodurch eine hohe Wahrscheinlichkeit von Stack-Heap-Collisions und Fehlern aufgrund von nicht mehr verfügbarem Speicher besteht! Bitte die LSL-Brücke über die Menü-Option „Avatar“ &gt; „Avatar-Befinden“ &gt; „LSL-Brücke neu erstellen“ neu erstellen. Falls dieser Hinweis erneut angezeigt wurde, bitte die Brücke in einer anderen Region neu erstellen.
 	</string>
 
 	<string name="QP Draw Distance">
@@ -5921,5 +5975,14 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="groupcountunlimitedstring">
 		Sie gehören [COUNT] Gruppe(n) an.
+	</string>
+	<string name="SLGridStatusInvalidMsg">
+		SL-Grid-Status-Fehler: Ungültiges Nachrichtenformat. Bitte später erneut versuchen.
+	</string>
+	<string name="SLGridStatusTimedOut">
+		SL-Grid-Status-Fehler: Zeitüberschreitung der Anfrage.
+	</string>
+	<string name="SLGridStatusOtherError">
+		SL-Grid-Status-Fehler: [STATUS] (https://de.wikipedia.org/wiki/HTTP-Statuscode).
 	</string>
 </strings>

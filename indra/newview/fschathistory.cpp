@@ -663,7 +663,7 @@ protected:
 				}
 				menu->setItemEnabled("Teleport to", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_TELEPORT_TO));
 				menu->setItemEnabled("Offer Teleport", LLAvatarActions::canOfferTeleport(mAvatarID));
-				menu->setItemEnabled("Request Teleport", LLAvatarActions::canOfferTeleport(mAvatarID));
+				menu->setItemEnabled("Request Teleport", LLAvatarActions::canRequestTeleport(mAvatarID));
 				menu->setItemEnabled("Voice Call", LLAvatarActions::canCall());
 				menu->setItemEnabled("Zoom In", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_ZOOM_IN));
 				menu->setItemEnabled("track", FSCommon::checkIsActionEnabled(mAvatarID, FS_RGSTR_ACT_TRACK_AVATAR));
@@ -927,7 +927,7 @@ static LLFastTimer::DeclareTimer FTM_APPEND_MESSAGE("Append Chat Message");
 
 void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LLStyle::Params& input_append_params)
 {
-	LLFastTimer _(FTM_APPEND_MESSAGE);
+	LL_RECORD_BLOCK_TIME(FTM_APPEND_MESSAGE);
 	// Ansa: FIRE-12754: Hack around a weird issue where the doc size magically increases by 1px
 	//       during draw if the doc exceeds the visible space and the scrollbar is getting visible.
 	mScrollToBottom = (mScroller->isAtBottom() || mScroller->getScrollbar(LLScrollContainer::VERTICAL)->getDocPosMax() <= 1);
@@ -1281,16 +1281,6 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 		{
 			message = chat.mFromName + message;
 		}
-
-		// <FS:Ansariel> Optional muted chat history
-		if (chat.mMuted)
-		{
-			LLUIColor muted_text_color = LLUIColorTable::instance().getColor("ChatHistoryMutedTextColor");
-			body_message_params.color = muted_text_color;
-			body_message_params.readonly_color = muted_text_color;
-			body_message_params.selected_color = muted_text_color;
-		}
-		// </FS:Ansariel> Optional muted chat history
 
 		if(chat.mSourceType != CHAT_SOURCE_OBJECT && (chat.mChatType == CHAT_TYPE_IM || chat.mChatType == CHAT_TYPE_IM_GROUP)) // FS::LO Fix for FIRE-6334; Fade IM Text into background of chat history default setting should not be 0.5; made object IM text not fade into the background as per phoenix behavior.
 		{

@@ -46,7 +46,7 @@ std::string LLEnvPrefs::getWaterPresetName() const
 {
 	if (mWaterPresetName.empty())
 	{
-		llwarns << "Water preset name is empty" << llendl;
+		LL_WARNS() << "Water preset name is empty" << LL_ENDL;
 	}
 
 	return mWaterPresetName;
@@ -56,7 +56,7 @@ std::string LLEnvPrefs::getSkyPresetName() const
 {
 	if (mSkyPresetName.empty())
 	{
-		llwarns << "Sky preset name is empty" << llendl;
+		LL_WARNS() << "Sky preset name is empty" << LL_ENDL;
 	}
 
 	return mSkyPresetName;
@@ -66,7 +66,7 @@ std::string LLEnvPrefs::getDayCycleName() const
 {
 	if (mDayCycleName.empty())
 	{
-		llwarns << "Day cycle name is empty" << llendl;
+		LL_WARNS() << "Day cycle name is empty" << LL_ENDL;
 	}
 
 	return mDayCycleName;
@@ -210,7 +210,7 @@ bool LLEnvManagerNew::useSkyPreset(const std::string& name, bool interpolate /*=
 
 	if (!sky_mgr.getParamSet(LLWLParamKey(name, LLEnvKey::SCOPE_LOCAL), param_set))
 	{
-		llwarns << "No sky preset named " << name << llendl;
+		LL_WARNS() << "No sky preset named " << name << LL_ENDL;
 		return false;
 	}
 
@@ -247,7 +247,7 @@ bool LLEnvManagerNew::useDayCycle(const std::string& name, LLEnvKey::EScope scop
 
 		if (!LLDayCycleManager::instance().getPreset(name, params))
 		{
-			llwarns << "No day cycle named " << name << llendl;
+			LL_WARNS() << "No day cycle named " << name << LL_ENDL;
 			return false;
 		}
 
@@ -278,7 +278,7 @@ void LLEnvManagerNew::setUseWaterPreset(const std::string& name, bool interpolat
 	// *TODO: make sure the preset exists.
 	if (name.empty())
 	{
-		llwarns << "Empty water preset name passed" << llendl;
+		LL_WARNS() << "Empty water preset name passed" << LL_ENDL;
 		return;
 	}
 
@@ -292,7 +292,7 @@ void LLEnvManagerNew::setUseSkyPreset(const std::string& name, bool interpolate 
 	// *TODO: make sure the preset exists.
 	if (name.empty())
 	{
-		llwarns << "Empty sky preset name passed" << llendl;
+		LL_WARNS() << "Empty sky preset name passed" << LL_ENDL;
 		return;
 	}
 
@@ -305,7 +305,7 @@ void LLEnvManagerNew::setUseDayCycle(const std::string& name, bool interpolate /
 {
 	if (!LLDayCycleManager::instance().presetExists(name))
 	{
-		llwarns << "Invalid day cycle name passed" << llendl;
+		LL_WARNS() << "Invalid day cycle name passed" << LL_ENDL;
 		return;
 	}
 
@@ -347,7 +347,11 @@ void LLEnvManagerNew::setUserPrefs(
 	const std::string& sky_preset,
 	const std::string& day_cycle_preset,
 	bool use_fixed_sky,
-	bool use_region_settings)
+	// <FS:Ansariel> Allow interpolation
+	//bool use_region_settings)
+	bool use_region_settings,
+	bool interpolate)
+	// </FS:Ansariel>
 {
 	// operate on members directly to avoid side effects
 	mUserPrefs.mWaterPresetName	= water_preset;
@@ -358,7 +362,10 @@ void LLEnvManagerNew::setUserPrefs(
 	mUserPrefs.mUseDayCycle			= !use_fixed_sky;
 
 	saveUserPrefs();
-	updateManagersFromPrefs(false);
+	// <FS:Ansariel> Allow interpolation
+	//updateManagersFromPrefs(false);
+	updateManagersFromPrefs(interpolate);
+	// </FS:Ansariel>
 }
 
 void LLEnvManagerNew::dumpUserPrefs()
@@ -509,9 +516,10 @@ void LLEnvManagerNew::onRegionSettingsResponse(const LLSD& content)
 		//bit of a hacky override since I've repurposed many of the settings and methods here -KC
 		//NOTE* It might not be a good idea to do this if under RLV_BHVR_SETENV -KC
 		else if (gSavedSettings.getBOOL("UseEnvironmentFromRegionAlways") 
-		 && !(rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV)))
+			&& !(rlv_handler_t::isEnabled() && gRlvHandler.hasBehaviour(RLV_BHVR_SETENV)))
 		{
-			setUseRegionSettings(true, mInterpNextChangeMessage);
+			// reset all environmental settings to track the region defaults, make this reset 'sticky' like the other sun settings.
+			setUserPrefs(getWaterPresetName(), getSkyPresetName(), getDayCycleName(), false, true, mInterpNextChangeMessage);
 		}
 	}
 
@@ -614,7 +622,7 @@ void LLEnvManagerNew::updateWaterFromPrefs(bool interpolate)
 		LLWaterParamSet params;
 		if (!water_mgr.getParamSet(water, params))
 		{
-			llwarns << "No water preset named " << water << ", falling back to defaults" << llendl;
+			LL_WARNS() << "No water preset named " << water << ", falling back to defaults" << LL_ENDL;
 			water_mgr.getParamSet("Default", params);
 
 			// *TODO: Fix user preferences accordingly.
@@ -714,19 +722,19 @@ void LLEnvManagerNew::onRegionChange()
 	LLUUID region_uuid = regionp ? regionp->getRegionID() : LLUUID::null;
 	if (region_uuid != mCurRegionUUID)
 	{
-		// Clear locally modified region settings.
-		mNewRegionPrefs.clear();
+	// Clear locally modified region settings.
+	mNewRegionPrefs.clear();
 
-		// *TODO: clear environment settings of the previous region?
+	// *TODO: clear environment settings of the previous region?
 
-		// Request environment settings of the new region.
-		mCurRegionUUID = region_uuid;
+	// Request environment settings of the new region.
+	mCurRegionUUID = region_uuid;
 		// for region crossings, interpolate the change; for teleports, don't
 		mInterpNextChangeMessage = (gAgent.getTeleportState() == LLAgent::TELEPORT_NONE);
 		LL_DEBUGS("Windlight") << (mInterpNextChangeMessage ? "Crossed" : "Teleported")
 							   << " to new region: " << region_uuid
 							   << LL_ENDL;
-		requestRegionSettings();
+	requestRegionSettings();
 	}
 	else
 	{
@@ -748,12 +756,12 @@ class WindLightRefresh : public LLHTTPNode
 		const LLSD& input) const
 	{
 		if (!input || !context || !input.isMap() || !input.has("body")) {
-			llinfos << "malformed WindLightRefresh!" << llendl;	 
+			LL_INFOS() << "malformed WindLightRefresh!" << LL_ENDL;	 
 			return;
 		}
 
 		//std::string dump = input["body"].asString();
-		//llwarns << dump << llendl;
+		//LL_WARNS() << dump << LL_ENDL;
 
 		LLSD body = input["body"];
 		LLEnvManagerNew *env = &LLEnvManagerNew::instance();
@@ -775,7 +783,7 @@ class WindLightRefresh : public LLHTTPNode
 		else {
 			env->mInterpNextChangeMessage = true;
 		}
-		llinfos << "Windlight Refresh , interpolate:" << env->mInterpNextChangeMessage << llendl;
+		LL_INFOS() << "Windlight Refresh , interpolate:" << env->mInterpNextChangeMessage << LL_ENDL;
 		env->requestRegionSettings();
 
 		// Ansa: This cause the windlight editor and others to update since the windlight has changed!

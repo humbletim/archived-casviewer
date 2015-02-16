@@ -778,11 +778,13 @@ class Windows_i686_Manifest(ViewerManifest):
           settingsFile = "settings_%s_v4.xml" % self.app_name()
 
           substitution_strings['installer_file'] = installer_file
+
+          channelSuffix = self.channel().replace( CHANNEL_VENDOR_BASE, "" ).strip()
+
           self.run_command('"' + createMSI + '" ' + self.dst_path_of( "" ) +
                            " " + self.channel() + " " + substitution_strings[ 'version' ] +
-                           " " + settingsFile + " " + installer_file[:-4] + " " + " ".join( substitution_strings[ 'version' ].split(".") ) )
-          
-
+                           " " + settingsFile + " " + installer_file[:-4] + " " + " ".join( substitution_strings[ 'version' ].split(".") ) +
+                           " " + self.args['upgradecodes'].split(",")[0] + " " + self.args['upgradecodes'].split(",")[1] + " " + channelSuffix  )
         self.fs_sign_win_installer( substitution_strings ) # <FS:ND/> Sign files, step two. Sign installer.
 
         #AO: Try to package up symbols
@@ -833,7 +835,7 @@ class Windows_i686_Manifest(ViewerManifest):
         self.package_file = installer_file
 
 
-class Darwin_i386_Manifest(ViewerManifest):
+class DarwinManifest(ViewerManifest):
     def is_packaging_viewer(self):
         # darwin requires full app bundle packaging even for debugging.
         return True
@@ -858,7 +860,7 @@ class Darwin_i386_Manifest(ViewerManifest):
 
             # most everything goes in the Resources directory
             if self.prefix(src="", dst="Resources"):
-                super(Darwin_i386_Manifest, self).construct()
+                super(DarwinManifest, self).construct()
 
                 if self.prefix("cursors_mac"):
                     self.path("*.tif")
@@ -1184,6 +1186,41 @@ class Darwin_i386_Manifest(ViewerManifest):
                                                                       self.args['viewer_flavor']))
 
 
+class Darwin_i386_Manifest(DarwinManifest):
+    def construct(self):
+        super(Darwin_i386_Manifest, self).construct()
+
+
+class Darwin_universal_Manifest(DarwinManifest):
+    def construct(self):
+        super(Darwin_universal_Manifest, self).construct()
+
+        if(self.prefix(src="../packages/bin_x86", dst="Contents/Resources/")):
+            self.path("slplugin.app")
+			
+            if self.prefix(src = "llplugin", dst="llplugin"):
+                self.path("media_plugin_quicktime.dylib")
+                self.path("media_plugin_webkit.dylib")
+                self.path("libllqtwebkit.dylib")
+            self.end_prefix("llplugin")
+
+        self.end_prefix("../packages/bin_x86");
+
+
+class Darwin_x86_64_Manifest(DarwinManifest):
+    def construct(self):
+        super(Darwin_x86_64_Manifest, self).construct()
+
+        if(self.prefix("../packages/bin_x86", dst="Contents/Resources/")):
+            self.path("slplugin.app", "slplugin.app")
+	
+            if self.prefix(src = "llplugin", dst="llplugin"):
+                self.path("media_plugin_quicktime.dylib", "media_plugin_quicktime.dylib")
+                self.path("media_plugin_webkit.dylib", "media_plugin_webkit.dylib")
+                self.path("libllqtwebkit.dylib", "libllqtwebkit.dylib")
+            self.end_prefix("llplugin")
+
+        self.end_prefix("../packages/bin_x86");
 
 
 class LinuxManifest(ViewerManifest):
@@ -1328,8 +1365,9 @@ class LinuxManifest(ViewerManifest):
         installer_name_components = ['Phoenix',self.app_name(),self.args.get('arch'),'.'.join(self.args['version'])]
         installer_name = "_".join(installer_name_components)
         #installer_name = self.installer_base_name()
-        
+
         self.strip_binaries()
+        self.fs_save_linux_symbols() # <FS:ND/> Package symbols, add debug link
 
         # Fix access permissions
         self.run_command("""
@@ -1351,11 +1389,13 @@ class LinuxManifest(ViewerManifest):
             if self.args['buildtype'].lower() == 'release':
                 # --numeric-owner hides the username of the builder for
                 # security etc.
-                self.run_command('tar -C %(dir)s --numeric-owner -cjf '
+                self.run_command('tar -C %(dir)s --numeric-owner %(fs_excludes)s -cjf '
                                  '%(inst_path)s.tar.bz2 %(inst_name)s' % {
                         'dir': self.get_build_prefix(),
                         'inst_name': installer_name,
-                        'inst_path':self.build_path_of(installer_name)})
+                        'inst_path':self.build_path_of(installer_name),
+                        'fs_excludes':self.fs_linux_tar_excludes()
+                        })
             else:
                 print "Skipping %s.tar.bz2 for non-Release build (%s)" % \
                       (installer_name, self.args['buildtype'])
@@ -1368,16 +1408,6 @@ class LinuxManifest(ViewerManifest):
         if self.args['buildtype'].lower() == 'release' and self.is_packaging_viewer():
             print "* Going strip-crazy on the packaged binaries, since this is a RELEASE build"
             self.run_command(r"find %(d)r/bin %(d)r/lib -type f \! -name update_install | xargs --no-run-if-empty strip -S" % {'d': self.get_dst_prefix()} ) # makes some small assumptions about our packaged dir structure
-
-        #AO: Try to package up symbols
-        # New Method, for reading cross platform stack traces on a linux/mac host
-        if (os.path.exists("%s/firestorm-symbols-linux.tar.bz2" % self.args['configuration'].lower())):
-            # Rename to add version numbers
-            os.rename("%s/firestorm-symbols-linux.tar.bz2" % self.args['configuration'].lower(),
-                      "%s/Phoenix_%s_%s_%s_symbols-linux.tar.bz2" % (self.args['configuration'].lower(),
-                                                                     self.fs_channel_legacy_oneword(),
-                                                                     '-'.join( self.args['version'] ),
-                                                                     self.args['viewer_flavor'] ) )
 
 
 class Linux_i686_Manifest(LinuxManifest):
@@ -1405,6 +1435,7 @@ class Linux_i686_Manifest(LinuxManifest):
           except:
               print "Leap Motion library not found"
           self.end_prefix("lib")
+          open( os.path.join(self.get_dst_prefix(), "FS_No_LD_Hacks.txt" ), "w" ).write( "1" )
 
 
 class Linux_x86_64_Manifest(LinuxManifest):

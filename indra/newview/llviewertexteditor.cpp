@@ -138,7 +138,7 @@ public:
 			if (item_ptr.isNull())
 			{
 				// check to prevent a crash. See EXT-8459.
-				llwarns << "Passed handle contains a dead inventory item. Most likely notecard has been closed and embedded item was destroyed." << llendl;
+				LL_WARNS() << "Passed handle contains a dead inventory item. Most likely notecard has been closed and embedded item was destroyed." << LL_ENDL;
 			}
 			else
 			{
@@ -187,7 +187,7 @@ public:
 		LLInventoryItem* item = gInventory.getItem(inv_item);
 		if(!item)
 		{
-			llwarns << "Item add reported, but not found in inventory!: " << inv_item << llendl;
+			LL_WARNS() << "Item add reported, but not found in inventory!: " << inv_item << LL_ENDL;
 		}
 		else
 		{
@@ -222,13 +222,6 @@ public:
 // [/SL:KB]
 		mHasMouseHover(false)
 	{
-		// <FS:Zi> Handle NULL pointers in mImage gracefully
-		if(!mImage)
-		{
-			LL_WARNS("UI") << "NULL Image pointer for text segment of embedded inventory." << LL_ENDL;
-			mImage=LLUI::getUIImage("Unknown_Icon");
-		}
-		// </FS:Zi>
 
 		mStyle = new LLStyle(LLStyle::Params().font(LLFontGL::getFontSansSerif()));
 		mToolTip = inv_item->getName() + '\n' + inv_item->getDescription();
@@ -533,7 +526,7 @@ llwchar	LLEmbeddedItems::getEmbeddedCharFromIndex(S32 index)
 {
 	if (index >= (S32)mEmbeddedIndexedChars.size())
 	{
-		llwarns << "No item for embedded char " << index << " using LL_UNKNOWN_CHAR" << llendl;
+		LL_WARNS() << "No item for embedded char " << index << " using LL_UNKNOWN_CHAR" << LL_ENDL;
 		return LL_UNKNOWN_CHAR;
 	}
 	return mEmbeddedIndexedChars[index];
@@ -589,7 +582,7 @@ S32 LLEmbeddedItems::getIndexFromEmbeddedChar(llwchar wch)
 	}
 	else
 	{
-		llwarns << "Embedded char " << wch << " not found, using 0" << llendl;
+		LL_WARNS() << "Embedded char " << wch << " not found, using 0" << LL_ENDL;
 		return 0;
 	}
 }
@@ -637,14 +630,8 @@ LLUIImagePtr LLEmbeddedItems::getItemImage(llwchar ext_char) const
 			case LLAssetType::AT_BODYPART:		img_name = "Inv_Skin";		break;
 			case LLAssetType::AT_ANIMATION:		img_name = "Inv_Animation";	break;
 			case LLAssetType::AT_GESTURE:		img_name = "Inv_Gesture";	break;
-			case LLAssetType::AT_MESH:          img_name = "Inv_Mesh";	    break;
-			// <FS:Zi> Don't crash, try to recover gracefully
-			// default: llassert(0);
-			default:
-				img_name = "Unknown_Icon";
-				LL_WARNS("UI") << "Unknown asset type " << item->getType() << " for text segment of embedded inventory." << LL_ENDL;
-				break;
-			// </FS:Zi>
+			case LLAssetType::AT_MESH:      	img_name = "Inv_Mesh";	    break;
+			default:                        	img_name = "Inv_Invalid";   break; // use the Inv_Invalid icon for undefined object types (see MAINT-3981)
 		}
 
 		return LLUI::getUIImage(img_name);
@@ -790,9 +777,9 @@ void LLViewerTextEditor::makePristine()
 	LLTextEditor::makePristine();
 }
 
-void LLViewerTextEditor::handleVisibilityChange( BOOL new_visibility )
+void LLViewerTextEditor::onVisibilityChange( BOOL new_visibility )
 {
-	LLUICtrl::handleVisibilityChange(new_visibility);
+	LLUICtrl::onVisibilityChange(new_visibility);
 }
 
 BOOL LLViewerTextEditor::handleMouseDown(S32 x, S32 y, MASK mask)
@@ -1026,7 +1013,7 @@ BOOL LLViewerTextEditor::handleDragAndDrop(S32 x, S32 y, MASK mask,
 	}
 
 	handled = TRUE;
-	lldebugst(LLERR_USER_INPUT) << "dragAndDrop handled by LLViewerTextEditor " << getName() << llendl;
+	LL_DEBUGS("UserInput") << "dragAndDrop handled by LLViewerTextEditor " << getName() << LL_ENDL;
 
 	return handled;
 }

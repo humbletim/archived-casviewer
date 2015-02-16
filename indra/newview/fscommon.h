@@ -30,8 +30,9 @@
 
 #include "fsregistrarutils.h"
 #include "llchat.h"
-#include "llpanelpeople.h"
 #include "llviewerobject.h"
+
+class LLAvatarName;
 
 const F32 AVATAR_UNKNOWN_Z_OFFSET = -1.f; // Const value for avatars at unknown height
 const F32 AVATAR_UNKNOWN_RANGE = -1.f;
@@ -40,7 +41,6 @@ void reportToNearbyChat(const std::string& message);
 std::string applyAutoCloseOoc(const std::string& message);
 std::string applyMuPose(const std::string& message);
 std::string formatString(std::string text, const LLStringUtil::format_map_t& args);
-LLPanelPeople* getPeoplePanel();
 
 namespace FSCommon
 {
@@ -77,6 +77,8 @@ namespace FSCommon
 
 	bool checkIsActionEnabled(const LLUUID& av_id, EFSRegistrarFunctionActionType);
 	LLSD populateGroupCount();
+
+	std::string getAvatarNameByDisplaySettings(const LLAvatarName& av_name);
 };
 
 #endif // FS_COMMON_H

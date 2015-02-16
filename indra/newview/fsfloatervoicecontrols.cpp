@@ -296,7 +296,7 @@ void FSFloaterVoiceControls::updateSession()
 			}
 			break;
 		default:
-			llwarning("Failed to determine voice call IM type", 0);
+			LL_WARNS() << "Failed to determine voice call IM type" << LL_ENDL;
 			mVoiceType = VC_GROUP_CHAT;
 			break;
 		}
@@ -720,7 +720,7 @@ void FSFloaterVoiceControls::updateNotInVoiceParticipantState(LLAvatarListItem* 
 		break;
 	default:
 		// for possible new future states.
-		llwarns << "Unsupported (" << getState(participant_id) << ") state for: " << item->getAvatarName()  << llendl;
+		LL_WARNS() << "Unsupported (" << getState(participant_id) << ") state for: " << item->getAvatarName()  << LL_ENDL;
 		break;
 	}
 }
@@ -758,7 +758,7 @@ void FSFloaterVoiceControls::setState(LLAvatarListItem* item, ESpeakerState stat
 		}
 		break;
 	default:
-		llwarns << "Unrecognized avatar panel state (" << state << ")" << llendl;
+		LL_WARNS("Voice") << "Unrecognized avatar panel state (" << state << ")" << LL_ENDL;
 		break;
 	}
 }

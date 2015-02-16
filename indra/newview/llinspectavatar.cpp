@@ -62,6 +62,7 @@
 #include "llmenubutton.h"
 #include "lltoggleablemenu.h"
 #include "lluictrl.h"
+#include "llviewerregion.h"
 // </FS:Ansariel>
 
 class LLFetchAvatarData;
@@ -131,6 +132,7 @@ private:
 	void onClickIM();
 	void onClickCall();
 	void onClickTeleport();
+	void onClickTeleportRequest();
 	void onClickInviteToGroup();
 	void onClickPay();
 	void onClickShare();
@@ -149,6 +151,7 @@ private:
 	bool enableMute();
 	bool enableUnmute();
 	bool enableTeleportOffer();
+	bool enableTeleportRequest();
 	bool godModeEnabled();
 
 	// Is used to determine if "Add friend" option should be enabled in gear menu
@@ -250,6 +253,7 @@ LLInspectAvatar::LLInspectAvatar(const LLSD& sd)
 	mEnableCallbackRegistrar.add("InspectAvatar.Gear.Enable", boost::bind(&LLInspectAvatar::isNotFriend, this));
 	mEnableCallbackRegistrar.add("InspectAvatar.Gear.EnableCall", boost::bind(&LLAvatarActions::canCall));
 	mEnableCallbackRegistrar.add("InspectAvatar.Gear.EnableTeleportOffer", boost::bind(&LLInspectAvatar::enableTeleportOffer, this));
+	mEnableCallbackRegistrar.add("InspectAvatar.Gear.EnableTeleportRequest", boost::bind(&LLInspectAvatar::enableTeleportRequest, this));
 	mEnableCallbackRegistrar.add("InspectAvatar.EnableMute", boost::bind(&LLInspectAvatar::enableMute, this));
 	mEnableCallbackRegistrar.add("InspectAvatar.EnableUnmute", boost::bind(&LLInspectAvatar::enableUnmute, this));
 	// </FS:Ansariel>
@@ -439,7 +443,7 @@ void LLInspectAvatar::processAvatarData(LLAvatarData* data)
 /*
 prep#
 			virtual void errorWithContent(U32 status, const std::string& reason, const LLSD& content)
-				llwarns << "MuteVoiceResponder error [status:" << status << "]: " << content << llendl;
+				LL_WARNS() << "MuteVoiceResponder error [status:" << status << "]: " << content << LL_ENDL;
 	*/
 
 void LLInspectAvatar::updateVolumeSlider()
@@ -642,7 +646,7 @@ void LLInspectAvatar::toggleSelectedVoice(bool enabled)
 
 			virtual void errorWithContent(U32 status, const std::string& reason, const LLSD& content)
 			{
-				llwarns << "MuteVoiceResponder error [status:" << status << "]: " << content << llendl;
+				LL_WARNS() << "MuteVoiceResponder error [status:" << status << "]: " << content << LL_ENDL;
 
 				if ( gIMMgr )
 				{
@@ -733,6 +737,12 @@ void LLInspectAvatar::onClickCall()
 void LLInspectAvatar::onClickTeleport()
 {
 	LLAvatarActions::offerTeleport(mAvatarID);
+	closeFloater();
+}
+
+void LLInspectAvatar::onClickTeleportRequest()
+{
+	LLAvatarActions::teleportRequest(mAvatarID);
 	closeFloater();
 }
 
@@ -881,6 +891,11 @@ bool LLInspectAvatar::enableUnmute()
 bool LLInspectAvatar::enableTeleportOffer()
 {
 	return LLAvatarActions::canOfferTeleport(mAvatarID);
+}
+
+bool LLInspectAvatar::enableTeleportRequest()
+{
+	return LLAvatarActions::canRequestTeleport(mAvatarID);
 }
 
 bool LLInspectAvatar::godModeEnabled()

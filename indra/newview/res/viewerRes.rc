@@ -129,6 +129,11 @@ TOOLPATHFINDINGPATHEND  CURSOR                  "lltoolpathfindingpathend.cur"
 TOOLPATHFINDINGPATHENDADD CURSOR                "lltoolpathfindingpathendadd.cur"
 TOOLNO                  CURSOR                  "llno.cur"
 
+TOOLBUY-LEGACY          CURSOR                  "toolbuy-legacy.cur"
+TOOLPAY-LEGACY          CURSOR                  "toolpay-legacy.cur"
+TOOLOPEN-LEGACY         CURSOR                  "toolopen-legacy.cur"
+TOOLSIT-LEGACY          CURSOR                  "toolsit-legacy.cur"
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -155,7 +160,7 @@ BEGIN
             VALUE "FileDescription", "CtrlAltStudioViewer"
             VALUE "FileVersion", "${VIEWER_VERSION_MAJOR}.${VIEWER_VERSION_MINOR}.${VIEWER_VERSION_PATCH}.${VIEWER_VERSION_REVISION}"
             VALUE "InternalName", "CtrlAltstudio Viewer"
-            VALUE "LegalCopyright", "Copyright \251 2013-2014, CtrlAltStudio"
+            VALUE "LegalCopyright", "Copyright \251 2013-2015, CtrlAltStudio"
             VALUE "OriginalFilename", "CASviewer.exe"
             VALUE "ProductName", "CtrlAltStudio Viewer"
             VALUE "ProductVersion", "${VIEWER_VERSION_MAJOR}.${VIEWER_VERSION_MINOR}.${VIEWER_VERSION_PATCH}.${VIEWER_VERSION_REVISION}"
