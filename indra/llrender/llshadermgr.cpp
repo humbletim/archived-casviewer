@@ -1208,15 +1208,6 @@ void LLShaderMgr::initAttribsAndUniforms()
 	mReservedUniforms.push_back("origin");
 	mReservedUniforms.push_back("display_gamma");
 
-// <CV:David>
-	mReservedUniforms.push_back("frame_size");
-	mReservedUniforms.push_back("sample_size");
-	mReservedUniforms.push_back("scale_in");
-	mReservedUniforms.push_back("scale_out");
-	mReservedUniforms.push_back("lens_center_in");
-	mReservedUniforms.push_back("lens_center_out");
-	mReservedUniforms.push_back("warp_params");
-// </CV:David>
 	llassert(mReservedUniforms.size() == END_RESERVED_UNIFORMS);
 
 	std::set<std::string> dupe_check;
