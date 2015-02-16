@@ -5918,7 +5918,7 @@ LLVector2 LLViewerWindow::riftUndistortCalc(ovrDistortionMesh* mesh, U32 x, U32 
 	const int SIZE_Y = 65;
 	if (SIZE_X * SIZE_Y != mesh->VertexCount)
 	{
-		llerrs << "Rift distortion mesh unexpected size!" << llendl;
+		LL_ERRS() << "Rift distortion mesh unexpected size!" << LL_ENDL;
 	}
 
 	// Search for quad that contains the normalized coordinates, centre out ...

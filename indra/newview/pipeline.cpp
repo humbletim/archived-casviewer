@@ -1025,17 +1025,17 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
         
 		if (!mScreen.allocate(resX, resY, screenFormat, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
 		// <CV:David>
-		llinfos << "gRift3DEnabled = " << gRift3DEnabled << llendl;
+		LL_INFOS() << "gRift3DEnabled = " << gRift3DEnabled << LL_ENDL;
 		if (true || gRift3DEnabled)  // DJRTODO: "true" needed at present because setRiftSDKRendering() call is in wrong place/
 		{
-			llinfos << "Oculus Rift: Rift FBOs allocation requested at " << resX << " x " << resY << llendl;
+			LL_INFOS() << "Oculus Rift: Rift FBOs allocation requested at " << resX << " x " << resY << LL_ENDL;
 			if (!mRiftLScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
-			llinfos << "Oculus Rift: L FBO resolution used: " << mRiftLScreen.getWidth() << " x " << mRiftLScreen.getHeight() << llendl;
+			LL_INFOS() << "Oculus Rift: L FBO resolution used: " << mRiftLScreen.getWidth() << " x " << mRiftLScreen.getHeight() << LL_ENDL;
 			if (!mRiftRScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
-			llinfos << "Oculus Rift: R FBO resolution used: " << mRiftRScreen.getWidth() << " x " << mRiftRScreen.getHeight() << llendl;
+			LL_INFOS() << "Oculus Rift: R FBO resolution used: " << mRiftRScreen.getWidth() << " x " << mRiftRScreen.getHeight() << LL_ENDL;
 			if (mRiftLScreen.getWidth() != mRiftRScreen.getWidth() || mRiftLScreen.getHeight() != mRiftRScreen.getHeight())
 			{
-				llwarns << "Oculus Rift: Left and right FBOs not the same size!" << llendl;
+				LL_WARNS() << "Oculus Rift: Left and right FBOs not the same size!" << LL_ENDL;
 				return false;
 			}
 			gRiftHBuffer = mRiftLScreen.getWidth();   // Actual render target size might be different from that requested.

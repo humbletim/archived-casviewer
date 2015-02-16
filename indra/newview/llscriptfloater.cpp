@@ -892,7 +892,7 @@ LLScriptFloater* LLScriptFloater::show(const LLUUID& notification_id)
 							(gViewerWindow->getWorldViewHeightScaled() - height) / 2,
 							width, height);
 
-		llinfos << "LLScriptFloater::show() @ " << width << ", " << height << llendl;
+		LL_INFOS() << "LLScriptFloater::show() @ " << width << ", " << height << LL_ENDL;
 	}
 	else
 	{

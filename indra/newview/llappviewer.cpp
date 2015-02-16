@@ -1572,7 +1572,7 @@ void LLAppViewer::initRift()
 		gRiftVFrame = gRiftVResolution;
 		gRiftAspect = (F32)gRiftHFrame / (F32)gRiftVFrame;
 		LL_INFOS("InitInfo") << "Oculus Rift: Eye resolution = " << gRiftHFrame << " x " << gRiftVFrame << LL_ENDL;
-		llinfos << "Oculus Rift: Eye display aspect = " << std::setprecision(3) << gRiftAspect << llendl;
+		LL_INFOS() << "Oculus Rift: Eye display aspect = " << std::setprecision(3) << gRiftAspect << LL_ENDL;
 		
 		// DJRTODO: Use WindowsPos ...
 		LL_INFOS("InitInfo") << "Oculus Rift: WindowsPos = " << gRiftHMD->WindowsPos.x << ", " << gRiftHMD->WindowsPos.y << LL_ENDL;
@@ -1586,8 +1586,8 @@ void LLAppViewer::initRift()
 		LL_INFOS("InitInfo") << "Oculus Rift: DisplayId = " << gRiftHMD->DisplayId << LL_ENDL;  // DJRTODO: Why is it -1? Perhaps if direct mode?
 
 		// DJRTODO: Comment out ...
-		LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << llendl;
-		LL_INFOS("InitInfo") << "Oculus Rift: Name = " << ovrHmd_GetString(gRiftHMD, "Name", "Name") << llendl;
+		LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Name = " << ovrHmd_GetString(gRiftHMD, "Name", "Name") << LL_ENDL;
 
 		ovrSizei recommendedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftHMD->DefaultEyeFov[0], 1.f);
 		ovrSizei recommendedRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftHMD->DefaultEyeFov[1], 1.f);

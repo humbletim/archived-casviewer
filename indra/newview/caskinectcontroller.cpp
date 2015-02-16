@@ -114,7 +114,7 @@ CASKinectHandler::CASKinectHandler()
 {
 	mKinectConfigured = false;
 
-	llinfos << "Kinect controller created" << llendl;
+	LL_INFOS() << "Kinect controller created" << LL_ENDL;
 	loadKinectDLL();
 
 	// Number of Kinect sensors.
@@ -122,7 +122,7 @@ CASKinectHandler::CASKinectHandler()
 	if (mKinectDLL)
 	{
 		NuiGetSensorCountFunc(&numSensors);
-		llinfos << "Number of Kinect sensors = " << numSensors << llendl;
+		LL_INFOS() << "Number of Kinect sensors = " << numSensors << LL_ENDL;
 	}
 
 	// Find the first active Kinect sensor.
@@ -162,7 +162,7 @@ CASKinectHandler::CASKinectHandler()
 	mStrafing = false;
 	mHysterisis = 0.01f;
 
-	llinfos << "Kinect sensor configured = " << mKinectConfigured << llendl;
+	LL_INFOS() << "Kinect sensor configured = " << mKinectConfigured << LL_ENDL;
 }
 
 CASKinectHandler::~CASKinectHandler()
@@ -183,13 +183,13 @@ CASKinectHandler::~CASKinectHandler()
 	}
 
 	unloadKinectDLL();
-	llinfos << "Kinect controller destroyed" << llendl;
+	LL_INFOS() << "Kinect controller destroyed" << LL_ENDL;
 }
 
 void CASKinectHandler::swapFlyUpAndFlyDown(bool swap)
 {
 	mSwapFlyUpAndFlyDown = swap;
-	llinfos << "Swap fly up and fly down = " << swap << llendl;
+	LL_INFOS() << "Swap fly up and fly down = " << swap << LL_ENDL;
 }
 
 void CASKinectHandler::scanKinect()
@@ -370,7 +370,7 @@ void CASKinectHandler::loadKinectDLL()
 		int major, minor, revision, build;
 		if (getFileVersion(kinectLibrary, &major, &minor, &revision, &build))
 		{
-			llinfos << "Kinect DLL version: " << major << "." << minor << "." << revision << "." << build << llendl;
+			LL_INFOS() << "Kinect DLL version: " << major << "." << minor << "." << revision << "." << build << LL_ENDL;
 		}
 		
 		NuiGetSensorCountFunc = (NuiGetSensorCountType)::GetProcAddress(mKinectDLL, "NuiGetSensorCount");
@@ -379,13 +379,13 @@ void CASKinectHandler::loadKinectDLL()
 		if (NuiGetSensorCountFunc == NULL ||
 			NuiCreateSensorByIndexFunc == NULL)
 		{
-			llwarns << "Could not load Kinect library functions!" << llendl;
+			LL_WARNS() << "Could not load Kinect library functions!" << LL_ENDL;
 			unloadKinectDLL();
 		}
 	}
 	else
 	{
-		llwarns << "Could not load Kinect library!" << llendl;
+		LL_WARNS() << "Could not load Kinect library!" << LL_ENDL;
 	}
 }
 

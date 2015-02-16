@@ -989,8 +989,8 @@ S32 LLViewerKeyboard::loadBindings(const std::string& filename)
 		{
 			LL_INFOS() << "Unknown mode on line " << line_count << " of key binding file " << filename << LL_ENDL;
 			// <CV:David>
-			//llinfos << "Mode must be one of FIRST_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << llendl;
-			LL_INFOS() << "Mode must be one of FIRST_PERSON, SECOND_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << llendl;
+			//LL_INFOS() << "Mode must be one of FIRST_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << LL_ENDL;
+			LL_INFOS() << "Mode must be one of FIRST_PERSON, SECOND_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << LL_ENDL;
 			// </CV:David>
 			continue;
 		}

@@ -117,10 +117,10 @@ glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloa
 			p11 = gRiftProjection11[gRiftCurrentEye];
 			p02 = mRiftProjectionOffset;
 			/*
-			llinfos << "Oculus Rift: gl_perspective = " << p00 << "  " << 0   << "  " << p02 << "  " << p03 << llendl;
-			llinfos << "                              " << 0   << "  " << p11 << "  " << 0 << "  " << 0 << llendl;
-			llinfos << "                              " << 0   << "  " << 0   << "  " << (zFar+zNear)/(zNear-zFar) << "  " << (2.f*zFar*zNear)/(zNear-zFar) << llendl;
-			llinfos << "                              " << 0   << "  " << 0   << "  " << -1.f << "  " << 0 << llendl;
+			LL_INFOS() << "Oculus Rift: gl_perspective = " << p00 << "  " << 0   << "  " << p02 << "  " << p03 << LL_ENDLl;
+			LL_INFOS() << "                              " << 0   << "  " << p11 << "  " << 0 << "  " << 0 << LL_ENDL;
+			LL_INFOS() << "                              " << 0   << "  " << 0   << "  " << (zFar+zNear)/(zNear-zFar) << "  " << (2.f*zFar*zNear)/(zNear-zFar) << LL_ENDL;
+			LL_INFOS() << "                              " << 0   << "  " << 0   << "  " << -1.f << "  " << 0 << LL_ENDL;
 			*/
 		}
 		else

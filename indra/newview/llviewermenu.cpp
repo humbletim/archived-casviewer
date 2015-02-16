@@ -10482,7 +10482,7 @@ void CVToggle3D::setStereoscopic(bool on)
 {
 	gStereoscopic3DEnabled = !gStereoscopic3DEnabled;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
-	llinfos << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << llendl;
+	LL_INFOS() << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << LL_ENDL;
 }
 
 // DJRTDODO: Temporarily use while using DK2 extended mode
@@ -10543,7 +10543,7 @@ void CVToggle3D::setRiftlook(bool on)
 
 	if (gRift3DEnabled)
 	{
-		llinfos << "Oculus Rift: Enter Riftlook mode" << llendl;
+		LL_INFOS() << "Oculus Rift: Enter Riftlook mode" << LL_ENDL;
 
 		if (!gSavedSettings.getBOOL("FullScreen"))
 		{
@@ -10566,7 +10566,7 @@ void CVToggle3D::setRiftlook(bool on)
 	}
 	else
 	{
-		llinfos << "Oculus Rift: Leave Riftlook mode" << llendl;
+		LL_INFOS() << "Oculus Rift: Leave Riftlook mode" << LL_ENDL;
 
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{

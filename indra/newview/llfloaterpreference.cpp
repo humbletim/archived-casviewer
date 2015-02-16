@@ -4139,7 +4139,7 @@ void LLFloaterPreference::onChangeOutputType()
 {
 	if (gStereoscopic3DEnabled)
 	{
-		llinfos << "Stereoscopic 3D: Leave stereoscopic 3D mode" << llendl;
+		LL_INFOS() << "Stereoscopic 3D: Leave stereoscopic 3D mode" << LL_ENDL;
 	}
 	gStereoscopic3DEnabled = FALSE;
 	gSavedSettings.setBOOL("Stereoscopic3DEnabled", gStereoscopic3DEnabled);
@@ -4162,19 +4162,19 @@ void LLFloaterPreference::onChangeRiftOperationMode()
 {
 	U32 riftOperationMode = getChild<LLRadioGroup>("RiftOperationMode")->getValue().asInteger();
 	gRiftStanding = riftOperationMode == RIFT_OPERATE_STANDING;
-	llinfos << "Oculus Rift: Operation mode = " << riftOperationMode << llendl;
+	LL_INFOS() << "Oculus Rift: Operation mode = " << riftOperationMode << LL_ENDL;
 }
 
 void LLFloaterPreference::onRiftStrafeEnable()
 {
 	gRiftStrafe = getChild<LLCheckBoxCtrl>("RiftStrafe")->getValue().asBoolean();
-	llinfos << "Oculus Rift: Strafe = " << gRiftStrafe << llendl;
+	LL_INFOS() << "Oculus Rift: Strafe = " << gRiftStrafe << LL_ENDL;
 }
 
 void LLFloaterPreference::onRiftHeadReorientsEnable()
 {
 	gRiftHeadReorients = getChild<LLCheckBoxCtrl>("RiftHeadReorients")->getValue().asBoolean();
-	llinfos << "Oculus Rift: Head reorients = " << gRiftHeadReorients << llendl;
+	LL_INFOS() << "Oculus Rift: Head reorients = " << gRiftHeadReorients << LL_ENDL;
 }
 
 void LLFloaterPreference::onChangeRiftHeadReorientsAfter()
@@ -4208,13 +4208,13 @@ void LLFloaterPreference::onChangeRiftMouseMode()
 {
 	U32 riftMouseMode = getChild<LLRadioGroup>("RiftMouseMode")->getValue().asInteger();
 	gRiftMouseCursor = riftMouseMode == RIFT_MOUSE_CURSOR;
-	llinfos << "Oculus Rift: Mouse mode = " << riftMouseMode << llendl;
+	LL_INFOS() << "Oculus Rift: Mouse mode = " << riftMouseMode << LL_ENDL;
 }
 
 void LLFloaterPreference::onRiftMouseHorizontalEnable()
 {
 	gRiftMouseHorizontal = getChild<LLCheckBoxCtrl>("RiftMouseHorizontal")->getValue().asBoolean();
-	llinfos << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << llendl;
+	LL_INFOS() << "Oculus Rift: Mouse horizontal = " << gRiftMouseHorizontal << LL_ENDL;
 }
 
 void LLFloaterPreference::onRiftHmdSettingsChanged()

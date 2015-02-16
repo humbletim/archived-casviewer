@@ -328,7 +328,7 @@ void LLViewerJoystick::init(bool autoenable)
 	// <CV:David>
 	if (mDriverState == JDS_INITIALIZED)
 	{
-		llinfos << "Joystick = " << getDescription() << llendl;
+		LL_INFOS() << "Joystick = " << getDescription() << LL_ENDL;
 	}
 	// </CV:David>
 
@@ -1956,7 +1956,7 @@ void LLViewerJoystick::setXboxControllerDefaults()
 #endif
 
 	//gViewerWindow->alertXml("CacheWillClear");
-	llinfos << "Restoring Xbox Controller defaults..." << llendl;
+	LL_INFOS() << "Restoring Xbox Controller defaults..." << LL_ENDL;
 
 	gSavedSettings.setS32("JoystickAxis0", 1); // z (at)
 	gSavedSettings.setS32("JoystickAxis1", 0); // x (slide)

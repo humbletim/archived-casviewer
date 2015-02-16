@@ -532,7 +532,7 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 	{
 		try_120Hz = true;
 		current_refresh = 120;
-		llinfos << "Try setting display output to 120Hz" << llendl;
+		LL_INFOS() << "Try setting display output to 120Hz" << LL_ENDL;
 	}
 	// <CV:David>
 
@@ -1185,7 +1185,7 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		stereo = ((pfd.dwFlags & PFD_STEREO) > 0);
 		if (!stereo)
 		{
-			LL_INFOS("Window") << "Stereoscopic 3D is not available." << llendl;
+			LL_INFOS("Window") << "Stereoscopic 3D is not available." << LL_ENDL;
 		}
 	}
 	// </CV:David>
@@ -1496,7 +1496,7 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	if (stereo)
 	{
 		stereo = ((pfd.dwFlags & PFD_STEREO) > 0);
-		LL_INFOS("Window") << "Stereoscopic 3D " << (stereo ? "successfully" : "not") << " configured." << llendl;
+		LL_INFOS("Window") << "Stereoscopic 3D " << (stereo ? "successfully" : "not") << " configured." << LL_ENDL;
 	}
 	// </CV:David>
 

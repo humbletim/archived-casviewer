@@ -2062,26 +2062,26 @@ void setRiftSDKRendering(bool on)
 
 		if (ovrHmd_ConfigureRendering(gRiftHMD, &gRiftConfig.Config, gRiftDistortionCaps, gRiftEyeFov, gRiftEyeRenderDesc))
 		{
-			llinfos << "Started Rift rendering" << llendl;
+			LL_INFOS() << "Started Rift rendering" << LL_ENDL;
 
 			gRiftEyeDeltaL = gRiftEyeRenderDesc[0].HmdToEyeViewOffset.x;  // Positive value
 			gRiftEyeDeltaR = -gRiftEyeRenderDesc[1].HmdToEyeViewOffset.x;  // Positive value
 
-			llinfos << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust L = " << gRiftEyeDeltaL << ", " << llendl;
-			llinfos << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust R = " << gRiftEyeDeltaR << ", " << llendl;
+			LL_INFOS() << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust L = " << gRiftEyeDeltaL << ", " << LL_ENDL;
+			LL_INFOS() << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust R = " << gRiftEyeDeltaR << ", " << LL_ENDL;
 
 			ovrMatrix4f projL = ovrMatrix4f_Projection(gRiftEyeRenderDesc[0].Fov, 0.01f, 10000.f, true);
 			ovrMatrix4f projR = ovrMatrix4f_Projection(gRiftEyeRenderDesc[1].Fov, 0.01f, 10000.f, true);
 			/*
-			llinfos << "Oculus Rift: L projection =  " << projL.M[0][0] << "  " << projL.M[0][1] << "  " << projL.M[0][2] << "  " << projL.M[0][3] << llendl;
-			llinfos << "                             " << projL.M[1][0] << "  " << projL.M[1][1] << "  " << projL.M[1][2] << "  " << projL.M[1][3] << llendl;
-			llinfos << "                             " << projL.M[2][0] << "  " << projL.M[2][1] << "  " << projL.M[2][2] << "  " << projL.M[2][3] << llendl;
-			llinfos << "                             " << projL.M[3][0] << "  " << projL.M[3][1] << "  " << projL.M[3][2] << "  " << projL.M[3][3] << llendl;
+			LL_INFOS() << "Oculus Rift: L projection =  " << projL.M[0][0] << "  " << projL.M[0][1] << "  " << projL.M[0][2] << "  " << projL.M[0][3] << LL_ENDL;
+			LL_INFOS() << "                             " << projL.M[1][0] << "  " << projL.M[1][1] << "  " << projL.M[1][2] << "  " << projL.M[1][3] << LL_ENDL;
+			LL_INFOS() << "                             " << projL.M[2][0] << "  " << projL.M[2][1] << "  " << projL.M[2][2] << "  " << projL.M[2][3] << LL_ENDL;
+			LL_INFOS() << "                             " << projL.M[3][0] << "  " << projL.M[3][1] << "  " << projL.M[3][2] << "  " << projL.M[3][3] << LL_ENDL;
 
-			llinfos << "Oculus Rift: R projection =  " << projR.M[0][0] << "  " << projR.M[0][1] << "  " << projR.M[0][2] << "  " << projR.M[0][3] << llendl;
-			llinfos << "                             " << projR.M[1][0] << "  " << projR.M[1][1] << "  " << projR.M[1][2] << "  " << projR.M[1][3] << llendl;
-			llinfos << "                             " << projR.M[2][0] << "  " << projR.M[2][1] << "  " << projR.M[2][2] << "  " << projR.M[2][3] << llendl;
-			llinfos << "                             " << projR.M[3][0] << "  " << projR.M[3][1] << "  " << projR.M[3][2] << "  " << projR.M[3][3] << llendl;
+			LL_INFOS() << "Oculus Rift: R projection =  " << projR.M[0][0] << "  " << projR.M[0][1] << "  " << projR.M[0][2] << "  " << projR.M[0][3] << LL_ENDL;
+			LL_INFOS() << "                             " << projR.M[1][0] << "  " << projR.M[1][1] << "  " << projR.M[1][2] << "  " << projR.M[1][3] << LL_ENDL;
+			LL_INFOS() << "                             " << projR.M[2][0] << "  " << projR.M[2][1] << "  " << projR.M[2][2] << "  " << projR.M[2][3] << LL_ENDL;
+			LL_INFOS() << "                             " << projR.M[3][0] << "  " << projR.M[3][1] << "  " << projR.M[3][2] << "  " << projR.M[3][3] << LL_ENDL;
 			*/
 			gRiftProjection00[0] = projL.M[0][0];
 			gRiftProjection00[1] = projR.M[0][0];
@@ -2090,7 +2090,7 @@ void setRiftSDKRendering(bool on)
 			gRiftProjection11[0] = projL.M[1][1];
 			gRiftProjection11[1] = projR.M[1][1];
 
-			llinfos << "L / R project offsets = " << gRiftProjection02[0] << " / " << gRiftProjection02[1] << llendl;
+			LL_INFOS() << "L / R project offsets = " << gRiftProjection02[0] << " / " << gRiftProjection02[1] << LL_ENDL;
 
 			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
 
@@ -2138,17 +2138,17 @@ void calculateRiftHmdCaps()
 {
 	gRiftHmdCaps = 0;
 
-	llinfos << "RiftVSync = " << gSavedSettings.getBOOL("RiftVSync") << llendl;
+	LL_INFOS() << "RiftVSync = " << gSavedSettings.getBOOL("RiftVSync") << LL_ENDL;
 	if (!gSavedSettings.getBOOL("RiftVSync"))
 	{
 		gRiftHmdCaps |= ovrHmdCap_NoVSync;
 	}
-	llinfos << "RiftLowPersistence = " << gSavedSettings.getBOOL("RiftLowPersistence") << llendl;
+	LL_INFOS() << "RiftLowPersistence = " << gSavedSettings.getBOOL("RiftLowPersistence") << LL_ENDL;
 	if (gSavedSettings.getBOOL("RiftLowPersistence"))
 	{
 		gRiftHmdCaps |= ovrHmdCap_LowPersistence;
 	}
-	llinfos << "RiftDynamicPrediction = " << gSavedSettings.getBOOL("RiftDynamicPrediction") << llendl;
+	LL_INFOS() << "RiftDynamicPrediction = " << gSavedSettings.getBOOL("RiftDynamicPrediction") << LL_ENDL;
 	if (gSavedSettings.getBOOL("RiftDynamicPrediction"))
 	{
 		gRiftHmdCaps |= ovrHmdCap_DynamicPrediction;
@@ -2157,13 +2157,13 @@ void calculateRiftHmdCaps()
 
 void calculateRiftDistortionCaps()
 {
-	llinfos << "RiftTimewarp = " << gSavedSettings.getBOOL("RiftTimewarp") << llendl;
+	LL_INFOS() << "RiftTimewarp = " << gSavedSettings.getBOOL("RiftTimewarp") << LL_ENDL;
 	unsigned timewarp = gSavedSettings.getBOOL("RiftTimewarp") ? ovrDistortionCap_TimeWarp : 0;
 
-	llinfos << "RiftTimewarpWaits = " << gSavedSettings.getBOOL("RiftTimewarpWaits") << llendl;
+	LL_INFOS() << "RiftTimewarpWaits = " << gSavedSettings.getBOOL("RiftTimewarpWaits") << LL_ENDL;
 	unsigned noSpinwaits = !gSavedSettings.getBOOL("RiftTimewarpWaits") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
 
-	llinfos << "RiftOverdrive = " << gSavedSettings.getBOOL("RiftOverdrive") << llendl;
+	LL_INFOS() << "RiftOverdrive = " << gSavedSettings.getBOOL("RiftOverdrive") << LL_ENDL;
 	unsigned overdrive = gSavedSettings.getBOOL("RiftOverdrive") ? ovrDistortionCap_Overdrive : 0;
 
 	gRiftDistortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic

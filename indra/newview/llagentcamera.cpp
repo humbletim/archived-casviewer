@@ -2236,7 +2236,7 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
 		{
-			llinfos << "Oculus Rift: Sensor found toggling into Riftlook" << llendl;  // DJRTODO: Delete? No, if can cope with sensor being plugged in at runtime.
+			LL_INFOS() << "Oculus Rift: Sensor found toggling into Riftlook" << LL_ENDL;  // DJRTODO: Delete? No, if can cope with sensor being plugged in at runtime.
 
 			ovrHmd_RecenterPose(gRiftHMD);
 			mLastRiftYaw = 0.f;
@@ -2246,7 +2246,7 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 		}
 		else
 		{
-			llinfos << "Oculus Rift: Sensor NOT found toggling into Riftlook" << llendl;
+			LL_INFOS() << "Oculus Rift: Sensor NOT found toggling into Riftlook" << LL_ENDL;
 			// DJTDODO: What to do?
 		}
 
@@ -3087,7 +3087,7 @@ void LLAgentCamera::zeroSensors()
 {
 	if (gRift3DEnabled)
 	{
-		llinfos << "LLAgentCamera::zeroSensors()" << llendl;
+		LL_INFOS() << "LLAgentCamera::zeroSensors()" << LL_ENDL;
 
 		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
