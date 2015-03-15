@@ -545,8 +545,9 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 	S32 dy = y - (gViewerWindow->getWindowHeightScaled() / 2);
 	if (gRift3DEnabled)
 	{
-		dx += 6;  // HACK: This is a temporary(?) work-around to make dragging physical objects work somewhat in Riftlook for DK1.
-		dy -= 1;
+		// HACK: This is a temporary(?) work-around to make dragging physical objects work somewhat in Riftlook.
+		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		dx += (14 + uiDepth);
 	}
 	// </CV:David>
 
