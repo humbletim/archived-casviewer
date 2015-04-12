@@ -92,6 +92,9 @@ BOOL LLPreviewNotecard::postBuild()
 	childSetAction("Delete", onClickDelete, this);
 	getChildView("Delete")->setEnabled(false);
 
+	// <FS:Ansariel> FIRE-13969: Search button
+	getChild<LLButton>("Search")->setClickedCallback(boost::bind(&LLPreviewNotecard::onSearchButtonClicked, this));
+
 	const LLInventoryItem* item = getItem();
 
 	childSetCommitCallback("desc", LLPreview::onText, this);
@@ -356,6 +359,10 @@ void LLPreviewNotecard::onLoadComplete(LLVFS *vfs,
 			}
 
 			previewEditor->makePristine();
+
+			// <FS:Ansariel> Force spell checker to check again after saving a NC,
+			//               or misspelled words wouldn't be shown
+			previewEditor->onSpellCheckSettingsChange();
 
 			const LLInventoryItem* item = preview->getItem();
 			BOOL modifiable = item && gAgent.allowOperation(PERM_MODIFY,
@@ -647,5 +654,22 @@ bool LLPreviewNotecard::handleDeleteChangesDialog(const LLSD& notification, cons
 	return false;
 }
 // [/FS:CR]
+
+// <FS:Ansariel> FIRE-13969: Search button
+void LLPreviewNotecard::onSearchButtonClicked()
+{
+	LLFloaterSearchReplace::show(getEditor());
+}
+// </FS:Ansariel>
+
+// <FS:Ansariel> FIRE-9039: Close notecard after choosing "Save" in close confirmation
+void LLPreviewNotecard::checkCloseAfterSave()
+{
+	if (mCloseAfterSave)
+	{
+		closeFloater();
+	}
+}
+// </FS:Ansariel>
 
 // EOF

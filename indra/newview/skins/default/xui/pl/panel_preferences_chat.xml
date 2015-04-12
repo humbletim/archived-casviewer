@@ -20,7 +20,6 @@
 				<radio_item label="Duża" name="consradio3"/>
 				<radio_item label="Ogromna" name="consradio4"/>
 			</radio_group>
-			<check_box label="Wyświetlaj czaty grupowe, wiadomości IM oraz czat lokalny zawsze dużymi literami" name="chat_always_in_uppercase"/>
 			<check_box label="Używaj animacji podczas pisania" name="play_typing_animation"/>
 			<check_box label="Odtwarzaj animacje awatara (np. krzyczenie)" name="play_avatar_animations"/>
 			<check_box label="Dźwięk pisania, gdy inne osoby piszą w czacie lokalnym" name="play_typing_sound"/>
@@ -143,6 +142,7 @@
 			<check_box label="Odznaczaj pasek czatu po wysłaniu wiadomości" name="CloseChatOnReturn"/>
 			<check_box label="Odznaczaj także historię czatu" name="FSUnfocusChatHistoryOnReturn" left_delta="285"/>
 			<check_box name="FSMarkObjects" label="Oznaczaj obiekty frazą (bez nazwy) gdy wysyłają coś na czat, by zapobiec oszustwom"/>
+			<check_box name="FSTypingChevronPrefix" label="Dodawaj znak (&gt;) w tytułach okien wiadomości IM przed imionami osób, które piszą"/>
 			<text name="group_enhancements">
 				Czat grupowy:
 			</text>
@@ -175,6 +175,8 @@
 			</combo_box>
 			<check_box name="FSMuteAllGroups" label="Wyłącz WSZYSTKIE czaty grupowe"/>
 			<check_box name="FSMuteGroupWhenNoticesDisabled" label="Gdy opcja 'otrzymuj ogłoszenia grupy' jest wyłączona - wyłączaj także czat grupy"/>
+			<check_box name="FSIgnoreAdHocSessions" label="Automatycznie ignoruj i opuszczaj wszystkie czaty konferencji (ad-hoc)"/>
+			<check_box name="FSReportIgnoredAdHocSession" label="Zgłaszaj ignorowanie czatu konferencji w czacie lokalnym"/>
 			<text name="logging_enhancements">
 				Znaczniki czasu:
 			</text>
@@ -226,6 +228,20 @@
 			<check_box name="RadarEnterChannelAlert" label="Zgłaszaj alerty wejść skryptom"/>
 			<check_box name="RadarLeaveChannelAlert" label="Zgłaszaj alerty wyjść skryptom"/>
 			<check_box name="FSRadarEnhanceByBridge" label="Wspomaganie radaru za pomocą Mostu LSL" tool_tip="Gdy ta opcja jest włączona, to funkcje radaru odpowiedzialne za ustalanie wysokości na jakiej znajdują się awatary są wspomagane przez Most LSL - zwłaszcza gdy jest ona duża i osoby są poza polem widzenia."/>
+			<text name="AgeAlertLabel">
+				Powiadom o wieku:
+			</text>
+			<text name="RadarAvatarAgeAlertValueLabel">
+				Próg:
+			</text>
+			<spinner name="RadarAvatarAgeAlertValue" tool_tip="Koloruje również kolumnę wieku w radarze. Ustaw na -1, aby wyłączyć." />
+			<text name="RadarAvatarAgeAlertValueLabelSuffix">
+				Dni
+			</text>
+			<check_box name="RadarAvatarAgeAlert" label="Radar ma informować, gdy awatar jest młodszy, niż ustawiono powyżej" />
+			<check_box name="PlayModeUISndRadarAgeAlert" width="150" label="Odtwórz UUID dźwięku:" />
+			<button name="Prev_UISndRadarAgeAlert" tool_tip="Podgląd dźwięku." />
+			<button name="Def_UISndRadarAgeAlert" tool_tip="Resetuj do domyślnego UUID." />
 		</panel>
 		<panel label="Detektor słów" name="ChatKeywordAlerts">
 			<check_box name="FSKeywordOn" label="Włącz detektor słów"/>

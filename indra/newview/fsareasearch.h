@@ -47,6 +47,7 @@ class LLContextMenu;
 class LLSpinCtrl;
 class LLComboBox;
 
+class FSAreaSearchListCtrl;
 class FSPanelAreaSearchList;
 class FSPanelAreaSearchFind;
 class FSPanelAreaSearchFilter;
@@ -110,6 +111,7 @@ public:
 
 	/*virtual*/ BOOL postBuild();
 	virtual void draw();
+	virtual void onOpen(const LLSD& key);
 
 	void callbackLoadFullName(const LLUUID& id, const std::string& full_name);
 	void processObjectProperties(LLMessageSystem* msg);
@@ -131,7 +133,7 @@ public:
 
 	void setFilterForSale(bool b) { mFilterForSale = b; }
 	void setFilterLocked(bool b) { mFilterLocked = b; }
-	void setFilterPhysicial(bool b) { mFilterPhysicial = b; }
+	void setFilterPhysical(bool b) { mFilterPhysical = b; }
 	void setFilterTemporary(bool b) { mFilterTemporary = b; }
 	void setFilterPhantom(bool b) { mFilterPhantom = b; }
 	void setFilterAttachment(bool b) { mFilterAttachment = b; }
@@ -155,17 +157,6 @@ public:
 	void setFilterDistance(bool b) { mFilterDistance = b; }
 	void setFilterDistanceMin(S32 s) { mFilterDistanceMin = s; }
 	void setFilterDistanceMax(S32 s) { mFilterDistanceMax = s; }
-	
-	void setColumnDistance(bool b) { mColumnDistance = b; }
-	void setColumnName(bool b) { mColumnName = b; }
-	void setColumnDescription(bool b) { mColumnDescription = b; }
-	void setColumnPrice(bool b) { mColumnPrice = b; }
-	void setColumnLandImpact(bool b) { mColumnLandImpact = b; }
-	void setColumnPrimCount(bool b) { mColumnPrimCount = b; }
-	void setColumnOwner(bool b) { mColumnOwner = b; }
-	void setColumnGroup(bool b) { mColumnGroup = b; }
-	void setColumnCreator(bool b) { mColumnCreator = b; }
-	void setColumnLastOwner(bool b) { mColumnLastOwner = b; }
 	
 	bool isActive() { return mActive; }
 
@@ -203,9 +194,9 @@ private:
 	boost::regex mRegexSearchLastOwner;
 
 	LLFrameTimer mLastUpdateTimer;
-	LLFrameTimer mLastProptiesRecievedTimer;
+	LLFrameTimer mLastPropertiesReceivedTimer;
 
-	std::vector<LLUUID> mNamesRequested;
+	uuid_vec_t mNamesRequested;
 
 	LLViewerRegion* mLastRegion;
 	
@@ -235,7 +226,7 @@ private:
 	bool mExcludeNeighborRegions;
 
 	bool mFilterLocked;
-	bool mFilterPhysicial;
+	bool mFilterPhysical;
 	bool mFilterTemporary;
 	bool mFilterPhantom;
 	bool mFilterAttachment;
@@ -251,17 +242,6 @@ private:
 
 	bool mFilterClickAction;
 	U8 mFilterClickActionType;
-	
-	bool mColumnDistance;
-	bool mColumnName;
-	bool mColumnDescription;
-	bool mColumnPrice;
-	bool mColumnLandImpact;
-	bool mColumnPrimCount;
-	bool mColumnOwner;
-	bool mColumnGroup;
-	bool mColumnCreator;
-	bool mColumnLastOwner;
 
 protected:
 	static void* createPanelList(void* data);
@@ -280,12 +260,14 @@ class FSPanelAreaSearchList
 :	public LLPanel
 {
 	LOG_CLASS(FSPanelAreaSearchList);
+	friend class FSAreaSearchMenu;
+	friend class FSPanelAreaSearchOptions;
+
 public:
 	FSPanelAreaSearchList(FSAreaSearch* pointer);
 	virtual ~FSPanelAreaSearchList();
 
 	/*virtual*/ BOOL postBuild();
-	/*virtual*/ BOOL handleRightMouseDown(S32 x, S32 y, MASK mask);
 	
 	void setCounterText();
 	void setCounterText(LLStringUtil::format_map_t args);
@@ -293,7 +275,8 @@ public:
 	void updateName(LLUUID id, std::string name);
 	void touchObject(LLViewerObject* objectp);
 
-	LLScrollListCtrl* getResultList() { return mResultList; }
+	FSAreaSearchListCtrl* getResultList() { return mResultList; }
+	void updateResultListColumns();
 
 	void setAgentLastPosition(LLVector3d d) { mAgentLastPosition = d; }
 	LLVector3d getAgentLastPosition() { return mAgentLastPosition; }
@@ -304,9 +287,11 @@ private:
 	void buyObject(FSObjectProperties& details, LLViewerObject* objectp);
 	void onCommitCheckboxBeacons();
 
-	LLContextMenu* mPopupMenu;
 	bool onContextMenuItemClick(const LLSD& userdata);
 	bool onContextMenuItemEnable(const LLSD& userdata);
+
+	void onColumnVisibilityChecked(const LLSD& userdata);
+	bool onEnableColumnVisibilityChecked(const LLSD& userdata);
 
 	F32 getBBoxAspectRatio(const LLBBox& bbox, const LLVector3& normal, F32* height, F32* width, F32* depth);
 
@@ -314,9 +299,12 @@ private:
 
 	FSAreaSearch* mFSAreaSearch;
 	LLButton* mRefreshButton;
-	LLScrollListCtrl* mResultList;
+	FSAreaSearchListCtrl* mResultList;
 	LLCheckBoxCtrl* mCheckboxBeacons;
 	LLTextBox* mCounterText;
+
+	std::map<std::string, U32> mColumnBits;
+	boost::signals2::connection mFSAreaSearchColumnConfigConnection;
 };
 
 
@@ -411,6 +399,7 @@ public:
 
 private:
 	void onCommitCheckboxDisplayColumn(const LLSD& userdata);
+	bool onEnableColumnVisibilityChecked(const LLSD& userdata);
 
 	FSAreaSearch* mFSAreaSearch;
 	

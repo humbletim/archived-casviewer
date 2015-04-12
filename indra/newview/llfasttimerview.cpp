@@ -256,6 +256,14 @@ BOOL LLFastTimerView::handleHover(S32 x, S32 y, MASK mask)
 			bar_index < end_index; 
 			++bar_index)
 		{
+			// <FS:Ansariel> FIRE-14600: mBars might be null here
+			if (!row.mBars)
+			{
+				LL_WARNS() << "Skipping null row bars" << LL_ENDL;
+				continue;
+			}
+			// </FS:Ansariel>
+
 			TimerBar& bar = row.mBars[bar_index];
 			if (bar.mSelfStart > mouse_time_offset)
 			{
@@ -404,6 +412,15 @@ void LLFastTimerView::draw()
 	if (!mPauseHistory)
 	{
 		mRecording.appendRecording(LLTrace::get_frame_recording().getLastRecording());
+		
+		// <FS:ND> Clean up memory. Would be clever if ~TimerBarRow existed and did that, but nope. So do it by hand.
+		if( mTimerBarRows.size() )
+		{
+			delete[] mTimerBarRows[ mTimerBarRows.size()-1 ].mBars;
+			mTimerBarRows[ mTimerBarRows.size()-1 ].mBars = 0; // Might look nonsensical, but in case someone adds a dtor later, make sure we're not double freeing.
+		}
+		// </FS:ND>
+
 		mTimerBarRows.pop_back();
 		mTimerBarRows.push_front(TimerBarRow());
 	}

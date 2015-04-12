@@ -920,6 +920,13 @@ void LLVOAvatarSelf::requestStopMotion(LLMotion* motion)
 }
 
 // virtual
+bool LLVOAvatarSelf::hasMotionFromSource(const LLUUID& source_id)
+{
+	AnimSourceIterator motion_it = mAnimationSources.find(source_id);
+	return motion_it != mAnimationSources.end();
+}
+
+// virtual
 void LLVOAvatarSelf::stopMotionFromSource(const LLUUID& source_id)
 {
 	for (AnimSourceIterator motion_it = mAnimationSources.find(source_id); motion_it != mAnimationSources.end(); )
@@ -927,6 +934,7 @@ void LLVOAvatarSelf::stopMotionFromSource(const LLUUID& source_id)
 		gAgent.sendAnimationRequest(motion_it->second, ANIM_REQUEST_STOP);
 		mAnimationSources.erase(motion_it++);
 	}
+
 
 	LLViewerObject* object = gObjectList.findObject(source_id);
 	if (object)
@@ -1399,7 +1407,11 @@ const LLViewerJointAttachment *LLVOAvatarSelf::attachObject(LLViewerObject *view
 		// <FS:TT> Client LSL Bridge
 		if (attachment->getName() == FS_BRIDGE_ATTACHMENT_POINT_NAME && gSavedSettings.getBOOL("UseLSLBridge"))
 		{
-			FSLSLBridge::instance().processAttach(viewer_object, attachment);
+			LLViewerInventoryItem* inv_object = gInventory.getItem(viewer_object->getAttachmentItemID());
+			if (inv_object && inv_object->getName() == FSLSLBridge::instance().currentFullName())
+			{
+				FSLSLBridge::instance().processAttach(viewer_object, attachment);
+			}
 		}
 		// </FS:TT>
 		updateLODRiggedAttachments();		
@@ -1457,9 +1469,13 @@ BOOL LLVOAvatarSelf::detachObject(LLViewerObject *viewer_object)
 			}
 
 			// <FS:TT> Client LSL Bridge
-			if (pAttachPt->getName() == FS_BRIDGE_ATTACHMENT_POINT_NAME && gSavedSettings.getBOOL("UseLSLBridge"))
+			if (pAttachPt->getName() == FS_BRIDGE_ATTACHMENT_POINT_NAME)
 			{
-				FSLSLBridge::instance().processDetach(viewer_object, pAttachPt);
+				LLViewerInventoryItem* inv_object = gInventory.getItem(viewer_object->getAttachmentItemID());
+				if (inv_object && inv_object->getName() == FSLSLBridge::instance().currentFullName())
+				{
+					FSLSLBridge::instance().processDetach(viewer_object, pAttachPt);
+				}
 			}
 			// </FS:TT>
 			break;
@@ -1517,7 +1533,8 @@ BOOL LLVOAvatarSelf::detachAttachmentIntoInventory(const LLUUID &item_id)
 	LLInventoryItem* item = gInventory.getItem(item_id);
 //	if (item)
 // [RLVa:KB] - Checked: 2010-09-04 (RLVa-1.2.1c) | Added: RLVa-1.2.1c
-	if ( (item) && ((!rlv_handler_t::isEnabled()) || (gRlvAttachmentLocks.canDetach(item))) )
+	if ( (item) && (((!rlv_handler_t::isEnabled()) || (gRlvAttachmentLocks.canDetach(item))) ||
+		FSLSLBridge::instance().canDetach(item->getUUID())) )
 // [/RLVa:KB]
 	{
 		gMessageSystem->newMessageFast(_PREHASH_DetachAttachmentIntoInv);

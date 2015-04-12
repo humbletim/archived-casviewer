@@ -526,7 +526,7 @@ BOOL FSFloaterIM::onSendSysinfo(const LLSD& notification, const LLSD& response)
 
 void FSFloaterIM::onSysinfoButtonVisibilityChanged(const LLSD& yes)
 {
-	mSysinfoButton->setVisible(yes.asBoolean() /* && mIsSupportIM */);
+	getChild<LLUICtrl>("send_sysinfo_btn_panel")->setVisible(yes.asBoolean() /* && mIsSupportIM */);
 }
 // support sysinfo button -Zi
 
@@ -552,14 +552,11 @@ void FSFloaterIM::updateCallButton()
 		return;
 	}
 	
-	//bool session_initialized = session->mSessionInitialized;
+	bool session_initialized = session->mSessionInitialized;
 	bool callback_enabled = session->mCallBackEnabled;
 
-	//[Possible FIX-FIRE-2012] GROUP and Ad-Hoc don't have session initialized --> removing that from the condition to enable_connect
-	//BOOL enable_connect = session_initialized
-	//&& voice_enabled
-	//&& callback_enabled;
-	BOOL enable_connect = voice_enabled
+	BOOL enable_connect = session_initialized
+	&& voice_enabled
 	&& callback_enabled;
 
 	getChild<LLButton>("call_btn")->setEnabled(enable_connect);
@@ -568,36 +565,10 @@ void FSFloaterIM::updateCallButton()
 void FSFloaterIM::updateButtons(bool is_call_started)
 {
 	LL_DEBUGS("FSFloaterIM") << "FSFloaterIM::updateButtons" << LL_ENDL;
-	getChild<LLLayoutStack>("ls_control_panel")->reshape(240,20,true);
 	getChildView("end_call_btn_panel")->setVisible( is_call_started);
 	getChildView("voice_ctrls_btn_panel")->setVisible( is_call_started);
 	getChildView("call_btn_panel")->setVisible( ! is_call_started);
 	updateCallButton();
-	
-	// AO: force resize the widget because llpanels don't resize properly on vis change.
-	LL_DEBUGS("FSFloaterIM") << "force resize the widget" << LL_ENDL;
-	LLIMModel::LLIMSession* pIMSession = LLIMModel::instance().findIMSession(mSessionID);
-	switch (pIMSession->mSessionType)
-	{
-		case LLIMModel::LLIMSession::P2P_SESSION:	// One-on-one IM
-		{
-			getChild<LLLayoutStack>("ls_control_panel")->reshape(230,20,true);
-			break;
-		}
-		case LLIMModel::LLIMSession::GROUP_SESSION:	// Group chat
-		{
-			getChild<LLLayoutStack>("ls_control_panel")->reshape(170,20,true);
-			break;
-		}
-		case LLIMModel::LLIMSession::ADHOC_SESSION:	// Conference chat
-		{
-			getChild<LLLayoutStack>("ls_control_panel")->reshape(150,20,true);
-			break;
-		}
-		default:
-			break;
-	}
-	
 }
 
 void FSFloaterIM::changed(U32 mask)
@@ -647,7 +618,7 @@ BOOL FSFloaterIM::postBuild()
 	button->setClickedCallback(boost::bind(&FSFloaterIM::onSlide, this));
 
 	// support sysinfo button -Zi
-	mSysinfoButton=getChild<LLButton>("send_sysinfo_btn");
+	mSysinfoButton = getChild<LLButton>("send_sysinfo_btn");
 	onSysinfoButtonVisibilityChanged(FALSE);
 	
 	// type-specfic controls
@@ -663,7 +634,6 @@ BOOL FSFloaterIM::postBuild()
 				getChild<LLLayoutPanel>("gprofile_panel")->setVisible(false);
 				getChild<LLLayoutPanel>("end_call_btn_panel")->setVisible(false);
 				getChild<LLLayoutPanel>("voice_ctrls_btn_panel")->setVisible(false);
-				getChild<LLLayoutStack>("ls_control_panel")->reshape(200,20,true);
 				
 				LL_DEBUGS("FSFloaterIM") << "adding FSFloaterIM removing/adding particularfriendobserver" << LL_ENDL;
 				LLAvatarTracker::instance().removeParticularFriendObserver(mOtherParticipantUUID, this);
@@ -700,7 +670,6 @@ BOOL FSFloaterIM::postBuild()
 				getChild<LLLayoutPanel>("pay_panel")->setVisible(false);
 				getChild<LLLayoutPanel>("end_call_btn_panel")->setVisible(false);
 				getChild<LLLayoutPanel>("voice_ctrls_btn_panel")->setVisible(false);
-				getChild<LLLayoutStack>("ls_control_panel")->reshape(140,20,true);
 				
 				LL_DEBUGS("FSFloaterIM") << "LLIMModel::LLIMSession::GROUP_SESSION end" << LL_ENDL;
 				break;
@@ -716,7 +685,6 @@ BOOL FSFloaterIM::postBuild()
 				getChild<LLLayoutPanel>("pay_panel")->setVisible(false);
 				getChild<LLLayoutPanel>("end_call_btn_panel")->setVisible(false);
 				getChild<LLLayoutPanel>("voice_ctrls_btn_panel")->setVisible(false);
-				getChild<LLLayoutStack>("ls_control_panel")->reshape(120,20,true);
 				LL_DEBUGS("FSFloaterIM") << "LLIMModel::LLIMSession::ADHOC_SESSION end" << LL_ENDL;
 				break;
 			}
@@ -749,29 +717,27 @@ BOOL FSFloaterIM::postBuild()
 	mChatLayoutPanelHeight = mChatLayoutPanel->getRect().getHeight();
 	mInputEditorPad = mChatLayoutPanelHeight - mInputEditor->getRect().getHeight();
 	
-	mInputEditor->setAutoreplaceCallback(boost::bind(&LLAutoReplace::autoreplaceCallback, LLAutoReplace::getInstance(), _1, _2, _3, _4, _5));	
-	mInputEditor->setFocusReceivedCallback( boost::bind(onInputEditorFocusReceived, _1, this) );
-	mInputEditor->setFocusLostCallback( boost::bind(onInputEditorFocusLost, _1, this) );
-	mInputEditor->setKeystrokeCallback( boost::bind(onInputEditorKeystroke, _1, this) );
+	mInputEditor->setAutoreplaceCallback(boost::bind(&LLAutoReplace::autoreplaceCallback, LLAutoReplace::getInstance(), _1, _2, _3, _4, _5));
+	mInputEditor->setFocusReceivedCallback(boost::bind(&FSFloaterIM::onInputEditorFocusReceived, this));
+	mInputEditor->setFocusLostCallback(boost::bind(&FSFloaterIM::onInputEditorFocusLost, this));
+	mInputEditor->setKeystrokeCallback(boost::bind(&FSFloaterIM::onInputEditorKeystroke, this));
 	mInputEditor->setTextExpandedCallback(boost::bind(&FSFloaterIM::reshapeChatLayoutPanel, this));
-	mInputEditor->setCommitOnFocusLost( FALSE );
+	mInputEditor->setCommitOnFocusLost(FALSE);
 	mInputEditor->setPassDelete(TRUE);
 	mInputEditor->setFont(LLViewerChat::getChatFont());
 	mInputEditor->enableSingleLineMode(gSavedSettings.getBOOL("FSUseSingleLineChatEntry"));
 
 	childSetCommitCallback("chat_editor", onSendMsg, this);
 
-	LLCheckBoxCtrl* FSPrefixBox = getChild<LLCheckBoxCtrl>("FSSupportGroupChatPrefix_toggle");
-
 	BOOL isFSSupportGroup = FSData::getInstance()->isSupportGroup(mSessionID);
-	FSPrefixBox->setVisible(isFSSupportGroup);
+	getChild<LLUICtrl>("support_panel")->setVisible(isFSSupportGroup);
 
 	// <FS:Zi> Viewer version popup
-	if(isFSSupportGroup)
+	if (isFSSupportGroup)
 	{
 		// check if the dialog was set to ignore
 		LLNotificationTemplatePtr templatep = LLNotifications::instance().getTemplate("FirstJoinSupportGroup");
-		if(!templatep.get()->mForm->getIgnored())
+		if (!templatep.get()->mForm->getIgnored())
 		{
 			// if not, give the user a choice, whether to enable the version prefix or not
 			LLSD args;
@@ -1197,10 +1163,14 @@ void FSFloaterIM::sessionInitReplyReceived(const LLUUID& im_session_id)
 		mControlPanel->setSessionId(im_session_id);
 	}
 
-	// updating "Call" button from group control panel here to enable it without placing into draw() (EXT-4796)
-	if(gAgent.isInGroup(im_session_id))
+	// updating "Call" button from group/ad-hoc control panel here to enable it without placing into draw() (EXT-4796)
+	LLIMModel::LLIMSession* session = LLIMModel::instance().findIMSession(im_session_id);
+	if (session)
 	{
-		updateCallButton();
+		if ((session->isGroupSessionType() && gAgent.isInGroup(im_session_id)) || session->isAdHocSessionType())
+		{
+			updateCallButton();
+		}
 	}
 	
 	//*TODO here we should remove "starting session..." warning message if we added it in postBuild() (IB)
@@ -1338,42 +1308,35 @@ void FSFloaterIM::reloadMessages(bool clean_messages/* = false*/)
 	updateMessages();
 }
 
-// static
-void FSFloaterIM::onInputEditorFocusReceived( LLFocusableElement* caller, void* userdata )
+void FSFloaterIM::onInputEditorFocusReceived()
 {
-	FSFloaterIM* self= (FSFloaterIM*) userdata;
-
 	// Allow enabling the FSFloaterIM input editor only if session can accept text
 	LLIMModel::LLIMSession* im_session =
-		LLIMModel::instance().findIMSession(self->mSessionID);
+		LLIMModel::instance().findIMSession(mSessionID);
 	//TODO: While disabled lllineeditor can receive focus we need to check if it is enabled (EK)
-	if( im_session && im_session->mTextIMPossible && self->mInputEditor->getEnabled())
+	if (im_session && im_session->mTextIMPossible && mInputEditor->getEnabled())
 	{
 		//in disconnected state IM input editor should be disabled
-		self->mInputEditor->setEnabled(!gDisconnected);
+		mInputEditor->setEnabled(!gDisconnected);
 	}
 }
 
-// static
-void FSFloaterIM::onInputEditorFocusLost(LLFocusableElement* caller, void* userdata)
+void FSFloaterIM::onInputEditorFocusLost()
 {
-	FSFloaterIM* self = (FSFloaterIM*) userdata;
-	self->setTyping(false);
+	setTyping(false);
 }
 
-// static
-void FSFloaterIM::onInputEditorKeystroke(LLTextEditor* caller, void* userdata)
+void FSFloaterIM::onInputEditorKeystroke()
 {
-	FSFloaterIM* self = (FSFloaterIM*)userdata;
-	std::string text = self->mInputEditor->getText();
+	std::string text = mInputEditor->getText();
 	if (!text.empty())
 	{
-		self->setTyping(true);
+		setTyping(true);
 	}
 	else
 	{
 		// Deleting all text counts as stopping typing.
-		self->setTyping(false);
+		setTyping(false);
 	}
 }
 
@@ -1687,7 +1650,7 @@ void FSFloaterIM::addTypingIndicator(const LLIMInfo* im_info)
 
 		// Save and set new title
 		mSavedTitle = getTitle();
-		setTitle (mTypingStart);
+		setTitle((gSavedSettings.getBOOL("FSTypingChevronPrefix") ? "> " : "") + mTypingStart.getString());
 
 		// Update speaker
 		LLIMSpeakerMgr* speaker_mgr = LLIMModel::getInstance()->getSpeakerManager(mSessionID);

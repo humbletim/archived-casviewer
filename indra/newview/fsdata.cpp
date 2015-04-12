@@ -54,6 +54,7 @@
 #include "llviewernetwork.h"
 #include "llxorcipher.h"
 #include "llvfs.h"
+#include "message.h"
 
 const std::string LEGACY_CLIENT_LIST_URL = "http://phoenixviewer.com/app/client_tags/client_list_v2.xml";
 const LLUUID MAGIC_ID("3c115e51-04f4-523c-9fa6-98aff1034730");
@@ -582,12 +583,19 @@ void FSData::processClientTags(const LLSD& tags)
 }
 
 //WS: Create a new LLSD based on the data from the mLegacyClientList if
-LLSD FSData::resolveClientTag(LLUUID id, bool new_system, LLColor4 color)
+LLSD FSData::resolveClientTag(const LLUUID& id, bool new_system, const LLColor4& color)
 {	
 	LLSD curtag;
 	curtag["uuid"] = id.asString();
 	curtag["id_based"] = new_system;
 	curtag["tex_color"] = color.getValue();
+
+	static const LLUUID id_singularity("f25263b7-6167-4f34-a4ef-af65213b2e39");
+	static const LLUUID id_kokua("4b6f6b75-bf77-d1ff-0000-000000000000");
+	static const LLUUID id_radegast("b748af88-58e2-995b-cf26-9486dea8e830");
+	static const LLUUID id_imprudence("cc7a030f-282f-c165-44d2-b5ee572e72bf");
+	static const LLUUID id_teapot("7eab0700-f000-0000-0000-546561706f7");
+	static const LLUUID id_lindenlab("c228d1cf-4b5d-4ba8-84f4-899a0796aa97");
 	
 	static LLCachedControl<U32> client_tag_visibility(gSavedSettings, "FSClientTagsVisibility");
 	static LLCachedControl<U32> use_legacy_client_tags(gSavedSettings, "FSUseLegacyClienttags");
@@ -607,29 +615,29 @@ LLSD FSData::resolveClientTag(LLUUID id, bool new_system, LLColor4 color)
 		}
 		else
 		{
-			if (id == LLUUID("f25263b7-6167-4f34-a4ef-af65213b2e39"))
+			if (id == id_singularity)
 			{
 				curtag["name"] = "Singularity";
 			}
-			else if (id == LLUUID("4b6f6b75-bf77-d1ff-0000-000000000000"))
+			else if (id == id_kokua)
 			{
 				curtag["name"] = "Kokua";
 			}
-			else if (id == LLUUID("b748af88-58e2-995b-cf26-9486dea8e830"))
+			else if (id == id_radegast)
 			{
 				curtag["name"] = "Radegast";
 			}
-			else if (id == LLUUID("cc7a030f-282f-c165-44d2-b5ee572e72bf"))
+			else if (id == id_imprudence)
 			{
 				curtag["name"] = "Imprudence";
 			}
-			else if (id == LLUUID("7eab0700-f000-0000-0000-546561706f7"))
+			else if (id == id_teapot)
 			{
 				curtag["name"] = "Teapot";
 			}
 			/// [FS:CR] Since SL Viewer can't connect to Opensim, and client tags only work on OpenSim
 			/// it doesn't make much sense to tag V3-based viewers as SL Viewer.
-			/*if (id == LLUUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97"))
+			/*if (id == id_lindenlab)
 			{
 				curtag["name"] = "SL Viewer";
 			}*/
@@ -656,9 +664,9 @@ LLSD FSData::resolveClientTag(LLUUID id, bool new_system, LLColor4 color)
 				if (color == LLColor4::blue ||
 					color == LLColor4::yellow ||
 					color == LLColor4::purple ||
-					color == LLColor4((F32)0.99,(F32)0.39,(F32)0.12,(F32)1) ||
+					color == LLColor4(0.99f, 0.39f, 0.12f, 1.f) ||
 					color == LLColor4::red ||
-					color == LLColor4((F32)0.99,(F32)0.56,(F32)0.65,(F32)1) ||
+					color == LLColor4(0.99f, 0.56f, 0.65f, 1.f) ||
 					color == LLColor4::white ||
 					color == LLColor4::green)
 				{
@@ -725,7 +733,7 @@ void FSData::saveLLSD(const LLSD& data, const std::string& filename, const LLDat
 #endif
 }
 
-S32 FSData::getAgentFlags(LLUUID avatar_id)
+S32 FSData::getAgentFlags(const LLUUID& avatar_id)
 {
 	std::map<LLUUID, S32>::iterator iter = mSupportAgents.find(avatar_id);
 	if (iter == mSupportAgents.end())
@@ -735,7 +743,7 @@ S32 FSData::getAgentFlags(LLUUID avatar_id)
 	return iter->second;
 }
 
-bool FSData::isSupport(LLUUID avatar_id)
+bool FSData::isSupport(const LLUUID& avatar_id)
 {
 	std::map<LLUUID, S32>::iterator iter = mSupportAgents.find(avatar_id);
 	if (iter == mSupportAgents.end())
@@ -745,7 +753,7 @@ bool FSData::isSupport(LLUUID avatar_id)
 	return (iter->second & SUPPORT);
 }
 
-bool FSData::isDeveloper(LLUUID avatar_id)
+bool FSData::isDeveloper(const LLUUID& avatar_id)
 {
 	std::map<LLUUID, S32>::iterator iter = mSupportAgents.find(avatar_id);
 	if (iter == mSupportAgents.end())
@@ -798,7 +806,7 @@ LLSD FSData::allowedLogin()
 	}
 }
 
-BOOL FSData::isSupportGroup(LLUUID id)
+BOOL FSData::isSupportGroup(const LLUUID& id)
 {
 	return (mSupportGroup.count(id));
 }
@@ -818,9 +826,9 @@ void FSData::addAgents()
 {
 	if (!gCacheName)
 	{
-	      return;
+		return;
 	}
-  
+
 	for (std::map<LLUUID, S32>::iterator iter = mSupportAgents.begin(); iter != mSupportAgents.end(); ++iter)
 	{
 		if (iter->second & NO_SPAM)
@@ -834,7 +842,7 @@ void FSData::addAgents()
 	}
 }
 
-std::string FSData::processRequestForInfo(LLUUID requester, std::string message, std::string name, LLUUID sessionid)
+std::string FSData::processRequestForInfo(const LLUUID& requester, const std::string& message, const std::string& name, const LLUUID& sessionid)
 {
 	std::string detectstring = "/reqsysinfo";
 	if(!message.find(detectstring) == 0)
@@ -868,7 +876,7 @@ std::string FSData::processRequestForInfo(LLUUID requester, std::string message,
 }
 
 //static
-void FSData::sendInfo(LLUUID destination, LLUUID sessionid, std::string myName, EInstantMessage dialog)
+void FSData::sendInfo(const LLUUID& destination, const LLUUID& sessionid, const std::string& myName, EInstantMessage dialog)
 {
 	LLSD system_info = getSystemInfo();
 	std::string part1 = system_info["Part1"].asString();
@@ -984,6 +992,7 @@ LLSD FSData::getSystemInfo()
 	sysinfo2 += llformat("Bandwidth: %d kbit/s\n", info["BANDWIDTH"].asInteger());
 	sysinfo2 += llformat("LOD Factor: %.3f\n", info["LOD"].asReal());
 	sysinfo2 += llformat("Render quality: %s\n", info["RENDERQUALITY_FSDATA_ENGLISH"].asString().c_str()); // <FS:PP> FIRE-4785: Current render quality setting in sysinfo / about floater
+	sysinfo2 += llformat("ALM enabled: %s\n", info["ALMSTATUS_FSDATA_ENGLISH"].asString().c_str());
 	sysinfo2 += llformat("Texture memory: %d MB (%.2f)\n", info["TEXTUREMEMORY"].asInteger(), info["TEXTUREMEMORYMULTIPLIER"].asReal());
 	sysinfo2 += "VFS (cache) creation time (UTC) " + info["VFS_DATE"].asString();
 

@@ -38,6 +38,8 @@
 #include "llview.h"
 #include "llviewmodel.h"		// *TODO move dependency to .cpp file
 
+#include "fssearchablecontrol.h"
+
 const BOOL TAKE_FOCUS_YES = TRUE;
 const BOOL TAKE_FOCUS_NO  = FALSE;
 

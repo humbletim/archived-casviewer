@@ -342,6 +342,15 @@ void LLTextEditor::setText(const LLStringExplicit &utf8str, const LLStyle::Param
 	resetDirty();
 }
 
+// [SL:KB] - Patch: UI-FloaterSearchReplace | Checked: 2013-12-30 (Catznip-3.6)
+std::string LLTextEditor::getSelectionString() const
+{
+	S32 idxSel = 0, lenSel = 0;
+	getSelectionRange(&idxSel, &lenSel);
+	return (lenSel > 0) ? wstring_to_utf8str(getWText().substr(idxSel, lenSel)) : LLStringUtil::null;
+}
+// [/SL:KB]
+
 //void LLTextEditor::selectNext(const std::string& search_text_in, BOOL case_insensitive, BOOL wrap)
 // [SL:KB] - Patch: UI-FloaterSearchReplace | Checked: 2010-10-29 (Catznip-2.3.0a) | Added: Catznip-2.3.0a
 void LLTextEditor::selectNext(const std::string& search_text_in, BOOL case_insensitive, BOOL wrap, BOOL search_up)
@@ -1113,6 +1122,35 @@ void LLTextEditor::removeChar()
 	}
 }
 
+// <FS> Ctrl-Backspace remove word
+// Remove a word (set of characters up to next space/punctuation) from the text
+void LLTextEditor::removeWord(bool prev)
+{
+	const U32 pos(mCursorPos);
+	if (prev ? pos > 0 : static_cast<S32>(pos) < getLength())
+	{
+		U32 new_pos(prev ? prevWordPos(pos) : nextWordPos(pos));
+		if (new_pos == pos) // Other character we don't jump over
+			new_pos = prev ? prevWordPos(new_pos-1) : nextWordPos(new_pos+1);
+
+		const U32 diff(labs(pos - new_pos));
+		if (prev)
+		{
+			remove(new_pos, diff, false);
+			setCursorPos(new_pos);
+		}
+		else
+		{
+			remove(pos, diff, false);
+		}
+	}
+	else
+	{
+		LLUI::reportBadKeystroke();
+	}
+}
+// </FS>
+
 // Add a single character to the text
 S32 LLTextEditor::addChar(S32 pos, llwchar wc)
 {
@@ -1708,7 +1746,13 @@ BOOL LLTextEditor::handleSpecialKey(const KEY key, const MASK mask)
 		else
 		if( 0 < mCursorPos )
 		{
-			removeCharOrTab();
+			// <FS> Ctrl-Backspace remove word
+			//removeCharOrTab();
+			if (mask == MASK_CONTROL)
+				removeWord(true);
+			else
+				removeCharOrTab();
+			// </FS>
 		}
 		else
 		{
@@ -1716,6 +1760,18 @@ BOOL LLTextEditor::handleSpecialKey(const KEY key, const MASK mask)
 		}
 		break;
 
+	// <FS> Ctrl-Backspace remove word
+	case KEY_DELETE:
+		if (getEnabled() && mask == MASK_CONTROL)
+		{
+			removeWord(false);
+		}
+		else
+		{
+			handled = false;
+		}
+		break;
+	// </FS>
 
 	case KEY_RETURN:
 		if (mask == MASK_NONE)
@@ -2512,6 +2568,15 @@ void LLTextEditor::removeTextFromEnd(S32 num_chars)
 }
 
 //----------------------------------------------------------------------------
+// <FS:Ansariel> FIRE-11045: Spell checking changes not identified as such
+void LLTextEditor::onSpellCheckPerformed()
+{
+	if (isPristine())
+	{
+		mBaseDocIsPristine = FALSE;
+	}
+}
+// </FS:Ansariel>
 
 void LLTextEditor::makePristine()
 {

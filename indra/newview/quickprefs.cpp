@@ -100,7 +100,8 @@ FloaterQuickPrefs::QuickPrefsXMLEntry::QuickPrefsXMLEntry()
 // </FS:Zi>
 
 FloaterQuickPrefs::FloaterQuickPrefs(const LLSD& key)
-:	LLTransientDockableFloater(NULL, true, key)
+:	LLTransientDockableFloater(NULL, true, key),
+	mRlvBehaviorCallbackConnection()
 {
 	// For Phototools
 	mCommitCallbackRegistrar.add("Quickprefs.ShaderChanged", boost::bind(&handleSetShaderChanged, LLSD()));
@@ -108,6 +109,10 @@ FloaterQuickPrefs::FloaterQuickPrefs(const LLSD& key)
 
 FloaterQuickPrefs::~FloaterQuickPrefs()
 {
+	if (mRlvBehaviorCallbackConnection.connected())
+	{
+		mRlvBehaviorCallbackConnection.disconnect();
+	}
 }
 
 void FloaterQuickPrefs::onOpen(const LLSD& key)
@@ -207,7 +212,7 @@ void FloaterQuickPrefs::initCallbacks()
 		gSavedSettings.getControl("QuickPrefsEditMode")->getSignal()->connect(boost::bind(&FloaterQuickPrefs::onEditModeChanged, this));	// <FS:Zi> Dynamic Quickprefs
 	}
 
-	gRlvHandler.setBehaviourCallback(boost::bind(&FloaterQuickPrefs::updateRlvRestrictions, this, _1, _2));
+	mRlvBehaviorCallbackConnection = gRlvHandler.setBehaviourCallback(boost::bind(&FloaterQuickPrefs::updateRlvRestrictions, this, _1, _2));
 }
 
 void FloaterQuickPrefs::loadPresets()
@@ -1408,6 +1413,12 @@ void FloaterQuickPrefs::onValuesChanged()
 {
 	// safety, do nothing if we are not in edit mode
 	if(!gSavedSettings.getBOOL("QuickPrefsEditMode"))
+	{
+		return;
+	}
+
+	// don't crash when we try to update values without having a control selected
+	if(mSelectedControl=="")
 	{
 		return;
 	}

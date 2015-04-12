@@ -105,6 +105,8 @@ public:
 	virtual void updateSettings()=0; // call after loading settings and whenever they change
 	
 	virtual bool isVoiceWorking() const = 0; // connected to a voice server and voice channel
+    
+    virtual void setHidden(bool hidden)=0;  //  Hides the user from voice.
 
 	virtual const LLVoiceVersionInfo& getVersion()=0;
 	
@@ -186,7 +188,10 @@ public:
 	/////////////////////////
 	/// @name enable disable voice and features
 	//@{
-	virtual bool voiceEnabled()=0;
+	// <FS:Ansariel> Bypass LLCachedControls for voice status update
+	//virtual bool voiceEnabled()=0;
+	virtual bool voiceEnabled(bool no_cache = false)=0;
+	// </FS:Ansariel>
 	virtual void setVoiceEnabled(bool enabled)=0;
 	virtual void setLipSyncEnabled(BOOL enabled)=0;
 	virtual BOOL lipSyncEnabled()=0;	
@@ -360,6 +365,7 @@ public:
 
 	void setCaptureDevice(const std::string& name);
 	void setRenderDevice(const std::string& name);
+    void setHidden(bool hidden);
 
 	const LLVoiceDeviceList& getCaptureDevices();
 	const LLVoiceDeviceList& getRenderDevices();
@@ -397,7 +403,10 @@ public:
 	void setVoiceVolume(F32 volume);
 	void setMicGain(F32 volume);
 	void setUserVolume(const LLUUID& id, F32 volume); // set's volume for specified agent, from 0-1 (where .5 is nominal)		
-	bool voiceEnabled();
+	// <FS:Ansariel> Bypass LLCachedControls for voice status update
+	//bool voiceEnabled();
+	bool voiceEnabled(bool no_cache = false);
+	// </FS:Ansariel>
 	void setLipSyncEnabled(BOOL enabled);
 	void setMuteMic(bool muted);		// Use this to mute the local mic (for when the client is minimized, etc), ignoring user PTT state.
 	void setUserPTTState(bool ptt);

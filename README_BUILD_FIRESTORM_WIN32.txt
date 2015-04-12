@@ -32,12 +32,11 @@ After launching the VS2010 cmd shell and navigating to your firestorm code repo:
 
 Other build targets you may use are:
 
-	ReleaseFS		(includes KDU, FMOD)
-	ReleaseFS_open		(no KDU, no FMOD)
-	RelWithDebInfoFS_open	(no KDU, no FMOD)
+	ReleaseFS (includes KDU, FMOD)
+	ReleaseFS_open (no KDU, no FMOD)
+	RelWithDebInfoFS_open (no KDU, no FMOD)
 
 Other examples:
-
         autobuild configure -c ReleaseFS                    # basic configuration step, don't build, just configure
         autobuild configure -c ReleaseFS -- --clean         # clean the output area first, then configure
         autobuild configure -c ReleaseFS -- --chan Private-Yourname   # configure with a custom channel
@@ -48,9 +47,7 @@ If you want to set custom configuration, do this in the configure step separatel
 build -c ReleaseFS --no-configure" as a secondary step.
 
 Logs:
-
 	Look for logs in build-vc100/logs
 
 Output:
-
 	Look for output in build-vc100/newview/Release

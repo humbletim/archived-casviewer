@@ -28,6 +28,7 @@
 
 #include "fskeywords.h"
 #include "llagent.h"
+#include "llchat.h"
 #include "llinstantmessage.h"
 #include "llmutelist.h"
 #include "llui.h"
@@ -58,7 +59,7 @@ void FSKeywords::updateKeywords()
 	boost::regex re(",");
 	boost::sregex_token_iterator begin(s.begin(), s.end(), re, -1), end;
 	mWordList.clear();
-	while(begin != end)
+	while (begin != end)
 	{
 		mWordList.push_back(*begin++);
 	}
@@ -70,20 +71,24 @@ bool FSKeywords::chatContainsKeyword(const LLChat& chat, bool is_local)
 	static LLCachedControl<bool> sFSKeywordInChat(gSavedPerAccountSettings, "FSKeywordInChat", false);
 	static LLCachedControl<bool> sFSKeywordInIM(gSavedPerAccountSettings, "FSKeywordInIM", false);
 	static LLCachedControl<bool> sFSKeywordCaseSensitive(gSavedPerAccountSettings, "FSKeywordCaseSensitive", false);
-	if (!sFSKeywordOn ||
-	(is_local && !sFSKeywordInChat) ||
-	(!is_local && !sFSKeywordInIM))
-		return FALSE;
 
-	std::string source(chat.mText);
+	if (!sFSKeywordOn ||
+		(is_local && !sFSKeywordInChat) ||
+		(!is_local && !sFSKeywordInIM))
+	{
+		return false;
+	}
+
+	std::string source(chat.mFromName + " " + chat.mText);
+
 	if (!sFSKeywordCaseSensitive)
 	{
 		LLStringUtil::toLower(source);
 	}
-	
-	for(U32 i=0; i < mWordList.size(); i++)
+
+	for (std::vector<std::string>::iterator it = mWordList.begin(); it != mWordList.end(); ++it)
 	{
-		if(source.find(mWordList[i]) != std::string::npos)
+		if (source.find((*it)) != std::string::npos)
 		{
 			return true;
 		}
@@ -94,9 +99,9 @@ bool FSKeywords::chatContainsKeyword(const LLChat& chat, bool is_local)
 // <FS:PP> FIRE-10178: Keyword Alerts in group IM do not work unless the group is in the foreground
 void FSKeywords::notify(const LLChat& chat)
 {
-	if (chat.mFromID != gAgent.getID() || chat.mFromName == SYSTEM_FROM)
+	if (chat.mFromID != gAgentID || chat.mFromName == SYSTEM_FROM)
 	{
-		if (!LLMuteList::getInstance()->isMuted(chat.mFromID))
+		if (!LLMuteList::getInstance()->isMuted(chat.mFromID) && !chat.mMuted)
 		{
 			static LLCachedControl<bool> PlayModeUISndFSKeywordSound(gSavedSettings, "PlayModeUISndFSKeywordSound");
 			if (PlayModeUISndFSKeywordSound)

@@ -686,9 +686,13 @@ void LLFloater::openFloater(const LLSD& key)
         // {
         //    make_ui_sound("UISndWindowOpen");
         // }
-        if(getName() == "incoming call")
+        if (getName() == "incoming call")
         {
             make_ui_sound("UISndIncomingVoiceCall");
+        }
+        else if (getName() == "script_floater")
+        {
+            make_ui_sound("UISndScriptFloaterOpen");
         }
         else
         {
@@ -1395,6 +1399,9 @@ void LLFloater::setMinimized(BOOL minimize)
 
 		// Reshape *after* setting mMinimized
 		reshape( mExpandedRect.getWidth(), mExpandedRect.getHeight(), TRUE );
+
+		// <FS:Ansariel> FIRE-7530: Make sure, an un-minimized floater goes to the front
+		setFrontmost();
 	}
 
 	make_ui_sound("UISndWindowClose");
@@ -2422,7 +2429,10 @@ void LLFloaterView::restoreAll()
 	for ( child_list_const_iter_t child_it = getChildList()->begin(); child_it != getChildList()->end(); ++child_it)
 	{
 		LLFloater* floaterp = (LLFloater*)*child_it;
-		floaterp->setMinimized(FALSE);
+		if (floaterp) //<FS:KC> Possible fix for crash on disconnect
+		{
+			floaterp->setMinimized(FALSE);
+		}
 	}
 
 	// *FIX: make sure dependents are restored

@@ -28,42 +28,28 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "fsradarlistctrl.h"
-#include "lllistcontextmenu.h"
 #include "llscrolllistitem.h"
 #include "rlvhandler.h"
 
 static LLDefaultChildRegistry::Register<FSRadarListCtrl> r("radar_list");
 
-FSRadarListCtrl::Params::Params()
-{
-	name = "radar_list";
-}
-
-FSRadarListCtrl::FSRadarListCtrl(const FSRadarListCtrl::Params& p)
-:	LLScrollListCtrl(p),
-mContextMenu(NULL)
+FSRadarListCtrl::FSRadarListCtrl(const Params& p)
+:	FSScrollListCtrl(p)
 {
 }
 
 BOOL FSRadarListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
-	//LL_INFOS() << "handleRightMouseDown" << LL_ENDL;
 	BOOL handled = LLUICtrl::handleRightMouseDown(x, y, mask);
-//	if ( mContextMenu )
-// [RLVa:KB-FS] - Checked: 2011-06-11 (RLVa-1.3.1) | Added: RLVa-1.3.1
 	if ( (mContextMenu) && (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) )
-// [/RLVa:KB-FS]
 	{
-		S32 uuid_column_index = getColumn("uuid")->mIndex;
 		std::vector<LLScrollListItem*> selected_items = getAllSelected();
 		if (selected_items.size() > 1)
 		{
-			//LL_INFOS() << "Right-click select by value: (multi-select)" << LL_ENDL;
 			uuid_vec_t selected_uuids;
-			for (size_t i = 0; i < selected_items.size(); i++)
+			for (std::vector<LLScrollListItem*>::iterator it = selected_items.begin(); it != selected_items.end(); ++it)
 			{
-				//LL_INFOS() << "Right-click select by value: " << selected_items.at(i)->getColumn(uuid_column_index)->getValue().asUUID() << LL_ENDL;
-				selected_uuids.push_back(selected_items.at(i)->getColumn(uuid_column_index)->getValue().asUUID());
+				selected_uuids.push_back((*it)->getUUID());
 			}
 			mContextMenu->show(this, selected_uuids, x, y);
 		}
@@ -72,7 +58,6 @@ BOOL FSRadarListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
 			LLScrollListItem* hit_item = hitItem(x, y);
 			if (hit_item)
 			{
-				//LL_INFOS() << "Right-click select by value: " << hit_item->getValue() << LL_ENDL;
 				selectByID(hit_item->getValue());
 				LLUUID av = hit_item->getValue();
 				uuid_vec_t selected_uuids;

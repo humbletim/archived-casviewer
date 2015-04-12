@@ -278,6 +278,7 @@ class LLTextBase
 :	public LLUICtrl,
 	protected LLEditMenuHandler,
 	public LLSpellCheckMenuHandler
+	, public nd::ui::SearchableControl
 {
 public:
 	friend class LLTextSegment;
@@ -302,6 +303,9 @@ public:
 								bg_readonly_color,
 								bg_writeable_color,
 								bg_focus_color,
+// [SL:KB] - Patch: Control-TextHighlight | Checked: 2013-12-30 (Catznip-3.6)
+								bg_highlighted_color,
+// [/SL:KB]
 								text_selected_color,
 								bg_selected_color;
 
@@ -390,6 +394,8 @@ public:
 	std::string				getMisspelledWord(U32 pos) const;
 	bool					isMisspelledWord(U32 pos) const;
 	void					onSpellCheckSettingsChange();
+	// <FS:Ansariel> FIRE-11045: Spell checking changes not identified as such
+	virtual void			onSpellCheckPerformed() {}
 
 	// used by LLTextSegment layout code
 	bool					getWordWrap() { return mWordWrap; }
@@ -468,6 +474,13 @@ public:
 	bool					scrolledToStart();
 	bool					scrolledToEnd();
 
+// [SL:KB] - Patch: Control-TextHighlight | Checked: 2013-12-30 (Catznip-3.6)
+	// highlighting
+	void					clearHighlights();
+	void					refreshHighlights();
+	void					setHighlightWord(const std::string& strHighlight, bool fCaseInsensitive);
+// [/SL:KB]
+
 	const LLFontGL*			getFont() const					{ return mFont; }
 
 	virtual void			appendLineBreakSegment(const LLStyle::Params& style_params);
@@ -485,6 +498,10 @@ protected:
 	struct compare_top;
 	struct line_end_compare;
 	typedef std::vector<LLTextSegmentPtr> segment_vec_t;
+// [SL:KB] - Patch: Control-TextHighlight | Checked: 2013-12-30 (Catznip-3.6)
+	typedef std::pair<S32, S32> range_pair_t;
+	typedef std::list<range_pair_t> highlight_list_t;
+// [/SL:KB]
 
 	// Abstract inner base class representing an undoable editor command.
 	// Concrete sub-classes can be defined for operations such as insert, remove, etc.
@@ -552,6 +569,9 @@ protected:
 
 	// draw methods
 	void							drawSelectionBackground(); // draws the black box behind the selected text
+// [SL:KB] - Patch: Control-TextHighlight | Checked: 2013-12-30 (Catznip-3.6)
+	void							drawHighlightsBackground(const highlight_list_t& highlights, const LLColor4& color);
+// [/SL:KB]
 	void							drawCursor();
 	void							drawText();
 
@@ -638,6 +658,9 @@ protected:
 	LLUIColor					mFocusBgColor;
 	LLUIColor					mTextSelectedColor;
 	LLUIColor					mSelectedBGColor;
+// [SL:KB] - Patch: Control-TextHighlight | Checked: 2013-12-30 (Catznip-3.6)
+	LLUIColor					mHighlightedBGColor;
+// [/SL:KB]
 
 	// cursor
 	S32							mCursorPos;			// I-beam is just after the mCursorPos-th character.
@@ -658,6 +681,14 @@ protected:
 	LLTimer						mSpellCheckTimer;
 	std::list<std::pair<U32, U32> > mMisspellRanges;
 	std::vector<std::string>		mSuggestionList;
+
+// [SL:KB] - Patch: Control-TextHighlight | Checked: 2013-12-30 (Catznip-3.6)
+	// highlighting
+	LLWString					mHighlightWord;
+	bool						mHighlightCaseInsensitive;
+	highlight_list_t			mHighlights;
+	bool						mHighlightsDirty;
+// [/SL:KB]
 
 	// configuration
 	S32							mHPad;				// padding on left of text
@@ -700,6 +731,14 @@ protected:
 	LLUIString					mLabel;	// text label that is visible when no user text provided
 	// <FS:Ansariel> Optional icon position
 	LLTextBaseEnums::EIconPositioning	mIconPositioning;
+
+// <FS:ND> Searchable text for UI filter
+protected:
+	virtual std::string _getSearchText() const
+	{
+		return mLabel.getString() + getToolTip();
+	}
+// </FS:ND>
 };
 
 #endif

@@ -94,13 +94,19 @@ FSRadar::FSRadar() :
 		mRadarAlertRequest(false),
 		mRadarFrameCount(0),
 		mRadarLastBulkOffsetRequestTime(0),
-		mRadarLastRequestTime(0.f)
+		mRadarLastRequestTime(0.f),
+		mShowUsernamesCallbackConnection(),
+		mNameFormatCallbackConnection(),
+		mAgeAlertCallbackConnection()
 {
 	mRadarListUpdater = new FSRadarListUpdater(boost::bind(&FSRadar::updateRadarList, this));
 
 	// Use the callback from LLAvatarNameCache here or we might update the names too early!
 	LLAvatarNameCache::addUseDisplayNamesCallback(boost::bind(&FSRadar::updateNames, this));
-	gSavedSettings.getControl("NameTagShowUsernames")->getSignal()->connect(boost::bind(&FSRadar::updateNames, this));
+	mShowUsernamesCallbackConnection = gSavedSettings.getControl("NameTagShowUsernames")->getSignal()->connect(boost::bind(&FSRadar::updateNames, this));
+
+	mNameFormatCallbackConnection = gSavedSettings.getControl("RadarNameFormat")->getSignal()->connect(boost::bind(&FSRadar::updateNames, this));
+	mAgeAlertCallbackConnection = gSavedSettings.getControl("RadarAvatarAgeAlertValue")->getSignal()->connect(boost::bind(&FSRadar::updateAgeAlertCheck, this));
 }
 
 FSRadar::~FSRadar()
@@ -111,6 +117,21 @@ FSRadar::~FSRadar()
 	for (entry_map_t::iterator em_it = mEntryList.begin(); em_it != em_it_end; ++em_it)
 	{
 		delete em_it->second;
+	}
+
+	if (mShowUsernamesCallbackConnection.connected())
+	{
+		mShowUsernamesCallbackConnection.disconnect();
+	}
+
+	if (mNameFormatCallbackConnection.connected())
+	{
+		mNameFormatCallbackConnection.disconnect();
+	}
+
+	if (mAgeAlertCallbackConnection.connected())
+	{
+		mAgeAlertCallbackConnection.disconnect();
 	}
 }
 
@@ -163,6 +184,7 @@ void FSRadar::updateRadarList()
 	static const std::string str_region_entering =			LLTrans::getString("entering_region");
 	static const std::string str_region_entering_distance =	LLTrans::getString("entering_region_distance");
 	static const std::string str_region_leaving =			LLTrans::getString("leaving_region");
+	static const std::string str_avatar_age_alert =			LLTrans::getString("avatar_age_alert");
 
 	static LLCachedControl<bool> RadarReportChatRangeEnter(gSavedSettings, "RadarReportChatRangeEnter");
 	static LLCachedControl<bool> RadarReportChatRangeLeave(gSavedSettings, "RadarReportChatRangeLeave");
@@ -172,6 +194,7 @@ void FSRadar::updateRadarList()
 	static LLCachedControl<bool> RadarReportSimRangeLeave(gSavedSettings, "RadarReportSimRangeLeave");
 	static LLCachedControl<bool> RadarEnterChannelAlert(gSavedSettings, "RadarEnterChannelAlert");
 	static LLCachedControl<bool> RadarLeaveChannelAlert(gSavedSettings, "RadarLeaveChannelAlert");
+	static LLCachedControl<bool> RadarAvatarAgeAlert(gSavedSettings, "RadarAvatarAgeAlert");
 	static LLCachedControl<F32> nearMeRange(gSavedSettings, "NearMeRange");
 	static LLCachedControl<bool> limitRange(gSavedSettings, "LimitRadarByRange");
 	static LLCachedControl<F32> RenderFarClip(gSavedSettings, "RenderFarClip");
@@ -326,7 +349,7 @@ void FSRadar::updateRadarList()
 		if (avPos[VZ] == AVATAR_UNKNOWN_Z_OFFSET) // if our official z position is AVATAR_UNKNOWN_Z_OFFSET, we need a correction.
 		{
 			// set correction if we have it
-			if (avZOffset > 0.1)
+			if (avZOffset > 0.1f)
 			{
 				avPos[VZ] = avZOffset;
 			}
@@ -482,11 +505,34 @@ void FSRadar::updateRadarList()
 		entry["name"] = avName;
 		entry["in_region"] = isInSameRegion;
 		entry["flags"] = avFlag;
-		entry["age"] = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES) ? "---" : ( (avAge > -1 ? llformat("%d", avAge) : "") );
 		entry["seen"] = avSeenStr;
 		entry["range"] = (avRange > AVATAR_UNKNOWN_RANGE ? llformat("%3.2f", avRange) : llformat(">%3.2f", drawRadius));
 		entry["typing"] = (avVo && avVo->isTyping());
 		entry["sitting"] = (avVo && (avVo->getParent() || avVo->isMotionActive(ANIM_AGENT_SIT_GROUND) || avVo->isMotionActive(ANIM_AGENT_SIT_GROUND_CONSTRAINED)));
+		entry["has_notes"] = ent->hasNotes();
+
+		if (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+		{
+			entry["age"] = (avAge > -1 ? llformat("%d", avAge) : "");
+			if (ent->hasAlertAge())
+			{
+				entry_options["age_color"] = LLUIColorTable::instance().getColor("AvatarListItemAgeAlert", LLColor4::red).get().getValue();
+
+				if (RadarAvatarAgeAlert && !ent->hasAgeAlertPerformed())
+				{
+					make_ui_sound("UISndRadarAgeAlert");
+					LLStringUtil::format_map_t args;
+					args["AGE"] = llformat("%d", avAge);
+					std::string message = formatString(str_avatar_age_alert, args);
+					LLAvatarNameCache::get(avId, boost::bind(&FSRadar::radarAlertMsg, this, _1, _2, message));
+				}
+				ent->mAgeAlertPerformed = true;
+			}
+		}
+		else
+		{
+			entry["age"] = "---";
+		}
 
 		//AO: Set any range colors / styles
 		LLUIColor range_color;
@@ -556,19 +602,19 @@ void FSRadar::updateRadarList()
 				switch (power_level)
 				{
 					case VPL_PTT_Off:
-						entry["voice_level_icon"] = "VoicePTT_Off";
+						entry["voice_level_icon"] = "Radar_VoicePTT_Off";
 						break;
 					case VPL_PTT_On:
-						entry["voice_level_icon"] = "VoicePTT_On";
+						entry["voice_level_icon"] = "Radar_VoicePTT_On";
 						break;
 					case VPL_Level1:
-						entry["voice_level_icon"] = "VoicePTT_Lvl1";
+						entry["voice_level_icon"] = "Radar_VoicePTT_Lvl1";
 						break;
 					case VPL_Level2:
-						entry["voice_level_icon"] = "VoicePTT_Lvl2";
+						entry["voice_level_icon"] = "Radar_VoicePTT_Lvl2";
 						break;
 					case VPL_Level3:
-						entry["voice_level_icon"] = "VoicePTT_Lvl3";
+						entry["voice_level_icon"] = "Radar_VoicePTT_Lvl3";
 						break;
 					default:
 						break;
@@ -832,12 +878,6 @@ void FSRadar::onRadarNameFmtClicked(const LLSD& userdata)
 	{
 		gSavedSettings.setU32("RadarNameFormat", FSRADAR_NAMEFORMAT_USERNAME_DISPLAYNAME);
 	}
-
-	FSRadar* instance = FSRadar::getInstance();
-	if (instance)
-	{
-		instance->updateNames();
-	}
 }
 
 //static
@@ -959,5 +999,14 @@ void FSRadar::updateName(const LLUUID& avatar_id)
 	if (entry)
 	{
 		entry->updateName();
+	}
+}
+
+void FSRadar::updateAgeAlertCheck()
+{
+	const entry_map_t::iterator it_end = mEntryList.end();
+	for (entry_map_t::iterator it = mEntryList.begin(); it != it_end; ++it)
+	{
+		it->second->checkAge();
 	}
 }

@@ -101,7 +101,7 @@ Wybierz pojedynczy obiekt i spróbuj jeszcze raz.
 		<usetemplate canceltext="Anuluj" name="yesnocancelbuttons" notext="Nie zapisuj" yestext="Zapisz"/>
 	</notification>
 	<notification name="FriendsAndGroupsOnly">
-		Osoby spoza listy znajomych, których rozmowy głosowe i IM są ignorowane, nie wiedzą o tym.
+		Osoby spoza listy znajomych nie będą wiedzieć, że zdecydowałeś/aś się ignorować ich rozmowy głosowe i wiadomości IM.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="FavoritesOnLogin">
@@ -166,6 +166,22 @@ Udzielaj tego przywileju z rozwagą.
 
 Dodać ten przywilej do funkcji &apos;[ROLE_NAME]&apos;?
 		<usetemplate name="okcancelbuttons" notext="Nie" yestext="Tak"/>
+	</notification>
+	<notification name="AssignBanAbilityWarning">
+		Dodajesz przywilej &apos;[ACTION_NAME]&apos; do funkcji &apos;[ROLE_NAME]&apos;
+
+*UWAGA*
+Osoba w funkcji z tym przywilejem otrzyma również &apos;[ACTION_NAME_2]&apos; oraz &apos;[ACTION_NAME_3]&apos;
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="RemoveBanAbilityWarning">
+		Zabierasz przywilej &apos;[ACTION_NAME]&apos; z funkcji &apos;[ROLE_NAME]&apos;
+
+*UWAGA*
+Zabranie tej funkcji NIE usunie &apos;[ACTION_NAME_2]&apos; oraz &apos;[ACTION_NAME_3]&apos;.
+
+Jeśli nie chcesz, aby te przywileje były dłużej przypisane do tej roli, to wyłącz je natychmiast!
+		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="EjectGroupMemberWarning">
 		Zamierzasz wyrzucić [AVATAR_NAME] z grupy.
@@ -2450,7 +2466,8 @@ URL: [MOAPURL]
 		Brakujące ubranie/części ciała zastąpiono domyślnymi obiektami.
 	</notification>
 	<notification name="GroupNotice">
-		Temat: [SUBJECT], Treść: [MESSAGE]
+		[SENDER], [GROUP]
+Temat: [SUBJECT], Treść: [MESSAGE]
 	</notification>
 	<notification name="FriendOnlineOffline">
 		[NAME] jest [STATUS].
@@ -3561,7 +3578,7 @@ W innym przypadku możesz poszukać na mapie miejsc oznaczonych jako &quot;Infoh
 	</notification>
 	<notification name="NewAOSet">
 		Wpisz nazwę nowego zestawu AO:
-(Nazwa nie może zawierać ":" lub "|")
+(Nazwa może zawierać każdy znak ASCII, za wyjątkiem ":" oraz "|")
 		<form name="form">
 			<input name="message">
 				Nowy zestaw AO
@@ -3570,14 +3587,14 @@ W innym przypadku możesz poszukać na mapie miejsc oznaczonych jako &quot;Infoh
 			<button name="Cancel" text="Anuluj"/>
 		</form>
 	</notification>
-	<notification name="NewAOCantContainColon">
+	<notification name="NewAOCantContainNonASCII">
 		Nie można utworzyć zestawu AO o nazwie "[AO_SET_NAME]".
-Nazwa nie może zawierać ":" lub "|".
+Nazwa może zawierać tylko znaki ASCII, za wyjątkiem ":" oraz "|".
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
-	<notification name="RenameAOCantContainColon">
-		Nie można zmienić nazwy zestawu AO na "[AO_SET_NAME]".
-Nazwa nie może zawierać ":" lub "|".
+	<notification name="RenameAOMustBeASCII">
+		Nie można zmienić nazwy zestawu AO "[AO_SET_NAME]".
+Nazwa może zawierać tylko znaki ASCII, za wyjątkiem ":" oraz "|".
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="RemoveAOSet">
@@ -4476,10 +4493,6 @@ Czy chcesz autoryzować [APP_NAME] do ładowania zdjęć na Flickr?
 Obecny symulator: [NEWVERSION]
 Poprzedni symulator: [OLDVERSION]
 	</notification>
-	<notification name="VintageLoginInfo">
-		Czy wiesz, że możesz sprawić, aby CtrlAltStudio Viewer wyglądał jak klasyczny Phoenix Viewer? Wybierz w tym celu pozycję "Phoenix" z listy "wybierz tryb" po prawej.
-		<usetemplate name="okbutton" yestext="OK"/>
-	</notification>
 	<notification name="CannotSaveSnapshot">
 		Zapis zdjęcia zakończony niepowodzeniem.
 	</notification>
@@ -4603,6 +4616,9 @@ Nie można tego cofnąć.
 			<button name="Cancel" text="Anuluj"/>
 		</form>
 	</notification>
+	<notification name="RenameContactSetFailure">
+		Nie można zmienić nazwy zestawu &apos;[SET]&apos; na &apos;[NEW_NAME]&apos;, ponieważ zestaw z taką nazwą już istnieje lub nowa nazwa nie jest poprawna.
+	</notification>
 	<notification name="ShapeImportGenericFail">
 		Wystąpił problem podczas importowania [FILENAME]. Zobacz log, aby uzyskać więcej szczegółów.
 	</notification>
@@ -4618,5 +4634,12 @@ Nie można tego cofnąć.
 	</notification>
 	<notification name="CantRestoreToWorldNoCopy">
 		Funkcjonalność przywracania na ostatnią pozycję nie jest dostępna dla obiektów bez praw kopiowania, aby zapobiec ewentualnej ich utracie.
+	</notification>
+	<notification name="ConfirmRemoveCredential">
+		Na pewno chcesz usunąć dane logowania dla &lt;nolink&gt;[NAME]&lt;/nolink&gt;?
+		<form name="form">
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Anuluj"/>
+		</form>
 	</notification>
 </notifications>

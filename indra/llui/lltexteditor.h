@@ -148,6 +148,7 @@ public:
 
 //	void			selectNext(const std::string& search_text_in, BOOL case_insensitive, BOOL wrap = TRUE);
 // [SL:KB] - Patch: UI-FloaterSearchReplace | Checked: 2010-10-29 (Catznip-2.3.0a) | Added: Catznip-2.3.0a
+	std::string		getSelectionString() const;
 	void			selectNext(const std::string& search_text_in, BOOL case_insensitive, BOOL wrap = TRUE, BOOL search_up = FALSE);
 	BOOL			replaceText(const std::string& search_text, const std::string& replace_text, BOOL case_insensitive, BOOL wrap = TRUE, BOOL search_up = FALSE);
 // [/SL:KB]
@@ -167,6 +168,9 @@ public:
 	typedef boost::function<void(S32&, S32&, LLWString&, S32&, const LLWString&)> autoreplace_callback_t;
 	autoreplace_callback_t mAutoreplaceCallback;
 	void			setAutoreplaceCallback(autoreplace_callback_t cb) { mAutoreplaceCallback = cb; }
+
+	// <FS:Ansariel> FIRE-11045: Spell checking changes not identified as such
+	/*virtual*/ void onSpellCheckPerformed();
 
 	//
 	// Text manipulation
@@ -258,6 +262,8 @@ protected:
 	S32				overwriteChar(S32 pos, llwchar wc);
 	void			removeChar();
 	S32 			removeChar(S32 pos);
+	// <FS> Ctrl-Backspace remove word
+	void			removeWord(bool prev);
 	S32				insert(S32 pos, const LLWString &wstr, bool group_with_next_op, LLTextSegmentPtr segment);
 	S32				remove(S32 pos, S32 length, bool group_with_next_op);
 	

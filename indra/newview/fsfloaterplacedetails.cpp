@@ -55,7 +55,7 @@
 #include "llviewerparcelmgr.h"
 #include "llviewerwindow.h"
 
-static const F32 FS_PLACE_INFO_UPDATE_INTERVAL = 3.0;
+static const F32 FS_PLACE_INFO_UPDATE_INTERVAL = 3.0f;
 
 static bool fs_is_agent_in_selected_parcel(LLParcel* parcel)
 {
@@ -330,6 +330,12 @@ void FSFloaterPlaceDetails::onOpen(const LLSD& key)
 			mDisplayInfo = REMOTE_PLACE;
 			setTitle(getString("title_remote_place"));
 
+			mPanelPlaceInfo->resetLocation();
+			mPanelPlaceInfo->setInfoType(LLPanelPlaceInfo::PLACE);
+			mPanelPlaceInfo->setHeaderVisible(FALSE);
+			mPanelPlaceInfo->setVisible(TRUE);
+			mPanelLandmarkInfo->setVisible(FALSE);
+
 			if (key.has("id"))
 			{
 				LLUUID parcel_id = key["id"].asUUID();
@@ -348,12 +354,6 @@ void FSFloaterPlaceDetails::onOpen(const LLSD& key)
 				mPanelPlaceInfo->setParcelDetailLoadedCallback(boost::bind(&FSFloaterPlaceDetails::processParcelDetails, this, _1));
 				mPanelPlaceInfo->displayParcelInfo(LLUUID(), mGlobalPos);
 			}
-
-			mPanelPlaceInfo->resetLocation();
-			mPanelPlaceInfo->setInfoType(LLPanelPlaceInfo::PLACE);
-			mPanelPlaceInfo->setHeaderVisible(FALSE);
-			mPanelPlaceInfo->setVisible(TRUE);
-			mPanelLandmarkInfo->setVisible(FALSE);
 
 			updateVerbs();
 		}

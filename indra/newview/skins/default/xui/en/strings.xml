@@ -65,6 +65,7 @@ Draw distance: [DRAW_DISTANCE]
 Bandwidth: [BANDWIDTH]
 LOD factor: [LOD]
 Render quality: [RENDERQUALITY]
+Advanced Lighting Model: [ALMSTATUS]
 Texture memory: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
 VFS (cache) creation time (UTC): [VFS_DATE]
   </string>
@@ -495,6 +496,7 @@ Please try logging in again in a minute.</string>
 	<string name="TeleportYourAgent">Teleport you</string>
 	<string name="ManageEstateSilently">Manage your estates silently</string>
 	<string name="ChangeYourDefaultAnimations">Change your default animations</string>
+	<string name="SnapshotSavedToDisk">Snapshot saved: [FILENAME]</string>
 	
 	<string name="JoinAnExperience">Join an experience</string> <!-- not used -->
 	<string name="SilentlyManageEstateAccess">Suppress alerts when managing estate access lists</string>
@@ -1026,6 +1028,11 @@ The [[MARKETPLACE_CREATE_STORE_URL] Marketplace store] is returning errors.
 
   <!-- panel preferences general -->
   <string name="DoNotDisturbModeResponseDefault">This resident has turned on Unavailable mode and will see your message later.</string>
+  <string name="AutoResponseModeDefault">The Resident you messaged has activated CtrlAltStudio Viewer&apos;s &apos;autorespond mode&apos; which means they have requested not to be disturbed.  Your message will still be shown in their IM panel for later viewing.</string>
+  <string name="AutoResponseModeNonFriendsDefault">The Resident you messaged has activated CtrlAltStudio Viewer&apos;s &apos;autorespond mode&apos; which means they have requested not to be disturbed.  Your message will still be shown in their IM panel for later viewing.</string>
+  <string name="RejectTeleportOffersResponseDefault">The Resident you messaged has activated CtrlAltStudio Viewer&apos;s &apos;reject all teleport offers and requests mode&apos; which means they have requested not to be disturbed with teleport offers and requests. You may still send an IM message manually.</string>
+  <string name="MutedAvatarsResponseDefault">The Resident you messaged has blocked you from sending them any messages.</string>
+  <string name="AwayAvatarResponseDefault">The Resident you messaged is currently away from keyboard. Your message will still be shown in their IM panel for later viewing.</string>
 
 	<!-- Mute -->
 	<string name="MuteByName">(By name)</string>
@@ -1905,6 +1912,7 @@ If you continue to receive this message, contact the [SUPPORT_SITE].
 	<!-- Additional IM messages -->
 	<string name="IM_announce_incoming">Incoming message from [NAME]</string>
 	<string name="IM_autoresponse_sent">Autoresponse sent</string>
+	<string name="IM_autoresponse_item_sent">Sent auto-response item: [ITEM_NAME]</string>
 
 	<!-- voice calls -->
 	<string name="answered_call">Your call has been answered</string>
@@ -2200,6 +2208,7 @@ If you continue to experience problems, please check your network and firewall s
   <string name="free">free</string>
 
   <!-- Group Profile roles and powers -->
+  <string name="Group Ban">Group Ban</string>
   <string name="Membership">Membership</string>
   <string name="Roles">Roles</string>
   <string name="Group Identity">Group Identity</string>
@@ -2596,8 +2605,16 @@ Try enclosing path to the editor with double quotes.
   <string name="FSCmdLineDrawDistanceSet">Draw Distance set to [DISTANCE]m.</string>
   <string name="FSCameraPositionCopied">Camera position [POS] copied to clipboard.</string>
 
-  <string name="FSCmdLineRollDiceTotal">Total result for [DICE]d[FACES]: [RESULT].</string>
+  <string name="FSCmdLineRollDiceTotal">Total result for [DICE]d[FACES][MODIFIER]: [RESULT].</string>
   <string name="FSCmdLineRollDiceLimits">You must provide positive values for dice (max 100) and faces (max 1000).</string>
+  <string name="FSCmdLineRollDiceModifiersInvalid">If you want to use a modifier, then you must provide valid modifier number and the type of modifier. Modifier must be in range from -1000 to 1000. Valid modifier types are "+" (bonuses), "-" (penalties), "&gt;", "&lt;" (successes), "r&gt;", "r&lt;", "r" (rerolls), "!p&gt;", "!p&lt;", "!p" (penetrations), "!&gt;", "!&lt;" and "!" (explosions). You can use only one modifier type per roll. Examples: "[COMMAND] 1 20 + 5", "[COMMAND] 5 40 &gt; 15", "[COMMAND] 10 25 ! 25", "[COMMAND] 15 25 !&lt; 10".</string>
+  <string name="FSCmdLineRollDiceExploded">Exploded</string>
+  <string name="FSCmdLineRollDicePenetrated">Penetrated</string>
+  <string name="FSCmdLineRollDiceSuccess">Success</string>
+  <string name="FSCmdLineRollDiceReroll">Reroll</string>
+  <string name="FSCmdLineRollDiceFreezeGuard">This operation cannot be completed because the viewer would freeze in an infinite rolling loop. Please change the criteria.</string>
+
+  <string name="FSCmdLineCalcRandError">'[RAND]' is not a valid expression for RAND(min,max). MAX must be higher than MIN, both in range from -10000 to 10000.</string>
 
   <!-- Build types for about floater -->
   <string name="FSWithHavok">with Havok support</string>
@@ -2676,6 +2693,7 @@ Try enclosing path to the editor with double quotes.
   <string name="QP_WL_None">None</string>
 
   <string name="GroupChatMuteNotice">Muting group chat from [NAME].</string>
+  <string name="IgnoredAdHocSession">You've been invited to a conference (ad-hoc) chat, but viewer automatically ignored it because of your settings.</string>
   
   <!-- <FS:Ansariel> Radar notifications -->
   <string name="camera_no_focus">The camera cannot focus user [AVATARNAME] because they are outside your draw distance.</string>
@@ -2686,6 +2704,7 @@ Try enclosing path to the editor with double quotes.
   <string name="entering_region">entered the region.</string>
   <string name="entering_region_distance">entered the region ([DISTANCE] m).</string>
   <string name="leaving_region">left the region.</string>
+  <string name="avatar_age_alert">triggered the age alert. Age: [AGE] day(s)</string>
 
   <string name="TotalScriptCountChangeIncrease">Total scripts in region jumped from [OLD_VALUE] to [NEW_VALUE] ([DIFFERENCE]).</string>
   <string name="TotalScriptCountChangeDecrease">Total scripts in region dropped from [OLD_VALUE] to [NEW_VALUE] ([DIFFERENCE]).</string>
@@ -2712,5 +2731,10 @@ Try enclosing path to the editor with double quotes.
   <string name="SLGridStatusInvalidMsg">SL Grid Status error: Invalid message format. Try again later.</string>
   <string name="SLGridStatusTimedOut">SL Grid Status error: Request timed out.</string>
   <string name="SLGridStatusOtherError">SL Grid Status error: [STATUS] (https://en.wikipedia.org/wiki/List_of_HTTP_status_codes).</string>
+
+  <string name="DoubleClickTeleportEnabled">DoubleClick Teleport enabled.</string>
+  <string name="DoubleClickTeleportDisabled">DoubleClick Teleport disabled.</string>
+
+  <string name="FSRegionRestartInLocalChat">The region you are in now is about to restart. If you stay in this region you will be logged out.</string>
 
 </strings>

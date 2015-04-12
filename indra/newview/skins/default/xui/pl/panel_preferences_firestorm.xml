@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <panel name="firestorm">
+<panel.string name="BeamsOffLabel">
+	=== WYŁĄCZONE ===
+</panel.string>
+<string name="EmbeddedItemNotSet">
+	Brak ustawionego
+</string>
+<string name="EmbeddedItemNotAvailable">
+	Niedostępny
+</string>
+<string name="EmbeddedItemNotLoggedIn">
+	Zaloguj się
+</string>
 <tab_container label="Ust. Firestorma" name="tabs">
     <panel label="Ogólne" name="tab-general">
         <check_box name="checkMiscRLVa" label="Sterowanie Firestormem przez skrypty (RLVa)" />
@@ -13,7 +25,30 @@
         <check_box label="Wyłącz ekran postępu wylogowywania się" name="logout_screen_toggle" tool_tip="Wyłącza czarny ekran postępu wylogowywania się." />
         <check_box label="Wyłącz automatyczne otwieranie listy zablokowanych" name="FSDisableBlockListAutoOpen" tool_tip="Wyłącza automatyczne otwieranie listy zablokowanych podczas blokowania awatarów lub obiektów." />
         <check_box label="Zawsze próbuj rezzować obiekty jako członek grupy zarządzającej działką" name="grouplandrez" tool_tip="Zawsze próbuj rezzować obiekty jako członek grupy zarządzającej działką niezależnie od tego, czy masz ją akurat aktywną, czy nie." />
-        <check_box label="Porządkuj listę kontaktów ZAWSZE według nazw kont" name="sortcontactsbyun" tool_tip="Nie zwracaj uwagi na Imiona Wyświetlane" />
+        <text name="textFriendlistOptions">
+            Opcje listy kontaktów:
+        </text>
+        <text name="textFriendlistColumns" width="113">
+            Widoczne kolumny:
+        </text>
+        <check_box width="80" label="Nazwa konta" name="FSFriendListColumnShowUserName" tool_tip="Lista kontaktów będzie pokazywać kolumnę z nazwami kont znajomych." />
+        <check_box width="105" label="Wyświetlane Imię" name="FSFriendListColumnShowDisplayName" tool_tip="Lista kontaktów będzie pokazywać kolumnę z Imionami Wyświetlanymi znajomych." />
+        <check_box label="Pełne imię" name="FSFriendListColumnShowFullName" tool_tip="Lista kontaktów będzie pokazywać kolumnę z imionami znajomych w pełnym formacie." />
+        <text name="textFriendListSortOrder" width="83">
+            Sortuj listę po:
+        </text>
+        <radio_group name="FSFriendListSortOrder">
+            <radio_item label="Nazwa konta" name="username" width="80" />
+            <radio_item label="Wyświetlane Imię" name="displayname" />
+        </radio_group>
+        <text name="textFriendListFullNameFormat" width="93">
+            Pełne imię jako:
+        </text>
+        <radio_group name="FSFriendListFullNameFormat">
+            <radio_item label="Nazwa konta (Wyświetlane)" name="username_displayname" />
+            <radio_item label="Wyświetlane (Nazwa konta)" name="displayname_username" />
+        </radio_group>
+        <check_box label="Pokaż kolumny zezwoleń" name="FSFriendListColumnShowPermissions" tool_tip="Lista kontaktów będzie pokazywać kolumny z zezwoleniami, jakie zostały udzielone temu awatarowi, a także przez tego awatara - innym." />
         <check_box label="Zablokowane awatary jako chmury cząsteczek" name="ShowMutedAvatarsAsCloud" tool_tip="Zablokowane awatary będą renderowane jako chmury cząsteczek o specjalnym kolorze." />
         <check_box label="Ukryj puste foldery systemowe w Szafie" name="DebugHideEmptySystemFolders" tool_tip="Gdy ta opcja jest włączona, to wszystkie puste foldery systemowe - takie jak Ulubione czy Landmarki - są ukrywane" />
         <check_box label="Pokaż folder &quot;Odebrane przedmioty&quot; normalnie w Szafie" name="FSShowInboxFolder" tool_tip="Gdy włączysz tą opcję, to w Szafie będzie można znaleźć folder &quot;Odebrane przedmioty&quot;." />
@@ -28,6 +63,7 @@
             <combo_box.item label="Pomocnik lotu: Umiarkowane przyspieszanie" name="flight_moderate" />
             <combo_box.item label="Pomocnik lotu: Silne przyspieszanie" name="flight_strong" />
         </combo_box>
+        <check_box label="Stopniowe powiększanie pola widzenia" name="FSRenderFarClipStepping" tool_tip="Jeśli włączysz tą opcję, to CtrlAltStudio Viewer będzie stopniowo zwiększać pole widzenia po teleportacji." />
         <slider name="progressive_draw_distance_interval" tool_tip="Odstęp w sekundach pomiędzy każdym kolejnym powiększeniem pola widzenia." />
     </panel>
     <panel label="Ochrona" name="ProtectionTab">
@@ -143,9 +179,9 @@
         </text>
         <line_editor tool_tip="Ustawia i odtwarza strumień muzyki dla podanego URL" name="FSCmdLineMusic" />
         <text name="FSCmdLineRollDice_txt">
-            Rzuć kostką (użycie: cmd kostki ścianki)
+            Rzuć kostką (użycie: cmd kostki ścianki tm wm)
         </text>
-        <line_editor tool_tip="Rzut kostką - cmd [ilość kostek] [ilość ścianek]. Przykład: cmd 1 20. Brak parametrów jest równy cmd 1 6 (zwykła kostka)." name="FSCmdLineRollDice" />
+        <line_editor tool_tip="Rzut kostką - cmd [ilość kostek] [ilość ścianek] [typ modyfikatora (opcjonalne)] [wartość modyfikatora (opcjonalne)]. Przykład: cmd 1 20, cmd 2 40 + 5. Brak parametrów jest równy cmd 1 6 (zwykła kostka)." name="FSCmdLineRollDice" />
     </panel>
     <panel label="Polecenia 2" name="tab-CmdLine2">
         <check_box label="Używaj paska czatu jak wiersza poleceń" name="chat_cmd_toggle2" />
@@ -233,11 +269,11 @@
           <combo_item name="High" label="Wysoki"/>
         </combo_box>
         <check_box name="FSBuildPrefs_EmbedItem" label="Umieszczaj obiekt w nowych primach"/>
-        <text name="Give inventory" tool_tip="Upuść przedmiot w tym miejscu.">
+        <fs_embedded_item_drop_target name="embed_item" tool_tip="Upuść przedmiot w tym miejscu.">
          Upuść przedmiot w tym miejscu.
-        </text>
+        </fs_embedded_item_drop_target>
         <text name="build_item_add_disp_rect_txt">
-         Obecnie ustawiono na: [ITEM]
+         Obecnie: [ITEM]
         </text>
         <text name="text_box_permissions">
           Zezwolenia

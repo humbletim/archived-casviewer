@@ -471,6 +471,9 @@
      name="AvatarListItemBeyondShoutRange"
      reference="Red" />
     <color
+     name="AvatarListItemAgeAlert"
+     reference="Red" />
+    <color
      name="BackgroundChatColor"
      reference="DkGray" />
     <color
@@ -1101,6 +1104,9 @@
      name="TextBgWriteableColor"
      reference="LtGray" />
     <color
+     name="TextBgHighlightColor"
+     reference="EmphasisColorLight" />
+    <color
      name="TextCursorColor"
      reference="Black" />
     <color
@@ -1312,4 +1318,7 @@
   <color
       name="MapPickRadiusColor"
       reference="EmphasisColor_35" />
+  <color
+      name="SearchableControlHighlightColor"
+      value="0.799 0.491 0.131 1" />
 </colors>

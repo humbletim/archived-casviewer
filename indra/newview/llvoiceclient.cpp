@@ -165,6 +165,18 @@ void LLVoiceClient::userAuthorized(const std::string& user_id, const LLUUID &age
 	mVoiceModule->userAuthorized(user_id, agentID);
 }
 
+void LLVoiceClient::setHidden(bool hidden)
+{
+    if (mVoiceModule)
+    {
+        //mVoiceModule->setHidden(hidden);
+		#ifdef OPENSIM
+			mVoiceModule->setHidden(hidden && LLGridManager::getInstance()->isInSecondLife());
+		#else
+        mVoiceModule->setHidden(hidden);
+		#endif
+    }
+}
 
 void LLVoiceClient::terminate()
 {
@@ -488,11 +500,17 @@ void LLVoiceClient::setMicGain(F32 volume)
 //------------------------------------------
 // enable/disable voice features
 
-bool LLVoiceClient::voiceEnabled()
+// <FS:Ansariel> Bypass LLCachedControls for voice status update
+//bool LLVoiceClient::voiceEnabled()
+bool LLVoiceClient::voiceEnabled(bool no_cache)
+// </FS:Ansariel>
 {
 	if (mVoiceModule) 
 	{
-		return mVoiceModule->voiceEnabled();
+		// <FS:Ansariel> Bypass LLCachedControls for voice status update
+		//return mVoiceModule->voiceEnabled();
+		return mVoiceModule->voiceEnabled(no_cache);
+		// </FS:Ansariel>
 	}
 	else
 	{

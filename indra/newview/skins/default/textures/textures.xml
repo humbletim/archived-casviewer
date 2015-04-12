@@ -760,6 +760,7 @@ with the same filename but different name
   <texture name="resync_animations" file_name="toolbar_icons/resync_animations.png" preload="true" />
   <texture name="display3d" file_name="toolbar_icons/display3d.png" preload="true" />  <!-- <CV:David> -->
   
+  <texture name="skin ansastorm blood" file_name="skinspreview/ansa_blood.jpg" preload="true" />
   <texture name="skin ansastorm bright blue" file_name="skinspreview/ansa_blue.jpg" preload="true" />
   <texture name="skin ansastorm classic brown" file_name="skinspreview/ansa_brown.jpg" preload="true" />
   <texture name="skin ansastorm ectoplasma" file_name="skinspreview/ansa_ecto.jpg" preload="true" />
@@ -804,6 +805,12 @@ with the same filename but different name
   <texture name="VoicePTT_Off_Dark" file_name="bottomtray/VoicePTT_Off_Dark.png" preload="false" />
   <texture name="VoicePTT_On_Dark" file_name="bottomtray/VoicePTT_On_Dark.png" preload="false" />
   <!-- END FS:Ansariel [FS communication UI] -->  
+  
+  <texture name="Radar_VoicePTT_Lvl1" file_name="bottomtray/VoicePTT_Lvl1.png" preload="false" />
+  <texture name="Radar_VoicePTT_Lvl2" file_name="bottomtray/VoicePTT_Lvl2.png" preload="false" />
+  <texture name="Radar_VoicePTT_Lvl3" file_name="bottomtray/VoicePTT_Lvl3.png" preload="false" />
+  <texture name="Radar_VoicePTT_Off" file_name="bottomtray/VoicePTT_Off.png" preload="false" />
+  <texture name="Radar_VoicePTT_On" file_name="bottomtray/VoicePTT_On.png" preload="false" />
   
   <texture name="Wearables_Divider" file_name="windows/Wearables_Divider.png" preload="false" />
 
@@ -942,7 +949,11 @@ with the same filename but different name
 <texture name="teleport_menu" file_name="icons/teleport_menu.png" preload="false" />
 <texture name="friends_icon_24x24" file_name="icons/Friends_Icon_24x24.png" preload="false" />
 <texture name="gift_icon_24x24" file_name="icons/gift_icon_24x24.png" preload="false" />
-<texture name="avatar_in_region" file_name="green_dot.tga" preload="false" />
+<texture name="avatar_in_region" file_name="icons/green_square.png" preload="false" />
+<texture name="radarbox_n" file_name="icons/radar_n.png" preload="false" />
+<texture name="radarbox_p" file_name="icons/radar_p.png" preload="false" />
+<texture name="radarbox_s" file_name="icons/radar_s.png" preload="false" />
+<texture name="radarbox_t" file_name="icons/radar_t.png" preload="false" />
 
 <texture name="ff_online_status_button"			file_name="legacy/ff_online_status_button.tga"		preload="false" />
 <texture name="ff_visible_online_button"		file_name="legacy/ff_visible_online_button.tga"		preload="false" />

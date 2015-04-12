@@ -1013,6 +1013,35 @@ bool LLFindNonRemovableObjects::operator()(LLInventoryCategory* cat, LLInventory
 	return false;
 }
 
+// [SL:KB] - Patch: UI-Misc | Checked: 2014-03-02 (Catznip-3.6)
+LLFindLandmarks::LLFindLandmarks(bool fFilterDuplicates, bool fFilterSelf)
+	: m_fFilterDuplicates(fFilterDuplicates)
+	, m_fFilterSelf(fFilterSelf)
+{
+}
+
+bool LLFindLandmarks::operator()(LLInventoryCategory* cat, LLInventoryItem* item)
+{
+	if ( (item) && (LLAssetType::AT_LANDMARK == item->getType()) )
+	{
+		if ( (m_fFilterSelf) && (gAgentID != item->getCreatorUUID()) )
+		{
+			return false;
+		}
+
+		if (m_fFilterDuplicates)
+		{
+			if (m_AssetIds.end() != std::find(m_AssetIds.begin(), m_AssetIds.end(), item->getAssetUUID()))
+				return false;
+			m_AssetIds.push_back(item->getAssetUUID());
+		}
+
+		return true;
+	}
+	return false;
+}
+// [/SL:KB]
+
 ///----------------------------------------------------------------------------
 /// LLAssetIDMatches 
 ///----------------------------------------------------------------------------
@@ -1156,6 +1185,108 @@ void LLInventoryAction::doToSelected(LLInventoryModel* model, LLFolderView* root
 		// Clear the clipboard before we start adding things on it
 		LLClipboard::instance().reset();
 	}
+	// <FS:Ansariel> Inventory Links Replace
+	if ("replace_links" == action)
+	{
+		LLSD params;
+		if (root->getSelectedCount() == 1)
+		{
+			LLFolderViewItem* folder_item = root->getSelectedItems().front();
+			LLInvFVBridge* bridge = (LLInvFVBridge*)folder_item->getViewModelItem();
+
+			if (bridge)
+			{
+				LLInventoryObject* obj = bridge->getInventoryObject();
+				if (obj && obj->getType() != LLAssetType::AT_CATEGORY && obj->getActualType() != LLAssetType::AT_LINK_FOLDER)
+				{
+					params = LLSD(obj->getUUID());
+				}
+			}
+		}
+		LLFloaterReg::showInstance("fs_linkreplace", params);
+		return;
+	}
+	// </FS:Ansariel>
+	// <FS:Ansariel> Move to default folder
+	if ("move_to_default_folder" == action)
+	{
+		std::set<LLFolderViewItem*> selected_items = root->getSelectionList();
+		std::set<LLFolderViewItem*>::iterator set_iter;
+		LLUUID outbox_folder_id = model->findCategoryUUIDForType(LLFolderType::FT_OUTBOX);
+		LLUUID cof_folder_id = model->findCategoryUUIDForType(LLFolderType::FT_CURRENT_OUTFIT);
+
+		for (set_iter = selected_items.begin(); set_iter != selected_items.end(); ++set_iter)
+		{
+			LLFolderViewItem* folder_item = *set_iter;
+			if (!folder_item)
+			{
+				continue;
+			}
+
+			LLInvFVBridge* bridge = (LLInvFVBridge*)folder_item->getViewModelItem();
+			if (!bridge)
+			{
+				continue;
+			}
+
+			LLInventoryObject* obj = bridge->getInventoryObject();
+			if (!obj)
+			{
+				continue;
+			}
+			
+			if (obj->getActualType() == LLAssetType::AT_CATEGORY)
+			{
+				continue;
+			}
+
+			if (model->isObjectDescendentOf(obj->getUUID(), outbox_folder_id) ||
+				model->isObjectDescendentOf(obj->getUUID(), cof_folder_id))
+			{
+				continue;
+			}
+
+			LLUUID target_cat_id = model->findCategoryUUIDForType(LLFolderType::assetTypeToFolderType(obj->getActualType()));
+			if (target_cat_id.notNull())
+			{
+				move_inventory_item(gAgentID, gAgentSessionID, obj->getUUID(), target_cat_id, obj->getName(), LLPointer<LLInventoryCallback>(NULL));
+			}
+		}
+		return;
+	}
+	// </FS:Ansariel>
+	// <FS:Ansariel> FIRE-11628: Option to delete broken links from AO folder
+	if ("cleanup_broken_links" == action)
+	{
+		if (root->getSelectedCount() == 1)
+		{
+			LLFolderViewItem* folder_item = root->getSelectedItems().front();
+			LLInvFVBridge* bridge = (LLInvFVBridge*)folder_item->getViewModelItem();
+
+			if (bridge)
+			{
+				LLInventoryObject* obj = bridge->getInventoryObject();
+
+				LLInventoryModel::cat_array_t cats;
+				LLInventoryModel::item_array_t items;
+				model->collectDescendents(obj->getUUID(), cats, items, FALSE);
+				LLUUID trash_id = model->findCategoryUUIDForType(LLFolderType::FT_TRASH);
+
+				BOOL old_setting = gSavedPerAccountSettings.getBOOL("ProtectAOFolders");
+				gSavedPerAccountSettings.setBOOL("ProtectAOFolders", FALSE);
+				for (LLInventoryModel::item_array_t::iterator it = items.begin(); it != items.end(); ++it)
+				{
+					if ((*it)->getIsLinkType() && LLAssetType::lookupIsLinkType((*it)->getType()))
+					{
+						model->removeItem((*it)->getUUID());
+					}
+				}
+				gSavedPerAccountSettings.setBOOL("ProtectAOFolders", old_setting);
+			}
+		}
+		return;
+	}
+	// </FS:Ansariel>
 
 	static const std::string change_folder_string = "change_folder_type_";
 	if (action.length() > change_folder_string.length() && 

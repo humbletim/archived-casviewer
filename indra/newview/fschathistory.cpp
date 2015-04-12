@@ -936,13 +936,14 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 	bool square_brackets = false; // square brackets necessary for a system messages
 	bool is_p2p = args.has("is_p2p") && args["is_p2p"].asBoolean();
 	bool is_conversation_log = args.has("conversation_log") && args["conversation_log"].asBoolean();	// <FS:CR> Don't dim chat in conversation log
+	bool is_local = args.has("is_local") && args["is_local"].asBoolean();
 
 	bool from_me = chat.mFromID == gAgent.getID();
 	setPlainText(use_plain_text_chat_history);	// <FS:Zi> FIRE-8600: TAB out of chat history
 
 	LLColor4 txt_color = LLUIColorTable::instance().getColor("White");
 	LLColor4 name_color = LLUIColorTable::instance().getColor("ChatNameColor");
-	LLViewerChat::getChatColor(chat, txt_color, false);
+	LLViewerChat::getChatColor(chat, txt_color, is_local);
 	LLFontGL* fontp = LLViewerChat::getChatFont();
 	std::string font_name = LLFontGL::nameFromFont(fontp);
 	std::string font_size = LLFontGL::sizeFromFont(fontp);
@@ -971,8 +972,7 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 	// FS:LO FIRE-2899 - Faded text for IMs in nearby chat
 
 	//IRC styled /me messages.
-	bool irc_me = (prefix == "/me " || prefix == "/me'"
-	 || prefix == "/ME " || prefix == "/ME'");	// <FS>
+	bool irc_me = (prefix == "/me " || prefix == "/me'");
 
 	// Delimiter after a name in header copy/past and in plain text mode
 	std::string delimiter = ": ";
@@ -996,16 +996,21 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 
 		// italics for emotes -Zi
 		if(gSavedSettings.getBOOL("EmotesUseItalic"))
+		{
 			body_message_params.font.style = "ITALIC";
+			name_params.font.style = "ITALIC";
+		}
 	}
 
 	if (chat.mChatType == CHAT_TYPE_WHISPER && gSavedSettings.getBOOL("FSEmphasizeShoutWhisper"))
 	{
-			body_message_params.font.style = "ITALIC";
+		body_message_params.font.style = "ITALIC";
+		name_params.font.style = "ITALIC";
 	}
 	else if(chat.mChatType == CHAT_TYPE_SHOUT && gSavedSettings.getBOOL("FSEmphasizeShoutWhisper"))
 	{
-			body_message_params.font.style = "BOLD";
+		body_message_params.font.style = "BOLD";
+		name_params.font.style = "BOLD";
 	}
 
 	bool message_from_log = chat.mChatStyle == CHAT_STYLE_HISTORY;
@@ -1030,7 +1035,7 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 	{
 		moderator_style_active = true;
 
-		name_params.font.style(moderator_name_style);		
+		name_params.font.style(moderator_name_style);
 		body_message_params.font.style(moderator_body_style);
 
 		if ( irc_me && gSavedSettings.getBOOL("EmotesUseItalic") )
@@ -1038,7 +1043,7 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 			if ( (ITALIC & moderator_name_style_value) != ITALIC )//HG: if ITALIC isn't one of the styles... add it
 			{
 				moderator_name_style += "ITALIC";
-				body_message_params.font.style(moderator_name_style);
+				name_params.font.style(moderator_name_style);
 			}
 			if ( (ITALIC & moderator_body_style_value) != ITALIC )
 			{
@@ -1130,7 +1135,6 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 			else if (chat.mFromName != SYSTEM_FROM && chat.mFromID.notNull() && !message_from_log && !chat.mRlvNamesFiltered)
 // [/RLVa:KB]
 			{
-				LLStyle::Params name_params(body_message_params);
 				name_params.color = name_color;
 				name_params.readonly_color = name_color;
 				if (chat.mChatType == CHAT_TYPE_IM || chat.mChatType == CHAT_TYPE_IM_GROUP)
@@ -1152,26 +1156,31 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 
 				if (from_me && gSavedSettings.getBOOL("FSChatHistoryShowYou"))
 				{
-					std::string localized_name;
-					bool is_localized = LLTrans::findString(localized_name, "AgentNameSubst");
-					appendText((is_localized? localized_name:"(You)") + delimiter,
-							prependNewLineState, name_params);
-					prependNewLineState = false;
+					appendText(LLTrans::getString("AgentNameSubst"), prependNewLineState, name_params);
 				}
 				else
 				{
-				// Add link to avatar's inspector and delimiter to message.
-					// <FS:Ansariel> Append delimiter with different style params or
-					//               it will be replaced with the avatar name once it's
-					//               returned from the server!
-					//appendText(std::string(link_params.link_href) + delimiter,
-					//		prependNewLineState, link_params);
+					// Add link to avatar's inspector and delimiter to message.
 					appendText(std::string(name_params.link_href), prependNewLineState, name_params);
-					prependNewLineState = false;
-					appendText(delimiter, prependNewLineState, body_message_params);
-					// </FS:Ansariel>
-					prependNewLineState = false;
 				}
+
+				prependNewLineState = false;
+
+				if (delimiter.length() > 0 && delimiter[0] == ':')
+				{
+					LLStyle::Params delimiter_params(body_message_params);
+					delimiter_params.font.style = name_params.font.style;
+
+					appendText(":", prependNewLineState, delimiter_params);
+					prependNewLineState = false;
+
+					appendText(delimiter.substr(1, std::string::npos), prependNewLineState, body_message_params);
+				}
+				else
+				{
+					appendText(delimiter, prependNewLineState, body_message_params);
+				}
+				prependNewLineState = false;
 			}
 			else
 			{
@@ -1290,14 +1299,6 @@ void FSChatHistory::appendMessage(const LLChat& chat, const LLSD &args, const LL
 		}
 		// FS:LO FIRE-2899 - Faded text for IMs in nearby chat
 
-		// <FS:PP> FIRE-7625: Option to display group chats, IM sessions and nearby chat always in uppercase
-		static LLCachedControl<bool> sFSChatsUppercase(gSavedSettings, "FSChatsUppercase");
-		if (sFSChatsUppercase)
-		{
-			LLStringUtil::toUpper(message);
-			LLStringUtil::toUpper(mLastFromName);
-		}
-		// </FS:PP>
 		if (square_brackets)
 		{
 			message += "]";

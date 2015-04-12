@@ -168,7 +168,10 @@ public:
 	/////////////////////////
 	/// @name enable disable voice and features
 	//@{
-	virtual bool voiceEnabled();
+	// <FS:Ansariel> Bypass LLCachedControls for voice status update
+	//virtual bool voiceEnabled();
+	virtual bool voiceEnabled(bool no_cache = false);
+	// </FS:Ansariel>
 	virtual void setVoiceEnabled(bool enabled);
 	virtual BOOL lipSyncEnabled();	
 	virtual void setLipSyncEnabled(BOOL enabled);
@@ -723,6 +726,7 @@ private:
 	bool mRenderDeviceDirty;
 
 	bool mIsInitialized;
+	bool mShutdownComplete;
 	
 	
 	bool checkParcelChanged(bool update = false);
@@ -747,6 +751,7 @@ private:
 	std::string getAudioSessionURI();
 	std::string getAudioSessionHandle();
 			
+    void setHidden(bool hidden); //virtual
 	void sendPositionalUpdate(void);
 	
 	void buildSetCaptureDevice(std::ostringstream &stream);
@@ -775,6 +780,7 @@ private:
 	
 	bool		mMuteMic;
 	bool		mMuteMicDirty;
+    bool        mHidden;       //Set to true during teleport to hide the agent's position.
 			
 	// Set to true when the friends list is known to have changed.
 	bool		mFriendsListDirty;

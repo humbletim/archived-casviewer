@@ -139,7 +139,7 @@ public:
 	inline BOOL getReleaseNotesRequested()		const;
 
 //	bool isAlive(); // can become false if circuit disconnects
-// [SL:KB] - Patch: World-MinimapOverlay | Checked: 2012-06-20 (Catznip-3.3.0)
+// [SL:KB] - Patch: World-MinimapOverlay | Checked: 2012-06-20 (Catznip-3.3)
 	bool isAlive() const; // can become false if circuit disconnects
 
 	LLViewerTexture* getWorldMapTile() const;
@@ -407,7 +407,7 @@ public:
 private:
 	void addToVOCacheTree(LLVOCacheEntry* entry);
 	LLViewerObject* addNewObject(LLVOCacheEntry* entry);
-	void killObject(LLVOCacheEntry* entry, std::vector<LLDrawable*>& delete_list);	
+	void killObject(LLVOCacheEntry* entry, std::vector<LLDrawable*>& delete_list); //adds entry into list if it is safe to move into cache
 	void removeFromVOCacheTree(LLVOCacheEntry* entry);
 	void killCacheEntry(LLVOCacheEntry* entry, bool for_rendering = false); //physically delete the cache entry	
 	void killInvisibleObjects(F32 max_time);

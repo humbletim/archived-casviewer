@@ -24,15 +24,15 @@
   <layout_stack
     border_size="0"
     animate="false"
-    follows="top|left"
+    follows="top|left|right"
     clip="false"
-    height="27"
+    height="20"
     right="-3"
     left_pad="0"
     layout="topleft"
     orientation="horizontal"
     name="ls_control_panel"
-    top="13"
+    top="20"
     left="3">
     <layout_panel
       auto_resize="false"
@@ -40,15 +40,18 @@
       name="slide_panel"
       top="0"
       layout="topleft"
-      height="24"
-      width="40"
+      height="20"
+      width="37"
       follows="left|top">
        <button
         height="20"
         follows="left|top"
         top="0"
-        left="5"
+        left_delta="2"
         image_overlay="TabIcon_Open_Off"
+        image_hover_unselected="Toolbar_Middle_Over"
+        image_selected="Toolbar_Middle_Selected"
+        image_unselected="Toolbar_Middle_Off"
         layout="topleft"
         width="24"
         name="slide_left_btn" />
@@ -56,10 +59,21 @@
        height="20"
        follows="left|top"
        top="0"
-       left="5"
+       left_delta="0"
        image_overlay="TabIcon_Close_Off"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        width="24"
        name="slide_right_btn" />
+      <icon
+        follows="left|right"
+        image_name="Toolbar_Middle_Off"
+        left_pad="2"
+        name="dummy_icon_slider"
+        top="0"
+        height="20"
+        width="9"/>
     </layout_panel>
     
     <layout_panel
@@ -68,8 +82,8 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
        <button
         name="group_info_btn"
@@ -77,11 +91,11 @@
         top="0"
         height="20"
         width="24"
-        left_delta="5"
+        left_delta="2"
         image_overlay="profile_icon_24x24"
-        image_pressed="PushButton_Press"
-        image_pressed_selected="PushButton_Selected_Press"
-        image_selected="PushButton_Selected_Press"
+        image_hover_unselected="Toolbar_Middle_Over"
+        image_selected="Toolbar_Middle_Selected"
+        image_unselected="Toolbar_Middle_Off"
         tool_tip="Show this group's profile">
          <button.commit_callback
           function="IMSession.Menu.Action"
@@ -95,8 +109,8 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        name="view_profile_btn"
@@ -104,11 +118,11 @@
        top="0"
        height="20"
        width="24"
-       left_delta="5"
+       left_delta="2"
        image_overlay="profile_icon_24x24"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Show this resident's profile">
         <button.commit_callback
          function="IMSession.Menu.Action"
@@ -122,18 +136,18 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        height="20"
        top="0"
-       left_delta="5"
+       left_delta="2"
        image_overlay="friends_icon_24x24"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Add this resident as a friend"
        name="add_friend_btn"
        width="24">
@@ -149,7 +163,7 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
+      height="20"
       width="33"
       follows="left|top">
       <menu_button
@@ -157,11 +171,11 @@
        follows="top|left"
        height="20"
        image_overlay="teleport_menu"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        layout="topleft"
-       left_delta="5"
+       left_delta="2"
        name="teleport_btn"
        tool_tip="Offer or request a teleport"
        top="0"
@@ -174,18 +188,18 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        top="0"
        height="20"
-       left_delta="5"
+       left_delta="2"
        image_overlay="gift_icon_24x24"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Send an item to this resident"
        name="share_btn"
        width="24">
@@ -201,18 +215,18 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        top="0"
        height="20"
-       left_delta="5"
+       left_delta="2"
        image_overlay="sale_icon_24x24"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Send money to this resident"
        name="pay_btn"
        width="24">
@@ -228,17 +242,17 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        height="20"
-       left_delta="5"
+       left_delta="2"
        image_overlay="call_icon_24x24"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Add a voice to this chat"
        name="call_btn"
        top="0"
@@ -255,17 +269,17 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        height="20"
-       left_delta="5"
+       left_delta="2"
        image_overlay="call_end_icon_24x24"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="End Voice Call"
        name="end_call_btn"
        top="0"
@@ -282,16 +296,16 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        height="20"
-       left_delta="5"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       left_delta="2"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Voice Properties"
        image_overlay="VoicePTT_Off"
        name="voice_ctrls_btn"
@@ -309,21 +323,21 @@
       user_resize="false"
       top="0"
       layout="topleft"
-      height="24"
-      width="27"
+      height="20"
+      width="26"
       follows="left|top">
       <button
        follows="left|top"
        height="20"
-       left_delta="5"
-       image_pressed="PushButton_Press"
-       image_pressed_selected="PushButton_Selected_Press"
-       image_selected="PushButton_Selected_Press"
+       left_delta="2"
+       image_hover_unselected="Toolbar_Middle_Over"
+       image_selected="Toolbar_Middle_Selected"
+       image_unselected="Toolbar_Middle_Off"
        tool_tip="Open this conversation's past transcripts."
        image_overlay="Chat_History"
        name="im_history_btn"
        top="0"
-       width="25">
+       width="24">
         <button.commit_callback
          function="IMSession.Menu.Action"
          parameter="history"/>
@@ -336,37 +350,72 @@
      user_resize="false"
      top="0"
      layout="topleft"
-     height="24"
-     width="27"
+     height="20"
+     width="26"
      follows="left|top">
      <button
      follows="left|top"
      height="20"
-     left_delta="5"
-     image_pressed="Info_Press"
-     image_pressed_selected="PushButton_Selected_Press"
-     image_selected="PushButton_Selected_Press"
+     left_delta="2"
+     image_hover_unselected="Toolbar_Middle_Over"
+     image_selected="Toolbar_Middle_Selected"
+     image_unselected="Toolbar_Middle_Off"
      tool_tip="Send system info"
      image_overlay="Info_Off"
      name="send_sysinfo_btn"
      top="0"
-     width="25" />
+     width="24" />
   </layout_panel>
-  </layout_stack>
 
   <!-- Checkbox for FS prefix on support groups -->
-  <check_box
-   control_name="FSSupportGroupChatPrefix2"
-   follows="right|top"
-   height="18"
-   label="Specify version"
-   layout="topleft"
-   top_delta="9"
-   left_delta="246"
-   name="FSSupportGroupChatPrefix_toggle"
-   tool_tip="Adds your current viewer version and skin information to the front of messages sent by you to this group which will assist support staff in correctly diagnosing your issues and improve accuracy in answering your questions"
-   width="135" />
+    <layout_panel
+      name="support_panel"
+      auto_resize="false"
+      user_resize="false"
+      top="0"
+      layout="topleft"
+      height="20"
+      width="115"
+      follows="left|top">
+      <icon
+        follows="left|right"
+        image_name="Toolbar_Middle_Off"
+        left="2"
+        name="dummy_icon_support_group"
+        top="0"
+        height="20"
+        width="113"/>
+      <check_box
+       control_name="FSSupportGroupChatPrefix2"
+       follows="left|top"
+       height="19"
+       label="Specify version"
+       layout="topleft"
+       top="0"
+       left_delta="5"
+       name="FSSupportGroupChatPrefix_toggle"
+       tool_tip="Adds your current viewer version and skin information to the front of messages sent by you to this group which will assist support staff in correctly diagnosing your issues and improve accuracy in answering your questions"
+       width="110" />
   <!-- END: FS Prefix -->
+  </layout_panel>
+    <layout_panel
+      name="lp_bar"
+      auto_resize="true"
+      user_resize="false"
+      top="0"
+      layout="topleft"
+      height="20"
+      follows="left|top|right">
+      <icon
+        follows="left|right"
+        image_name="Toolbar_Middle_Off"
+        left="2"
+        name="dummy_icon"
+        top="0"
+        height="20"
+        right="-1"/>
+    </layout_panel>
+  </layout_stack>
 
   <layout_stack
     tab_group="1"
@@ -423,7 +472,7 @@
           parse_highlights="true"
           parse_urls="true"
           right="-4"
-          left="4"
+          left="0"
           top="0"
           bottom="-1" />
         </layout_panel>
@@ -464,7 +513,7 @@
               top="1"
               bottom="-1"
               left="4"
-              right="-2"
+              right="-3"
               wrap="true" />
             </layout_panel>
             <!-- Not added yet, if ever [FS:CR]

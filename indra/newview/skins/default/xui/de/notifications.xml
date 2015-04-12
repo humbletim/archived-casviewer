@@ -147,7 +147,7 @@ Wählen Sie ein einzelnes Objekt aus und versuchen Sie es erneut.
 	</notification>
 	<notification name="FriendsAndGroupsOnly">
 		Personen, die nicht auf Ihrer Freundesliste stehen, werden nicht informiert, dass Sie ihre Anrufe und Instant Messages ignorieren.
-		<usetemplate name="okbutton" yestext="Ja"/>
+		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="FavoritesOnLogin">
 		Hinweis: Bei Aktivierung dieser Option sehen alle Personen, die diesen Computer benutzen, Ihre Lieblingsorte.
@@ -215,6 +215,22 @@ Der Rolle „[ROLE_NAME]“ diese Fähigkeit zuweisen?
 
 Der Rolle „[ROLE_NAME]“ diese Fähigkeit zuweisen?
 		<usetemplate name="okcancelbuttons" notext="Nein" yestext="Ja"/>
+	</notification>
+	<notification name="AssignBanAbilityWarning">
+		Sie sind im Begriff, der Rolle „[ROLE_NAME]“ die Fähigkeit „[ACTION_NAME]“ zuzuweisen.
+
+*ACHTUNG*
+Jedes Mitglied in einer Rolle mit dieser Fähigkeit bekommt ebenfalls die Fähigkeiten „[ACTION_NAME_2]“ und „[ACTION_NAME_3]“ zugewiesen.
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="RemoveBanAbilityWarning">
+		Sie sind im Begriff, der Rolle „[ROLE_NAME]“ die Fähigkeit „[ACTION_NAME]“ zu entziehen.
+
+*ACHTUNG*
+Der Entzug dieser Fähigkeit entzieht NICHT die Fähigkeiten „[ACTION_NAME_2]“ und „[ACTION_NAME_3]“.
+
+Falls diese Fähigkeiten dieser Rolle nicht länger zugewiesen sein sollen, deaktivieren Sie diese unverzüglich!
+		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
 	<notification name="EjectGroupMemberWarning">
 		Sie sind dabei, [AVATAR_NAME] aus der Gruppe hinauszuwerfen.
@@ -1604,6 +1620,14 @@ Diese Gruppe verlassen?
 		Sie können die Gruppe nicht verlassen, da Sie der letzte Besitzer der Gruppe sind. Weisen Sie die Besitzerrolle zuerst einem anderen Mitglied zu.
 		<usetemplate name="okbutton" yestext="OK"/>
 	</notification>
+	<notification name="GroupDepartError">
+		Verlassen der Gruppe nicht möglich: [reason]
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="GroupDepart">
+		Sie haben die Gruppe [group_name] verlassen.
+		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
 	<notification name="ConfirmKick">
 		Möchten Sie WIRKLICH alle Benutzer aus dem Grid werfen?
 		<usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="Alle Benutzer hinauswerfen"/>
@@ -2415,7 +2439,8 @@ Von einer Webseite zu diesem Formular linken, um anderen leichten Zugang zu dies
 		Fehlende(s) Kleidung/Körperteil mit Standard ersetzt.
 	</notification>
 	<notification name="GroupNotice">
-		Betreff: [SUBJECT], Nachricht: [MESSAGE]
+		[SENDER], [GROUP]
+Betreff: [SUBJECT], Nachricht: [MESSAGE]
 	</notification>
 	<notification name="FriendOnlineOffline">
 		[NAME] ist [STATUS].
@@ -4188,7 +4213,7 @@ Wählen Sie ein kleineres Stück Land aus.
 	</notification>
 
   <notification name="FSWL" label="Windlight-Umgebungseinstellungen anpassen">
-&apos;[PARCEL_NAME]&apos;, im Besitz von [OWNER_NAME], möchte deine visuellen Windlight-Umgebungseinstellungen ändern.
+„[PARCEL_NAME]“, im Besitz von [OWNER_NAME], möchte deine visuellen Windlight-Umgebungseinstellungen ändern.
     <form name="form">
       <button name="Allow" text="Zulassen"/>
       <button name="Ignore" text="Ignorieren"/>
@@ -4196,14 +4221,14 @@ Wählen Sie ein kleineres Stück Land aus.
   </notification>
   
   <notification name="FSWLClear" label="Windlight-Umgebungseinstellungen zurücksetzen">
-Windlight-Umgebungseinstellungen für &apos;[PARCEL_NAME]&apos; auf Regionsstandard zurücksetzen?
+Windlight-Umgebungseinstellungen für „[PARCEL_NAME]“ auf Regionsstandard zurücksetzen?
     <usetemplate name="okcancelbuttons" notext="Abbrechen" yestext="Ja"/>
   </notification>
 	
 <!-- ## Zi: Animation Overrider -->
   <notification name="NewAOSet">
 Bitte einen Namen für das neue Animationsset eingeben:
-(Der Name darf kein ":" oder "|" enthalten)
+(Der Name darf ausschließlich ASCII-Zeichen ausgenommen „:“ und „|“ enhalten.)
     <form name="form">
       <input name="message">
 Neues Animationsset
@@ -4217,17 +4242,17 @@ Neues Animationsset
     </form>
   </notification>
 
-  <notification name="NewAOCantContainColon">
+  <notification name="NewAOCantContainNonASCII">
 Ein neues Animationsset mit Namen "[AO_SET_NAME]" konnte nicht angelegt werden.
-Der Name darf kein ":" oder "|" enhalten.
+Der Name darf ausschließlich ASCII-Zeichen ausgenommen „:“ und „|“ enhalten.
     <usetemplate
      name="okbutton"
      yestext="OK"/>
   </notification>
 
-  <notification name="RenameAOCantContainColon">
+  <notification name="RenameAOMustBeASCII">
 Das Animationsset konnte nicht zu "[AO_SET_NAME]" umbenannt werden.
-Der Name darf kein ":" oder "|" enhalten.
+Der Name darf ausschließlich ASCII-Zeichen ausgenommen „:“ und „|“ enhalten.
     <usetemplate
      name="okbutton"
      yestext="OK"/>
@@ -4631,11 +4656,6 @@ Aktueller Simulator: [NEWVERSION]
 Vorheriger Simulator: [OLDVERSION]
 	</notification>
 
-	<notification name="VintageLoginInfo">
-Wussten Sie schon, dass Sie die klassische Benutzeroberläche im Stil des Phoenix Viewers verwenden können? Wählen Sie den Phoenix-Modus in der „Modus“-Auswahlbox auf der rechten Seite aus.
-		<usetemplate name="okbutton" yestext="OK"/>
-	</notification>
-
 	<notification name="CannotSaveSnapshot">
 Foto konnte nicht gespeichert werden.
 	</notification>
@@ -4785,6 +4805,9 @@ Der Wert, der für das gleichzeitige Laden von Mesh-Objekten gesetzt wurde ([VAL
 			<button name="Cancel" text="Abbrechen"/>
 		</form>
 	</notification>
+	<notification name="RenameContactSetFailure">
+		Kontakt-Set „[SET]“ konnte nicht in „[NEW_NAME]“ umbenannt werden, da entweder bereits ein Kontakt-Set mit demselben Namen existiert oder der neue Name ungültig ist.
+	</notification>
 
 	<notification name="ShapeImportGenericFail">
 		Es gab ein Problem beim importieren von [FILENAME]. Siehe Log-Datei für weitergehende Details.
@@ -4802,5 +4825,12 @@ Der Wert, der für das gleichzeitige Laden von Mesh-Objekten gesetzt wurde ([VAL
 	</notification>
 	<notification name="CantRestoreToWorldNoCopy">
 		Die Option „Wiederherstellen an letzter Position“ ist nicht erlaubt für nicht-kopierbare Objekte, um einem möglichen Verlust vorzubeugen.
+	</notification>
+	<notification name="ConfirmRemoveCredential">
+		Gespeichertes Login für &lt;nolink&gt;[NAME]&lt;/nolink&gt; löschen?
+		<form name="form">
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Abbrechen"/>
+		</form>
 	</notification>
 </notifications>

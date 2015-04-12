@@ -32,13 +32,13 @@
 #include "llagent.h"
 #include "llavataractions.h"
 #include "llavatarnamecache.h"
-#include "llfloatersidepanelcontainer.h"
 #include "llinventorymodel.h"
 #include "llnotificationmanager.h"
 #include "llnotificationsutil.h"	// <FS:CR> reportToNearbyChat
 #include "lltooldraganddrop.h"
 #include "llviewerinventory.h"
 #include "llviewernetwork.h"
+#include "llviewerobject.h"
 #include "llviewerregion.h"
 #include "rlvactions.h"
 #include "rlvhandler.h"
@@ -64,9 +64,7 @@ void reportToNearbyChat(const std::string& message)
 	LLChat chat;
 	chat.mText = message;
 	chat.mSourceType = CHAT_SOURCE_SYSTEM;
-	LLSD args;
-	LLNotificationsUI::LLNotificationManager::instance().onChat(chat, args);
-
+	LLNotificationsUI::LLNotificationManager::instance().onChat(chat, LLSD());
 }
 
 std::string applyAutoCloseOoc(const std::string& message)
@@ -195,23 +193,26 @@ void FSCommon::applyDefaultBuildPreferences(LLViewerObject* object)
 	}
 	object->sendTEUpdate();
 	
-	if(gSavedSettings.getBOOL("FSBuildPrefs_EmbedItem"))
+	if (gSavedPerAccountSettings.getBOOL("FSBuildPrefs_EmbedItem"))
 	{
-		LLViewerInventoryItem* item = (LLViewerInventoryItem*)gInventory.getItem((LLUUID)gSavedSettings.getString("FSBuildPrefs_Item"));
-		if(item)
+		LLUUID item_id(gSavedPerAccountSettings.getString("FSBuildPrefs_Item"));
+		if (item_id.notNull())
 		{
-			if (item->getType() == LLAssetType::AT_LSL_TEXT)
+			LLInventoryItem* item = dynamic_cast<LLInventoryItem*>(gInventory.getObject(item_id));
+			if (item)
 			{
-				
-				LLToolDragAndDrop::dropScript(object, item, TRUE,
-							      LLToolDragAndDrop::SOURCE_AGENT,
-							      gAgentID);
-			}
-			else
-			{
-				LLToolDragAndDrop::dropInventory(object, item,
-								LLToolDragAndDrop::SOURCE_AGENT,
-								gAgentID);
+				if (item->getType() == LLAssetType::AT_LSL_TEXT)
+				{
+					LLToolDragAndDrop::dropScript(object, item, TRUE,
+									  LLToolDragAndDrop::SOURCE_AGENT,
+									  gAgentID);
+				}
+				else
+				{
+					LLToolDragAndDrop::dropInventory(object, item,
+									LLToolDragAndDrop::SOURCE_AGENT,
+									gAgentID);
+				}
 			}
 		}
 	}

@@ -50,7 +50,7 @@
          name="System Volume"
          show_text="false"
          slider_label.halign="right"
-         top="10"
+         top="5"
          volume="true"
          width="300">
             <slider.commit_callback
@@ -172,7 +172,7 @@
          left="0"
          name="SFX Volume"
          show_text="false"
-         top_pad="4"
+         top_pad="2"
          volume="true"
          width="300">
             <slider.commit_callback
@@ -220,7 +220,7 @@
          name="Music Volume"
          slider_label.halign="right"
          show_text="false"
-         top_pad="4"
+         top_pad="2"
          volume="true"
          width="300">
             <slider.commit_callback
@@ -266,7 +266,7 @@
          name="Media Volume"
          show_text="false"
          slider_label.halign="right"
-         top_pad="4"
+         top_pad="2"
          volume="true"
          width="300">
             <slider.commit_callback
@@ -311,7 +311,7 @@
          label_width="120"
          layout="topleft"
          left="0"
-         top_pad="4"
+         top_pad="2"
          name="Voice Volume"
          show_text="false"
          slider_label.halign="right"
@@ -344,9 +344,20 @@
          layout="topleft"
          top_delta="2"
          left_pad="5"
-         name="enable_voice_check"
+         name="enable_voice_check_volume"
          width="110"/>
 
+        <check_box
+         name="audio_auto_play_btn"
+         control_name="FSParcelMusicAutoPlay"
+         enabled_control="AudioStreamingMedia"
+         layout="topleft"
+         height="16"
+         width="230"
+         tool_tip="Check this to automatically start audio streams."
+         label="Allow Audio to auto-play"
+         top_pad="5"
+         left="25"/>
         <check_box
          name="media_auto_play_btn"
          control_name="ParcelMediaAutoPlayEnable"
@@ -354,9 +365,9 @@
          layout="topleft"
          height="16"
          width="230"
-         tool_tip="Check this to automatically start media when you log in or change regions."
-         label="Allow Media to auto-play when entering a region"
-         top_pad="5"
+         tool_tip="Check this to automatically start media."
+         label="Allow Media to auto-play"
+         top_pad="1"
          left="25"/>
         <check_box
          name="media_allowscript_btn"
@@ -680,8 +691,23 @@
          top_pad="10"
          left="25"
          name="enable_voice_check"
-         width="110"/>
-        <check_box
+         width="90"/>
+         <button
+         enabled_control="EnableVoiceChat"
+         disabled_control="CmdLineDisableVoice"
+         follows="top|left"
+         halign="center"
+         height="23"
+         image_overlay="Refresh_Off"
+         layout="topleft"
+         tool_tip="Reset Voice"
+         name="reset_voice_button"
+         left_pad="5"
+         width="25">
+           <button.commit_callback
+            function="Pref.ResetVoice" />
+        </button>
+         <check_box
          follows="left|top"
          height="16"
          control_name="VoiceMultiInstance"
@@ -2887,21 +2913,21 @@ Hover your mouse cursor over UUID field to show its default value.
          left="5"
          height="14"
          width="150"
-         tool_tip="Sound UUID played on default footsteps. Change requires restart to take effect."
-         name="textFSFootsteps">
-            Default footsteps:
+         tool_tip="Sound UUID played, when script opens a dialog window."
+         name="textFSScriptFloaterOpen">
+            Script dialog:
         </text>
         <line_editor
          follows="left|top"
          left_pad="5"
          height="20"
          max_length_chars="256"
-         name="UISndFootsteps"
-         control_name="UISndFootsteps"
+         name="UISndScriptFloaterOpen"
+         control_name="UISndScriptFloaterOpen"
          width="218"/>
         <button
          follows="left|top"
-         name="Prev_UISndFootsteps"
+         name="Prev_UISndScriptFloaterOpen"
          height="20"
          label="P"
          layout="topleft"
@@ -2909,29 +2935,29 @@ Hover your mouse cursor over UUID field to show its default value.
          left_pad="1"
          width="17"
          tool_tip="Preview this sound.">
-           <button.commit_callback
+            <button.commit_callback
              function="PreviewUISound"
-             parameter="UISndFootsteps"/>
+             parameter="UISndScriptFloaterOpen"/>
         </button>
         <button
          follows="left|top"
-         name="Def_UISndFootsteps"
+         name="Def_UISndScriptFloaterOpen"
          height="20"
          label="D"
          layout="topleft"
          left_pad="1"
          width="15"
          tool_tip="Reset to the default UUID.">
-           <button.commit_callback
+            <button.commit_callback
              function="ResetControl"
-             parameter="UISndFootsteps"/>
+             parameter="UISndScriptFloaterOpen"/>
         </button>
         <check_box
-         control_name="PlayModeUISndFootsteps"
+         control_name="PlayModeUISndScriptFloaterOpen"
          height="20"
          label="Play this sound"
          layout="topleft"
-         name="PlayModeUISndFootsteps"
+         name="PlayModeUISndScriptFloaterOpen"
          left_pad="1"
          width="120" />
 
@@ -3506,6 +3532,61 @@ Hover your mouse cursor over UUID field to show its default value.
          label="Play this sound"
          layout="topleft"
          name="PlayModeUISndMovelockToggle"
+         left_pad="1"
+         width="120" />
+
+        <text
+         layout="topleft"
+         follows="left|top"
+         top_pad="7"
+         left="5"
+         height="14"
+         width="150"
+         tool_tip="Sound UUID played on default footsteps. Change requires restart to take effect."
+         name="textFSFootsteps">
+            Default footsteps:
+        </text>
+        <line_editor
+         follows="left|top"
+         left_pad="5"
+         height="20"
+         max_length_chars="256"
+         name="UISndFootsteps"
+         control_name="UISndFootsteps"
+         width="218"/>
+        <button
+         follows="left|top"
+         name="Prev_UISndFootsteps"
+         height="20"
+         label="P"
+         layout="topleft"
+         top_delta="-1"
+         left_pad="1"
+         width="17"
+         tool_tip="Preview this sound.">
+           <button.commit_callback
+             function="PreviewUISound"
+             parameter="UISndFootsteps"/>
+        </button>
+        <button
+         follows="left|top"
+         name="Def_UISndFootsteps"
+         height="20"
+         label="D"
+         layout="topleft"
+         left_pad="1"
+         width="15"
+         tool_tip="Reset to the default UUID.">
+           <button.commit_callback
+             function="ResetControl"
+             parameter="UISndFootsteps"/>
+        </button>
+        <check_box
+         control_name="PlayModeUISndFootsteps"
+         height="20"
+         label="Play this sound"
+         layout="topleft"
+         name="PlayModeUISndFootsteps"
          left_pad="1"
          width="120" />
 

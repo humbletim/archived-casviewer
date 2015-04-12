@@ -25,6 +25,12 @@
           <key>folder</key>
           <string>ectoplasma</string>
         </map>
+        <map>
+          <key>name</key>
+          <string>Blood</string>
+          <key>folder</key>
+          <string>blood</string>
+        </map>
       </array>
     </map>
 
@@ -196,7 +202,7 @@
           <key>name</key>
           <string>Custom Light</string>
           <key>folder</key>
-          <string>custom_Light</string>
+          <string>custom_light</string>
         </map>
       </array>
     </map>

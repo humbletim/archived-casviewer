@@ -787,32 +787,7 @@ class Windows_i686_Manifest(ViewerManifest):
                            " " + self.args['upgradecodes'].split(",")[0] + " " + self.args['upgradecodes'].split(",")[1] + " " + channelSuffix  )
         self.fs_sign_win_installer( substitution_strings ) # <FS:ND/> Sign files, step two. Sign installer.
 
-        #AO: Try to package up symbols
-        # New Method, for reading cross platform stack traces on a linux/mac host
-        if (os.path.exists("%s/casviewer-symbols-windows.tar.bz2" % self.args['configuration'].lower())):
-            # Rename to add version numbers
-            sName = "%s/%s_%s_%s_symbols-windows.tar.bz2" % (self.args['configuration'].lower(),
-                                                                     self.fs_channel_legacy_oneword(),
-                                                                     substitution_strings['version_dashes'],
-                                                                     self.args['viewer_flavor'])
-
-            if os.path.exists( sName ):
-                os.unlink( sName )
-
-            os.rename("%s/casviewer-symbols-windows.tar.bz2" % self.args['configuration'].lower(), sName )
-        
-        # Store windows symbols we want to keep for debugging in a tar file, this will be later compressed with xz (lzma)
-        # Using tat+xz gives far superior compression than zip (~half the size of the zip archive).
-        # Python3 natively supports tar+xz via mode 'w:xz'. But we're stuck with Python2 for nowo.
-        symbolTar = tarfile.TarFile("%s/%s_%s_%s_pdbsymbols-windows.tar" % (self.args['configuration'].lower(),
-                                                                                    self.fs_channel_legacy_oneword(),
-                                                                                    substitution_strings['version_dashes'],
-                                                                                    self.args['viewer_flavor']),
-                                                                                    'w')
-        symbolTar.add("%s/CASviewer-bin.exe" % self.args['configuration'].lower(),"CASviewer-bin.exe")
-        symbolTar.add("%s/CASviewer-bin.pdb" % self.args['configuration'].lower(),"CASviewer-bin.pdb")
-        symbolTar.close()
-
+        self.fs_save_windows_symbols( substitution_strings )
 
 
 # If we're on a build machine, sign the code using our Authenticode certificate. JC
@@ -984,13 +959,42 @@ class DarwinManifest(ViewerManifest):
                         symlinkf(os.path.join(os.pardir, os.pardir, os.pardir, libfile),
                                  os.path.join(resource_path, libfile))
 
-                # plugins
+                # SLPlugin.app/Contents/Resources gets those Qt4 libraries it needs.
+                if self.prefix(src="", dst="SLPlugin.app/Contents/Resources"):
+                    for libfile in ('libQtCore.4.dylib',
+                                    'libQtCore.4.7.1.dylib',
+                                    'libQtGui.4.dylib',
+                                    'libQtGui.4.7.1.dylib',
+                                    'libQtNetwork.4.dylib',
+                                    'libQtNetwork.4.7.1.dylib',
+                                    'libQtOpenGL.4.dylib',
+                                    'libQtOpenGL.4.7.1.dylib',
+                                    'libQtSvg.4.dylib',
+                                    'libQtSvg.4.7.1.dylib',
+                                    'libQtWebKit.4.dylib',
+                                    'libQtWebKit.4.7.1.dylib',
+                                    'libQtXml.4.dylib',
+                                    'libQtXml.4.7.1.dylib'):
+                        self.path2basename("../packages/lib/release", libfile)
+                    self.end_prefix("SLPlugin.app/Contents/Resources")
+
+                # Qt4 codecs go to llplugin.  Not certain why but this is the first
+                # location probed according to dtruss so we'll go with that.
+                if self.prefix(src="../packages/plugins/codecs/", dst="llplugin/codecs"):
+                    self.path("libq*.dylib")
+                    self.end_prefix("llplugin/codecs")
+
+                # Similarly for imageformats.
+                if self.prefix(src="../packages/plugins/imageformats/", dst="llplugin/imageformats"):
+                    self.path("libq*.dylib")
+                    self.end_prefix("llplugin/imageformats")
+
+                # SLPlugin plugins proper
                 if self.prefix(src="", dst="llplugin"):
                     self.path2basename("../media_plugins/quicktime/" + self.args['configuration'],
                                        "media_plugin_quicktime.dylib")
                     self.path2basename("../media_plugins/webkit/" + self.args['configuration'],
                                        "media_plugin_webkit.dylib")
-                    self.path2basename("../packages/lib/release", "libllqtwebkit.dylib")
 
                     self.end_prefix("llplugin")
 
@@ -1308,6 +1312,7 @@ class LinuxManifest(ViewerManifest):
             self.path("libalut.so*")
             self.path("libpng15.so.15") #use provided libpng to workaround incompatible system versions on some distros
             self.path("libpng15.so.15.13.0") #use provided libpng to workaround incompatible system versions on some distros
+            self.path("libpng15.so.15.1.0") #use provided libpng to workaround incompatible system versions on some distros
             self.path("libopenal.so", "libopenal.so.1") # Install as versioned file in case it's missing from the 3p- and won't get copied below
             self.path("libopenal.so*")
             #self.path("libnotify.so.1.1.2", "libnotify.so.1") # LO - uncomment when testing libnotify(growl) on linux
@@ -1366,6 +1371,7 @@ class LinuxManifest(ViewerManifest):
         installer_name = "_".join(installer_name_components)
         #installer_name = self.installer_base_name()
 
+        self.fs_delete_linux_symbols() # <FS:ND/> Delete old syms
         self.strip_binaries()
         self.fs_save_linux_symbols() # <FS:ND/> Package symbols, add debug link
 

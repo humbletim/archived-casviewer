@@ -136,10 +136,19 @@ set(viewer_SOURCE_FILES
     exopostprocess.cpp
     floatermedialists.cpp
     fsareasearch.cpp
+    fsareasearchlistctrl.cpp
+    fsareasearchmenu.cpp
+    fsavatarsearchlistctrl.cpp
+    fsavatarsearchmenu.cpp
+    fsblocklistctrl.cpp
+    fsblocklistmenu.cpp
     fschathistory.cpp
     fscommon.cpp
     fsconsoleutils.cpp
+    fscontactsfriendsctrl.cpp
+    fscontactsfriendsmenu.cpp
     fsdata.cpp
+    fsdroptarget.cpp
     fsexportperms.cpp
     fsfloateraddtocontactset.cpp
     fsfloaterblocklist.cpp
@@ -151,6 +160,7 @@ set(viewer_SOURCE_FILES
     fsfloaterimport.cpp
     fsfloaterim.cpp
     fsfloaterimcontainer.cpp
+    fsfloaterlinkreplace.cpp
     fsfloaternearbychat.cpp
     fsfloaterplacedetails.cpp
     fsfloaterposestand.cpp
@@ -172,6 +182,7 @@ set(viewer_SOURCE_FILES
     fsnearbychatcontrol.cpp
     fsnearbychathub.cpp
     fsnearbychatvoicemonitor.cpp
+    fspanelblocklist.cpp
     fspanelclassified.cpp
     fspanelcontactsets.cpp
     fspanelimcontrolpanel.cpp
@@ -186,6 +197,8 @@ set(viewer_SOURCE_FILES
     fsradarlistctrl.cpp
     fsradarmenu.cpp
     fsscriptlibrary.cpp
+    fsscrolllistctrl.cpp
+	fssearchableui.cpp
     fsslurlcommand.cpp
     fswsassetblacklist.cpp
     groupchatlistener.cpp
@@ -332,6 +345,7 @@ set(viewer_SOURCE_FILES
     llfloatergesture.cpp
     llfloatergodtools.cpp
     llfloatergotoline.cpp
+    llfloatergroupbulkban.cpp
     llfloatergroupinvite.cpp
     llfloatergroups.cpp
     llfloaterhandler.cpp
@@ -505,6 +519,8 @@ set(viewer_SOURCE_FILES
     llpanelface.cpp
     llpanelgenerictip.cpp
     llpanelgroup.cpp
+    llpanelgroupbulk.cpp
+    llpanelgroupbulkban.cpp
     llpanelgroupgeneral.cpp
     llpanelgroupinvite.cpp
     llpanelgrouplandmoney.cpp
@@ -836,10 +852,19 @@ set(viewer_HEADER_FILES
     exopostprocess.h
     floatermedialists.h
     fsareasearch.h
+    fsareasearchlistctrl.h
+    fsareasearchmenu.h
+    fsavatarsearchlistctrl.h
+    fsavatarsearchmenu.h
+    fsblocklistctrl.h
+    fsblocklistmenu.h
     fschathistory.h
     fscommon.h
     fsconsoleutils.h
+    fscontactsfriendsctrl.h
+    fscontactsfriendsmenu.h
     fsdata.h
+    fsdroptarget.h
     fsexportperms.h
     fsfloateraddtocontactset.h
     fsfloaterblocklist.h
@@ -848,6 +873,7 @@ set(viewer_HEADER_FILES
     fsfloaterexport.h
     fsfloatergroup.h
     fsfloatergrouptitles.h
+    fsfloaterlinkreplace.h
     fsfloaterimport.h
     fsfloaterim.h
     fsfloaterimcontainer.h
@@ -873,6 +899,7 @@ set(viewer_HEADER_FILES
     fsnearbychatcontrol.h
     fsnearbychathub.h
     fsnearbychatvoicemonitor.h
+    fspanelblocklist.h
     fspanelcontactsets.h
     fspanelclassified.h
     fspanelimcontrolpanel.h
@@ -887,6 +914,8 @@ set(viewer_HEADER_FILES
     fsradarlistctrl.h
     fsradarmenu.h
     fsscriptlibrary.h
+    fsscrolllistctrl.h
+	fssearchableui.h
     fsslurl.h
     fsslurlcommand.h
     fswsassetblacklist.h
@@ -1036,6 +1065,7 @@ set(viewer_HEADER_FILES
     llfloatergesture.h
     llfloatergodtools.h
     llfloatergotoline.h
+    llfloatergroupbulkban.h
     llfloatergroupinvite.h
     llfloatergroups.h
     llfloaterhandler.h
@@ -1202,6 +1232,9 @@ set(viewer_HEADER_FILES
     llpanelface.h
     llpanelgenerictip.h
     llpanelgroup.h
+    llpanelgroupbulk.h
+    llpanelgroupbulkimpl.h
+    llpanelgroupbulkban.h
     llpanelgroupgeneral.h
     llpanelgroupinvite.h
     llpanelgrouplandmoney.h

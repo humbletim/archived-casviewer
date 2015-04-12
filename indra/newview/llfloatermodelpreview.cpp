@@ -118,6 +118,9 @@
 // </AW: opensim-limits>
 #include "nd/ndboolswitch.h" // <FS:ND/> To toggle LLRender::sGLCoreProfile 
 
+// <FS:Ansariel> Proper matrix array length for fitted mesh
+#define JOINT_COUNT 52
+
 const S32 SLM_SUPPORTED_VERSION = 3;
 
 //static
@@ -1430,32 +1433,6 @@ LLModelLoader::LLModelLoader( std::string filename, S32 lod, LLModelPreview* pre
 	mJointMap["lThigh"] = "mHipLeft";
 	mJointMap["lShin"] = "mKneeLeft";
 	mJointMap["lFoot"] = "mFootLeft";
-
-// <FS:WF> FIRE-7937 : Patch from Magus Freston - allows ALL bones including all attachment points to be weighted to mesh and animated	
-	mJointMap["Right_Ear"] = "Right Ear";
-    mJointMap["Left_Ear"] = "Left Ear";
-    mJointMap["Right_Eyeball"] = "Right Eyeball";
-    mJointMap["Left_Eyeball"] = "Left Eyeball";
-    mJointMap["Right_Shoulder"] = "Right Shoulder";
-    mJointMap["Left_Shoulder"] = "Left Shoulder";
-    mJointMap["R_Upper_Arm"] = "R Upper Arm";
-    mJointMap["L_Upper_Arm"] = "L Upper Arm";
-    mJointMap["R_Forearm"] = "R Forearm";
-    mJointMap["L_Forearm"] = "L Forearm";
-    mJointMap["Right_Hand"] = "Right Hand";
-    mJointMap["Left_Hand"] = "Left Hand";
-    mJointMap["Right_Pec"] = "Right Pec";
-    mJointMap["Left_Pec"] = "Left Pec";
-    mJointMap["Avatar_Center"] = "Avatar Center";
-    mJointMap["Right_Hip"] = "Right Hip";
-    mJointMap["Left_Hip"] = "Left Hip";
-    mJointMap["R_Upper_Leg"] = "R Upper Leg";
-    mJointMap["L_Upper_Leg"] = "L Upper Leg";
-    mJointMap["R_Lower_Leg"] = "R Lower Leg";
-    mJointMap["R_Lower_Leg"] = "R Lower Leg";
-    mJointMap["Right_Foot"] = "Right Foot";
-    mJointMap["Left_Foot"] = "Left Foot";
-// <FS:WF> FIRE-7937 end
 
 	if (mPreview)
 	{
@@ -5608,8 +5585,13 @@ BOOL LLModelPreview::render()
 
 							//build matrix palette
 							
-							LLMatrix4 mat[64];
-							for (U32 j = 0; j < model->mSkinInfo.mJointNames.size(); ++j)
+							// <FS:Ansariel> Proper matrix array length for fitted mesh
+							//LLMatrix4 mat[64];
+							//for (U32 j = 0; j < model->mSkinInfo.mJointNames.size(); ++j)
+							LLMatrix4 mat[JOINT_COUNT];
+							U32 count = llmin((U32) model->mSkinInfo.mJointNames.size(), (U32) JOINT_COUNT);
+							for (U32 j = 0; j < count; ++j)
+							// </FS:Ansariel>
 							{
 								LLJoint* joint = getPreviewAvatar()->getJoint(model->mSkinInfo.mJointNames[j]);
 								if (joint)
@@ -5641,7 +5623,10 @@ BOOL LLModelPreview::render()
 
 								for (U32 k = 0; k < 4; k++)
 								{
-									F32* src = (F32*) mat[idx[k]].mMatrix;
+									// <FS:Ansariel> Proper matrix array length for fitted mesh
+									//F32* src = (F32*) mat[idx[k]].mMatrix;
+									F32* src = (F32*) mat[idx[(k < JOINT_COUNT) ? k : 0]].mMatrix;
+									// </FS:Ansariel>
 									F32* dst = (F32*) final_mat.mMatrix;
 
 									F32 w = wght.mV[k];

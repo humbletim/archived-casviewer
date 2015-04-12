@@ -116,10 +116,11 @@
 
 // Firestorm Includes
 #include "exogroupmutelist.h"
-#include "fsfloatercontacts.h" // TS: sort contacts list
+#include "fsdroptarget.h"
 #include "fsfloaterimcontainer.h"
 #include "growlmanager.h"
 #include "llavatarname.h"	// <FS:CR> Deeper name cache stuffs
+#include "lleventtimer.h"
 #include "lldiriterator.h"	// <Kadah> for populating the fonts combo
 #include "llline.h"
 #include "llpanelmaininventory.h"
@@ -135,6 +136,8 @@
 #include "rlvhandler.h"
 #include "NACLantispam.h"
 #include "../llcrashlogger/llcrashlogger.h"
+
+#include "fssearchableui.h"
 
 #include "llappviewer.h"  // <CV:David>
 #include "llviewerdisplay.h"  // <CV:David>
@@ -241,10 +244,6 @@ bool callback_pick_debug_search(const LLSD& notification, const LLSD& response);
 bool callback_growl_not_installed(const LLSD& notification, const LLSD& response);
 #endif
 // </FS:LO>
-// <FS:CR>
-void handleLegacyTrimOptionChanged(const LLSD& newvalue);
-void handleUsernameFormatOptionChanged(const LLSD& newvalue);
-// </FS:CR>
 // </Firestorm>
 
 //bool callback_skip_dialogs(const LLSD& notification, const LLSD& response, LLFloaterPreference* floater);
@@ -378,24 +377,6 @@ bool callback_pick_debug_search(const LLSD& notification, const LLSD& response)
 }
 // </FS:AW  opensim search support>
 
-// <FS:CR> FIRE-6659: Legacy "Resident" name toggle
-void handleLegacyTrimOptionChanged(const LLSD& newvalue)
-{
-	gSavedSettings.setBOOL("FSTrimLegacyNames", newvalue.asBoolean());
-	LLAvatarName::setTrimResidentSurname(newvalue.asBoolean());
-	LLAvatarNameCache::cleanupClass();
-	LLVOAvatar::invalidateNameTags();
-}
-
-void handleUsernameFormatOptionChanged(const LLSD& newvalue)
-{
-	gSavedSettings.setBOOL("FSNameTagShowLegacyUsernames", newvalue.asBoolean());
-	LLAvatarName::setUseLegacyFormat(newvalue.asBoolean());
-	LLAvatarNameCache::cleanupClass();
-	LLVOAvatar::invalidateNameTags();
-}
-// </FS:CR>
-
 /*bool callback_skip_dialogs(const LLSD& notification, const LLSD& response, LLFloaterPreference* floater)
 {
 	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
@@ -452,7 +433,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mOriginalIMViaEmail(false),
 	mLanguageChanged(false),
 	mAvatarDataInitialized(false),
-	mClickActionDirty(false)
+	mClickActionDirty(false),
+	mSearchData(NULL) // <FS:ND> Hook up and init for filtering
 {
 	LLConversationLog::instance().addObserver(this);
 
@@ -518,7 +500,6 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.DeleteTranscripts",      boost::bind(&LLFloaterPreference::onDeleteTranscripts, this));
 
 	// <Firestorm Callbacks>
-	mCommitCallbackRegistrar.add("FS.ToggleSortContacts",		boost::bind(&LLFloaterPreference::onClickSortContacts, this));
 	mCommitCallbackRegistrar.add("NACL.AntiSpamUnblock",		boost::bind(&LLFloaterPreference::onClickClearSpamList, this));
 	mCommitCallbackRegistrar.add("NACL.SetPreprocInclude",		boost::bind(&LLFloaterPreference::setPreprocInclude, this));
 	//[ADD - Clear Settings : SJ]
@@ -536,8 +517,6 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ResetLogPath",			boost::bind(&LLFloaterPreference::onClickResetLogPath, this));
 	// <FS:CR>
 	gSavedSettings.getControl("FSColorUsername")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
-	gSavedSettings.getControl("FSNameTagShowLegacyUsernames")->getCommitSignal()->connect(boost::bind(&handleUsernameFormatOptionChanged, _2));
-	gSavedSettings.getControl("FSTrimLegacyNames")->getCommitSignal()->connect(boost::bind(&handleLegacyTrimOptionChanged, _2));
 	gSavedSettings.getControl("FSUseLegacyClienttags")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
 	gSavedSettings.getControl("FSClientTagsVisibility")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
 	gSavedSettings.getControl("FSColorClienttags")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged, _2));
@@ -548,7 +527,12 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.SetSoundCache",					boost::bind(&LLFloaterPreference::onClickSetSoundCache, this));
 	mCommitCallbackRegistrar.add("Pref.ResetSoundCache",				boost::bind(&LLFloaterPreference::onClickResetSoundCache, this));
 	// </FS:Ansariel>
+
+	// <FS:Ansariel> FIRE-2912: Reset voice button
+	mCommitCallbackRegistrar.add("Pref.ResetVoice",						boost::bind(&LLFloaterPreference::onClickResetVoice, this));
 	// </Firestorm callbacks>
+
+	mCommitCallbackRegistrar.add("UpdateFilter", boost::bind(&LLFloaterPreference::onUpdateFilterTerm, this, false)); // <FS:ND/> Hook up for filtering
 
 	// <CV:David>
 	mCommitCallbackRegistrar.add("Pref.ChangeWalkSpeed",		boost::bind(&LLFloaterPreference::onChangeWalkSpeed, this));
@@ -660,9 +644,11 @@ BOOL LLFloaterPreference::postBuild()
 
 	gSavedSettings.getControl("PreferredMaturity")->getSignal()->connect(boost::bind(&LLFloaterPreference::onChangeMaturity, this));
 
-	LLTabContainer* tabcontainer = getChild<LLTabContainer>("pref core");
-	if (!tabcontainer->selectTab(gSavedSettings.getS32("LastPrefTab")))
-		tabcontainer->selectFirstTab();
+	// <FS:Ansariel> Preferences search
+	//LLTabContainer* tabcontainer = getChild<LLTabContainer>("pref core");
+	//if (!tabcontainer->selectTab(gSavedSettings.getS32("LastPrefTab")))
+	//	tabcontainer->selectFirstTab();
+	// </FS:Ansariel>
 	
 	getChild<LLUICtrl>("cache_location")->setEnabled(FALSE); // make it read-only but selectable (STORM-227)
 	getChildView("log_path_string")->setEnabled(FALSE);// do the same for chat logs path
@@ -696,6 +682,13 @@ BOOL LLFloaterPreference::postBuild()
 	if (LLStartUp::getStartupState() < STATE_STARTED)
 	{
 		gSavedPerAccountSettings.setString("DoNotDisturbModeResponse", LLTrans::getString("DoNotDisturbModeResponseDefault"));
+		// <FS:Ansariel> FIRE-5436: Unlocalizable auto-response messages
+		gSavedPerAccountSettings.setString("FSAutorespondModeResponse", LLTrans::getString("AutoResponseModeDefault"));
+		gSavedPerAccountSettings.setString("FSAutorespondNonFriendsResponse", LLTrans::getString("AutoResponseModeNonFriendsDefault"));
+		gSavedPerAccountSettings.setString("FSRejectTeleportOffersResponse", LLTrans::getString("RejectTeleportOffersResponseDefault"));
+		gSavedPerAccountSettings.setString("FSMutedAvatarResponse", LLTrans::getString("MutedAvatarsResponseDefault"));
+		gSavedPerAccountSettings.setString("FSAwayAvatarResponse", LLTrans::getString("AwayAvatarResponseDefault"));
+		// </FS:Ansariel>
 	}
 
 	// set 'enable' property for 'Clear log...' button
@@ -742,7 +735,12 @@ BOOL LLFloaterPreference::postBuild()
 	// <FS:Kadah> Load the list of font settings
 	populateFontSelectionCombo();
 	// </FS:Kadah>
-    
+
+	// <FS:ND> Hook up and init for filtering
+	mFilterEdit = getChild<LLSearchEditor>("search_prefs_edit");
+	mFilterEdit->setKeystrokeCallback(boost::bind(&LLFloaterPreference::onUpdateFilterTerm, this, false));
+	// </FS:ND>
+
 	// <CV:David>
 	#if LL_WINDOWS
 		getChild<LLUICtrl>("SetOutput120Hz")->setEnabled(TRUE);
@@ -779,6 +777,38 @@ void LLFloaterPreference::onDoNotDisturbResponseChanged()
 					!= getChild<LLUICtrl>("do_not_disturb_response")->getValue().asString();
 
 	gSavedPerAccountSettings.setBOOL("DoNotDisturbResponseChanged", response_changed_flag );
+
+	// <FS:Ansariel> FIRE-5436: Unlocalizable auto-response messages
+	bool auto_response_changed_flag =
+			LLTrans::getString("AutoResponseModeDefault")
+					!= getChild<LLUICtrl>("autorespond_response")->getValue().asString();
+
+	gSavedPerAccountSettings.setBOOL("FSAutoResponseChanged", auto_response_changed_flag );
+
+	bool auto_response_non_friends_changed_flag =
+			LLTrans::getString("AutoResponseModeNonFriendsDefault")
+					!= getChild<LLUICtrl>("autorespond_nf_response")->getValue().asString();
+
+	gSavedPerAccountSettings.setBOOL("FSAutoResponseNonFriendsChanged", auto_response_non_friends_changed_flag );
+
+	bool reject_teleport_offers_response_changed_flag =
+			LLTrans::getString("RejectTeleportOffersResponseDefault")
+					!= getChild<LLUICtrl>("autorespond_rto_response")->getValue().asString();
+
+	gSavedPerAccountSettings.setBOOL("FSRejectTeleportOffersResponseChanged", reject_teleport_offers_response_changed_flag );
+
+	bool muted_avatar_response_changed_flag =
+			LLTrans::getString("MutedAvatarsResponseDefault")
+					!= getChild<LLUICtrl>("muted_avatar_response")->getValue().asString();
+
+	gSavedPerAccountSettings.setBOOL("FSMutedAvatarResponseChanged", muted_avatar_response_changed_flag );
+
+	bool away_avatar_response_changed_flag =
+			LLTrans::getString("AwayAvatarResponseDefault")
+					!= getChild<LLUICtrl>("away_avatar_response")->getValue().asString();
+
+	gSavedPerAccountSettings.setBOOL("FSAwayAvatarResponseChanged", away_avatar_response_changed_flag );
+	// </FS:Ansariel>
 }
 
 // <FS:Zi> Optional Edit Appearance Lighting
@@ -802,18 +832,29 @@ LLFloaterPreference::~LLFloaterPreference()
 	}*/
 
 	LLConversationLog::instance().removeObserver(this);
+
+	delete mSearchData;
 }
 
-//void LLFloaterPreference::draw()
-//{
-//	BOOL has_first_selected = (getChildRef<LLScrollListCtrl>("disabled_popups").getFirstSelected()!=NULL);
-//	gSavedSettings.setBOOL("FirstSelectedDisabledPopups", has_first_selected);
-//	
-//	has_first_selected = (getChildRef<LLScrollListCtrl>("enabled_popups").getFirstSelected()!=NULL);
-//	gSavedSettings.setBOOL("FirstSelectedEnabledPopups", has_first_selected);
-//	
-//	LLFloater::draw();
-//}
+void LLFloaterPreference::draw()
+{
+	// <FS:Ansariel> Performance improvement
+	//BOOL has_first_selected = (getChildRef<LLScrollListCtrl>("disabled_popups").getFirstSelected()!=NULL);
+	//gSavedSettings.setBOOL("FirstSelectedDisabledPopups", has_first_selected);
+	//
+	//has_first_selected = (getChildRef<LLScrollListCtrl>("enabled_popups").getFirstSelected()!=NULL);
+	//gSavedSettings.setBOOL("FirstSelectedEnabledPopups", has_first_selected);
+
+	static LLScrollListCtrl* disabled_popups = getChild<LLScrollListCtrl>("disabled_popups");
+	static LLScrollListCtrl* enabled_popups = getChild<LLScrollListCtrl>("enabled_popups");
+	BOOL has_first_selected = disabled_popups->getFirstSelected() != NULL;
+	gSavedSettings.setBOOL("FirstSelectedDisabledPopups", has_first_selected);
+	has_first_selected = enabled_popups->getFirstSelected() != NULL;
+	gSavedSettings.setBOOL("FirstSelectedEnabledPopups", has_first_selected);
+	// </FS:Ansariel>
+
+	LLFloater::draw();
+}
 
 void LLFloaterPreference::saveSettings()
 {
@@ -982,6 +1023,13 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 		// this connection is needed to properly set "DoNotDisturbResponseChanged" setting when user makes changes in
 		// do not disturb response message.
 		gSavedPerAccountSettings.getControl("DoNotDisturbModeResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onDoNotDisturbResponseChanged, this));
+		// <FS:Ansariel> FIRE-5436: Unlocalizable auto-response messages
+		gSavedPerAccountSettings.getControl("FSAutorespondModeResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onDoNotDisturbResponseChanged, this));
+		gSavedPerAccountSettings.getControl("FSAutorespondNonFriendsResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onDoNotDisturbResponseChanged, this));
+		gSavedPerAccountSettings.getControl("FSRejectTeleportOffersResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onDoNotDisturbResponseChanged, this));
+		gSavedPerAccountSettings.getControl("FSMutedAvatarResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onDoNotDisturbResponseChanged, this));
+		gSavedPerAccountSettings.getControl("FSAwayAvatarResponse")->getSignal()->connect(boost::bind(&LLFloaterPreference::onDoNotDisturbResponseChanged, this));
+		// </FS:Ansariel>
 	}
 	gAgent.sendAgentUserInfoRequest();
 
@@ -1064,11 +1112,32 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 	groupmute_item->getColumn(0)->setEnabled(in_opensim);
 	// </FS:Ansariel>
 
+	// <FS:Ansariel> Call onOpen on all panels for additional initialization on open
+	// Call onOpen() on all panels that derive from LLPanelPreference
+	LLTabContainer* tabcontainer = getChild<LLTabContainer>("pref core");
+	for (child_list_t::const_iterator iter = tabcontainer->getChildList()->begin();
+		iter != tabcontainer->getChildList()->end(); ++iter)
+	{
+		LLView* view = *iter;
+		LLPanelPreference* panel = dynamic_cast<LLPanelPreference*>(view);
+		if (panel)
+			panel->onOpen(key);
+	}
+	// </FS:Ansariel>
+
 	// Make sure the current state of prefs are saved away when
 	// when the floater is opened.  That will make cancel do its
 	// job
 	saveSettings();
-	
+
+	// <FS:ND> Hook up and init for filtering
+	mFilterEdit->setText(LLStringExplicit(""));
+	collectSearchableItems();
+	onUpdateFilterTerm(true);
+
+	if (!tabcontainer->selectTab(gSavedSettings.getS32("LastPrefTab")))
+		tabcontainer->selectFirstTab();
+	// </FS:ND>
 }
 
 void LLFloaterPreference::onVertexShaderEnable()
@@ -1106,6 +1175,33 @@ void LLFloaterPreference::initDoNotDisturbResponse()
 			//LLTrans::getString("DoNotDisturbModeResponseDefault") is used here for localization (EXT-5885)
 			gSavedPerAccountSettings.setString("DoNotDisturbModeResponse", LLTrans::getString("DoNotDisturbModeResponseDefault"));
 		}
+
+		// <FS:Ansariel> FIRE-5436: Unlocalizable auto-response messages
+		if (!gSavedPerAccountSettings.getBOOL("FSAutoResponseChanged"))
+		{
+			gSavedPerAccountSettings.setString("FSAutorespondModeResponse", LLTrans::getString("AutoResponseModeDefault"));
+		}
+
+		if (!gSavedPerAccountSettings.getBOOL("FSAutoResponseNonFriendsChanged"))
+		{
+			gSavedPerAccountSettings.setString("FSAutorespondNonFriendsResponse", LLTrans::getString("AutoResponseModeNonFriendsDefault"));
+		}
+
+		if (!gSavedPerAccountSettings.getBOOL("FSRejectTeleportOffersResponseChanged"))
+		{
+			gSavedPerAccountSettings.setString("FSRejectTeleportOffersResponse", LLTrans::getString("RejectTeleportOffersResponseDefault"));
+		}
+
+		if (!gSavedPerAccountSettings.getBOOL("FSMutedAvatarResponseChanged"))
+		{
+			gSavedPerAccountSettings.setString("FSMutedAvatarResponse", LLTrans::getString("MutedAvatarsResponseDefault"));
+		}
+
+		if (!gSavedPerAccountSettings.getBOOL("FSAwayAvatarResponseChanged"))
+		{
+			gSavedPerAccountSettings.setString("FSAwayAvatarResponse", LLTrans::getString("AwayAvatarResponseDefault"));
+		}
+		// </FS:Ansariel>
 	}
 
 void LLFloaterPreference::setHardwareDefaults()
@@ -1127,7 +1223,13 @@ void LLFloaterPreference::setHardwareDefaults()
 //virtual
 void LLFloaterPreference::onClose(bool app_quitting)
 {
-	gSavedSettings.setS32("LastPrefTab", getChild<LLTabContainer>("pref core")->getCurrentPanelIndex());
+	// <FS:Ansariel> Preferences search
+	//gSavedSettings.setS32("LastPrefTab", getChild<LLTabContainer>("pref core")->getCurrentPanelIndex());
+	if (mFilterEdit->getText().empty())
+	{
+		gSavedSettings.setS32("LastPrefTab", getChild<LLTabContainer>("pref core")->getCurrentPanelIndex());
+	}
+	// </FS:Ansariel>
 	LLPanelLogin::setAlwaysRefresh(false);
 	if (!app_quitting)
 	{
@@ -1443,6 +1545,37 @@ void LLFloaterPreference::onClickResetSoundCache()
 }
 // </FS:Ansariel>
 
+// <FS:Ansariel> FIRE-2912: Reset voice button
+class FSResetVoiceTimer : public LLEventTimer
+{
+public:
+	FSResetVoiceTimer() : LLEventTimer(5.f) { }
+	~FSResetVoiceTimer() { }
+
+	BOOL tick()
+	{
+		gSavedSettings.setBOOL("EnableVoiceChat", TRUE);
+		LLFloaterPreference* floater = LLFloaterReg::findTypedInstance<LLFloaterPreference>("preferences");
+		if (floater)
+		{
+			floater->childSetEnabled("enable_voice_check", true);
+			floater->childSetEnabled("enable_voice_check_volume", true);
+		}
+		return TRUE;
+	}
+};
+
+void LLFloaterPreference::onClickResetVoice()
+{
+	if (gSavedSettings.getBOOL("EnableVoiceChat") && !gSavedSettings.getBOOL("CmdLineDisableVoice"))
+	{
+		gSavedSettings.setBOOL("EnableVoiceChat", FALSE);
+		childSetEnabled("enable_voice_check", false);
+		childSetEnabled("enable_voice_check_volume", false);
+		new FSResetVoiceTimer();
+	}
+}
+// </FS:Ansariel>
 
 // Performs a wipe of the local settings dir on next restart 
 bool callback_clear_settings(const LLSD& notification, const LLSD& response)
@@ -1575,7 +1708,10 @@ void LLFloaterPreference::buildPopupLists()
 		{
 			if (ignore == LLNotificationForm::IGNORE_WITH_LAST_RESPONSE)
 			{
-				LLSD last_response = LLUI::sSettingGroups["config"]->getLLSD("Default" + templatep->mName);
+				// <FS:Ansariel> Default responses are declared in "ignores" settings group, see llnotifications.cpp
+				//LLSD last_response = LLUI::sSettingGroups["config"]->getLLSD("Default" + templatep->mName);
+				LLSD last_response = LLUI::sSettingGroups["ignores"]->getLLSD("Default" + templatep->mName);
+				// </FS:Ansariel>
 				if (!last_response.isUndefined())
 				{
 					for (LLSD::map_const_iterator it = last_response.beginMap();
@@ -2304,16 +2440,16 @@ void LLFloaterPreference::setPersonalInfo(const std::string& visibility, bool im
 	getChildView("send_im_to_email")->setEnabled(TRUE);
 	getChild<LLUICtrl>("send_im_to_email")->setValue(im_via_email);
 	getChildView("favorites_on_login_check")->setEnabled(TRUE);
-	getChildView("log_path_button")->setEnabled(TRUE);
+	//getChildView("log_path_button")->setEnabled(TRUE); // <FS:Ansariel> Does not exist as of 12-09-2014
 	getChildView("chat_font_size")->setEnabled(TRUE);
-	getChildView("open_log_path_button")->setEnabled(TRUE);
+	//getChildView("open_log_path_button")->setEnabled(TRUE); // <FS:Ansariel> Does not exist as of 12-09-2014
 	getChildView("log_path_button-panelsetup")->setEnabled(TRUE);// second set of controls for panel_preferences_setup  -WoLf
 	getChildView("open_log_path_button-panelsetup")->setEnabled(TRUE);
 	std::string Chatlogsdir = gDirUtilp->getOSUserAppDir();
 	
 	getChildView("conversation_log_combo")->setEnabled(TRUE);	// <FS:CR>
 	getChildView("LogNearbyChat")->setEnabled(TRUE);	// <FS:CR>
-	getChildView("log_nearby_chat")->setEnabled(TRUE);	// <FS:CR> Readd after CHUI merge
+	//getChildView("log_nearby_chat")->setEnabled(TRUE); // <FS:Ansariel> Does not exist as of 12-09-2014
 	//[FIX FIRE-2765 : SJ] Set Chatlog Reset Button on enabled when Chatlogpath isn't the default folder
 	if (gSavedPerAccountSettings.getString("InstantMessageLogPath") != gDirUtilp->getOSUserAppDir())
 	{
@@ -2404,11 +2540,6 @@ void LLFloaterPreference::onClickBlockList()
 			LLSD().with("people_panel_tab_name", "blocked_panel"));
 	}
 	// </FS:Ansariel>
-}
-
-void LLFloaterPreference::onClickSortContacts()
-{
-	FSFloaterContacts::getInstance()->sortFriendList();
 }
 
 void LLFloaterPreference::onClickProxySettings()
@@ -2704,12 +2835,14 @@ BOOL LLPanelPreference::postBuild()
 	// </FS:Ansariel>
 
 	////////////////////// PanelVoice ///////////////////
-	if (hasChild("voice_unavailable", TRUE))
-	{
-		BOOL voice_disabled = gSavedSettings.getBOOL("CmdLineDisableVoice");
-		getChildView("voice_unavailable")->setVisible( voice_disabled);
-		getChildView("enable_voice_check")->setVisible( !voice_disabled);
-	}
+	// <FS:Ansariel> Doesn't exist as of 25-07-2014
+	//if (hasChild("voice_unavailable", TRUE))
+	//{
+	//	BOOL voice_disabled = gSavedSettings.getBOOL("CmdLineDisableVoice");
+	//	getChildView("voice_unavailable")->setVisible( voice_disabled);
+	//	getChildView("enable_voice_check")->setVisible( !voice_disabled);
+	//}
+	// </FS:Ansariel>
 	
 	//////////////////////PanelSkins ///////////////////
 	
@@ -2992,6 +3125,8 @@ public:
 	{
 		mAccountIndependentSettings.push_back("VoiceCallsFriendsOnly");
 		mAccountIndependentSettings.push_back("AutoDisengageMic");
+
+		mAutoresponseItem = gSavedPerAccountSettings.getString("FSAutoresponseItemUUID");
 	}
 
 	/*virtual*/ void saveSettings()
@@ -3019,29 +3154,102 @@ public:
 		}
 	}
 
+	// <FS:Ansariel> Send inventory item on autoresponse
+	/*virtual*/ void apply()
+	{
+		LLPanelPreference::apply();
+		if (LLStartUp::getStartupState() == STATE_STARTED)
+		{
+			gSavedPerAccountSettings.setString("FSAutoresponseItemUUID", mAutoresponseItem);
+		}
+	}
+	// </FS:Ansariel>
+
 	// <FS:Ansariel> DebugLookAt checkbox status not working properly
 	/*virtual*/ BOOL postBuild()
 	{
-		getChild<LLUICtrl>("DebugLookAt")->setCommitCallback(boost::bind(&LLPanelPreferencePrivacy::onClickDebugLookAt, this, _2));
+		getChild<LLUICtrl>("showlookat")->setCommitCallback(boost::bind(&LLPanelPreferencePrivacy::onClickDebugLookAt, this, _2));
 		gSavedPerAccountSettings.getControl("DebugLookAt")->getSignal()->connect(boost::bind(&LLPanelPreferencePrivacy::onChangeDebugLookAt, this));
 		onChangeDebugLookAt();
 
-		return TRUE;
+		mInvDropTarget = getChild<FSCopyTransInventoryDropTarget>("autoresponse_item");
+		mInvDropTarget->setDADCallback(boost::bind(&LLPanelPreferencePrivacy::onDADAutoresponseItem, this, _1));
+		getChild<LLButton>("clear_autoresponse_item")->setCommitCallback(boost::bind(&LLPanelPreferencePrivacy::onClearAutoresponseItem, this));
+
+		return LLPanelPreference::postBuild();
+	}
+	// </FS:Ansariel>
+
+	// <FS:Ansariel> Send inventory item on autoresponse
+	/* virtual */ void onOpen(const LLSD& key)
+	{
+		LLButton* clear_item_btn = getChild<LLButton>("clear_autoresponse_item");
+		clear_item_btn->setEnabled(FALSE);
+		if (LLStartUp::getStartupState() == STATE_STARTED)
+		{
+			mAutoresponseItem = gSavedPerAccountSettings.getString("FSAutoresponseItemUUID");
+			LLUUID item_id(mAutoresponseItem);
+			if (item_id.isNull())
+			{
+				mInvDropTarget->setText(getString("AutoresponseItemNotSet"));
+			}
+			else
+			{
+				clear_item_btn->setEnabled(TRUE);
+				LLInventoryObject* item = gInventory.getObject(item_id);
+				if (item)
+				{
+					mInvDropTarget->setText(item->getName());
+				}
+				else
+				{
+					mInvDropTarget->setText(getString("AutoresponseItemNotAvailable"));
+				}
+			}
+		}
+		else
+		{
+			mInvDropTarget->setText(getString("AutoresponseItemNotLoggedIn"));
+		}
 	}
 	// </FS:Ansariel>
 
 private:
 	std::list<std::string> mAccountIndependentSettings;
 
+	// <FS:Ansariel> Send inventory item on autoresponse
+	FSCopyTransInventoryDropTarget*	mInvDropTarget;
+	std::string						mAutoresponseItem;
+
 	// <FS:Ansariel> DebugLookAt checkbox status not working properly
 	void onChangeDebugLookAt()
 	{
-		getChild<LLCheckBoxCtrl>("DebugLookAt")->set(gSavedPerAccountSettings.getS32("DebugLookAt") == 0 ? FALSE : TRUE);
+		getChild<LLCheckBoxCtrl>("showlookat")->set(gSavedPerAccountSettings.getS32("DebugLookAt") == 0 ? FALSE : TRUE);
 	}
 
 	void onClickDebugLookAt(const LLSD& value)
 	{
 		gSavedPerAccountSettings.setS32("DebugLookAt", value.asBoolean());
+	}
+	// </FS:Ansariel>
+
+	// <FS:Ansariel> Send inventory item on autoresponse
+	void onDADAutoresponseItem(const LLUUID& item_id)
+	{
+		LLInventoryObject* item = gInventory.getObject(item_id);
+		if (item)
+		{
+			mInvDropTarget->setText(item->getName());
+			mAutoresponseItem = item_id.asString();
+			childSetEnabled("clear_autoresponse_item", true);
+		}
+	}
+
+	void onClearAutoresponseItem()
+	{
+		mAutoresponseItem = "";
+		mInvDropTarget->setText(getString("AutoresponseItemNotSet"));
+		childSetEnabled("clear_autoresponse_item", false);
 	}
 	// </FS:Ansariel>
 };
@@ -3440,12 +3648,56 @@ void LLPanelPreferenceSkins::apply()
 		gSavedSettings.setString("FSSkinCurrentReadableName", m_SkinName);
 		gSavedSettings.setString("FSSkinCurrentThemeReadableName", m_SkinThemeName);
 
-		LLSD args, payload;
-		LLNotificationsUtil::add("ChangeSkin",
-								 args,
-								 payload,
-								 boost::bind(&LLPanelPreferenceSkins::callbackRestart, this, _1, _2));
+		// <FS:AO> Some crude hardcoded preferences per skin. Without this, some defaults from the
+		// current skin would be carried over, leading to confusion and a first experience with
+		// the skin that the designer didn't intend.
+		if (gSavedSettings.getBOOL("FSSkinClobbersToolbarPrefs"))
+		{
+			LL_INFOS() << "Clearing toolbar settings." << LL_ENDL;
+			gSavedSettings.setBOOL("ResetToolbarSettings", TRUE);
+		}
+
+		if (m_Skin == "starlight" || m_Skin == "starlightcui")
+		{
+			std::string noteMessage;
+
+			if (gSavedSettings.getBOOL("ShowMenuBarLocation"))
+			{
+				noteMessage = LLTrans::getString("skin_defaults_starlight_location");
+				gSavedSettings.setBOOL("ShowMenuBarLocation", FALSE);
+			}
+
+			if (!gSavedSettings.getBOOL("ShowNavbarNavigationPanel"))
+			{
+				if (!noteMessage.empty())
+				{
+					noteMessage += "\n";
+				}
+				noteMessage += LLTrans::getString("skin_defaults_starlight_navbar");
+				gSavedSettings.setBOOL("ShowNavbarNavigationPanel", TRUE);
+			}
+
+			if (!noteMessage.empty())
+			{
+				LLSD args;
+				args["MESSAGE"] = noteMessage;
+				LLNotificationsUtil::add("SkinDefaultsChangeSettings", args, LLSD(), boost::bind(&LLPanelPreferenceSkins::showSkinChangeNotification, this));
+				return;
+			}
+		}
+		// </FS:AO>
+
+		showSkinChangeNotification();
 	}
+}
+
+void LLPanelPreferenceSkins::showSkinChangeNotification()
+{
+	LLSD args, payload;
+	LLNotificationsUtil::add("ChangeSkin",
+								args,
+								payload,
+								boost::bind(&LLPanelPreferenceSkins::callbackRestart, this, _1, _2));
 }
 
 void LLPanelPreferenceSkins::callbackRestart(const LLSD& notification, const LLSD& response)
@@ -3481,45 +3733,6 @@ void LLPanelPreferenceSkins::onSkinChanged()
 	m_SkinName = m_pSkinCombo->getSelectedItemLabel();
 	m_SkinThemeName = m_pSkinThemeCombo->getSelectedItemLabel();
 	refreshPreviewImage(); // <FS:PP> FIRE-1689: Skins preview image
-
-    // <FS:AO> Some crude hardcoded preferences per skin. Without this, some defaults from the
-    // current skin would be carried over, leading to confusion and a first experience with
-    // the skin that the designer didn't intend.
-	if  (m_Skin.compare("starlight") == 0 ||
-	     m_Skin.compare("starlightcui") == 0)
-	{
-		std::string noteMessage;
-
-		if(gSavedSettings.getBOOL("ShowMenuBarLocation"))
-		{
-			noteMessage=LLTrans::getString("skin_defaults_starlight_location");
-			gSavedSettings.setBOOL("ShowMenuBarLocation", FALSE);
-		}
-
-		if(!gSavedSettings.getBOOL("ShowNavbarNavigationPanel"))
-		{
-			if(!noteMessage.empty())
-			{
-				noteMessage+="\n";
-			}
-			noteMessage+=LLTrans::getString("skin_defaults_starlight_navbar");
-			gSavedSettings.setBOOL("ShowNavbarNavigationPanel",TRUE);
-		}
-
-		if(!noteMessage.empty())
-		{
-			LLSD args;
-			args["MESSAGE"]=noteMessage;
-			LLNotificationsUtil::add("SkinDefaultsChangeSettings",args);
-		}
-	}
-
-	if (gSavedSettings.getBOOL("FSSkinClobbersToolbarPrefs"))
-	{
-		LL_INFOS() << "Clearing toolbar settings." << LL_ENDL;
-		gSavedSettings.setBOOL("ResetToolbarSettings",TRUE);
-	}
-    //</FS:AO>
 }
 
 void LLPanelPreferenceSkins::onSkinThemeChanged()
@@ -4532,3 +4745,112 @@ void LLPanelPreferenceOpensim::onClickPickDebugSearchURL()
 #endif // OPENSIM
 // <FS:AW optional opensim support>
 
+// <FS:ND> Code to filter/search in the prefs panel
+void LLFloaterPreference::onUpdateFilterTerm(bool force)
+{
+	LLWString seachValue = utf8str_to_wstring( mFilterEdit->getValue() );
+	LLWStringUtil::toLower( seachValue );
+
+	if( !mSearchData || (mSearchData->mLastFilter == seachValue && !force))
+		return;
+
+	mSearchData->mLastFilter = seachValue;
+
+	if( !mSearchData->mRootTab )
+		return;
+
+	mSearchData->mRootTab->hightlightAndHide( seachValue );
+	LLTabContainer *pRoot = getChild< LLTabContainer >( "pref core" );
+	if( pRoot )
+		pRoot->selectFirstTab();
+}
+
+void collectChildren( LLView const *aView, nd::prefs::PanelDataPtr aParentPanel, nd::prefs::TabContainerDataPtr aParentTabContainer )
+{
+	if( !aView )
+		return;
+
+	llassert_always( aParentPanel || aParentTabContainer );
+
+	LLView::child_list_const_iter_t itr = aView->beginChild();
+	LLView::child_list_const_iter_t itrEnd = aView->endChild();
+
+	while( itr != itrEnd )
+	{
+		LLView *pView = *itr;
+		nd::prefs::PanelDataPtr pCurPanelData = aParentPanel;
+		nd::prefs::TabContainerDataPtr pCurTabContainer = aParentTabContainer;
+		if( !pView )
+			continue;
+		LLPanel const *pPanel = dynamic_cast< LLPanel const *>( pView );
+		LLTabContainer const *pTabContainer = dynamic_cast< LLTabContainer const *>( pView );
+		nd::ui::SearchableControl const *pSCtrl = dynamic_cast< nd::ui::SearchableControl const *>( pView );
+
+		if( pTabContainer )
+		{
+			pCurPanelData.reset();
+
+			pCurTabContainer = nd::prefs::TabContainerDataPtr( new nd::prefs::TabContainerData );
+			pCurTabContainer->mTabContainer = const_cast< LLTabContainer *>( pTabContainer );
+			pCurTabContainer->mLabel = pTabContainer->getLabel();
+			pCurTabContainer->mPanel = 0;
+
+			if( aParentPanel )
+				aParentPanel->mChildPanel.push_back( pCurTabContainer );
+			if( aParentTabContainer )
+				aParentTabContainer->mChildPanel.push_back( pCurTabContainer );
+		}
+		else if( pPanel )
+		{
+			pCurTabContainer.reset();
+
+			pCurPanelData = nd::prefs::PanelDataPtr( new nd::prefs::PanelData );
+			pCurPanelData->mPanel = pPanel;
+			pCurPanelData->mLabel = pPanel->getLabel();
+
+			llassert_always( aParentPanel || aParentTabContainer );
+
+			if( aParentTabContainer )
+				aParentTabContainer->mChildPanel.push_back( pCurPanelData );
+			else if( aParentPanel )
+				aParentPanel->mChildPanel.push_back( pCurPanelData );
+		}
+		else if( pSCtrl && pSCtrl->getSearchText().size() )
+		{
+			nd::prefs::SearchableItemPtr item = nd::prefs::SearchableItemPtr( new nd::prefs::SearchableItem() );
+			item->mView = pView;
+			item->mCtrl = pSCtrl;
+
+			item->mLabel = utf8str_to_wstring( pSCtrl->getSearchText() );
+			LLWStringUtil::toLower( item->mLabel );
+
+			llassert_always( aParentPanel || aParentTabContainer );
+
+			if( aParentPanel )
+				aParentPanel->mChildren.push_back( item );
+			if( aParentTabContainer )
+				aParentTabContainer->mChildren.push_back( item );
+		}
+		collectChildren( pView, pCurPanelData, pCurTabContainer );
+		++itr;
+	}
+}
+
+void LLFloaterPreference::collectSearchableItems()
+{
+	delete mSearchData;
+	mSearchData = 0;
+	LLTabContainer *pRoot = getChild< LLTabContainer >( "pref core" );
+	if( mFilterEdit && pRoot )
+	{
+		mSearchData = new nd::prefs::SearchData();
+
+		nd::prefs::TabContainerDataPtr pRootTabcontainer = nd::prefs::TabContainerDataPtr( new nd::prefs::TabContainerData );
+		pRootTabcontainer->mTabContainer = pRoot;
+		pRootTabcontainer->mLabel = pRoot->getLabel();
+		mSearchData->mRootTab = pRootTabcontainer;
+
+		collectChildren( this, nd::prefs::PanelDataPtr(), pRootTabcontainer );
+	}
+}
+// </FS:ND>

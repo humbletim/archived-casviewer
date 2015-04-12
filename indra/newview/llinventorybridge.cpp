@@ -105,6 +105,8 @@ void copy_slurl_to_clipboard_callback_inv(const std::string& slurl);
 typedef std::pair<LLUUID, LLUUID> two_uuids_t;
 typedef std::list<two_uuids_t> two_uuids_list_t;
 
+const F32 SOUND_GAIN = 1.0f;
+
 struct LLMoveInv
 {
 	LLUUID mObjectID;
@@ -656,6 +658,39 @@ void hide_context_entries(LLMenuGL& menu,
 	}
 }
 
+// <FS:Ansariel> Inventory Links Replace
+void LLInvFVBridge::checkInventoryLinkReplace(menuentry_vec_t& items, menuentry_vec_t& disables_items)
+{
+	const LLInventoryObject* obj = getInventoryObject();
+
+	if (isAgentInventory() && obj && obj->getType() != LLAssetType::AT_CATEGORY && obj->getType() != LLAssetType::AT_LINK_FOLDER)
+	{
+		items.push_back(std::string("Replace Links"));
+
+		if (mRoot->getSelectedCount() != 1)
+		{
+			disables_items.push_back(std::string("Replace Links"));
+		}
+	}
+}
+// </FS:Ansariel>
+
+// <FS:Ansariel> Move to default folder
+void LLInvFVBridge::checkMoveToDefaultFolder(menuentry_vec_t& items, menuentry_vec_t& disables_items)
+{
+	const LLInventoryObject* obj = getInventoryObject();
+
+	if (isAgentInventory() && !isOutboxFolder() && !isProtectedFolder(true) && obj &&
+		obj->getActualType() != LLAssetType::AT_CATEGORY &&
+		obj->getActualType() != LLAssetType::AT_LINK_FOLDER &&
+		obj->getActualType() != LLAssetType::AT_LINK
+		)
+	{
+		items.push_back(std::string("Move to Default Folder"));
+	}
+}
+// </FS:Ansariel>
+
 // Helper for commonly-used entries
 void LLInvFVBridge::getClipboardEntries(bool show_asset_id,
 										menuentry_vec_t &items,
@@ -839,6 +874,13 @@ void LLInvFVBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 
 		getClipboardEntries(true, items, disabled_items, flags);
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
 }
 
@@ -1045,19 +1087,27 @@ BOOL LLInvFVBridge::isCOFFolder() const
 }
 
 // <FS:TT> Client LSL Bridge (also for #AO)
-BOOL LLInvFVBridge::isProtectedFolder() const
+BOOL LLInvFVBridge::isProtectedFolder(bool ignore_setting /*= false*/) const
 {
 	const LLInventoryModel* model = getInventoryModel();
-	if(!model) return FALSE;
+	if (!model)
+	{
+		return FALSE;
+	}
+
 	if ((mUUID ==  FSLSLBridge::instance().getBridgeFolder()
 		|| model->isObjectDescendentOf(mUUID, FSLSLBridge::instance().getBridgeFolder()))
-		&& gSavedPerAccountSettings.getBOOL("ProtectBridgeFolder"))
+		&& (gSavedPerAccountSettings.getBOOL("ProtectBridgeFolder") || ignore_setting))
+	{
 		return TRUE;
+	}
 
 	if ((mUUID == AOEngine::instance().getAOFolder() 
 		|| model->isObjectDescendentOf(mUUID, AOEngine::instance().getAOFolder()))
-		&& gSavedPerAccountSettings.getBOOL("ProtectAOFolders"))
+		&& (gSavedPerAccountSettings.getBOOL("ProtectAOFolders") || ignore_setting))
+	{
 		return TRUE;
+	}
 
 	return FALSE;
 }
@@ -1232,7 +1282,10 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 			{
 				LL_WARNS() << LLAssetType::lookup(asset_type) << " asset has inventory type " << LLInventoryType::lookupHumanReadable(inv_type) << " on uuid " << uuid << LL_ENDL;
 			}
-			new_listener = new LLWearableBridge(inventory, root, uuid, asset_type, inv_type, (LLWearableType::EType)flags);
+			// <FS> FIRE-6627: Clear high bits to determine proper wearable type
+			//new_listener = new LLWearableBridge(inventory, root, uuid, asset_type, inv_type, (LLWearableType::EType)flags);
+			new_listener = new LLWearableBridge(inventory, root, uuid, asset_type, inv_type, LLWearableType::EType(flags & LLInventoryItemFlags::II_FLAGS_WEARABLES_MASK));
+			// </FS>
 			break;
 		case LLAssetType::AT_CATEGORY:
 			if (actual_asset_type == LLAssetType::AT_LINK_FOLDER)
@@ -3661,6 +3714,12 @@ void LLFolderBridge::buildContextMenuOptions(U32 flags, menuentry_vec_t&   items
 	const LLUUID lost_and_found_id = model->findCategoryUUIDForType(LLFolderType::FT_LOST_AND_FOUND);
 	const LLUUID favorites = model->findCategoryUUIDForType(LLFolderType::FT_FAVORITE);
 
+	// <FS:Ansariel> FIRE-11628: Option to delete broken links from AO folder
+	if (mUUID == AOEngine::instance().getAOFolder())
+	{
+		items.push_back(std::string("Cleanup broken Links"));
+	}
+	// </FS:Ansariel>
 	if (lost_and_found_id == mUUID)
 	{
 		// This is the lost+found folder.
@@ -4855,7 +4914,25 @@ void LLTextureBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		{
 			disabled_items.push_back(std::string("Save As"));
 		}
+
+// [RLVa:KB] - Checked: 2010-03-01 (RLVa-1.2.0b) | Modified: RLVa-1.1.0a
+		if (rlv_handler_t::isEnabled())
+		{
+			const LLInventoryObject* pItem = getInventoryObject();
+			if (pItem && gRlvHandler.hasBehaviour(RLV_BHVR_VIEWTEXTURE))
+			{
+				disabled_items.push_back(std::string("Open"));
+			}
+		}
+// [/RLVa:KB]
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);	
 }
 
@@ -4926,7 +5003,30 @@ void LLSoundBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("Sound Play"));
 	}
 
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
+}
+
+void LLSoundBridge::performAction(LLInventoryModel* model, std::string action)
+{
+	if ("sound_play" == action)
+	{
+		LLViewerInventoryItem* item = getItem();
+		if(item)
+		{
+			send_sound_trigger(item->getAssetUUID(), SOUND_GAIN);
+		}
+	}
+	else if ("open" == action)
+	{
+		openSoundPreview((void*)this);
+	}
+	else LLItemBridge::performAction(model, action);
 }
 
 // +=================================================+
@@ -4994,6 +5094,12 @@ void LLLandmarkBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		disabled_items.push_back(std::string("url_copy"));
 		disabled_items.push_back(std::string("About Landmark"));
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
 
 	hide_context_entries(menu, items, disabled_items);
 }
@@ -5318,6 +5424,13 @@ void LLCallingCardBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 			disabled_items.push_back(std::string("Conference Chat"));
 		}
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
 }
 
@@ -5566,6 +5679,13 @@ void LLGestureBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 			items.push_back(std::string("Activate"));
 		}
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
 }
 
@@ -5620,6 +5740,12 @@ void LLAnimationBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("Animation Play"));
 		items.push_back(std::string("Animation Audition"));
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
 
 	hide_context_entries(menu, items, disabled_items);
 }
@@ -6085,6 +6211,13 @@ void LLObjectBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 			}
 		}
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
 }
 
@@ -6335,6 +6468,13 @@ void LLWearableBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 			}
 		}
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
 }
 
@@ -6506,6 +6646,10 @@ void LLLinkItemBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 		items.push_back(std::string("Properties"));
 		addDeleteContextMenuOptions(items, disabled_items);
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
 	hide_context_entries(menu, items, disabled_items);
 }
 
@@ -6554,6 +6698,12 @@ void LLMeshBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 
 		getClipboardEntries(true, items, disabled_items, flags);
 	}
+
+	// <FS:Ansariel> Inventory Links Replace
+	checkInventoryLinkReplace(items, disabled_items);
+
+	// <FS:Ansariel> Move to default folder
+	checkMoveToDefaultFolder(items, disabled_items);
 
 	hide_context_entries(menu, items, disabled_items);
 }
@@ -6714,7 +6864,7 @@ public:
 		LLViewerInventoryItem* item = getItem();
 		if (item)
 		{
-			LLFloaterReg::showInstance("preview_sound", LLSD(mUUID), TAKE_FOCUS_YES);
+			send_sound_trigger(item->getAssetUUID(), SOUND_GAIN);
 		}
 		LLInvFVBridgeAction::doIt();
 	}

@@ -59,6 +59,7 @@ Logs:
         Look for logs in build-darwin-i386/logs
 
 Output:
-
         Look for output in build-darwin-i386/newview/Release
+
+
 

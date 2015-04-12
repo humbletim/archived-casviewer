@@ -20,8 +20,7 @@
 #include "llavatarlist.h"				// Avatar list control used by the "Nearby" tab in the "People" sidebar panel
 #include "llavatarnamecache.h"
 // <FS:Ansariel> [FS communication UI]
-//#include "llcallfloater.h"
-//#include "fsfloatervoicecontrols.h" // <FS:TM> removed in CHUI
+#include "fsfloatervoicecontrols.h"
 // </FS:Ansariel> [FS communication UI]
 #include "llenvmanager.h"
 #include "llfloatersidepanelcontainer.h"
@@ -393,13 +392,12 @@ void RlvUIEnabler::onToggleShowNames(bool fQuitting)
 		pRadar->updateNames();
 	// </FS:Ansariel> [Standalone radar]
 
-//	// Refresh the speaker list
-//	// <FS:Ansariel> [FS communication UI] <FS:TM> removed in CHUI
-//	//LLCallFloater* pCallFloater = LLFloaterReg::findTypedInstance<LLCallFloater>("voice_controls");
-//	FSFloaterVoiceControls* pCallFloater = LLFloaterReg::findTypedInstance<FSFloaterVoiceControls>("fs_voice_controls");
-//	// </FS:Ansariel> [FS communication UI]
-//	if (pCallFloater)
-//		pCallFloater->getAvatarCallerList()->updateAvatarNames();
+	// Refresh the speaker list
+	// <FS:Ansariel> [FS communication UI]
+	FSFloaterVoiceControls* pCallFloater = LLFloaterReg::findTypedInstance<FSFloaterVoiceControls>("fs_voice_controls");
+	if (pCallFloater)
+		pCallFloater->getAvatarCallerList()->updateAvatarNames();
+	// </FS:Ansariel> [FS communication UI]
 
 	// Force the use of the "display name" cache so we can filter both display and legacy names (or return back to the user's preference)
 	if (!fEnable)
@@ -643,7 +641,10 @@ bool RlvUIEnabler::hasOpenProfile(const LLUUID& idAgent)
 // Checked: 2010-09-11 (RLVa-1.2.1d) | Added: RLVa-1.2.1d
 bool RlvUIEnabler::isBuildEnabled()
 {
-	return (gAgent.canEditParcel()) && ((!gRlvHandler.hasBehaviour(RLV_BHVR_EDIT)) || (!gRlvHandler.hasBehaviour(RLV_BHVR_REZ)));
+	// <FS:Ansariel> FIRE-1432: Build button not properly updated
+	//return (gAgent.canEditParcel()) && ((!gRlvHandler.hasBehaviour(RLV_BHVR_EDIT)) || (!gRlvHandler.hasBehaviour(RLV_BHVR_REZ)));
+	return (LLViewerParcelMgr::getInstance()->allowAgentBuild()) && ((!gRlvHandler.hasBehaviour(RLV_BHVR_EDIT)) || (!gRlvHandler.hasBehaviour(RLV_BHVR_REZ)));
+	// </FS:Ansariel>
 }
 
 // ============================================================================

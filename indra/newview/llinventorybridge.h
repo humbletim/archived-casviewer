@@ -165,12 +165,18 @@ protected:
 // [/SL:KB]
 	BOOL isCOFFolder() const; // true if COF or descendent of
 // <FS:TT> Client LSL Bridge
-	BOOL isProtectedFolder() const;
+	BOOL isProtectedFolder(bool ignore_setting = false) const;
 // </FS:TT>
 	BOOL isInboxFolder() const; // true if COF or descendent of marketplace inbox
 	BOOL isOutboxFolder() const; // true if COF or descendent of marketplace outbox
 	BOOL isOutboxFolderDirectParent() const;
 	const LLUUID getOutboxFolder() const;
+
+	// <FS:Ansariel> Inventory Links Replace
+	void checkInventoryLinkReplace(menuentry_vec_t& items, menuentry_vec_t& disables_items);
+
+	// <FS:Ansariel> Move to default folder
+	void checkMoveToDefaultFolder(menuentry_vec_t& items, menuentry_vec_t& disables_items);
 
 	virtual BOOL isItemPermissive() const;
 	static void changeItemParent(LLInventoryModel* model,
@@ -415,6 +421,7 @@ public:
 		LLItemBridge(inventory, root, uuid) {}
 	virtual void openItem();
 	virtual void buildContextMenu(LLMenuGL& menu, U32 flags);
+	virtual void performAction(LLInventoryModel* model, std::string action);
 	static void openSoundPreview(void*);
 };
 

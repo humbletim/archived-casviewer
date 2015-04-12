@@ -31,6 +31,7 @@
 #include <boost/algorithm/string.hpp>
 #include "fscommon.h"
 #include "fsradar.h"
+#include "llagent.h"
 #include "rlvhandler.h"
 
 using namespace boost;
@@ -50,6 +51,9 @@ FSRadarEntry::FSRadarEntry(const LLUUID& avid)
 	mAge(-1),
 	mIsLinden(false),
 	mIgnore(false),
+	mHasNotes(false),
+	mAlertAge(false),
+	mAgeAlertPerformed(false),
 	mAvatarNameCallbackConnection()
 {
 	if (mID.notNull())
@@ -60,6 +64,7 @@ FSRadarEntry::FSRadarEntry(const LLUUID& avid)
 
 		processor->addObserver(mID, this);
 		processor->sendAvatarPropertiesRequest(mID);
+		processor->sendAvatarNotesRequest(mID);
 	}
 
 	updateName();
@@ -107,11 +112,26 @@ void FSRadarEntry::onAvatarNameCache(const LLUUID& av_id, const LLAvatarName& av
 
 void FSRadarEntry::processProperties(void* data, EAvatarProcessorType type)
 {
-	if (data && type == APT_PROPERTIES)
+	if (data)
 	{
-		LLAvatarData* avatar_data = static_cast<LLAvatarData*>(data);
-		mAge = ((LLDate::now().secondsSinceEpoch() - (avatar_data->born_on).secondsSinceEpoch()) / 86400);
-		mStatus = avatar_data->flags;		
+		if (type == APT_PROPERTIES)
+		{
+			LLAvatarData* avatar_data = static_cast<LLAvatarData*>(data);
+			if (avatar_data && avatar_data->agent_id == gAgentID && avatar_data->avatar_id == mID)
+			{
+				mAge = ((LLDate::now().secondsSinceEpoch() - (avatar_data->born_on).secondsSinceEpoch()) / 86400);
+				mStatus = avatar_data->flags;
+				checkAge();
+			}
+		}
+		else if (type == APT_NOTES)
+		{
+			LLAvatarNotes* avatar_notes = static_cast<LLAvatarNotes*>(data);
+			if (avatar_notes && avatar_notes->agent_id == gAgentID && avatar_notes->target_id == mID)
+			{
+				mHasNotes = !avatar_notes->notes.empty();
+			}
+		}
 	}
 }
 
@@ -141,7 +161,7 @@ std::string FSRadarEntry::getRadarName(const LLAvatarName& av_name)
 		{
 			if (av_name.isDisplayNameDefault())
 			{
-				return av_name.getDisplayName();
+				return av_name.getUserNameForDisplay();
 			}
 			else
 			{
@@ -152,7 +172,7 @@ std::string FSRadarEntry::getRadarName(const LLAvatarName& av_name)
 		{
 			if (av_name.isDisplayNameDefault())
 			{
-				return av_name.getDisplayName();
+				return av_name.getUserNameForDisplay();
 			}
 			else
 			{
@@ -162,5 +182,14 @@ std::string FSRadarEntry::getRadarName(const LLAvatarName& av_name)
 	}
 	
 	// else use legacy name lookups
-	return av_name.getDisplayName(); // will be mapped to legacyname automatically by the name cache
+	return av_name.getUserNameForDisplay(); // will be mapped to legacyname automatically by the name cache
+}
+
+void FSRadarEntry::checkAge()
+{
+	mAlertAge = (mAge > -1 && mAge <= gSavedSettings.getS32("RadarAvatarAgeAlertValue"));
+	if (!mAlertAge || gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+	{
+		mAgeAlertPerformed = true;
+	}
 }

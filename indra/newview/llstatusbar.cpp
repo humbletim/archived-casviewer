@@ -111,9 +111,13 @@
 #include "llviewernetwork.h"
 #endif // OPENSIM
 // </FS:CR>
+
+#include "fssearchableui.h"
+
 //
 // Globals
 //
+
 LLStatusBar *gStatusBar = NULL;
 S32 STATUS_BAR_HEIGHT = 26;
 extern S32 MENU_BAR_HEIGHT;
@@ -196,7 +200,10 @@ LLStatusBar::LLStatusBar(const LLRect& rect)
 	mPathfindingFlashOn(TRUE),	// <FS:Zi> Pathfinding rebake functions
 	mAudioStreamEnabled(FALSE),	// ## Zi: Media/Stream separation
 	mRebakeStuck(FALSE),		// <FS:LO> FIRE-7639 - Stop the blinking after a while
-	mNearbyIcons(FALSE)			// <FS:Ansariel> Script debug
+	mNearbyIcons(FALSE),		// <FS:Ansariel> Script debug
+	mSearchData(NULL),			// <FS:ND/> Hook up and init for filtering
+	mFilterEdit(NULL),			// <FS:ND/> Edit for filtering
+	mSearchPanel(NULL)			// <FS:ND/> Panel for filtering
 {
 	setRect(rect);
 	
@@ -438,6 +445,16 @@ BOOL LLStatusBar::postBuild()
 	}
 	// </FS:PP>
 
+	// <FS:ND> Hook up and init for filtering
+	mFilterEdit = getChild<LLSearchEditor>("search_menu_edit");
+	mSearchPanel = getChild<LLPanel>("menu_search_panel");
+	mSearchPanel->setVisible(gSavedSettings.getBOOL("FSMenuSearch"));
+	mFilterEdit->setKeystrokeCallback(boost::bind(&LLStatusBar::onUpdateFilterTerm, this));
+	mFilterEdit->setCommitCallback(boost::bind(&LLStatusBar::onUpdateFilterTerm, this));
+	collectSearchableItems();
+	gSavedSettings.getControl("FSMenuSearch")->getCommitSignal()->connect(boost::bind(&LLStatusBar::updateMenuSearchVisibility, this, _2));
+	// </FS:ND>
+
 	return TRUE;
 }
 
@@ -481,20 +498,20 @@ void LLStatusBar::refresh()
 	}
 
 	// <FS:Zi> Pathfinding rebake functions
-	static LLMenuOptionPathfindingRebakeNavmesh::ERebakeNavMeshMode pathfinding_mode=LLMenuOptionPathfindingRebakeNavmesh::kRebakeNavMesh_Default;
+	static LLMenuOptionPathfindingRebakeNavmesh::ERebakeNavMeshMode pathfinding_mode = LLMenuOptionPathfindingRebakeNavmesh::kRebakeNavMesh_Default;
 	// <FS:LO> FIRE-7639 - Stop the blinking after a while
 	LLViewerRegion* current_region = gAgent.getRegion();
-	if(current_region != agent_region)
+	if (current_region != agent_region)
 	{
 		agent_region=current_region;
 		bakingStarted = false;
 		mRebakeStuck = false;
 	}
 	// </FS:LO>
-	if(	LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebaking())
+	if (LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebaking())
 	{
 		// <FS:LO> FIRE-7639 - Stop the blinking after a while
-		if(!bakingStarted)
+		if (!bakingStarted)
 		{
 			bakingStarted = true;
 			mRebakeStuck = false;
@@ -502,23 +519,24 @@ void LLStatusBar::refresh()
 		}
 		// </FS:LO>
 		
-		if(	agent_region &&
+		if (agent_region &&
 			agent_region->dynamicPathfindingEnabled() && 
-			mRebakingTimer.getElapsedTimeF32()>0.5f)
+			mRebakingTimer.getElapsedTimeF32() > 0.5f)
 		{
 			mRebakingTimer.reset();
 			mPathfindingFlashOn=!mPathfindingFlashOn;
 			updateParcelIcons();
 		}
 	}
-	else if(pathfinding_mode!=LLMenuOptionPathfindingRebakeNavmesh::getInstance()->getMode())
+	else if (pathfinding_mode != LLMenuOptionPathfindingRebakeNavmesh::getInstance()->getMode())
 	{
-		pathfinding_mode=LLMenuOptionPathfindingRebakeNavmesh::getInstance()->getMode();
+		pathfinding_mode = LLMenuOptionPathfindingRebakeNavmesh::getInstance()->getMode();
 		updateParcelIcons();
 	}
 	// </FS:Zi>
 
 	LLRect r;
+
 	const S32 MENU_RIGHT = gMenuBarView->getRightmostMenuEdge();
 
 	// reshape menu bar to its content's width
@@ -603,6 +621,7 @@ void LLStatusBar::setVisibleForMouselook(bool visible)
 	mSGBandwidth->setVisible(visible && showNetStats);
 	mSGPacketLoss->setVisible(visible && showNetStats);
 	mBandwidthButton->setVisible(visible && showNetStats); // <FS:PP> FIRE-6287: Clicking on traffic indicator toggles Lag Meter window
+	mSearchPanel->setVisible(visible && gSavedSettings.getBOOL("FSMenuSearch"));
 	mTimeMediaPanel->setVisible(visible);
 	setBackgroundVisible(visible);
 }
@@ -646,6 +665,19 @@ void LLStatusBar::setBalance(S32 balance)
 		// </FS:Ansariel>
 		balance_bg_view->setShape(balance_bg_rect);
 	}
+
+	// FS:ND> If the search panel is shown, move this according to the new balance width. Parcel text will reshape itself in setParcelInfoText
+	if (mSearchPanel && mSearchPanel->getVisible())
+	{
+		S32 HPAD = 12;
+		LLRect balanceRect = getChildView("balance_bg")->getRect();
+		LLRect searchRect = mSearchPanel->getRect();
+		S32 w = searchRect.getWidth();
+		searchRect.mLeft = balanceRect.mLeft - w - HPAD;
+		searchRect.mRight = searchRect.mLeft + w;
+		mSearchPanel->setShape( searchRect );
+	}
+	// </FS:ND>
 
 	if (mBalance && (fabs((F32)(mBalance - balance)) > gSavedSettings.getF32("UISndMoneyChangeThreshold")))
 	{
@@ -1025,6 +1057,12 @@ void LLStatusBar::setParcelInfoText(const std::string& new_text)
 	// Ansariel: Recalculate panel size so we are able to click the whole text
 	LLRect panelParcelInfoRect = mParcelInfoPanel->getRect();
 	LLRect panelBalanceRect = mBalancePanel->getRect();
+
+	// <FS:ND> The menu search editor is left from the balance rect. If it is shown, use that rect
+	if (mSearchPanel && mSearchPanel->getVisible())
+		panelBalanceRect = mSearchPanel->getRect();
+	// </FS:ND>
+
 	panelParcelInfoRect.mRight = panelParcelInfoRect.mLeft + rect.mRight;
 	S32 borderRight = panelBalanceRect.mLeft - ParcelInfoSpacing;
 
@@ -1092,7 +1130,6 @@ void LLStatusBar::updateParcelIcons()
 	if (!agent_region || !agent_parcel)
 		return;
 
-	bool allow_voice=FALSE;		// <FS:Zi> Declare here to use it in both if() branches
 	if (mShowParcelIcons)
 	{
 		LLParcel* current_parcel;
@@ -1120,10 +1157,7 @@ void LLStatusBar::updateParcelIcons()
 		is_opensim = LLGridManager::getInstance()->isInOpenSim();
 #endif // OPENSIM
 		// </FS:CR>
-		// <FS:Zi> allow_voice is now declared outside the if() block
-		//	bool allow_voice	= vpm->allowAgentVoice(agent_region, current_parcel);
-		allow_voice	= vpm->allowAgentVoice(agent_region, current_parcel);
-		// </FS:Zi>
+		bool allow_voice	= vpm->allowAgentVoice(agent_region, current_parcel);
 		bool allow_fly		= vpm->allowAgentFly(agent_region, current_parcel);
 		bool allow_push		= vpm->allowAgentPush(agent_region, current_parcel);
 		bool allow_build	= vpm->allowAgentBuild(current_parcel); // true when anyone is allowed to build. See EXT-4610.
@@ -1139,21 +1173,21 @@ void LLStatusBar::updateParcelIcons()
 		bool pathfinding_dynamic_enabled = agent_region->dynamicPathfindingEnabled();
 
 		// <FS:Zi> Pathfinding rebake functions
-		bool pathfinding_navmesh_dirty=LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebakeNeeded();
-		F32 pathfinding_dirty_icon_alpha=1.0;
-		if(LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebaking())
+		bool pathfinding_navmesh_dirty = LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebakeNeeded();
+		F32 pathfinding_dirty_icon_alpha = 1.0f;
+		if (LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebaking())
 		{
 			// <FS:LO> FIRE-7639 - Stop the blinking after a while
-			if(mRebakeStuck)
+			if (mRebakeStuck)
 			{
 				pathfinding_dirty_icon_alpha = 0.5;
 			}
 			else
 			{
-				pathfinding_dirty_icon_alpha=mPathfindingFlashOn ? 1.0 : 0.25;
+				pathfinding_dirty_icon_alpha = mPathfindingFlashOn ? 1.0f : 0.25f;
 			}
 			// </FS:LO>
-			pathfinding_navmesh_dirty=true;
+			pathfinding_navmesh_dirty = true;
 		}
 		// </FS:Zi>
 
@@ -1197,11 +1231,9 @@ void LLStatusBar::updateParcelIcons()
 		// <FS:Ansariel> Script debug
 		mScriptOut->setVisible(FALSE);
 		// </FS:Ansariel> Script debug
-		allow_voice	= vpm->allowAgentVoice();	// <FS:Zi> update allow_voice even if icons are hidden
 	}
 
 	layoutParcelIcons();
-	gSavedSettings.setBOOL("ParcelAllowsVoice",allow_voice);	// <FS:Zi> set internal control for button state changing
 }
 
 void LLStatusBar::updateHealth()
@@ -1223,7 +1255,7 @@ void LLStatusBar::updateHealth()
 void LLStatusBar::layoutParcelIcons()
 {
 	// TODO: remove hard-coded values and read them as xml parameters
-	static const int FIRST_ICON_HPAD = 2; // 2 padding; See also ICON_HEAD
+	static const S32 FIRST_ICON_HPAD = 2; // 2 padding; See also ICON_HEAD
 	// Kadah - not needed static const int LAST_ICON_HPAD = 11;
 
 	// Ansariel: Changed order to be more Viewer 1 like and keep important
@@ -1234,7 +1266,7 @@ void LLStatusBar::layoutParcelIcons()
 	left = layoutWidget(mScriptOut, left);
 	left = layoutWidget(mDamageText, left);
 
-	for (int i = ICON_COUNT - 1; i >= 0; --i)
+	for (S32 i = ICON_COUNT - 1; i >= 0; --i)
 	{
 		left = layoutWidget(mParcelIcon[i], left);
 	}
@@ -1252,7 +1284,7 @@ void LLStatusBar::layoutParcelIcons()
 S32 LLStatusBar::layoutWidget(LLUICtrl* ctrl, S32 left)
 {
 	// TODO: remove hard-coded values and read them as xml parameters
-	static const int ICON_HPAD = 2;
+	static const S32 ICON_HPAD = 2;
 
 	if (ctrl->getVisible())
 	{
@@ -1439,13 +1471,15 @@ void LLStatusBar::updateVolumeControlsVisibility(const LLSD& data)
 // <FS:Zi> Pathfinding rebake functions
 BOOL LLStatusBar::rebakeRegionCallback(const LLSD& notification,const LLSD& response)
 {
-	std::string newSetName=response["message"].asString();
-	S32 option=LLNotificationsUtil::getSelectedOption(notification,response);
+	std::string newSetName = response["message"].asString();
+	S32 option = LLNotificationsUtil::getSelectedOption(notification,response);
 
-	if(option==0)
+	if (option == 0)
 	{
-		if(LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebakeNeeded())
+		if (LLMenuOptionPathfindingRebakeNavmesh::getInstance()->isRebakeNeeded())
+		{
 			LLMenuOptionPathfindingRebakeNavmesh::getInstance()->rebakeNavmesh();
+		}
 		return TRUE;
 	}
 	return FALSE;
@@ -1463,3 +1497,51 @@ void LLStatusBar::onMouseLeaveParcelInfo()
 	mParcelInfoText->setColor(LLUIColorTable::instance().getColor("ParcelNormalColor"));
 }
 // </FS:Zi>
+
+void LLStatusBar::onUpdateFilterTerm()
+{
+	LLWString searchValue = utf8str_to_wstring( mFilterEdit->getValue() );
+	LLWStringUtil::toLower( searchValue );
+
+	if( !mSearchData || mSearchData->mLastFilter == searchValue )
+		return;
+
+	mSearchData->mLastFilter = searchValue;
+
+	mSearchData->mRootMenu->hightlightAndHide( searchValue );
+	gMenuBarView->needsArrange();
+}
+
+void collectChildren( LLMenuGL *aMenu, nd::statusbar::SearchableItemPtr aParentMenu )
+{
+	for( U32 i = 0; i < aMenu->getItemCount(); ++i )
+	{
+		LLMenuItemGL *pMenu = aMenu->getItem( i );
+
+		nd::statusbar::SearchableItemPtr pItem( new nd::statusbar::SearchableItem );
+		pItem->mCtrl = pMenu;
+		pItem->mMenu = pMenu;
+		pItem->mLabel = utf8str_to_wstring( pMenu->nd::ui::SearchableControl::getSearchText() );
+		LLWStringUtil::toLower( pItem->mLabel );
+		aParentMenu->mChildren.push_back( pItem );
+
+		LLMenuItemBranchGL *pBranch = dynamic_cast< LLMenuItemBranchGL* >( pMenu );
+		if( pBranch )
+			collectChildren( pBranch->getBranch(), pItem );
+	}
+
+}
+
+void LLStatusBar::collectSearchableItems()
+{
+	mSearchData = new nd::statusbar::SearchData;
+	nd::statusbar::SearchableItemPtr pItem( new nd::statusbar::SearchableItem );
+	mSearchData->mRootMenu = pItem;
+	collectChildren( gMenuBarView, pItem );
+}
+
+void LLStatusBar::updateMenuSearchVisibility(const LLSD& data)
+{
+	mSearchPanel->setVisible(data.asBoolean());
+	update();
+}

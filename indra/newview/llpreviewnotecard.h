@@ -80,6 +80,9 @@ public:
 	// asset system. :(
 	void refreshFromInventory(const LLUUID& item_id = LLUUID::null);
 
+	// <FS:Ansariel> FIRE-9039: Close notecard after choosing "Save" in close confirmation
+	void checkCloseAfterSave();
+
 protected:
 
 	void updateTitleButtons();
@@ -107,6 +110,9 @@ protected:
 	bool handleDeleteChangesDialog(const LLSD& notification, const LLSD& response);
 	static void onConfirmDelete(void* user_data);
 	// [FS:CR]
+
+	// <FS:Ansariel> FIRE-13969: Search button
+	void onSearchButtonClicked();
 
 protected:
 	LLViewerTextEditor* mEditor;

@@ -33,11 +33,22 @@
 // KDU core header files
 //
 #define KDU_NO_THREADS
+
+// <FS:ND> Some magic to make KDU and the viewer agree with internal alignments
+#define KDU_X86_INTRINSICS
+// </FS:ND>
+
 #include "kdu_elementary.h"
 #include "kdu_messaging.h"
 #include "kdu_params.h"
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
+
+// <FS:ND> KDU >= 7.5.0 uses namespaces for nicer encapsulation. To avoid cluttering this all over LLs source we're going with this.
+#if KDU_MAJOR_VERSION >= 7 && KDU_MINOR_VERSION >= 5
+ using namespace kdu_core;
+#endif
+// </FS:ND>
 
 class LLKDUDecodeState;
 class LLKDUMemSource;

@@ -38,12 +38,13 @@
 
 UtilityBar::UtilityBar() :
 	LLSingleton<UtilityBar>(),
-	LLEventTimer(0.5),
+	LLEventTimer(0.5f),
 	mAOInterfaceButton(NULL),
 	mVolumeControlsInterfaceButton(NULL),
 	mParcelMediaPlayButton(NULL),
 	mParcelStreamPlayButton(NULL),
-	mTalkButton(NULL)
+	mTalkButton(NULL),
+	mPTTButton(NULL)
 {
 	// Tried to do this cleanly with callbacks and controls, but ran into dead ends on every approach.
 	// This helper class works, but I am not at all satisfied with it. -Zi
@@ -58,7 +59,7 @@ void UtilityBar::init()
 	LLView* rootView = LLUI::getRootView();
 
 	// Skip all this if we don't have a skin that needs it
-	if (rootView->findChildView("chat_bar_utility_bar_stack") == NULL)
+	if (!rootView->findChildView("chat_bar_utility_bar_stack"))
 	{
 		mEventTimer.stop();
 		return;
@@ -69,6 +70,7 @@ void UtilityBar::init()
 	mTalkButton = rootView->findChild<LLButton>("utility_talk_button");
 	mAOInterfaceButton = rootView->findChild<LLButton>("show_ao_interface_button");
 	mVolumeControlsInterfaceButton = rootView->findChild<LLButton>("show_volume_controls_button");
+	mPTTButton = rootView->findChild<LLButton>("utility_push_to_talk_lock_button");
 
 	if (mParcelStreamPlayButton)
 	{
@@ -102,7 +104,7 @@ void UtilityBar::onParcelStreamClicked()
 
 void UtilityBar::onParcelMediaClicked()
 {
-	bool any_media_playing = (LLViewerMedia::isAnyMediaShowing() || 
+	bool any_media_playing = (LLViewerMedia::isAnyMediaShowing() ||
 							  LLViewerMedia::isParcelMediaPlaying());
 
 	gStatusBar->toggleMedia(!any_media_playing);
@@ -113,7 +115,7 @@ BOOL UtilityBar::tick()
 	// NOTE: copied from llstatusbar.cpp
 	// This has to be resolved to callbacks or controls eventually -Zi
 
-	if(mParcelMediaPlayButton)
+	if (mParcelMediaPlayButton)
 	{
 		// Disable media toggle if there's no media, parcel media, and no parcel audio
 		// (or if media is disabled)
@@ -124,23 +126,27 @@ BOOL UtilityBar::tick()
 		mParcelMediaPlayButton->setEnabled(button_enabled);
 
 		// Note the "sense" of the toggle is opposite whether media is playing or not
-		bool any_media_playing = (LLViewerMedia::isAnyMediaShowing() || 
+		bool any_media_playing = (LLViewerMedia::isAnyMediaShowing() ||
 								LLViewerMedia::isParcelMediaPlaying());
-		mParcelMediaPlayButton->setValue(any_media_playing);
+		mParcelMediaPlayButton->setImageOverlay(any_media_playing ? "icn_pause.tga" : "icn_play.tga");
 	}
 
-	if(mParcelStreamPlayButton)
+	if (mParcelStreamPlayButton)
 	{
 		static LLCachedControl<bool> audio_streaming_music(gSavedSettings, "AudioStreamingMusic");
 		bool button_enabled = (audio_streaming_music && LLViewerMedia::hasParcelAudio());
 
 		mParcelStreamPlayButton->setEnabled(button_enabled);
-		mParcelStreamPlayButton->setValue(LLViewerMedia::isParcelAudioPlaying());
+		mParcelStreamPlayButton->setImageOverlay(LLViewerMedia::isParcelAudioPlaying() ? "icn_pause.tga" : "icn_play.tga");
 	}
 
-	if(mTalkButton)
+	if (mTalkButton)
 	{
-		mTalkButton->setValue(gAgent.isMicrophoneOn(LLSD()));
+		mTalkButton->setEnabled(LLAgent::isActionAllowed(LLSD("speak")));
+	}
+	if (mPTTButton)
+	{
+		mPTTButton->setEnabled(LLAgent::isActionAllowed(LLSD("speak")));
 	}
 
 	return FALSE;

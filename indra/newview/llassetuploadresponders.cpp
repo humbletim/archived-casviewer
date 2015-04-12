@@ -166,8 +166,13 @@ void on_new_single_inventory_upload_complete(
 
 		// Show the preview panel for textures and sounds to let
 		// user know that the image (or snapshot) arrived intact.
-		LLInventoryPanel* panel = LLInventoryPanel::getActiveInventoryPanel();
-		if ( panel )
+		// <FS:Ansariel> FIRE-14598: Option to prevent inventory popping up after taking a snapshot
+		//LLInventoryPanel* panel = LLInventoryPanel::getActiveInventoryPanel();
+		//if ( panel )
+		LLInventoryPanel* panel = NULL;
+		if ((inventory_type != LLInventoryType::IT_SNAPSHOT || gSavedSettings.getBOOL("FSOpenInventoryAfterSnapshot"))
+			&& (panel = LLInventoryPanel::getActiveInventoryPanel()))
+		// </FS:Ansariel>
 		{
 			LLFocusableElement* focus = gFocusMgr.getKeyboardFocus();
 
@@ -590,6 +595,8 @@ void LLUpdateAgentInventoryResponder::uploadComplete(const LLSD& content)
 				  gVFS->removeFile(content["new_asset"].asUUID(), LLAssetType::AT_NOTECARD);
 			  }
 			  nc->refreshFromInventory(new_item->getUUID());
+			  // <FS:Ansariel> FIRE-9039: Close notecard after choosing "Save" in close confirmation
+			  nc->checkCloseAfterSave();
 		  }
 		  break;
 	  }
@@ -717,6 +724,8 @@ void LLUpdateTaskInventoryResponder::uploadComplete(const LLSD& content)
 			  }
 			  nc->setAssetId(content["new_asset"].asUUID());
 			  nc->refreshFromInventory();
+			  // <FS:Ansariel> FIRE-9039: Close notecard after choosing "Save" in close confirmation
+			  nc->checkCloseAfterSave();
 		  }
 		  break;
 	  }
@@ -732,7 +741,10 @@ void LLUpdateTaskInventoryResponder::uploadComplete(const LLSD& content)
 		  }
 		  else
 		  {
-			  LLLiveLSLEditor* preview = LLFloaterReg::findTypedInstance<LLLiveLSLEditor>("preview_scriptedit", LLSD(item_id));
+			  // <FS:Ansariel> FIRE-511 / VWR-27512: Can't open script editors from objects individually
+			  //LLLiveLSLEditor* preview = LLFloaterReg::findTypedInstance<LLLiveLSLEditor>("preview_scriptedit", LLSD(item_id));
+			  LLLiveLSLEditor* preview = LLFloaterReg::findTypedInstance<LLLiveLSLEditor>("preview_scriptedit", LLSD().with("xoredid", item_id ^ task_id).with("assetid", item_id));
+			  // </FS:Ansariel>
 			  if (preview)
 			  {
 				  // Bytecode save completed

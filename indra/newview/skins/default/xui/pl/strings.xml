@@ -62,6 +62,7 @@ Pole widzenia (Draw Distance): [DRAW_DISTANCE]
 Przepustowość (Bandwidth): [BANDWIDTH]
 Mnożnik poziomu detali (LOD Factor): [LOD]
 Jakość wyświetlania (Render quality): [RENDERQUALITY]
+Zaawansowane oświetlenie (Advanced Lighting Model): [ALMSTATUS]
 Pamięć tekstur (Texture memory): [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
 Czas utworzenia VFS (cache) w UTC: [VFS_DATE]
 	</string>
@@ -1039,6 +1040,9 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="ChangeYourDefaultAnimations">
 		Zmieniać Twoje domyślne animacje
+	</string>
+	<string name="SnapshotSavedToDisk">
+		Zdjęcie zapisane: [FILENAME]
 	</string>
 	<string name="JoinAnExperience">
 		Rozpocznij przygodę
@@ -2157,6 +2161,21 @@ Spróbuj zalogować się ponownie za minutę.
 	</string>
 	<string name="DoNotDisturbModeResponseDefault">
 		Rezydent, do którego wysłałeś/aś wiadomość prywatną znajduje się w trybie zajętości i nie chce, aby mu przeszkadzano. Oznacza to, iż Twoja wiadomość zostanie zapisana do przejrzenia na później.
+	</string>
+	<string name="AutoResponseModeDefault">
+		Rezydent, do którego wysłałeś/aś wiadomość prywatną aktywował w Firestormie tryb autoodpowiedzi i nie chce, aby mu przeszkadzano. Oznacza to, iż Twoja wiadomość zostanie zapisana do przejrzenia na później.
+	</string>
+	<string name="AutoResponseModeNonFriendsDefault">
+		Rezydent, do którego wysłałeś/aś wiadomość prywatną aktywował w Firestormie tryb autoodpowiedzi i nie chce, aby mu przeszkadzano. Oznacza to, iż Twoja wiadomość zostanie zapisana do przejrzenia na później.
+	</string>
+	<string name="RejectTeleportOffersResponseDefault">
+		Rezydent, do którego wysłałeś/aś wiadomość aktywował w Firestormie tryb odrzucania próśb oraz propozycji teleportacji i nie chce, aby mu nimi przeszkadzano. Możesz w dalszym ciągu wysłać wiadomość prywatną ręcznie.
+	</string>
+	<string name="MutedAvatarsResponseDefault">
+		Rezydent, do którego wysłałeś/aś wiadomość zablokował Cię.
+	</string>
+	<string name="AwayAvatarResponseDefault">
+		Rezydent, do którego wysłałeś/aś wiadomość obecnie śpi (jest z dala od klawiatury). Oznacza to, iż Twoja wiadomość zostanie zapisana do przejrzenia na później.
 	</string>
 	<string name="MuteByName">
 		(Nazwa)
@@ -4136,6 +4155,9 @@ Jeżeli nadal otrzymujesz ten komunikat, skontaktuj się z [SUPPORT_SITE].
 	<string name="IM_autoresponse_sent">
 		Autoodpowiedź wysłana
 	</string>
+	<string name="IM_autoresponse_item_sent">
+		Wysłano przedmiot: [ITEM_NAME]
+	</string>
 	<string name="answered_call">
 		Twoja rozmowa głosowa została odebrana
 	</string>
@@ -4547,6 +4569,9 @@ Jeśli problemy będą występowały nadal, proszę sprawdź sieć i ustawienia 
 	</string>
 	<string name="free">
 		darmowe
+	</string>
+	<string name="Group Ban">
+		Bany grupowe
 	</string>
 	<string name="Membership">
 		Członkostwo
@@ -5193,10 +5218,31 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 		Pozycja kamery [POS] została skopiowana do schowka.
 	</string>
 	<string name="FSCmdLineRollDiceTotal">
-		Wynik całkowity dla [DICE]d[FACES]: [RESULT].
+		Wynik całkowity dla [DICE]d[FACES][MODIFIER]: [RESULT].
 	</string>
 	<string name="FSCmdLineRollDiceLimits">
 		Musisz podać wartości dodatnie dla ilości kostek (maksymalnie 100) oraz ścianek (maksymalnie 1000).
+	</string>
+	<string name="FSCmdLineRollDiceModifiersInvalid">
+		Jeśli chcesz użyć modyfikatora, to musisz podać właściwą jego liczbę oraz typ. Wartość modyfikatora musi być w zakresie od -1000 do 1000. Prawidłowe typy modyfikatorów to "+" (premie), "-" (kary), "&gt;", "&lt;" (sukcesy), "r&gt;", "r&lt;", "r" (ponowne rzuty), "!p&gt;", "!p&lt;", "!p" (penetracje), "!&gt;", "!&lt;" oraz "!" (eksplozje). Możesz jednocześnie użyć tylko jednego typu modyfikatora. Przykłady: "[COMMAND] 1 20 + 5", "[COMMAND] 5 40 &gt; 15", "[COMMAND] 10 25 ! 25", "[COMMAND] 15 25 !&lt; 10".
+	</string>
+	<string name="FSCmdLineRollDiceExploded">
+		Eksplozja
+	</string>
+	<string name="FSCmdLineRollDicePenetrated">
+		Penetracja
+	</string>
+	<string name="FSCmdLineRollDiceSuccess">
+		Sukces
+	</string>
+	<string name="FSCmdLineRollDiceReroll">
+		Ponowny rzut
+	</string>
+	<string name="FSCmdLineRollDiceFreezeGuard">
+		Ta operacja nie może zostać zakończona, ponieważ przeglądarka mogłaby się zawiesić. Proszę zmienić kryteria losowania.
+	</string>
+	<string name="FSCmdLineCalcRandError">
+		'[RAND]' nie jest poprawnym wyrażeniem dla RAND(min,max). MAX musi być większe niż MIN, oba w zakresie od -10000 do 10000.
 	</string>
 	<string name="FSWithHavok">
 		ze wsparciem dla Havoka
@@ -5390,6 +5436,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	<string name="GroupChatMuteNotice">
 		Wyciszanie czatu grupowego [NAME].
 	</string>
+	<string name="IgnoredAdHocSession">
+		Zostałeś/aś zaproszony/a do konferencji (czatu ad-hoc), ale przeglądarka automatycznie ją zignorowała ze względu na Twoje ustawienia.
+	</string>
 	<string name="camera_no_focus">
 		Kamera nie może skupić się na [AVATARNAME], ponieważ jest on/ona poza polem widzenia.
 	</string>
@@ -5413,6 +5462,9 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="leaving_region">
 		opuścił/a region.
+	</string>
+	<string name="avatar_age_alert">
+		wywołał/a alert powiadamiania o wieku. Wiek: [AGE] dni.
 	</string>
 	<string name="TotalScriptCountChangeIncrease">
 		Całkowita il. skryptów w regionie wzrosła z [OLD_VALUE] do [NEW_VALUE] ([DIFFERENCE]).
@@ -5461,5 +5513,14 @@ Spróbuj załączyć ścieżkę do edytora w cytowaniu.
 	</string>
 	<string name="SLGridStatusOtherError">
 		Błąd strony SL Grid Status: [STATUS] (https://pl.wikipedia.org/wiki/Kod_odpowiedzi_HTTP).
+	</string>
+	<string name="DoubleClickTeleportEnabled">
+		Włączono teleport po dwukliku.
+	</string>
+	<string name="DoubleClickTeleportDisabled">
+		Wyłączono teleport po dwukliku.
+	</string>
+	<string name="FSRegionRestartInLocalChat">
+		Region, w którym teraz jesteś zostanie za chwilę zrestartowany. Jeśli w nim zostaniesz, to symulator Cię wyloguje.
 	</string>
 </strings>

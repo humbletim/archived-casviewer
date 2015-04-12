@@ -25,32 +25,28 @@
  * $/LicenseInfo$
  */
 
-
 #include "llviewerprecompiledheaders.h"
 
 #include "fsfloatercontacts.h"
 
-// libs
+#include "fscommon.h"
+#include "fscontactsfriendsctrl.h"
+#include "fscontactsfriendsmenu.h"
+#include "fsfloaterimcontainer.h"
 #include "llagent.h"
-#include "llfloaterreg.h"
-#include "lltabcontainer.h"
-#include "llscrolllistctrl.h"
 #include "llavataractions.h"
-#include "llavatarlistitem.h"
-#include "llavatarnamecache.h"
 #include "llcallingcard.h"			// for LLAvatarTracker
 #include "llfloateravatarpicker.h"
 #include "llfloatergroupinvite.h"
-#include "llfriendcard.h"
+#include "llfloaterreg.h"
 #include "llgroupactions.h"
 #include "llgrouplist.h"
-#include "fsfloaterimcontainer.h"
 #include "llnotificationsutil.h"
+#include "llscrolllistctrl.h"
 #include "llstartup.h"
-#include "llviewercontrol.h"
-#include "llvoiceclient.h"
-#include "fscommon.h"
+#include "lltabcontainer.h"
 #include "llviewermenu.h"
+#include "llvoiceclient.h"
 
 //Maximum number of people you can select to do an operation on at once.
 const U32 MAX_FRIEND_SELECT = 20;
@@ -91,7 +87,9 @@ FSFloaterContacts::FSFloaterContacts(const LLSD& seed)
 	mGroupList(NULL),
 	mAllowRightsChange(TRUE),
 	mNumRightsChanged(0),
-	mSortByUserName(LLCachedControl<bool>(gSavedSettings,"FSSortContactsByUserName", FALSE))
+	mRlvBehaviorCallbackConnection(),
+	mResetLastColumnDisplayModeChanged(false),
+	mDirtyNames(false)
 {
 	mObserver = new LLLocalFriendsObserver(this);
 	LLAvatarTracker::instance().addObserver(mObserver);
@@ -105,6 +103,20 @@ FSFloaterContacts::~FSFloaterContacts()
 	LLVoiceClient::getInstance()->removeObserver(mObserver);
 	LLAvatarTracker::instance().removeObserver(mObserver);
 	delete mObserver;
+
+	if (mRlvBehaviorCallbackConnection.connected())
+	{
+		mRlvBehaviorCallbackConnection.disconnect();
+	}
+
+	for (avatar_name_cb_t::iterator it = mAvatarNameCacheConnections.begin(); it != mAvatarNameCacheConnections.end(); ++it)
+	{
+		if (it->second.connected())
+		{
+			it->second.disconnect();
+		}
+	}
+	mAvatarNameCacheConnections.clear();
 }
 
 BOOL FSFloaterContacts::postBuild()
@@ -113,29 +125,12 @@ BOOL FSFloaterContacts::postBuild()
 	mFriendsTab = getChild<LLPanel>(FRIENDS_TAB_NAME);
 	mFriendListFontName = mFriendsTab->getString("FontName");
 
-	mFriendsList = mFriendsTab->getChild<LLScrollListCtrl>("friend_list");
+	mFriendsList = mFriendsTab->getChild<FSContactsFriendsCtrl>("friend_list");
 	mFriendsList->setMaxSelectable(MAX_FRIEND_SELECT);
-	//mFriendsList->setMaximumSelectCallback(boost::bind(&FSFloaterContacts::onMaximumSelect, this)); //TODO
 	mFriendsList->setCommitOnSelectionChange(TRUE);
-	//mFriendsList->setContextMenu(LLScrollListCtrl::MENU_AVATAR);
 	mFriendsList->setCommitCallback(boost::bind(&FSFloaterContacts::onSelectName, this));
 	mFriendsList->setDoubleClickCallback(boost::bind(&FSFloaterContacts::onImButtonClicked, this));
-	//mFriendsList->setReturnCallback(boost::bind(&FSFloaterContacts::onImButtonClicked, this));
-	mFriendsList->setContextMenu(LLScrollListCtrl::MENU_AVATAR);
-
-	// primary sort = online status, secondary sort = name
-	if (mSortByUserName)
-	{
-		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
-		mFriendsList->sortByColumn(std::string("user_name"), TRUE);
-	}
-	else
-	{
-		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_NAME)->mName;
-		mFriendsList->sortByColumn(std::string("full_name"), TRUE);
-	}
-	mFriendsList->sortByColumn(std::string("icon_online_status"), FALSE);
-	mFriendsList->setSearchColumn(mFriendsList->getColumn("full_name")->mIndex);
+	mFriendsList->setContextMenu(&gFSContactsFriendsMenu);
 	
 	mFriendsTab->childSetAction("im_btn",				boost::bind(&FSFloaterContacts::onImButtonClicked,				this));
 	mFriendsTab->childSetAction("profile_btn",			boost::bind(&FSFloaterContacts::onViewProfileButtonClicked,		this));
@@ -165,9 +160,37 @@ BOOL FSFloaterContacts::postBuild()
 	mGroupsTab->childSetAction("invite_btn",	boost::bind(&FSFloaterContacts::onGroupInviteButtonClicked,		this));
 	mGroupsTab->setDefaultBtn("chat_btn");
 	
-	gRlvHandler.setBehaviourCallback(boost::bind(&FSFloaterContacts::updateRlvRestrictions, this, _1));
+	mRlvBehaviorCallbackConnection = gRlvHandler.setBehaviourCallback(boost::bind(&FSFloaterContacts::updateRlvRestrictions, this, _1));
+
+	gSavedSettings.getControl("FSFriendListFullNameFormat")->getSignal()->connect(boost::bind(&FSFloaterContacts::onDisplayNameChanged, this));
+	gSavedSettings.getControl("FSFriendListSortOrder")->getSignal()->connect(boost::bind(&FSFloaterContacts::sortFriendList, this));
+	gSavedSettings.getControl("FSFriendListColumnShowUserName")->getSignal()->connect(boost::bind(&FSFloaterContacts::onColumnDisplayModeChanged, this, "FSFriendListColumnShowUserName"));
+	gSavedSettings.getControl("FSFriendListColumnShowDisplayName")->getSignal()->connect(boost::bind(&FSFloaterContacts::onColumnDisplayModeChanged, this, "FSFriendListColumnShowDisplayName"));
+	gSavedSettings.getControl("FSFriendListColumnShowFullName")->getSignal()->connect(boost::bind(&FSFloaterContacts::onColumnDisplayModeChanged, this, "FSFriendListColumnShowFullName"));
+	gSavedSettings.getControl("FSFriendListColumnShowPermissions")->getSignal()->connect(boost::bind(&FSFloaterContacts::onColumnDisplayModeChanged, this, std::string()));
+	onColumnDisplayModeChanged();
+
+	LLAvatarNameCache::addUseDisplayNamesCallback(boost::bind(&FSFloaterContacts::onDisplayNameChanged, this));
 
 	return TRUE;
+}
+
+void FSFloaterContacts::draw()
+{
+	if (mResetLastColumnDisplayModeChanged)
+	{
+		gSavedSettings.setBOOL(mLastColumnDisplayModeChanged, TRUE);
+		mResetLastColumnDisplayModeChanged = false;
+	}
+
+	if (mDirtyNames)
+	{
+		onDisplayNameChanged();
+		mFriendsList->setNeedsSort();
+		mDirtyNames = false;
+	}
+
+	LLFloater::draw();
 }
 
 void FSFloaterContacts::updateGroupButtons()
@@ -236,9 +259,9 @@ void FSFloaterContacts::openTab(const std::string& name)
 	else
 	{
 		setVisible(TRUE);
+		setFrontmost();
 	}
 }
-
 
 //static
 FSFloaterContacts* FSFloaterContacts::findInstance()
@@ -257,33 +280,16 @@ FSFloaterContacts* FSFloaterContacts::getInstance()
 // Friend actions
 //
 
-void FSFloaterContacts::onAvatarListDoubleClicked(LLUICtrl* ctrl)
-{
-	LLAvatarListItem* item = dynamic_cast<LLAvatarListItem*>(ctrl);
-	if (!item)
-	{
-		return;
-	}
-
-	LLUUID clicked_id = item->getAvatarId();
-	
-#if 0 // SJB: Useful for testing, but not currently functional or to spec
-	LLAvatarActions::showProfile(clicked_id);
-#else // spec says open IM window
-	LLAvatarActions::startIM(clicked_id);
-#endif
-}
-
 void FSFloaterContacts::onImButtonClicked()
 {
 	uuid_vec_t selected_uuids;
 	getCurrentItemIDs(selected_uuids);
-	if ( selected_uuids.size() == 1 )
+	if (selected_uuids.size() == 1)
 	{
 		// if selected only one person then start up IM
-		LLAvatarActions::startIM(selected_uuids.at(0));
+		LLAvatarActions::startIM(selected_uuids.front());
 	}
-	else if ( selected_uuids.size() > 1 )
+	else if (selected_uuids.size() > 1)
 	{
 		// for multiple selection start up friends conference
 		LLAvatarActions::startConference(selected_uuids);
@@ -307,7 +313,9 @@ void FSFloaterContacts::onPayButtonClicked()
 {
 	LLUUID id = getCurrentItemID();
 	if (id.notNull())
+	{
 		LLAvatarActions::pay(id);
+	}
 }
 
 void FSFloaterContacts::onDeleteFriendButtonClicked()
@@ -317,11 +325,11 @@ void FSFloaterContacts::onDeleteFriendButtonClicked()
 
 	if (selected_uuids.size() == 1)
 	{
-		LLAvatarActions::removeFriendDialog( selected_uuids.front() );
+		LLAvatarActions::removeFriendDialog(selected_uuids.front());
 	}
 	else if (selected_uuids.size() > 1)
 	{
-		LLAvatarActions::removeFriendsDialog( selected_uuids );
+		LLAvatarActions::removeFriendsDialog(selected_uuids);
 	}
 }
 
@@ -445,9 +453,13 @@ LLUUID FSFloaterContacts::getCurrentItemID() const
 	{
 		LLScrollListItem* selected = mFriendsList->getFirstSelected();
 		if (selected)
+		{
 			return selected->getUUID();
+		}
 		else
+		{
 			return LLUUID::null;
+		}
 	}
 	else if (cur_tab == GROUP_TAB_NAME)
 	{
@@ -473,8 +485,8 @@ void FSFloaterContacts::getCurrentItemIDs(uuid_vec_t& selected_uuids) const
 
 void FSFloaterContacts::getCurrentFriendItemIDs(uuid_vec_t& selected_uuids) const
 {
-	std::vector<LLScrollListItem*> selected = mFriendsList->getAllSelected();
-	for(std::vector<LLScrollListItem*>::iterator itr = selected.begin(); itr != selected.end(); ++itr)
+	listitem_vec_t selected = mFriendsList->getAllSelected();
+	for (listitem_vec_t::iterator itr = selected.begin(); itr != selected.end(); ++itr)
 	{
 		selected_uuids.push_back((*itr)->getUUID());
 	}
@@ -482,21 +494,25 @@ void FSFloaterContacts::getCurrentFriendItemIDs(uuid_vec_t& selected_uuids) cons
 
 void FSFloaterContacts::sortFriendList()
 {
-	mFriendsList->updateLineHeight();
-	mFriendsList->updateLayout();
+	mFriendsList->refreshLineHeight();
+	mFriendsList->clearSortOrder();
 
-	if (mSortByUserName)
+	if (gSavedSettings.getS32("FSFriendListSortOrder"))
 	{
-		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mName;
+		mFriendsList->sortByColumn(std::string("display_name"), TRUE);
 	}
 	else
 	{
-		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->sortByColumn(std::string("user_name"), TRUE);
 	}
-	mFriendsList->setNeedsSort(true);
+	mFriendsList->sortByColumn(std::string("icon_online_status"), FALSE);
 }
-
-
 
 
 //
@@ -507,59 +523,64 @@ void FSFloaterContacts::onFriendListUpdate(U32 changed_mask)
 {
 	LLAvatarTracker& at = LLAvatarTracker::instance();
 
-	switch(changed_mask) {
-	case LLFriendObserver::ADD:
-		{
-			const std::set<LLUUID>& changed_items = at.getChangedIDs();
-			std::set<LLUUID>::const_iterator id_it = changed_items.begin();
-			std::set<LLUUID>::const_iterator id_end = changed_items.end();
-			for (;id_it != id_end; ++id_it)
+	switch (changed_mask)
+	{
+		case LLFriendObserver::ADD:
 			{
-				addFriend(*id_it);
+				const std::set<LLUUID>& changed_items = at.getChangedIDs();
+				std::set<LLUUID>::const_iterator id_it = changed_items.begin();
+				std::set<LLUUID>::const_iterator id_end = changed_items.end();
+				for (;id_it != id_end; ++id_it)
+				{
+					addFriend(*id_it);
+				}
 			}
-		}
-		break;
-	case LLFriendObserver::REMOVE:
-		{
-			const std::set<LLUUID>& changed_items = at.getChangedIDs();
-			std::set<LLUUID>::const_iterator id_it = changed_items.begin();
-			std::set<LLUUID>::const_iterator id_end = changed_items.end();
-			for (;id_it != id_end; ++id_it)
+			break;
+		case LLFriendObserver::REMOVE:
 			{
-				mFriendsList->deleteSingleItem(mFriendsList->getItemIndex(*id_it));
+				const std::set<LLUUID>& changed_items = at.getChangedIDs();
+				std::set<LLUUID>::const_iterator id_it = changed_items.begin();
+				std::set<LLUUID>::const_iterator id_end = changed_items.end();
+				for (;id_it != id_end; ++id_it)
+				{
+					mFriendsList->deleteSingleItem(mFriendsList->getItemIndex(*id_it));
+				}
 			}
-		}
-		break;
-	case LLFriendObserver::POWERS:
-		{
-			--mNumRightsChanged;
-			if(mNumRightsChanged > 0)
-				mAllowRightsChange = FALSE;
-			else
-				mAllowRightsChange = TRUE;
+			break;
+		case LLFriendObserver::POWERS:
+			{
+				--mNumRightsChanged;
+				if (mNumRightsChanged > 0)
+				{
+					mAllowRightsChange = FALSE;
+				}
+				else
+				{
+					mAllowRightsChange = TRUE;
+				}
 			
-			const std::set<LLUUID>& changed_items = at.getChangedIDs();
-			std::set<LLUUID>::const_iterator id_it = changed_items.begin();
-			std::set<LLUUID>::const_iterator id_end = changed_items.end();
-			for (;id_it != id_end; ++id_it)
-			{
-				const LLRelationship* info = at.getBuddyInfo(*id_it);
-				updateFriendItem(*id_it, info);
+				const std::set<LLUUID>& changed_items = at.getChangedIDs();
+				std::set<LLUUID>::const_iterator id_it = changed_items.begin();
+				std::set<LLUUID>::const_iterator id_end = changed_items.end();
+				for (;id_it != id_end; ++id_it)
+				{
+					const LLRelationship* info = at.getBuddyInfo(*id_it);
+					updateFriendItem(*id_it, info);
+				}
 			}
-		}
-		break;
-	case LLFriendObserver::ONLINE:
-		{
-			const std::set<LLUUID>& changed_items = at.getChangedIDs();
-			std::set<LLUUID>::const_iterator id_it = changed_items.begin();
-			std::set<LLUUID>::const_iterator id_end = changed_items.end();
-			for (;id_it != id_end; ++id_it)
+			break;
+		case LLFriendObserver::ONLINE:
 			{
-				const LLRelationship* info = at.getBuddyInfo(*id_it);
-				updateFriendItem(*id_it, info);
+				const std::set<LLUUID>& changed_items = at.getChangedIDs();
+				std::set<LLUUID>::const_iterator id_it = changed_items.begin();
+				std::set<LLUUID>::const_iterator id_end = changed_items.end();
+				for (;id_it != id_end; ++id_it)
+				{
+					const LLRelationship* info = at.getBuddyInfo(*id_it);
+					updateFriendItem(*id_it, info);
+				}
 			}
-		}
-	default:;
+		default:;
 	}
 	
 	refreshUI();
@@ -569,7 +590,11 @@ void FSFloaterContacts::addFriend(const LLUUID& agent_id)
 {
 	LLAvatarTracker& at = LLAvatarTracker::instance();
 	const LLRelationship* relationInfo = at.getBuddyInfo(agent_id);
-	if(!relationInfo) return;
+	
+	if (!relationInfo)
+	{
+		return;
+	}
 
 	bool isOnlineSIP = LLVoiceClient::getInstance()->isOnlineSIP(agent_id);
 	bool isOnline = relationInfo->isOnline();
@@ -578,7 +603,9 @@ void FSFloaterContacts::addFriend(const LLUUID& agent_id)
 	if (!LLAvatarNameCache::get(agent_id, &av_name))
 	{
 		const LLRelationship* info = LLAvatarTracker::instance().getBuddyInfo(agent_id);
-		LLAvatarNameCache::get(agent_id, boost::bind(&FSFloaterContacts::updateFriendItem, this, agent_id, info));
+		LLUUID request_id = LLUUID::generateNewID();
+		LLAvatarNameCache::callback_connection_t conn = LLAvatarNameCache::get(agent_id, boost::bind(&FSFloaterContacts::updateFriendItem, this, agent_id, info, request_id));
+		mAvatarNameCacheConnections[request_id] = conn;
 	}
 
 	LLSD element;
@@ -586,10 +613,18 @@ void FSFloaterContacts::addFriend(const LLUUID& agent_id)
 	LLSD& username_column				= element["columns"][LIST_FRIEND_USER_NAME];
 	username_column["column"]			= "user_name";
 	username_column["value"]			= av_name.getUserNameForDisplay();
+	username_column["font"]["name"]		= mFriendListFontName;
+	username_column["font"]["style"]	= "NORMAL";
 	
+	LLSD& display_name_column			= element["columns"][LIST_FRIEND_DISPLAY_NAME];
+	display_name_column["column"]		= "display_name";
+	display_name_column["value"]		= av_name.getDisplayName();
+	display_name_column["font"]["name"]	= mFriendListFontName;
+	display_name_column["font"]["style"]= "NORMAL";
+
 	LLSD& friend_column					= element["columns"][LIST_FRIEND_NAME];
 	friend_column["column"]				= "full_name";
-	friend_column["value"]				= av_name.getCompleteName();
+	friend_column["value"]				= getFullName(av_name);
 	friend_column["font"]["name"]		= mFriendListFontName;
 	friend_column["font"]["style"]		= "NORMAL";
 
@@ -600,12 +635,16 @@ void FSFloaterContacts::addFriend(const LLUUID& agent_id)
 	
 	if (isOnline)
 	{	
-		friend_column["font"]["style"]		= "BOLD";	
+		username_column["font"]["style"]	= "BOLD";
+		display_name_column["font"]["style"]= "BOLD";
+		friend_column["font"]["style"]		= "BOLD";
 		online_status_column["value"]		= "icon_avatar_online";
 	}
-	else if(isOnlineSIP)
+	else if (isOnlineSIP)
 	{	
-		friend_column["font"]["style"]		= "BOLD";	
+		username_column["font"]["style"]	= "BOLD";
+		display_name_column["font"]["style"]= "BOLD";
+		friend_column["font"]["style"]		= "BOLD";
 		online_status_column["value"]		= "slim_icon_16_viewer";
 	}
 
@@ -656,9 +695,16 @@ void FSFloaterContacts::onMapButtonClicked()
 // Does not resort the UI list because it can be called frequently. JC
 void FSFloaterContacts::updateFriendItem(const LLUUID& agent_id, const LLRelationship* info)
 {
-	if (!info) return;
+	if (!info)
+	{
+		return;
+	}
+
 	LLScrollListItem* itemp = mFriendsList->getItem(agent_id);
-	if (!itemp) return;
+	if (!itemp)
+	{
+		return;
+	}
 	
 	bool isOnlineSIP = LLVoiceClient::getInstance()->isOnlineSIP(itemp->getUUID());
 	bool isOnline = info->isOnline();
@@ -666,12 +712,14 @@ void FSFloaterContacts::updateFriendItem(const LLUUID& agent_id, const LLRelatio
 	LLAvatarName av_name;
 	if (!LLAvatarNameCache::get(agent_id, &av_name))
 	{
-		LLAvatarNameCache::get(agent_id, boost::bind(&FSFloaterContacts::updateFriendItem, this, agent_id, info));
+		LLUUID request_id = LLUUID::generateNewID();
+		LLAvatarNameCache::callback_connection_t conn = LLAvatarNameCache::get(agent_id, boost::bind(&FSFloaterContacts::updateFriendItem, this, agent_id, info, request_id));
+		mAvatarNameCacheConnections[request_id] = conn;
 	}
 
 	// Name of the status icon to use
 	std::string statusIcon;
-	if(isOnline)
+	if (isOnline)
 	{
 		statusIcon = "icon_avatar_online";
 	}
@@ -682,11 +730,15 @@ void FSFloaterContacts::updateFriendItem(const LLUUID& agent_id, const LLRelatio
 
 	itemp->getColumn(LIST_ONLINE_STATUS)->setValue(statusIcon);
 
-	itemp->getColumn(LIST_FRIEND_USER_NAME)->setValue( av_name.getUserNameForDisplay() );
-	itemp->getColumn(LIST_FRIEND_NAME)->setValue( av_name.getCompleteName() );
+	itemp->getColumn(LIST_FRIEND_USER_NAME)->setValue(av_name.getUserNameForDisplay());
+	itemp->getColumn(LIST_FRIEND_DISPLAY_NAME)->setValue(av_name.getDisplayName());
+	itemp->getColumn(LIST_FRIEND_NAME)->setValue(getFullName(av_name));
 
 	// render name of online friends in bold text
-	((LLScrollListText*)itemp->getColumn(LIST_FRIEND_NAME))->setFontStyle((isOnline || isOnlineSIP) ? LLFontGL::BOLD : LLFontGL::NORMAL);
+	LLFontGL::StyleFlags font_style = ((isOnline || isOnlineSIP) ? LLFontGL::BOLD : LLFontGL::NORMAL);
+	((LLScrollListText*)itemp->getColumn(LIST_FRIEND_USER_NAME))->setFontStyle(font_style);
+	((LLScrollListText*)itemp->getColumn(LIST_FRIEND_DISPLAY_NAME))->setFontStyle(font_style);
+	((LLScrollListText*)itemp->getColumn(LIST_FRIEND_NAME))->setFontStyle(font_style);
 
 	itemp->getColumn(LIST_VISIBLE_ONLINE)->setValue(info->isRightGrantedTo(LLRelationship::GRANT_ONLINE_STATUS));
 	itemp->getColumn(LIST_VISIBLE_MAP)->setValue(info->isRightGrantedTo(LLRelationship::GRANT_MAP_LOCATION));
@@ -698,6 +750,12 @@ void FSFloaterContacts::updateFriendItem(const LLUUID& agent_id, const LLRelatio
 
 	// enable this item, in case it was disabled after user input
 	itemp->setEnabled(TRUE);
+}
+
+void FSFloaterContacts::updateFriendItem(const LLUUID& agent_id, const LLRelationship* relationship, const LLUUID& request_id)
+{
+	disconnectAvatarNameCacheConnection(request_id);
+	updateFriendItem(agent_id, relationship);
 }
 
 void FSFloaterContacts::refreshRightsChangeList()
@@ -737,7 +795,7 @@ void FSFloaterContacts::refreshRightsChangeList()
 		}
 	}
 	
-	if (num_selected == 0)  // nothing selected
+	if (num_selected == 0) // nothing selected
 	{
 		childSetEnabled("im_btn", false);
 		childSetEnabled("offer_teleport_btn", false);
@@ -754,7 +812,8 @@ void FSFloaterContacts::refreshRightsChangeList()
 
 void FSFloaterContacts::refreshUI()
 {
-	sortFriendList();
+	mFriendsList->refreshLineHeight();
+	mFriendsList->setNeedsSort(true);
 
 	bool single_selected = false;
 	bool multiple_selected = false;
@@ -784,9 +843,7 @@ void FSFloaterContacts::refreshUI()
 	childSetEnabled("map_btn", mappable && !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWWORLDMAP));
 
 	// Set friend count
-	LLStringUtil::format_map_t args;
-	args["[COUNT]"] = llformat("%d", mFriendsList->getItemCount());
-	mFriendsTab->childSetValue("friend_count", LLSD( mFriendsTab->getString("FriendCount", args) ) );
+	mFriendsTab->getChild<LLTextBox>("friend_count")->setTextArg("COUNT", llformat("%d", mFriendsList->getItemCount()));
 
 	refreshRightsChangeList();
 }
@@ -800,21 +857,24 @@ void FSFloaterContacts::onSelectName()
 
 void FSFloaterContacts::confirmModifyRights(rights_map_t& ids, EGrantRevoke command)
 {
-	if (ids.empty()) return;
+	if (ids.empty())
+	{
+		return;
+	}
 	
 	LLSD args;
-	if(ids.size() > 0)
+	if (ids.size() > 0)
 	{
 		rights_map_t* rights = new rights_map_t(ids);
 
 		// for single friend, show their name
-		if(ids.size() == 1)
+		if (ids.size() == 1)
 		{
 			LLUUID agent_id = ids.begin()->first;
 			std::string name;
-			if(gCacheName->getFullName(agent_id, name))
+			if (gCacheName->getFullName(agent_id, name))
 			{
-				args["NAME"] = name;	
+				args["NAME"] = name;
 			}
 			if (command == GRANT)
 			{
@@ -885,8 +945,8 @@ void FSFloaterContacts::applyRightsToFriends()
 	EGrantRevoke confirmation_type = GRANT;
 
 	// this assumes that changes only happened to selected items
-	std::vector<LLScrollListItem*> selected = mFriendsList->getAllSelected();
-	for (std::vector<LLScrollListItem*>::iterator itr = selected.begin(); itr != selected.end(); ++itr)
+	listitem_vec_t selected = mFriendsList->getAllSelected();
+	for (listitem_vec_t::iterator itr = selected.begin(); itr != selected.end(); ++itr)
 	{
 		LLUUID id = (*itr)->getValue();
 		const LLRelationship* buddy_relationship = LLAvatarTracker::instance().getBuddyInfo(id);
@@ -998,11 +1058,13 @@ void FSFloaterContacts::sendRightsGrant(rights_map_t& ids)
 	gAgent.sendReliableMessage();
 }
 
-void FSFloaterContacts::childShowTab(const std::string& id, const std::string& tabname )
+void FSFloaterContacts::childShowTab(const std::string& id, const std::string& tabname)
 {
 	LLTabContainer* child = findChild<LLTabContainer>(id);
 	if (child)
+	{
 		child->selectTabByName(tabname);
+	}
 }
 
 void FSFloaterContacts::updateRlvRestrictions(ERlvBehaviour behavior)
@@ -1013,4 +1075,202 @@ void FSFloaterContacts::updateRlvRestrictions(ERlvBehaviour behavior)
 		refreshUI();
 	}
 }
+
+void FSFloaterContacts::onColumnDisplayModeChanged(const std::string& settings_name)
+{
+	mLastColumnDisplayModeChanged = settings_name;
+
+	// Make sure at least one column is shown!
+	if (!settings_name.empty() &&
+		!gSavedSettings.getBOOL("FSFriendListColumnShowUserName") &&
+		!gSavedSettings.getBOOL("FSFriendListColumnShowDisplayName") &&
+		!gSavedSettings.getBOOL("FSFriendListColumnShowFullName"))
+	{
+		mResetLastColumnDisplayModeChanged = true;
+		return;
+	}
+
+	std::vector<LLScrollListColumn::Params> column_params = mFriendsList->getColumnInitParams();
+
+	mFriendsList->clearColumns();
+	mFriendsList->updateLayout();
+
+	for (std::vector<LLScrollListColumn::Params>::iterator it = column_params.begin(); it != column_params.end(); ++it)
+	{
+		LLScrollListColumn::Params p = *it;
+
+		if (p.name.getValue() == "user_name")
+		{
+			LLScrollListColumn::Params params;
+			params.header = p.header;
+			params.name = p.name;
+			params.halign = p.halign;
+			params.sort_direction = p.sort_direction;
+			params.sort_column = p.sort_column;
+			params.tool_tip = p.tool_tip;
+
+			if (gSavedSettings.getBOOL("FSFriendListColumnShowUserName"))
+			{
+				params.width.dynamic_width.set(true, true);
+			}
+			else
+			{
+				params.width.pixel_width.set(-1, true);
+			}
+			mFriendsList->addColumn(params);
+		}
+		else if (p.name.getValue() == "display_name")
+		{
+			LLScrollListColumn::Params params;
+			params.header = p.header;
+			params.name = p.name;
+			params.halign = p.halign;
+			params.sort_direction = p.sort_direction;
+			params.sort_column = p.sort_column;
+			params.tool_tip = p.tool_tip;
+
+			if (gSavedSettings.getBOOL("FSFriendListColumnShowDisplayName"))
+			{
+				params.width.dynamic_width.set(true, true);
+			}
+			else
+			{
+				params.width.pixel_width.set(-1, true);
+			}
+			mFriendsList->addColumn(params);
+		}
+		else if (p.name.getValue() == "full_name")
+		{
+			LLScrollListColumn::Params params;
+			params.header = p.header;
+			params.name = p.name;
+			params.halign = p.halign;
+			params.sort_direction = p.sort_direction;
+			params.sort_column = p.sort_column;
+			params.tool_tip = p.tool_tip;
+
+			if (gSavedSettings.getBOOL("FSFriendListColumnShowFullName"))
+			{
+				params.width.dynamic_width.set(true, true);
+			}
+			else
+			{
+				params.width.pixel_width.set(-1, true);
+			}
+			mFriendsList->addColumn(params);
+		}
+		else if (p.name.getValue() == "icon_visible_online" ||
+			p.name.getValue() == "icon_visible_map" ||
+			p.name.getValue() == "icon_edit_mine" ||
+			p.name.getValue() == "icon_visible_map_theirs" ||
+			p.name.getValue() == "icon_edit_theirs")
+		{
+			LLScrollListColumn::Params params;
+			params.header = p.header;
+			params.name = p.name;
+			params.halign = p.halign;
+			params.sort_direction = p.sort_direction;
+			params.sort_column = p.sort_column;
+			params.tool_tip = p.tool_tip;
+
+			if (gSavedSettings.getBOOL("FSFriendListColumnShowPermissions"))
+			{
+				params.width = p.width;
+			}
+			else
+			{
+				params.width.pixel_width.set(-1, true);
+			}
+			mFriendsList->addColumn(params);
+		}
+		else
+		{
+			mFriendsList->addColumn(p);
+		}
+		
+	}
+
+	mFriendsList->dirtyColumns();
+	mFriendsList->updateColumns(true); // Force update or icons don't properly hide if permission columns are hidden
+
+	// primary sort = online status, secondary sort = name
+	if (gSavedSettings.getS32("FSFriendListSortOrder"))
+	{
+		mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mName;
+		mFriendsList->sortByColumn(std::string("display_name"), TRUE);
+	}
+	else
+	{
+		mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_DISPLAY_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->getColumn(LIST_FRIEND_NAME)->mSortingColumn = mFriendsList->getColumn(LIST_FRIEND_USER_NAME)->mName;
+		mFriendsList->sortByColumn(std::string("user_name"), TRUE);
+	}
+	mFriendsList->sortByColumn(std::string("icon_online_status"), FALSE);
+	mFriendsList->setSearchColumn(mFriendsList->getColumn("full_name")->mIndex);
+}
+
+void FSFloaterContacts::onDisplayNameChanged()
+{
+	listitem_vec_t items = mFriendsList->getAllData();
+	for (listitem_vec_t::iterator it = items.begin(); it != items.end(); ++it)
+	{
+		LLAvatarName av_name;
+		if (LLAvatarNameCache::get((*it)->getUUID(), &av_name))
+		{
+			(*it)->getColumn(LIST_FRIEND_USER_NAME)->setValue(av_name.getUserNameForDisplay());
+			(*it)->getColumn(LIST_FRIEND_DISPLAY_NAME)->setValue(av_name.getDisplayName());
+			(*it)->getColumn(LIST_FRIEND_NAME)->setValue(getFullName(av_name));
+		}
+		else
+		{
+			LLUUID request_id = LLUUID::generateNewID();
+			LLAvatarNameCache::callback_connection_t conn = LLAvatarNameCache::get((*it)->getUUID(), boost::bind(&FSFloaterContacts::setDirtyNames, this, request_id));
+			mAvatarNameCacheConnections[request_id] = conn;
+		}
+	}
+	mFriendsList->setNeedsSort();
+}
+
+std::string FSFloaterContacts::getFullName(const LLAvatarName& av_name)
+{
+	if (av_name.isDisplayNameDefault() || !gSavedSettings.getBOOL("UseDisplayNames"))
+	{
+		return av_name.getUserNameForDisplay();
+	}
+
+	if (gSavedSettings.getS32("FSFriendListFullNameFormat"))
+	{
+		// Display name (Username)
+		return llformat("%s (%s)", av_name.getDisplayName().c_str(), av_name.getUserNameForDisplay().c_str());
+	}
+	else
+	{
+		// Username (Display name)
+		return llformat("%s (%s)", av_name.getUserNameForDisplay().c_str(), av_name.getDisplayName().c_str());
+	}
+}
+
+void FSFloaterContacts::setDirtyNames(const LLUUID& request_id)
+{
+	disconnectAvatarNameCacheConnection(request_id);
+	mDirtyNames = true;
+}
+
+void FSFloaterContacts::disconnectAvatarNameCacheConnection(const LLUUID& request_id)
+{
+	avatar_name_cb_t::iterator found = mAvatarNameCacheConnections.find(request_id);
+	if (found != mAvatarNameCacheConnections.end())
+	{
+		LLAvatarNameCache::callback_connection_t& conn = found->second;
+		if (conn.connected())
+		{
+			conn.disconnect();
+		}
+		mAvatarNameCacheConnections.erase(found);
+	}
+}
+
 // EOF

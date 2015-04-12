@@ -28,69 +28,25 @@
 #ifndef FS_RADARLISTCTRL_H
 #define FS_RADARLISTCTRL_H
 
-#include "llscrolllistctrl.h"
-
-class LLListContextMenu;
+#include "fsscrolllistctrl.h"
 
 class FSRadarListCtrl
-: public LLScrollListCtrl, public LLInstanceTracker<FSRadarListCtrl>
+: public FSScrollListCtrl, public LLInstanceTracker<FSRadarListCtrl>
 {
 public:
-	
-	struct Params : public LLInitParam::Block<Params, LLScrollListCtrl::Params>
+
+	struct Params : public LLInitParam::Block<Params, FSScrollListCtrl::Params>
 	{
-		// behavioral flags
-		Optional<bool>	multi_select,
-		commit_on_keyboard_movement,
-		mouse_wheel_opaque;
-		
-		// display flags
-		Optional<bool>	has_border,
-		draw_heading,
-		draw_stripes,
-		background_visible,
-		scroll_bar_bg_visible;
-		
-		// layout
-		Optional<S32>	column_padding,
-		page_lines,
-		heading_height;
-		
-		// sort and search behavior
-		Optional<S32>	search_column,
-		sort_column;
-		Optional<bool>	sort_ascending;
-		
-		// colors
-		Optional<LLUIColor>	fg_unselected_color,
-		fg_selected_color,
-		bg_selected_color,
-		fg_disable_color,
-		bg_writeable_color,
-		bg_readonly_color,
-		bg_stripe_color,
-		hovered_color,
-		highlighted_color,
-		scroll_bar_bg_color;
-		
-		Optional<Contents> contents;
-		
-		Optional<LLViewBorder::Params> border;
-		
-		Params();
-	};	
-	
-	void	setContextMenu(LLListContextMenu* menu) { mContextMenu = menu; }
+		Params()
+		{}
+	};
+
 	BOOL	handleRightMouseDown(S32 x, S32 y, MASK mask);
-	
-	
+
 protected:
 	FSRadarListCtrl(const Params&);
+	virtual ~FSRadarListCtrl() {}
 	friend class LLUICtrlFactory;
-
-private:
-	LLListContextMenu*	mContextMenu;
-	
 };
 
 #endif // FS_RADARLISTCTRL_H

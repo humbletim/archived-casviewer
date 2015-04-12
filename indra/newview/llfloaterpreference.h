@@ -37,6 +37,15 @@
 #include "llavatarpropertiesprocessor.h"
 #include "llconversationlog.h"
 #include "lllineeditor.h" // <FS:CR>
+#include "llsearcheditor.h"
+
+namespace nd
+{
+	namespace prefs
+	{
+		struct SearchData;
+	}
+}
 
 class LLConversationLogObserver;
 class LLPanelPreference;
@@ -70,7 +79,7 @@ public:
 
 	void apply();
 	void cancel();
-	///*virtual*/ void draw();
+	/*virtual*/ void draw();
 	/*virtual*/ BOOL postBuild();
 	/*virtual*/ void onOpen(const LLSD& key);
 	/*virtual*/	void onClose(bool app_quitting);
@@ -162,6 +171,9 @@ public:
 	void onClickResetSoundCache();
 	// </FS:Ansariel>
 
+	// <FS:Ansariel> FIRE-2912: Reset voice button
+	void onClickResetVoice();
+
 	void onClickSetCache();
 	void onClickBrowseCache();
 	void onClickBrowseCrashLogs();
@@ -216,7 +228,6 @@ public:
 	void applyResolution();
 	void onChangeMaturity();
 	void onClickBlockList();
-	void onClickSortContacts();
 	void onClickProxySettings();
 	void onClickTranslationSettings();
 	void onClickAutoReplace();
@@ -277,6 +288,12 @@ private:
 	std::string mDirectoryVisibility;
 	
 	LLAvatarData mAvatarProperties;
+
+	LLSearchEditor *mFilterEdit;
+	void onUpdateFilterTerm(bool force = false);
+
+	nd::prefs::SearchData *mSearchData;
+	void collectSearchableItems();
 };
 
 class LLPanelPreference : public LLPanel
@@ -366,6 +383,7 @@ protected:
 	void refreshSkinList();
 	void refreshSkinThemeList();
 	void refreshPreviewImage(); // <FS:PP> FIRE-1689: Skins preview image
+	void showSkinChangeNotification();
 	
 protected:
 	std::string m_Skin;

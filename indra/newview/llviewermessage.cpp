@@ -132,6 +132,7 @@
 #include "fsmoneytracker.h"
 #include "fswsassetblacklist.h"
 #include "llfloaterreg.h"
+#include "llgiveinventory.h"
 #include "llnotificationmanager.h"
 #include "lltexturefetch.h"
 #include "rlvactions.h"
@@ -2611,6 +2612,26 @@ static void god_message_name_cb(const LLAvatarName& av_name, LLChat chat, std::s
 	}
 }
 
+// <FS:Ansariel> FIRE-505: Group name not shown in notification well
+static void notification_group_name_cb(const std::string& group_name,
+										const std::string& sender,
+										const std::string& subject,
+										const std::string& message,
+										const LLSD& payload,
+										U32 timestamp)
+{
+	LLAvatarName av_name;
+	av_name.fromString(sender);
+	LLSD args;
+	args["SENDER"] = av_name.getUserNameForDisplay();
+	args["GROUP"] = group_name;
+	args["SUBJECT"] = subject;
+	args["MESSAGE"] = message;
+	LLNotifications::instance().add(LLNotification::Params("GroupNotice").substitutions(args).payload(payload).time_stamp(LLDate(timestamp)));
+	make_ui_sound("UISndGroupNotice"); // <FS:PP> Group notice sound
+}
+// </FS:Ansariel>
+
 void process_improved_im(LLMessageSystem *msg, void **user_data)
 {
 	LLUUID from_id;
@@ -2767,6 +2788,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 		//               muted OR the sender is muted and we explicitely want
 		//               to inform him about that fact.
 		else if (offline == IM_ONLINE
+					&& (!accept_im_from_only_friend || is_friend)                                    // is friend or accept IMs from friend only disabled
 					&& ((is_do_not_disturb && (!is_muted || (is_muted && !is_autorespond_muted))) || // do not disturb
 						(is_autorespond && !is_muted) ||                                             // autorespond everyone
 						(is_autorespond_nonfriends && !is_friend && !is_muted) ||                    // autorespond friends only
@@ -2782,7 +2804,8 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			// return a standard "do not disturb" message, but only do it to online IM
 			// (i.e. not other auto responses and not store-and-forward IM)
 			// <FS:Ansariel> Old "do not disturb" message behavior: only send once if session not open
-			if (!gIMMgr->hasSession(session_id))
+			// Session id will be null if avatar answers from offline IM via email
+			if (!gIMMgr->hasSession(session_id) && session_id.notNull())
 			{
 			// </FS:Ansariel>
 				// <FS:Ansariel> Log autoresponse notification after initial message
@@ -2881,6 +2904,31 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 					TRUE
 					);
 				// </FS:LO>
+
+				// <FS:Ansariel> Send inventory item on autoresponse
+				LLUUID item_id(gSavedPerAccountSettings.getString("FSAutoresponseItemUUID"));
+				if (item_id.notNull())
+				{
+					LLInventoryItem* item = dynamic_cast<LLInventoryItem*>(gInventory.getItem(item_id));
+					if (item)
+					{
+						gIMMgr->addMessage(
+								session_id,
+								gAgentID,
+								LLStringUtil::null, // Pass null value so no name gets prepended
+								LLTrans::getString("IM_autoresponse_item_sent", LLSD().with("[ITEM_NAME]", item->getName())),
+								false,
+								name,
+								IM_NOTHING_SPECIAL,
+								parent_estate_id,
+								region_id,
+								position,
+								false,
+								TRUE);
+						LLGiveInventory::doGiveInventoryItem(from_id, item, session_id);
+					}
+				}
+				// </FS:Ansariel>
 			}
 		}
 		else if (from_id.isNull())
@@ -2914,8 +2962,10 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			{
 				if (!gIMMgr->isNonFriendSessionNotified(session_id))
 				{
-					std::string message = LLTrans::getString("IM_unblock_only_groups_friends");
-					gIMMgr->addMessage(session_id, from_id, name, message, IM_OFFLINE == offline);
+					// <FS:Ansariel> Disable this - doesn't make sense it will be skipped by LLIMMgr::addMessage() anyway
+					//std::string message = LLTrans::getString("IM_unblock_only_groups_friends");
+					//gIMMgr->addMessage(session_id, from_id, name, message, IM_OFFLINE == offline);
+					// </FS:Ansariel>
 					gIMMgr->addNotifiedNonFriendSessionID(session_id);
 				}
 
@@ -2976,7 +3026,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 				LLNotificationsUtil::add("SystemMessageTip", args);
 				*/
 				static LLCachedControl<bool> fsSendMutedAvatarResponse(gSavedPerAccountSettings, "FSSendMutedAvatarResponse");
-				if (fsSendMutedAvatarResponse)
+				if (fsSendMutedAvatarResponse && (!accept_im_from_only_friend || is_friend))
 				{
 					std::string my_name;
 					LLAgentUI::buildFullname(my_name);
@@ -3121,11 +3171,14 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 					payload["inventory_offer"] = info->asLLSD();
 				}
 
-				LLSD args;
-				args["SUBJECT"] = subj;
-				args["MESSAGE"] = mes;
-				LLNotifications::instance().add(LLNotification::Params("GroupNotice").substitutions(args).payload(payload).time_stamp(LLDate(timestamp)));
-				make_ui_sound("UISndGroupNotice"); // <FS:PP> Group notice sound
+				// <FS:Ansariel> FIRE-505: Group name not shown in notification well
+				//LLSD args;
+				//args["SUBJECT"] = subj;
+				//args["MESSAGE"] = mes;
+				//LLNotifications::instance().add(LLNotification::Params("GroupNotice").substitutions(args).payload(payload).time_stamp(LLDate(timestamp)));
+				//make_ui_sound("UISndGroupNotice"); // <FS:PP> Group notice sound
+				gCacheName->get(group_id, true, boost::bind(&notification_group_name_cb, _2, name, subj, mes, payload, timestamp));
+				// </FS:Ansariel>
 			}
 
 			// Also send down the old path for now.
@@ -4421,10 +4474,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 			}
 			return;
 		}
-		// <FS:PP> FIRE-7625: Option to display group chats, IM sessions and nearby chat always in uppercase
-		static LLCachedControl<bool> aFSChatsUppercase(gSavedSettings, "FSChatsUppercase");
-		bool allowConvertChatUppercase = true;
-		// </FS:PP>
 
 		// Look for IRC-style emotes
 		if (ircstyle)
@@ -4458,7 +4507,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 				{
 					mesg.erase(0, 1);
 					LLStringUtil::toLower(mesg);
-					allowConvertChatUppercase = false;
 
 					std::string strExecuted, strFailed, strRetained, *pstr;
 
@@ -4535,7 +4583,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 				if  ( (rlv_handler_t::isEnabled()) && (chatter) && (chat.mSourceType == CHAT_SOURCE_OBJECT) &&
 					  (gSavedSettings.getBOOL("EffectScriptChatParticles")) )
 				{
-					allowConvertChatUppercase = false;
 					LLPointer<LLViewerPartSourceChat> psc = new LLViewerPartSourceChat(chatter->getPositionAgent());
 					psc->setSourceObject(chatter);
 					psc->setColor(color);
@@ -4555,25 +4602,14 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 			case CHAT_TYPE_START:
 			case CHAT_TYPE_STOP:
 				LL_WARNS("Messaging") << "Got chat type start/stop in main chat processing." << LL_ENDL;
-				allowConvertChatUppercase = false;
 				break;
 			default:
 				LL_WARNS("Messaging") << "Unknown type " << chat.mChatType << " in chat!" << LL_ENDL;
-				allowConvertChatUppercase = false;
 				break;
 			}
 
 			chat.mText += mesg;
 		}
-		
-		// <FS:PP> FIRE-7625: Option to display group chats, IM sessions and nearby chat always in uppercase
-		if (aFSChatsUppercase && allowConvertChatUppercase)
-		{
-			std::string chatMessageUppercase = chat.mText;
-			 LLStringUtil::toUpper(chatMessageUppercase);
-			 chat.mText = chatMessageUppercase;
-		}
-		// </FS:PP>
 
 		// We have a real utterance now, so can stop showing "..." and proceed.
 		if (chatter && chatter->isAvatar())
@@ -4587,14 +4623,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 				std::string formated_msg = "";
 				LLViewerChat::formatChatMsg(chat, formated_msg);
 				LLChat chat_bubble = chat;
-
-				// <FS:PP> FIRE-7625: Option to display group chats, IM sessions and nearby chat always in uppercase
-				// Chat bubbles
-				if (aFSChatsUppercase && allowConvertChatUppercase)
-				{
-					LLStringUtil::toUpper(formated_msg);
-				}
-				// </FS:PP>
 
 				chat_bubble.mText = formated_msg;
 				((LLVOAvatar*)chatter)->addChat(chat_bubble);
@@ -6809,24 +6837,40 @@ static void process_money_balance_reply_extended(LLMessageSystem* msg)
 		{
 			if (dest_id.notNull())
 			{
-				message = LLTrans::getString("you_paid_ldollars", args);
+				// <FS:Ansariel> FIRE-6901: Payment notifications show wrong message
+				//message = LLTrans::getString("you_paid_ldollars", args);
+				message = success ? LLTrans::getString("you_paid_ldollars", args) :
+									LLTrans::getString("you_paid_failure_ldollars", args);
+				// </FS:Ansariel>
 			}
 			else
 			{
 				// transaction fee to the system, eg, to create a group
-				message = LLTrans::getString("you_paid_ldollars_no_name", args);
+				// <FS:Ansariel> FIRE-6901: Payment notifications show wrong message
+				//message = LLTrans::getString("you_paid_ldollars_no_name", args);
+				message = success ? LLTrans::getString("you_paid_ldollars_no_name", args) :
+									LLTrans::getString("you_paid_failure_ldollars_no_name", args);
+				// </FS:Ansariel>
 			}
 		}
 		else
 		{
 			if (dest_id.notNull())
 			{
-				message = LLTrans::getString("you_paid_ldollars_no_reason", args);
+				// <FS:Ansariel> FIRE-6901: Payment notifications show wrong message
+				//message = LLTrans::getString("you_paid_ldollars_no_reason", args);
+				message = success ? LLTrans::getString("you_paid_ldollars_no_reason", args) :
+									LLTrans::getString("you_paid_failure_ldollars_no_reason", args);
+				// </FS:Ansariel>
 			}
 			else
 			{
 				// no target, no reason, you just paid money
-				message = LLTrans::getString("you_paid_ldollars_no_info", args);
+				// <FS:Ansariel> FIRE-6901: Payment notifications show wrong message
+				//message = LLTrans::getString("you_paid_ldollars_no_info", args);
+				message = success ? LLTrans::getString("you_paid_ldollars_no_info", args) :
+									LLTrans::getString("you_paid_failure_ldollars_no_info", args);
+				// </FS:Ansariel>
 			}
 		}
 		
@@ -7220,6 +7264,7 @@ bool attempt_standard_notification(LLMessageSystem* msgsystem)
 			//send_sound_trigger(LLUUID(gSavedSettings.getString("UISndRestart")), 1.0f);
 			make_ui_sound("UISndRestart");
 			// </FS:Ansariel>
+			reportToNearbyChat(LLTrans::getString("FSRegionRestartInLocalChat")); // <FS:PP> FIRE-6307: Region restart notices in local chat
 		}
 
 		// <FS:Ansariel> FIRE-9858: Kill annoying "Autopilot canceled" toast
@@ -7426,6 +7471,7 @@ void process_alert_core(const std::string& message, BOOL modal)
 			}
 
 			make_ui_sound("UISndRestartOpenSim");
+			reportToNearbyChat(LLTrans::getString("FSRegionRestartInLocalChat")); // <FS:PP> FIRE-6307: Region restart notices in local chat
 			return;
 		}
 		// </FS:Ansariel>

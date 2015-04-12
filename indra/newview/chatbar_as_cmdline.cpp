@@ -59,6 +59,7 @@
 #include "llvolumemessage.h"
 #include "llworld.h"
 #include "llworldmap.h"
+#include <boost/regex.hpp> // rand(min,max) in calc
 
 
 // [RLVa:KB] - Checked by TM: 2013-11-10 (RLVa-1.4.9)
@@ -824,6 +825,42 @@ bool cmd_line_chat(const std::string& revised_text, EChatType type, bool from_ge
 
 					std::string expr = revised_text.substr(command.length()+1);
 					LLStringUtil::toUpper(expr);
+					std::string original_expr = expr;
+
+					// < rand(min,max) >
+					S32 loop_attempts = 0;
+					boost::cmatch random_nums;
+					const boost::regex expression("RAND\\(([0-9-]+),([0-9-]+)\\)");
+					while (boost::regex_search(expr.c_str(), random_nums, expression) && loop_attempts < 5) // No more than five rand() in one expression please (performance)
+					{
+						++loop_attempts;
+						S32 random_min = atoi(random_nums[1].first);
+						S32 random_max = atoi(random_nums[2].first);
+						std::string look_for = "RAND(" + llformat("%d", random_min) + "," + llformat("%d", random_max) + ")";
+						S32 random_string_pos = expr.find(look_for);
+						if (random_string_pos != std::string::npos)
+						{
+							S32 random_number = 0;
+							if (random_max > random_min && random_min >= -10000 && random_min <= 10000 && random_max >= -10000 && random_max <= 10000) // Generate a random number only when max > min, and when they're in rational range
+							{
+								S32 random_calculated = (random_max - random_min) + 1;
+								if (random_calculated != 0) // Don't divide by zero
+								{
+									random_number = random_min + (rand() % random_calculated);
+								}
+							}
+							else
+							{
+								LLStringUtil::format_map_t args;
+								args["RAND"] = llformat("%s", look_for.c_str());
+								reportToNearbyChat(LLTrans::getString("FSCmdLineCalcRandError", args));
+							}
+							std::string random_number_text = llformat("%d", random_number);
+							expr.replace(random_string_pos, look_for.length(), random_number_text);
+						}
+					}
+					// </ rand(min,max) >
+
 					success = LLCalc::getInstance()->evalString(expr, result);
 
 					std::string out;
@@ -836,7 +873,7 @@ bool cmd_line_chat(const std::string& revised_text, EChatType type, bool from_ge
 					{
 						// Replace the expression with the result
 						std::ostringstream result_str;
-						result_str << expr;
+						result_str << original_expr;
 						result_str << " = ";
 						result_str << result;
 						out = result_str.str();
@@ -1183,25 +1220,140 @@ bool cmd_line_chat(const std::string& revised_text, EChatType type, bool from_ge
 				S32 dice;
 				S32 faces;
 				S32 result = 0;
+				std::string modifier_type = "";
 				if (i >> dice && i >> faces)
 				{
 					if (dice > 0 && faces > 0 && dice < 101 && faces < 1001)
 					{
 						// For viewer performance - max 100 dice and 1000 faces per die at once
+						S32 modifier = 0;
+						S32 successes = 0;
+						S32 modifier_error = 0;
+
+						if (i >> modifier_type && i >> modifier)
+						{
+							// 2d20+5, 2d20-5 / 2d20>5, 2d20<5 / 2d20!>5, 2d20!<5, 2d20!5 / 2d20!p>5, 2d20!p<5, 2d20!p5 / 2d20r>5, 2d20r<5, 2d20r5
+							LLStringUtil::toLower(modifier_type);
+							if (modifier < -1000 || modifier > 1000 || (modifier_type != "+" && modifier_type != "-" && modifier_type != "<" && modifier_type != ">" && modifier_type != "!>" && modifier_type != "!<" && modifier_type != "!" && modifier_type != "!p" && modifier_type != "!p>" && modifier_type != "!p<" && modifier_type != "r" && modifier_type != "r>" && modifier_type != "r<"))
+							{
+								modifier_error = 1;
+							}
+						}
+						else if (modifier_type != "")
+						{
+							// Modifier type invalid
+							modifier_error = 1;
+						}
+
+						if (modifier_error == 1)
+						{
+							LLStringUtil::format_map_t args;
+							args["COMMAND"] = llformat("%s", std::string(sFSCmdLineRollDice).c_str());
+							reportToNearbyChat(LLTrans::getString("FSCmdLineRollDiceModifiersInvalid", args));
+							return false;
+						}
+
 						S32 result_per_die = 0;
 						S32 die_iter = 1;
+						S32 freeze_guard = 0;
+						S32 die_penetrated = 0;
 						while (die_iter <= dice)
 						{
+
 							// Each die may have a different value rolled
 							result_per_die = 1 + (rand() % faces);
-							result += result_per_die;
-							if (dice > 1)
+							if (die_penetrated == 1)
 							{
-								// For more than one die show the ordinal number in front of the result
+								result_per_die -= 1;
+								die_penetrated = 0;
+								reportToNearbyChat(llformat("#%d 1d%d-1: %d.", die_iter, faces, result_per_die));
+							}
+							else
+							{
 								reportToNearbyChat(llformat("#%d 1d%d: %d.", die_iter, faces, result_per_die));
 							}
+							result += result_per_die;
 							++die_iter;
+
+							if (modifier_type == "<")
+							{
+								// Modifier: Successes lower than a value
+								if (result_per_die <= modifier)
+								{
+									reportToNearbyChat("  ^-- " + LLTrans::getString("FSCmdLineRollDiceSuccess"));
+									++successes;
+								}
+								else
+								{
+									result -= result_per_die;
+								}
+							}
+							else if (modifier_type == ">")
+							{
+								// Modifier: Successes greater than a value
+								if (result_per_die >= modifier)
+								{
+									reportToNearbyChat("  ^-- " + LLTrans::getString("FSCmdLineRollDiceSuccess"));
+									++successes;
+								}
+								else
+								{
+									result -= result_per_die;
+								}
+							}
+							else if ((modifier_type == "!" && result_per_die == modifier) || (modifier_type == "!>" && result_per_die >= modifier) || (modifier_type == "!<" && result_per_die <= modifier))
+							{
+								// Modifier: Exploding dice
+								reportToNearbyChat("  ^-- " + LLTrans::getString("FSCmdLineRollDiceExploded"));
+								--die_iter;
+							}
+							else if ((modifier_type == "!p" && result_per_die == modifier) || (modifier_type == "!p>" && result_per_die >= modifier) || (modifier_type == "!p<" && result_per_die <= modifier))
+							{
+								// Modifier: Penetrating dice (special style of exploding dice)
+								reportToNearbyChat("  ^-- " + LLTrans::getString("FSCmdLineRollDicePenetrated"));
+								die_penetrated = 1;
+								--die_iter;
+							}
+							else if ((modifier_type == "r" && result_per_die == modifier) || (modifier_type == "r>" && result_per_die >= modifier) || (modifier_type == "r<" && result_per_die <= modifier))
+							{
+								// Modifier: Reroll
+								result -= result_per_die;
+								reportToNearbyChat("  ^-- " + LLTrans::getString("FSCmdLineRollDiceReroll"));
+								--die_iter;
+							}
+
+							++freeze_guard;
+							if (freeze_guard > 1000)
+							{
+								// More than 1000 iterations already? We probably have an infinite loop - kill all further rolls
+								// Explosions can trigger this easily, "rolld 1 6 !> 0" for example
+								die_iter = 102;
+								reportToNearbyChat(LLTrans::getString("FSCmdLineRollDiceFreezeGuard"));
+								return false;
+							}
+
 						}
+
+						if (modifier_type != "")
+						{
+							if (modifier_type == "+")
+							{
+								// Modifier: Bonus
+								result += modifier;
+							}
+							else if (modifier_type == "-")
+							{
+								// Modifier: Penalty
+								result -= modifier;
+							}
+							else if (modifier_type == ">" || modifier_type == "<")
+							{
+								// Modifier: Successes
+								reportToNearbyChat(LLTrans::getString("FSCmdLineRollDiceSuccess") + ": " + llformat("%d", successes));
+							}
+							modifier_type = modifier_type + llformat("%d", modifier);
+						}
+
 					}
 					else
 					{
@@ -1220,6 +1372,7 @@ bool cmd_line_chat(const std::string& revised_text, EChatType type, bool from_ge
 				args["DICE"] = llformat("%d", dice);
 				args["FACES"] = llformat("%d", faces);
 				args["RESULT"] = llformat("%d", result);
+				args["MODIFIER"] = llformat("%s", modifier_type.c_str());
 				reportToNearbyChat(LLTrans::getString("FSCmdLineRollDiceTotal", args));
 				return false;
 			}

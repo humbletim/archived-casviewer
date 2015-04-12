@@ -76,19 +76,19 @@
 #include "llstartup.h"
 #include "llupdaterservice.h"
 
-// NaCl - Antispam Registry
-#include "NACLantispam.h"
-// NaCl End
-//#include "llcombobox.h"
-#include "llnetmap.h"
-#include "llnotificationsutil.h"
-#include "llstatusbar.h"
-#include "llfloaterreg.h"
-#include "llfloatersidepanelcontainer.h"
-#include "llpanelplaces.h"
+// Firestorm inclues
+#include "fsfloatercontacts.h"
 #include "fsfloaterposestand.h"
 #include "fsfloaterteleporthistory.h"
 #include "fslslbridge.h"
+#include "fsradar.h"
+#include "llfloaterreg.h"
+#include "llfloatersidepanelcontainer.h"
+#include "llnetmap.h"
+#include "llnotificationsutil.h"
+#include "llpanelplaces.h"
+#include "llstatusbar.h"
+#include "NACLantispam.h"
 
 // <CV:David>
 #include "llviewerdisplay.h"
@@ -796,6 +796,28 @@ static void handleDecimalPrecisionChanged(const LLSD& newvalue)
 	}
 }
 
+// <FS:CR> FIRE-6659: Legacy "Resident" name toggle
+void handleLegacyTrimOptionChanged(const LLSD& newvalue)
+{
+	gSavedSettings.setBOOL("FSTrimLegacyNames", newvalue.asBoolean());
+	LLAvatarName::setTrimResidentSurname(newvalue.asBoolean());
+	LLAvatarNameCache::cleanupClass();
+	LLVOAvatar::invalidateNameTags();
+	FSFloaterContacts::getInstance()->onDisplayNameChanged();
+	FSRadar::getInstance()->updateNames();
+}
+
+void handleUsernameFormatOptionChanged(const LLSD& newvalue)
+{
+	gSavedSettings.setBOOL("FSNameTagShowLegacyUsernames", newvalue.asBoolean());
+	LLAvatarName::setUseLegacyFormat(newvalue.asBoolean());
+	LLAvatarNameCache::cleanupClass();
+	LLVOAvatar::invalidateNameTags();
+	FSFloaterContacts::getInstance()->onDisplayNameChanged();
+	FSRadar::getInstance()->updateNames();
+}
+// </FS:CR>
+
 ////////////////////////////////////////////////////////////////////////////
 
 void settings_setup_listeners()
@@ -995,6 +1017,8 @@ void settings_setup_listeners()
 	gSavedPerAccountSettings.getControl("BridgeIntegrationOC")->getCommitSignal()->connect(boost::bind(&handleExternalIntegrationsOptionChanged));
 	gSavedPerAccountSettings.getControl("BridgeIntegrationLM")->getCommitSignal()->connect(boost::bind(&handleExternalIntegrationsOptionChanged));
 
+	gSavedSettings.getControl("FSNameTagShowLegacyUsernames")->getCommitSignal()->connect(boost::bind(&handleUsernameFormatOptionChanged, _2));
+	gSavedSettings.getControl("FSTrimLegacyNames")->getCommitSignal()->connect(boost::bind(&handleLegacyTrimOptionChanged, _2));
 }
 
 #if TEST_CACHED_CONTROL

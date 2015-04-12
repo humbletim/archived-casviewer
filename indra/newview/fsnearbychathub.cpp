@@ -262,12 +262,13 @@ void FSNearbyChat::sendChatFromViewer(const LLWString& wtext, EChatType type, BO
 {
 	// Look for "/20 foo" channel chats.
 	S32 channel = 0;
-	LLWString out_text = stripChannelNumber(wtext, &channel);
+	bool is_set = false;
+	LLWString out_text = stripChannelNumber(wtext, &channel, &sLastSpecialChatChannel, &is_set);
 	// If "/<number>" is not specified, see if a channel has been set in
 	//  the spinner.
-	if (gSavedSettings.getBOOL("FSNearbyChatbar") &&
-		gSavedSettings.getBOOL("FSShowChatChannel") &&
-		(channel == 0))
+	if (!is_set &&
+		gSavedSettings.getBOOL("FSNearbyChatbar") &&
+		gSavedSettings.getBOOL("FSShowChatChannel"))
 	{
 		channel = (S32)(FSFloaterNearbyChat::getInstance()->getChild<LLSpinCtrl>("ChatChannel")->get());
 	}
@@ -370,13 +371,16 @@ EChatType FSNearbyChat::processChatTypeTriggers(EChatType type, std::string &str
 
 // If input of the form "/20foo" or "/20 foo", returns "foo" and channel 20.
 // Otherwise returns input and channel 0.
-LLWString FSNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel)
+LLWString FSNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel, S32* last_channel, bool* is_set)
 {
+	*is_set = false;
+
 	if (mesg[0] == '/'
 		&& mesg[1] == '/')
 	{
 		// This is a "repeat channel send"
-		*channel = sLastSpecialChatChannel;
+		*is_set = true;
+		*channel = *last_channel;
 		return mesg.substr(2, mesg.length() - 2);
 	}
 	else if (mesg[0] == '/'
@@ -391,6 +395,7 @@ LLWString FSNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel)
 	//</FS:TS> FIRE-11412
 	{
 		// This a special "/20" speak on a channel
+		*is_set = true;
 		S32 pos = 0;
 		//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
 		//        (this code was here; documenting for the future)
@@ -420,15 +425,15 @@ LLWString FSNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel)
 			pos++;
 		}
 		
-		sLastSpecialChatChannel = strtol(wstring_to_utf8str(channel_string).c_str(), NULL, 10);
+		*last_channel = strtol(wstring_to_utf8str(channel_string).c_str(), NULL, 10);
 		//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
 		//        (this code was here; documenting for the future)
 		if (mesg[1] == '-')
 		{
-			sLastSpecialChatChannel = -sLastSpecialChatChannel;
+			*last_channel = -(*last_channel);
 		}
 		//</FS:TS> FIRE-11412
-		*channel = sLastSpecialChatChannel;
+		*channel = *last_channel;
 		return mesg.substr(pos, mesg.length() - pos);
 	}
 	else
@@ -454,12 +459,13 @@ void FSNearbyChat::sendChat(LLWString text, EChatType type)
 
 		// Check if this is destined for another channel
 		S32 channel = 0;
-		stripChannelNumber(text, &channel);
+		bool is_set = false;
+		stripChannelNumber(text, &channel, &sLastSpecialChatChannel, &is_set);
 		// If "/<number>" is not specified, see if a channel has been set in
 		//  the spinner.
-		if (gSavedSettings.getBOOL("FSNearbyChatbar") &&
-			gSavedSettings.getBOOL("FSShowChatChannel") &&
-			(channel == 0))
+		if (!is_set &&
+			gSavedSettings.getBOOL("FSNearbyChatbar") &&
+			gSavedSettings.getBOOL("FSShowChatChannel"))
 		{
 			channel = (S32)(FSFloaterNearbyChat::getInstance()->getChild<LLSpinCtrl>("ChatChannel")->get());
 		}

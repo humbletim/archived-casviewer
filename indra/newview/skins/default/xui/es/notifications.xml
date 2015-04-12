@@ -2544,7 +2544,8 @@ URL: [AUDIOURL]
 		Reemplazadas las ropas o partes del cuerpo perdidas con sus equivalentes por defecto.
 	</notification>
 	<notification name="GroupNotice">
-		Asunto: [SUBJECT], Mensaje: [MESSAGE]
+		[SENDER], [GROUP]
+Asunto: [SUBJECT], Mensaje: [MESSAGE]
 	</notification>
 	<notification name="FriendOnlineOffline">
 		[NAME] está [STATUS]
@@ -5276,10 +5277,6 @@ Intento cancelado.
 		La región en la que has entrado funciona bajo una versión de simulador diferente.
 Simulador actual:   [NEWVERSION]
 Simulador anterior: [OLDVERSION]
-	</notification>
-	<notification name="VintageLoginInfo">
-		¿Sabías que puedes obtener la clásica apariencia de Phoenix en CtrlAltStudio Viewer? Ve al menú "Modo", a la derecha, y selecciona "Phoenix".
-		<usetemplate name="okbutton" yestext="Aceptar"/>
 	</notification>
 	<notification name="CannotSaveSnapshot">
 		No se ha podido guardar la fotografía.

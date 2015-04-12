@@ -1055,6 +1055,9 @@
      name="TextBgWriteableColor"
      reference="Black" />
     <color
+     name="TextBgHighlightColor"
+     reference="EmphasisColorLight" />
+    <color
      name="TextCursorColor"
      reference="White" />
     <color
@@ -1148,4 +1151,7 @@
   <color
       name="MapPickRadiusColor"
       reference="EmphasisColor_35" />
+  <color
+      name="SearchableControlHighlightColor"
+      value="0.168 0.684 0.224 1" />
 </colors>

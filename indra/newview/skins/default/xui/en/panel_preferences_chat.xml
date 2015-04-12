@@ -144,20 +144,12 @@
             </radio_group>
 
             <check_box
-             control_name="FSChatsUppercase"
-             height="16"
-             label="Always display group chats, IM sessions and nearby chat in uppercase"
-             layout="topleft"
-             left="20"
-             name="chat_always_in_uppercase"
-             top_pad="1"
-             width="400" />
-            <check_box
              control_name="PlayTypingAnim"
              height="16"
              initial_value="true"
              label="Play typing animation when chatting"
              layout="topleft"
+             left="20"
              name="play_typing_animation"
              top_pad="1"
              width="400" />
@@ -811,7 +803,7 @@
              name="chat_and_im_enhancements"
              follows="left|top"
              layout="topleft"
-             top_pad="4"
+             top_pad="2"
              left="19"
              height="16"
              width="400">
@@ -822,7 +814,7 @@
              name="AllowMUpose"
              label="&quot;:&quot; as a synonym for &quot;/me&quot;"
              layout="topleft"
-             top_pad="0"
+             top_pad="-3"
              left="30"
              height="18"
              width="200" />
@@ -839,7 +831,7 @@
              name="AutoCloseOOC"
              label="Auto-close ((OOC)) parentheses"
              layout="topleft"
-             top_pad="0"
+             top_pad="-2"
              left="30"
              height="18"
              width="400" />
@@ -856,7 +848,7 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-2"
              left="30"
              width="250"
              height="18"
@@ -866,7 +858,7 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-2"
              left="30"
              width="250"
              height="18"
@@ -894,7 +886,7 @@
              left="30"
              name="AutohideChatBar"
              tool_tip="Hide the chat bar from the bottom button bar and only show it as an overlay when needed."
-             top_pad="0"
+             top_pad="-2"
              width="256" />
             <check_box
              control_name="CloseChatOnReturn"
@@ -904,7 +896,7 @@
              layout="topleft"
              left="30"
              name="CloseChatOnReturn"
-             top_pad="0"
+             top_pad="-2"
              width="256" />
             <check_box
              control_name="FSUnfocusChatHistoryOnReturn"
@@ -920,13 +912,23 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-2"
              left="30"
              width="400"
              height="18"
              name="FSMarkObjects"
              control_name="FSMarkObjects"
              label="Mark objects with (no name) when they speak to avoid spoofing"/>
+            <check_box
+             layout="topleft"
+             follows="left|top"
+             top_pad="-2"
+             left="30"
+             width="400"
+             height="18"
+             name="FSTypingChevronPrefix"
+             control_name="FSTypingChevronPrefix"
+             label="Add additional chevron (&gt;) as typing indicator to IM sessions"/>
 
             <!-- Groups -->
             <text
@@ -943,7 +945,7 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-5"
              left="30"
              width="50"
              height="20"
@@ -1070,14 +1072,34 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-2"
              left_delta="10"
              width="30"
              height="18"
              control_name="FSMuteGroupWhenNoticesDisabled"
              name="FSMuteGroupWhenNoticesDisabled"
              label="When 'Receive group notices' is disabled, disable group chat as well"/>
-
+            <check_box
+             layout="topleft"
+             follows="left|top"
+             top_pad="-2"
+             left="30"
+             width="30"
+             height="18"
+             name="FSIgnoreAdHocSessions"
+             control_name="FSIgnoreAdHocSessions"
+             label="Automatically ignore and leave all conference (ad-hoc) chats"/>
+            <check_box
+             layout="topleft"
+             follows="left|top"
+             left_delta="10"
+             enabled_control="FSIgnoreAdHocSessions"
+             top_pad="-2"
+             width="30"
+             height="18"
+             name="FSReportIgnoredAdHocSession"
+             control_name="FSReportIgnoredAdHocSession"
+             label="Report ignored conference chats in nearby chat"/>
             <!-- Logging -->
             <text
              name="logging_enhancements"
@@ -1149,7 +1171,7 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-3"
              left="30"
              width="200"
              height="18"
@@ -1160,7 +1182,7 @@
             <check_box
              layout="topleft"
              follows="left|top"
-             top_pad="0"
+             top_pad="-2"
              left="30"
              width="200"
              height="18"
@@ -1229,7 +1251,7 @@
              label="Radar reports when avatars enter chat range"
              layout="topleft"
              left="24"
-             top_pad="15"
+             top_pad="5"
              height="20"
              width="400" />
             <check_box
@@ -1600,6 +1622,108 @@
            top_pad="0"
            height="20"
            width="400" />
+
+          <text
+           layout="topleft"
+           follows="left|top"
+           top_pad="10"
+           left="20"
+           height="14"
+           width="120"
+           name="AgeAlertLabel">
+            Age Alert:
+          </text>
+
+            <text
+             follows="left|top"
+             height="20"
+             top_pad="2"
+             left="28"
+             name="RadarAvatarAgeAlertValueLabel"
+             width="70">
+                Threshold:
+            </text>
+            <spinner
+             top_delta="-4"
+             decimal_digits="0"
+             control_name="RadarAvatarAgeAlertValue"
+             follows="left|top"
+             height="20"
+             increment="1"
+             initial_value="7"
+             left_pad="0"
+             min_val="-1"
+             max_val="100000"
+             name="RadarAvatarAgeAlertValue"
+             tool_tip="Also colors the age column in the radar. Set to -1 to disable."
+             width="60" />
+            <text
+             top_delta="4"
+             follows="left|top"
+             height="20"
+             left_pad="5"
+             name="RadarAvatarAgeAlertValueLabelSuffix"
+             width="70">
+                Days
+            </text>
+
+            <check_box
+             control_name="RadarAvatarAgeAlert"
+             name="RadarAvatarAgeAlert"
+             label="Radar reports avatars younger than the specified age"
+             layout="topleft"
+             left="24"
+             top_pad="0"
+             height="20"
+             width="400" />
+            <check_box
+             enabled_control="RadarAvatarAgeAlert"
+             layout="topleft"
+             top_pad="-2"
+             left="35"
+             width="115"
+             height="20"
+             control_name="PlayModeUISndRadarAgeAlert"
+             name="PlayModeUISndRadarAgeAlert"
+             label="Play sound UUID:"/>
+            <line_editor
+             enabled_control="RadarAvatarAgeAlert"
+             follows="left|top"
+             left_pad="5"
+             height="20"
+             max_length_chars="256"
+             name="UISndRadarAgeAlert"
+             control_name="UISndRadarAgeAlert"
+             width="220"/>
+            <button
+             enabled_control="RadarAvatarAgeAlert"
+             follows="left|top"
+             name="Prev_UISndRadarAgeAlert"
+             height="20"
+             label="P"
+             layout="topleft"
+             top_delta="-1"
+             left_pad="1"
+             width="17"
+             tool_tip="Preview this sound.">
+                 <button.commit_callback
+                  function="PreviewUISound"
+                  parameter="UISndRadarAgeAlert"/>
+            </button>
+            <button
+             enabled_control="RadarAvatarAgeAlert"
+             follows="left|top"
+             name="Def_UISndRadarAgeAlert"
+             height="20"
+             label="D"
+             layout="topleft"
+             left_pad="1"
+             width="15"
+             tool_tip="Reset to the default UUID.">
+                 <button.commit_callback
+                  function="ResetControl"
+                  parameter="UISndRadarAgeAlert"/>
+            </button>
 
         </panel>
 

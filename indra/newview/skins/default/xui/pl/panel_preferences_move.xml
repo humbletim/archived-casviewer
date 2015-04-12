@@ -18,6 +18,7 @@
 			<check_box label="Awatar widoczny w trybie pierwszoosobowym" name="first_person_avatar_visible"/>
 			<check_box label="Interfejs widoczny w trybie pierwszoosobowym" name="first_person_ui_visible"/>
 			<check_box label="Menu kontekstowe widoczne w trybie pierwszoosobowym" tool_tip="Otwieraj menu kołowe/kontekstowe w trybie pierwszoosobowym po przytrzymaniu klawisza ALT i kliknięciu prawym przyciskiem myszki" name="FSEnableRightclickMenuInMouselook"/>
+			<check_box label="Zezwól na opuszczanie trybu pierwszoosobowego za pomocą kółka myszy" name="FSScrollWheelExitsMouselook" tool_tip="Zezwól na opuszczanie trybu pierwszoosobowego za pomocą kółka myszy"/>
 			<check_box label="Pokazuj instrukcje trybu pierwszoosobowego" name="mouselook_instructions_visible" tool_tip="Pokazuj instrukcje w trybie pierwszoosobowym"/>
 			<check_box label="Pokazuj celownik myszki" name="ShowCrosshairs" tool_tip="Pokazuj celownik myszki, gdy widok pierwszoosobowy jest włączony"/>
 			<check_box label="Włącz funkcje bojowe" name="FSMouselookCombatFeatures"/>
@@ -37,6 +38,7 @@
 			<check_box label="Puk-puk-trzymaj, aby biec" name="tap_tap_hold_to_run"/>
 			<check_box label="Przytrzymaj klawisz skoku lub kucania, aby zacząć lub przestać latać" name="automatic_fly"/>
 			<check_box label="Włącz tryb przełączania kucania" name="crouch_toggle_mode"/>
+			<check_box label="Wyłącz oczekiwanie na animacje przed-skoku oraz lądowania (szybki skok)" name="FSIgnoreFinishAnimation"/>
 			<check_box label="Odtwórz dźwięk podczas teleportacji" name="PlayTeleportSound"/>
 			<check_box label="Zawsze lataj po teleportacji" name="FSFlyAfterTeleport"/>
 			<text name="movelock_lbl">

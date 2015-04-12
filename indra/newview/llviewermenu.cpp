@@ -2830,7 +2830,8 @@ void derenderObject(bool permanent)
 
 			// <FS:ND> Pass true to make sure this object stays dead.
 			// gObjectList.killObject(objp);
-			gObjectList.killObject(objp, true);
+			gObjectList.addDerenderedItem( objp->getID(), permanent );
+			gObjectList.killObject(objp);
 			// </FS:ND>
 		}
 		else if( (objp) && (gAgentID != objp->getID()) && ((rlv_handler_t::isEnabled()) || (objp->isAttachment()) || (objp->permYouOwner())) )
@@ -2931,13 +2932,25 @@ class LLObjectTexRefresh : public view_listener_t
 				if (!node->isTESelected(i)) continue;
 
 				LLViewerTexture* img = node->getObject()->getTEImage(i);
-				faces_per_texture[img->getID()].push_back(i);
+				if (img->getID() != ((LLViewerTexture*)(LLViewerFetchedTexture::sDefaultImagep))->getID())
+				{
+					faces_per_texture[img->getID()].push_back(i);
+				}
 
-				LLViewerTexture* norm_img = node->getObject()->getTENormalMap(i);
-				faces_per_texture[norm_img->getID()].push_back(i);
+				if (node->getObject()->getTE(i)->getMaterialParams().notNull())
+				{
+					LLViewerTexture* norm_img = node->getObject()->getTENormalMap(i);
+					if (norm_img->getID() != ((LLViewerTexture*)(LLViewerFetchedTexture::sDefaultImagep))->getID())
+					{
+						faces_per_texture[norm_img->getID()].push_back(i);
+					}
 
-				LLViewerTexture* spec_img = node->getObject()->getTESpecularMap(i);
-				faces_per_texture[spec_img->getID()].push_back(i);
+					LLViewerTexture* spec_img = node->getObject()->getTESpecularMap(i);
+					if (spec_img->getID() != ((LLViewerTexture*)(LLViewerFetchedTexture::sDefaultImagep))->getID())
+					{
+						faces_per_texture[spec_img->getID()].push_back(i);
+					}
+				}
 			}
 
 			map_t::iterator it;
@@ -8032,7 +8045,10 @@ static bool onEnableAttachmentLabel(LLUICtrl* ctrl, const LLSD& data)
 				if (attached_object)
 				{
 					LLViewerInventoryItem* itemp = gInventory.getItem(attached_object->getAttachmentItemID());
-					if (itemp)
+					// <FS:Ansariel> Hide bridge from attach to HUD menus
+					//if (itemp)
+					if (itemp && !(FSLSLBridge::instance().getBridge() && FSLSLBridge::instance().getBridge()->getUUID() == itemp->getUUID() && data["index"].asInteger() == FS_BRIDGE_POINT))
+					// </FS:Ansariel>
 					{
 						label += std::string(" (") + itemp->getName() + std::string(")");
 						break;
@@ -8774,16 +8790,17 @@ class LLAdvancedToggleDoubleClickTeleport: public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		
-		BOOL checked = gSavedSettings.getBOOL( "DoubleClickTeleport" );
+		BOOL checked = gSavedSettings.getBOOL("DoubleClickTeleport");
 		if (checked)
 		{
-		   gSavedSettings.setBOOL( "DoubleClickTeleport", false );
+			gSavedSettings.setBOOL("DoubleClickTeleport", FALSE);
+			reportToNearbyChat(LLTrans::getString("DoubleClickTeleportDisabled"));
 		}
 		else
 		{
-           gSavedSettings.setBOOL( "DoubleClickTeleport", true );
-		   gSavedSettings.setBOOL( "DoubleClickAutoPilot", false );
+			gSavedSettings.setBOOL("DoubleClickTeleport", TRUE);
+			gSavedSettings.setBOOL("DoubleClickAutoPilot", FALSE);
+			reportToNearbyChat(LLTrans::getString("DoubleClickTeleportEnabled"));
 		}
 		return true;
 	}

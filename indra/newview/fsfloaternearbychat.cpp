@@ -36,6 +36,7 @@
 #include "fscommon.h"
 #include "fsfloaterim.h"
 #include "fsfloaterimcontainer.h"
+#include "fsnearbychathub.h"
 #include "llagent.h" 			// gAgent
 #include "llanimationstates.h"	// ANIM_AGENT_WHISPER, ANIM_AGENT_TALK, ANIM_AGENT_SHOUT
 #include "llautoreplace.h"
@@ -219,6 +220,7 @@ void FSFloaterNearbyChat::addMessage(const LLChat& chat,bool archive,const LLSD 
 	LLSD chat_args = args;
 	chat_args["use_plain_text_chat_history"] = use_plain_text_chat_history;
 	chat_args["show_time"] = show_timestamps_nearby_chat;
+	chat_args["is_local"] = true;
 	mChatHistoryMuted->appendMessage(chat, chat_args);
 	// </FS:Ansariel> Optional muted chat history
 	if (!chat.mMuted)
@@ -992,12 +994,13 @@ void FSFloaterNearbyChat::sendChat( EChatType type )
 			
 			// Check if this is destined for another channel
 			S32 channel = 0;
-			stripChannelNumber(text, &channel);
+			bool is_set = false;
+			FSNearbyChat::stripChannelNumber(text, &channel, &sLastSpecialChatChannel, &is_set);
 			// If "/<number>" is not specified, see if a channel has been set in
 			//  the spinner.
-			if (gSavedSettings.getBOOL("FSNearbyChatbar") &&
-				gSavedSettings.getBOOL("FSShowChatChannel") &&
-				(channel == 0))
+			if (!is_set &&
+				gSavedSettings.getBOOL("FSNearbyChatbar") &&
+				gSavedSettings.getBOOL("FSShowChatChannel"))
 			{
 				channel = (S32)(FSFloaterNearbyChat::getInstance()->getChild<LLSpinCtrl>("ChatChannel")->get());
 			}
@@ -1085,12 +1088,13 @@ void FSFloaterNearbyChat::sendChatFromViewer(const std::string &utf8text, EChatT
 void FSFloaterNearbyChat::sendChatFromViewer(const LLWString &wtext, EChatType type, BOOL animate)
 {
 	S32 channel = 0;
-	LLWString out_text = stripChannelNumber(wtext, &channel);
+	bool is_set = false;
+	LLWString out_text = FSNearbyChat::stripChannelNumber(wtext, &channel, &sLastSpecialChatChannel, &is_set);
 	// If "/<number>" is not specified, see if a channel has been set in
 	//  the spinner.
-	if (gSavedSettings.getBOOL("FSNearbyChatbar") &&
-		gSavedSettings.getBOOL("FSShowChatChannel") &&
-		(channel == 0))
+	if (!is_set &&
+		gSavedSettings.getBOOL("FSNearbyChatbar") &&
+		gSavedSettings.getBOOL("FSShowChatChannel"))
 	{
 		// <FS:Ansariel> [FS communication UI]
 		//channel = (S32)(LLFloaterNearbyChat::getInstance()->getChild<LLSpinCtrl>("ChatChannel")->get());
@@ -1165,70 +1169,6 @@ void FSFloaterNearbyChat::stopChat()
 	{
 		nearby_chat->mInputEditor->setFocus(FALSE);
 	    gAgent.stopTyping();
-	}
-}
-
-// If input of the form "/20foo" or "/20 foo", returns "foo" and channel 20.
-// Otherwise returns input and channel 0.
-LLWString FSFloaterNearbyChat::stripChannelNumber(const LLWString &mesg, S32* channel)
-{
-	if (mesg[0] == '/'
-		&& mesg[1] == '/')
-	{
-		// This is a "repeat channel send"
-		*channel = sLastSpecialChatChannel;
-		return mesg.substr(2, mesg.length() - 2);
-	}
-	else if (mesg[0] == '/'
-			 && mesg[1]
-	//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
-			 //&& LLStringOps::isDigit(mesg[1]))
-			 && (LLStringOps::isDigit(mesg[1])
-				|| (mesg[1] == '-'
-					&& mesg[2]
-					&& LLStringOps::isDigit(mesg[2]))))
-	//</FS:TS> FIRE-11412
-	{
-		// This a special "/20" speak on a channel
-		S32 pos = 0;
-		//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
-		if (mesg[1] == '-')
-			pos++;
-		//</FS:TS> FIRE-11412
-		
-		// Copy the channel number into a string
-		LLWString channel_string;
-		llwchar c;
-		do
-		{
-			c = mesg[pos+1];
-			channel_string.push_back(c);
-			pos++;
-		}
-		while(c && pos < 64 && LLStringOps::isDigit(c));
-		
-		// Move the pointer forward to the first non-whitespace char
-		// Check isspace before looping, so we can handle "/33foo"
-		// as well as "/33 foo"
-		while(c && iswspace(c))
-		{
-			c = mesg[pos+1];
-			pos++;
-		}
-		
-		sLastSpecialChatChannel = strtol(wstring_to_utf8str(channel_string).c_str(), NULL, 10);
-		//<FS:TS> FIRE-11412: Allow saying /-channel for negative numbers
-		if (mesg[1] == '-')
-			sLastSpecialChatChannel = -sLastSpecialChatChannel;
-		//</FS:TS> FIRE-11412
-		*channel = sLastSpecialChatChannel;
-		return mesg.substr(pos, mesg.length() - pos);
-	}
-	else
-	{
-		// This is normal chat.
-		*channel = 0;
-		return mesg;
 	}
 }
 

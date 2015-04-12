@@ -29,11 +29,13 @@
 #ifndef FS_FLOATERCONTACTS_H
 #define FS_FLOATERCONTACTS_H
 
+#include "llavatarnamecache.h"
 #include "llfloater.h"
+#include "llscrolllistcolumn.h"
 #include "rlvhandler.h"
 
+class FSContactsFriendsCtrl;
 class LLAvatarList;
-class LLAvatarName;
 class LLAvatarTracker;
 class LLFriendObserver;
 class LLScrollListCtrl;
@@ -56,6 +58,7 @@ public:
 
 	/*virtual*/ BOOL postBuild();
 	/*virtual*/ void onOpen(const LLSD& key);
+	/*virtual*/ void draw();
 
 	static FSFloaterContacts* getInstance();
 	static FSFloaterContacts* findInstance();
@@ -64,23 +67,26 @@ public:
 	LLPanel* getPanelByName(const std::string& panel_name);
 
 	void					sortFriendList();
+	void					onDisplayNameChanged();
 
 	LLPanel*				mFriendsTab;
-	LLScrollListCtrl*		mFriendsList;
+	FSContactsFriendsCtrl*	mFriendsList;
 	LLPanel*				mGroupsTab;
 	LLGroupList*			mGroupList;
 
 private:
+	typedef std::vector<LLScrollListItem*> listitem_vec_t;
+
 	std::string				getActiveTabName() const;
 	LLUUID					getCurrentItemID() const;
 	void					getCurrentItemIDs(uuid_vec_t& selected_uuids) const;
 	void					getCurrentFriendItemIDs(uuid_vec_t& selected_uuids) const;
-	void					onAvatarListDoubleClicked(LLUICtrl* ctrl);
 
 	enum FRIENDS_COLUMN_ORDER
 	{
 		LIST_ONLINE_STATUS,
 		LIST_FRIEND_USER_NAME,
+		LIST_FRIEND_DISPLAY_NAME,
 		LIST_FRIEND_NAME,
 		LIST_VISIBLE_ONLINE,
 		LIST_VISIBLE_MAP,
@@ -95,8 +101,9 @@ private:
 	void					refreshUI();
 	void					onSelectName();
 	void					applyRightsToFriends();
-	void					addFriend(const LLUUID& agent_id);	
+	void					addFriend(const LLUUID& agent_id);
 	void					updateFriendItem(const LLUUID& agent_id, const LLRelationship* relationship);
+	void					updateFriendItem(const LLUUID& agent_id, const LLRelationship* relationship, const LLUUID& request_id);
 
 	typedef enum 
 	{
@@ -112,7 +119,8 @@ private:
 	
 	// misc callbacks
 	static void				onAvatarPicked(const uuid_vec_t& ids, const std::vector<LLAvatarName> names);
-	
+	void					onColumnDisplayModeChanged(const std::string& settings_name = "");
+
 	// friend buttons
 	void					onViewProfileButtonClicked();
 	void					onImButtonClicked();
@@ -139,14 +147,25 @@ private:
 	LLFriendObserver*		mObserver;
 	BOOL					mAllowRightsChange;
 	S32						mNumRightsChanged;
-	LLCachedControl<bool>	mSortByUserName;
 
 	std::string				mFriendListFontName;
+
+	std::string				mLastColumnDisplayModeChanged;
+	bool					mResetLastColumnDisplayModeChanged;
+	bool					mDirtyNames;
 
 	void childShowTab(const std::string& id, const std::string& tabname);
 
 	void updateRlvRestrictions(ERlvBehaviour behavior);
-};
+	boost::signals2::connection mRlvBehaviorCallbackConnection;
 
+	std::string getFullName(const LLAvatarName& av_name);
+
+	void setDirtyNames(const LLUUID& request_id);
+
+	typedef std::map<LLUUID, LLAvatarNameCache::callback_connection_t> avatar_name_cb_t;
+	avatar_name_cb_t	mAvatarNameCacheConnections;
+	void				disconnectAvatarNameCacheConnection(const LLUUID& request_id);
+};
 
 #endif // FS_FLOATERCONTACTS_H

@@ -78,6 +78,7 @@ public:
 		mOldState(FALSE),
 		mPlaceholderText(placeholder),
 		mPadding(0)
+		, mVisible( true )
 	{}
 
 	LLTabContainer*  mTabContainer;
@@ -86,6 +87,8 @@ public:
 	BOOL			 mOldState;
 	LLTextBox*		 mPlaceholderText;
 	S32				 mPadding;
+
+	mutable bool mVisible;
 };
 
 //----------------------------------------------------------------------------
@@ -413,30 +416,12 @@ void LLTabContainer::draw()
 	S32 cur_scroll_pos = getScrollPos();
 	if (cur_scroll_pos > 0)
 	{
-		// <FS:Zi> Fix vertical tab scrolling
-		// S32 available_width_with_arrows = getRect().getWidth() - mRightTabBtnOffset - 2 * (LLPANEL_BORDER_WIDTH + tabcntr_arrow_btn_size  + tabcntr_arrow_btn_size + 1);
-		// if (!mIsVertical)
-		// {
-		S32 available_space_with_arrows;
-		if(mIsVertical)
+//		S32 available_width_with_arrows = getRect().getWidth() - mRightTabBtnOffset - 2 * (LLPANEL_BORDER_WIDTH + tabcntr_arrow_btn_size  + tabcntr_arrow_btn_size + 1);
+		if (!mIsVertical)
 		{
-			available_space_with_arrows=mPrevArrowBtn->getRect().mBottom-mNextArrowBtn->getRect().mTop;
-		}
-		else
-		{
-			available_space_with_arrows=getRect().getWidth()-mRightTabBtnOffset-2*(LLPANEL_BORDER_WIDTH+tabcntr_arrow_btn_size*2+1);
-		}
-
-		S32 total_tab_pixels=0;
-		if(mIsVertical)
-		{
-			total_tab_pixels=getTabCount()*(BTN_HEIGHT+tabcntrv_pad);
-			target_pixel_scroll=cur_scroll_pos*(BTN_HEIGHT+tabcntrv_pad);
-		}
-		else
-		{
-			total_tab_pixels=mTotalTabWidth;
-		// </FS:Zi>
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2014-03-17 (Catznip-3.6)
+			S32 available_width_with_arrows = getRect().getWidth() - mRightTabBtnOffset - 2 * (LLPANEL_BORDER_WIDTH + tabcntr_arrow_btn_size  + tabcntr_arrow_btn_size + 1);
+// [/SL:KB]
 			for(tuple_list_t::iterator iter = mTabList.begin(); iter != mTabList.end(); ++iter)
 			{
 				if (cur_scroll_pos == 0)
@@ -449,18 +434,21 @@ void LLTabContainer::draw()
 
 			// Show part of the tab to the left of what is fully visible
 			target_pixel_scroll -= tabcntr_tab_partial_width;
-		// <FS:Zi> Fix vertical tab scrolling
-		// 	// clamp so that rightmost tab never leaves right side of screen
-		// 	target_pixel_scroll = llmin(mTotalTabWidth - available_width_with_arrows, target_pixel_scroll);
-		// </FS:Zi>
+			// clamp so that rightmost tab never leaves right side of screen
+			target_pixel_scroll = llmin(mTotalTabWidth - available_width_with_arrows, target_pixel_scroll);
 		}
-		// <FS:Zi> Fix vertical tab scrolling
-		// clamp so that last tab never leaves the side of screen
-		target_pixel_scroll=llmin(total_tab_pixels-available_space_with_arrows,target_pixel_scroll);
-		// </FS:Zi>
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2014-03-17 (Catznip-3.6)
+		else
+		{
+			target_pixel_scroll = cur_scroll_pos * (BTN_HEIGHT + tabcntrv_pad);
+		}
+// [/SL:KB]
 	}
 
-	setScrollPosPixels((S32)lerp((F32)getScrollPosPixels(), (F32)target_pixel_scroll, LLSmoothInterpolation::getInterpolant(0.08f)));
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2014-03-17 (Catznip-3.6)
+	setScrollPosPixels( (!mIsVertical) ? (S32)lerp((F32)getScrollPosPixels(), (F32)target_pixel_scroll, LLSmoothInterpolation::getInterpolant(0.08f)) : target_pixel_scroll);
+// [/SL:KB]
+//	setScrollPosPixels((S32)lerp((F32)getScrollPosPixels(), (F32)target_pixel_scroll, LLSmoothInterpolation::getInterpolant(0.08f)));
 
 	BOOL has_scroll_arrows = !getTabsHidden() && ((mMaxScrollPos > 0) || (mScrollPosPixels > 0));
 	if (!mIsVertical)
@@ -518,6 +506,14 @@ void LLTabContainer::draw()
 		{
 			LLTabTuple* tuple = *iter;
 
+			// <FS:ND> If the tab is hidden, do not take it into account.
+			if( !tuple->mVisible )
+			{
+				tuple->mButton->setVisible(false);
+				continue;
+			}
+			// </FS:ND>
+
 			tuple->mButton->translate( left ? left - tuple->mButton->getRect().mLeft : 0,
 									   top ? top - tuple->mButton->getRect().mTop : 0 );
 			if (top) top -= BTN_HEIGHT + tabcntrv_pad;
@@ -540,6 +536,14 @@ void LLTabContainer::draw()
 					}
 				}
 			}
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2014-03-17 (Catznip-3.6)
+			else
+			{
+				//  Hide buttons that aren't (fully) visible
+				if ( (idx < getScrollPos()) || (max_scroll_visible <= idx) )
+					tuple->mButton->setVisible(false);
+			}
+// [/SL:KB]
 
 			idx++;
 		}
@@ -746,6 +750,36 @@ BOOL LLTabContainer::handleMouseUp( S32 x, S32 y, MASK mask )
 	return handled;
 }
 
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2014-04-06 (Catznip-3.6)
+BOOL LLTabContainer::handleScrollWheel(S32 x, S32 y, S32 clicks)
+{
+	// NOTE-Catznip: should match the code in LLTabContainer::handleMouseDown()
+	static LLUICachedControl<S32> tabcntrv_pad ("UITabCntrvPad", 0);
+	BOOL handled = FALSE;
+
+	S32 tab_count = getTabCount();
+	if ( (tab_count > 0) && (!getTabsHidden()) )
+	{
+		LLTabTuple* firsttuple = getTab(0);
+		LLRect tab_rect;
+		if (mIsVertical)
+			tab_rect = LLRect(firsttuple->mButton->getRect().mLeft, mPrevArrowBtn->getRect().mTop, firsttuple->mButton->getRect().mRight, mNextArrowBtn->getRect().mBottom );
+		else
+			tab_rect = LLRect(mJumpPrevArrowBtn->getRect().mLeft, firsttuple->mButton->getRect().mTop, mJumpNextArrowBtn->getRect().mRight, firsttuple->mButton->getRect().mBottom);
+
+		if (tab_rect.pointInRect(x, y))
+		{
+			mScrollPos = llclamp(mScrollPos + clicks, 0, mMaxScrollPos);
+			handled = TRUE;
+		}
+	}
+
+	if (!handled)
+		handled = LLUICtrl::handleScrollWheel(x, y, clicks);
+	return handled;
+}
+// [/SL:KB]
+
 // virtual
 BOOL LLTabContainer::handleToolTip( S32 x, S32 y, MASK mask)
 {
@@ -777,7 +811,11 @@ BOOL LLTabContainer::handleToolTip( S32 x, S32 y, MASK mask)
 			for(tuple_list_t::iterator iter = mTabList.begin(); iter != mTabList.end(); ++iter)
 			{
 				LLTabTuple* tuple = *iter;
-				tuple->mButton->setVisible( TRUE );
+// [SL:KB]
+				if (!tuple->mButton->getVisible())
+					continue;
+// [/SL/KB]
+//				tuple->mButton->setVisible( TRUE );
 				S32 local_x = x - tuple->mButton->getRect().mLeft;
 				S32 local_y = y - tuple->mButton->getRect().mBottom;
 				handled = tuple->mButton->handleToolTip( local_x, local_y, mask);
@@ -876,48 +914,6 @@ BOOL LLTabContainer::handleKeyHere(KEY key, MASK mask)
 	}
 	return handled;
 }
-
-// <FS:LO> FIRE-8024 Ability to scroll tab containers with the scroll wheel on the mouse
-// virtual
-BOOL LLTabContainer::handleScrollWheel(S32 x, S32 y, S32 clicks)
-{
-	if( 0 == getTabCount() )
-		return LLUICtrl::handleScrollWheel(x, y, clicks);
-
-	LLTabTuple* firsttuple = getTab(0);
-	static LLUICachedControl<S32> tabcntrv_pad ("UITabCntrvPad", 0);
-	BOOL has_scroll_arrows = (getMaxScrollPos() > 0);
-	LLRect clip;
-	if (mIsVertical)
-	{
-		clip = LLRect(firsttuple->mButton->getRect().mLeft,
-						has_scroll_arrows ? mPrevArrowBtn->getRect().mBottom - tabcntrv_pad : mPrevArrowBtn->getRect().mTop,
-						firsttuple->mButton->getRect().mRight,
-						has_scroll_arrows ? mNextArrowBtn->getRect().mTop + tabcntrv_pad : mNextArrowBtn->getRect().mBottom );
-	}
-	else
-	{
-		clip = LLRect(has_scroll_arrows ? mPrevArrowBtn->getRect().mRight : mJumpPrevArrowBtn->getRect().mLeft,
-						firsttuple->mButton->getRect().mTop,
-						has_scroll_arrows ? mNextArrowBtn->getRect().mLeft : mJumpNextArrowBtn->getRect().mRight,
-						firsttuple->mButton->getRect().mBottom );
-	}
-
-	if( clip.pointInRect( x, y ) )
-	{
-		if(clicks < 0)
-		{
-			setScrollPos(llmax(0, getScrollPos()-1));
-		}
-		else
-		{
-			setScrollPos(llmin(getScrollPos()+1, getMaxScrollPos()));
-		}
-	}
-
-	return LLUICtrl::handleScrollWheel(x, y, clicks);
-}
-// </FS:LO>
 
 // virtual
 BOOL LLTabContainer::handleDragAndDrop(S32 x, S32 y, MASK mask,	BOOL drop,	EDragAndDropType type, void* cargo_data, EAcceptance *accept, std::string	&tooltip)
@@ -1260,7 +1256,10 @@ void LLTabContainer::addTabPanel(const TabPanelParams& panel)
 	
 	if( select )
 	{
-		selectLastTab();
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2012-08-10 (Catznip-3.3)
+		selectTabPanel(child);
+// [/SL:KB]
+//		selectLastTab();
 	}
 
 	updateMaxScrollPos();
@@ -1599,7 +1598,10 @@ BOOL LLTabContainer::setTab(S32 which)
 	}
 
 	BOOL is_visible = FALSE;
-	if (selected_tuple->mButton->getEnabled())
+	// <FS:ND> Cannot switch to a hidden tab
+	// if (selected_tuple->mButton->getEnabled())
+	if (selected_tuple->mButton->getEnabled() && selected_tuple->mVisible )
+	// </FS:ND>
 	{
 		setCurrentPanelIndex(which);
 
@@ -1629,29 +1631,20 @@ BOOL LLTabContainer::setTab(S32 which)
 				if (mIsVertical)
 				{
 					S32 num_visible = getTabCount() - getMaxScrollPos();
-					if( i >= getScrollPos() && i <= getScrollPos() + num_visible)
-					{
-						setCurrentPanelIndex(which);
-						is_visible = TRUE;
-					}
-					else
-					{
-						is_visible = FALSE;
-
-						// <FS:Ansariel> FIRE-12999: Automatically scroll to selected tab
-						//               in vertical tabs if it's outside the visible tabs
-						if (which - num_visible <= getMaxScrollPos())
-						{
-							setScrollPos(which - num_visible);
-							is_visible = TRUE;
-						}
-						else if (which < getScrollPos())
-						{
-							setScrollPos(which);
-							is_visible = TRUE;
-						}
-						// </FS:Ansariel>
-					}
+// [SL:KB] - Patch: Control-TabContainer | Checked: 2014-03-17 (Catznip-3.6)
+					if ( (i < getScrollPos()) || (i >= getScrollPos() + num_visible) )
+						setScrollPos(llmin(i, getMaxScrollPos()));
+					is_visible = TRUE;
+// [/SL:KB]
+//					if( i >= getScrollPos() && i <= getScrollPos() + num_visible)
+//					{
+//						setCurrentPanelIndex(which);
+//						is_visible = TRUE;
+//					}
+//					else
+//					{
+//						is_visible = FALSE;
+//					}
 				}
 				else if (getMaxScrollPos() > 0)
 				{
@@ -1885,9 +1878,7 @@ void LLTabContainer::onNextBtn( const LLSD& data )
 {
 	if (!mScrolled)
 	{
-		// scrollNext();	// <FS:Zi> Fix vertical tab scrolling
-		selectNextTab();
-		setScrollPos(mCurrentTabIdx);
+		scrollNext();
 	}
 	mScrolled = FALSE;
 }
@@ -1897,9 +1888,7 @@ void LLTabContainer::onNextBtnHeld( const LLSD& data )
 	if (mScrollTimer.getElapsedTimeF32() > SCROLL_STEP_TIME)
 	{
 		mScrollTimer.reset();
-		// scrollNext();	// <FS:Zi> Fix vertical tab scrolling
-		selectNextTab();
-		setScrollPos(mCurrentTabIdx);
+		scrollNext();
 		mScrolled = TRUE;
 	}
 }
@@ -1908,9 +1897,7 @@ void LLTabContainer::onPrevBtn( const LLSD& data )
 {
 	if (!mScrolled)
 	{
-		// scrollPrev();	// <FS:Zi> Fix vertical tab scrolling
-		selectPrevTab();
-		setScrollPos(mCurrentTabIdx);
+		scrollPrev();
 	}
 	mScrolled = FALSE;
 }
@@ -1930,9 +1917,7 @@ void LLTabContainer::onPrevBtnHeld( const LLSD& data )
 	if (mScrollTimer.getElapsedTimeF32() > SCROLL_STEP_TIME)
 	{
 		mScrollTimer.reset();
-		// scrollPrev();	// <FS:Zi> Fix vertical tab scrolling
-		selectPrevTab();
-		setScrollPos(mCurrentTabIdx);
+		scrollPrev();
 		mScrolled = TRUE;
 	}
 }
@@ -2262,3 +2247,35 @@ void LLTabContainer::commitHoveredButton(S32 x, S32 y)
 		}
 	}
 }
+
+// <FS:ND> Hide one tab. Will switch to the first visible tab if one exists. Otherwise the Tabcontainer is hidden
+void LLTabContainer::setTabVisibility( LLPanel const *aPanel, bool aVisible )
+{
+	for( tuple_list_t::const_iterator itr = mTabList.begin(); itr != mTabList.end(); ++itr )
+	{
+		LLTabTuple const *pTT = *itr;
+		if( pTT->mTabPanel == aPanel )
+		{
+			pTT->mVisible = aVisible;
+			break;
+		}
+	}
+
+	bool foundTab( false );
+	for( tuple_list_t::const_iterator itr = mTabList.begin(); itr != mTabList.end(); ++itr )
+	{
+		LLTabTuple const *pTT = *itr;
+		if( pTT->mVisible )
+		{
+			this->selectTab( itr-mTabList.begin() );
+			foundTab = true;
+			break;
+		}
+	}
+
+	if( foundTab )
+		this->setVisible( TRUE );
+	else
+		this->setVisible( FALSE );
+}
+// </FS:ND>

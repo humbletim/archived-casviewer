@@ -257,6 +257,20 @@ LLScrollListCtrl::LLScrollListCtrl(const LLScrollListCtrl::Params& p)
 		mBorder->reshape(getRect().getWidth(), getRect().getHeight());
 	}
 
+	// <FS:Ansariel> addRow() will call updateLayout() that tries to access the the comment
+	//               textbox. So create it first before adding rows!
+	LLTextBox::Params text_p;
+	text_p.name("comment_text");
+	text_p.border_visible(false);
+	text_p.rect(mItemListRect);
+	text_p.follows.flags(FOLLOWS_ALL);
+	// word wrap was added accroding to the EXT-6841
+	text_p.wrap(true);
+	// set up label text color for empty lists in a way it's always readable -Zi
+	text_p.text_color = mFgUnselectedColor;
+	addChild(LLUICtrlFactory::create<LLTextBox>(text_p));
+	// </FS:Ansariel>
+
 	if (p.sort_column >= 0)
 	{
 		sortByColumnIndex(p.sort_column, p.sort_ascending);
@@ -268,6 +282,9 @@ LLScrollListCtrl::LLScrollListCtrl(const LLScrollListCtrl::Params& p)
 		++row_it)
 	{
 		addColumn(*row_it);
+
+		// <FS:Ansariel> Get list of the column init params so we can re-add them
+		mColumnInitParams.push_back(*row_it);
 	}
 
 	for (LLInitParam::ParamIterator<LLScrollListItem::Params>::const_iterator row_it = p.contents.rows.begin();
@@ -277,16 +294,18 @@ LLScrollListCtrl::LLScrollListCtrl(const LLScrollListCtrl::Params& p)
 		addRow(*row_it);
 	}
 
-	LLTextBox::Params text_p;
-	text_p.name("comment_text");
-	text_p.border_visible(false);
-	text_p.rect(mItemListRect);
-	text_p.follows.flags(FOLLOWS_ALL);
-	// word wrap was added accroding to the EXT-6841
-	text_p.wrap(true);
-	// set up label text color for empty lists in a way it's always readable -Zi
-	text_p.text_color=mFgUnselectedColor;
-	addChild(LLUICtrlFactory::create<LLTextBox>(text_p));
+	// <FS:Ansariel> Moved up
+	//LLTextBox::Params text_p;
+	//text_p.name("comment_text");
+	//text_p.border_visible(false);
+	//text_p.rect(mItemListRect);
+	//text_p.follows.flags(FOLLOWS_ALL);
+	//// word wrap was added accroding to the EXT-6841
+	//text_p.wrap(true);
+	//// set up label text color for empty lists in a way it's always readable -Zi
+	//text_p.text_color = mFgUnselectedColor;
+	//addChild(LLUICtrlFactory::create<LLTextBox>(text_p));
+	// </FS:Ansariel>
 }
 
 S32 LLScrollListCtrl::getSearchColumn()
@@ -2994,6 +3013,9 @@ void LLScrollListCtrl::clearColumns()
 	mSortColumns.clear();
 	mTotalStaticColumnWidth = 0;
 	mTotalColumnPadding = 0;
+
+	// <FS:Ansariel> Reset number of dynamic columns, too
+	mNumDynamicWidthColumns = 0;
 }
 
 void LLScrollListCtrl::setColumnLabel(const std::string& column, const std::string& label)

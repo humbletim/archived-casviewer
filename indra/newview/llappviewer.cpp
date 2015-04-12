@@ -3642,6 +3642,17 @@ bool LLAppViewer::initConfiguration()
 	gLastRunVersion = gSavedSettings.getString("LastRunVersion");
 
 	loadColorSettings();
+    
+    //<FS:KC> One time fix for Latency
+    if ((gLastRunVersion != LLVersionInfo::getChannelAndVersion()) && (gSavedSettings.getString("SkinCurrent") == "latency") && !gSavedSettings.getBOOL("FSLatencyOneTimeFixRun"))
+    {
+        LL_INFOS() << "FSLatencyOneTimeFix: Fixing script dialog colors." << LL_ENDL;
+        // Replace previously saved script dialog colors with new defaults, which happen to be the same as the group notice colors
+        LLUIColorTable::instance().setColor("ScriptDialog", LLUIColorTable::instance().getColor("GroupNotifyDialogBG", LLColor4::grey4));
+        LLUIColorTable::instance().setColor("ScriptDialogFg", LLUIColorTable::instance().getColor("GroupNotifyTextColor", LLColor4::white));
+    }
+    gSavedSettings.setBOOL("FSLatencyOneTimeFixRun", TRUE);
+    //</FS:KC>
 
 	// Let anyone else who cares know that we've populated our settings
 	// variables.
@@ -4173,6 +4184,7 @@ LLSD LLAppViewer::getViewerInfo() const
 	else if (fsInternalFontSettingsFile == "fonts_mobi.xml") info["FONT"] = "Mobi Sans";
 	else if (fsInternalFontSettingsFile == "fonts_roboto.xml") info["FONT"] = "Roboto";
 	else if (fsInternalFontSettingsFile == "fonts_dyslexia.xml") info["FONT"] = "OpenDyslexic";
+	else if (fsInternalFontSettingsFile == "fonts_deja_vu_all_caps.xml") info["FONT"] = "Deja Vu All Caps";
 	
 	info["FONT_SIZE"] = gSavedSettings.getF32("FSFontSizeAdjustment");
 	info["FONT_SCREEN_DPI"] = gSavedSettings.getF32("FontScreenDPI");
@@ -4274,17 +4286,17 @@ LLSD LLAppViewer::getViewerInfo() const
 
 	if (gPacketsIn > 0)
 	{
-		// <FS:ND> Stats are only per frame, but we want the total amount over the whole application life here.
+		// <FS:ND> Use the total accumulated samples.
 
 		// LLTrace::Recording& last_frame = LLTrace::get_frame_recording().getLastRecording();
 		// info["PACKETS_LOST"] = last_frame.getSum(LLStatViewer::PACKETS_LOST);
 		// info["PACKETS_IN"] = last_frame.getSum(LLStatViewer::PACKETS_IN);
 
-		info["PACKETS_LOST"] = (F64)LLWorld::getInstance()->getPacketsLost();
-		info["PACKETS_IN"] = (S32)LLWorld::getInstance()->getPacketsIn();
-		
+		info["PACKETS_LOST"] = LLStatViewer::PACKETS_LOST.getTotalSamples();
+		info["PACKETS_IN"] = LLStatViewer::PACKETS_IN.getTotalSamples();
+
 		// </FS:ND>
-	
+
 		info["PACKETS_PCT"] = 100.f*info["PACKETS_LOST"].asReal() / info["PACKETS_IN"].asReal();
 	}
 
@@ -4339,6 +4351,19 @@ LLSD LLAppViewer::getViewerInfo() const
 			info["RENDERQUALITY"] = LLTrans::getString("render_quality_unknown");
 			info["RENDERQUALITY_FSDATA_ENGLISH"] = "Unknown, user has RenderQualityPerformance debug setting beyond the normal range (0-6)";
 			break;
+	}
+	// </FS:PP>
+
+	// <FS:PP> ALM enabled or disabled
+	if (gSavedSettings.getBOOL("RenderDeferred"))
+	{
+		info["ALMSTATUS"] = LLTrans::getString("PermYes");
+		info["ALMSTATUS_FSDATA_ENGLISH"] = "Yes";
+	}
+	else
+	{
+		info["ALMSTATUS"] = LLTrans::getString("PermNo");
+		info["ALMSTATUS_FSDATA_ENGLISH"] = "No";
 	}
 	// </FS:PP>
 
@@ -5997,7 +6022,10 @@ void LLAppViewer::idle()
 	// Handle the regular UI idle callbacks as well as
 	// hover callbacks
 	//
-
+    
+#ifdef LL_DARWIN
+	if (!mQuitRequested)  //MAINT-4243
+#endif
 	{
 // 		LL_RECORD_BLOCK_TIME(FTM_IDLE_CB);
 

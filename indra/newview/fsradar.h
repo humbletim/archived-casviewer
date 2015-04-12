@@ -115,6 +115,7 @@ private:
 	void					updateTracking();
 	void					checkTracking();
 	void					radarAlertMsg(const LLUUID& agent_id, const LLAvatarName& av_name, const std::string& postMsg);
+	void					updateAgeAlertCheck();
 
 	Updater*				mRadarListUpdater;
 	
@@ -143,6 +144,10 @@ private:
 	LLSD					mAvatarStats;
 
 	radar_update_callback_t mUpdateSignal;
+
+	boost::signals2::connection mShowUsernamesCallbackConnection;
+	boost::signals2::connection mNameFormatCallbackConnection;
+	boost::signals2::connection mAgeAlertCallbackConnection;
 };
 
 #endif // FS_RADAR_H

@@ -201,6 +201,7 @@ public:
 	/*virtual*/ LLUUID			remapMotionID(const LLUUID& id);
 	/*virtual*/ BOOL			startMotion(const LLUUID& id, F32 time_offset = 0.f);
 	/*virtual*/ BOOL			stopMotion(const LLUUID& id, BOOL stop_immediate = FALSE);
+	virtual bool			hasMotionFromSource(const LLUUID& source_id);
 	virtual void			stopMotionFromSource(const LLUUID& source_id);
 	virtual void			requestStopMotion(LLMotion* motion);
 	LLMotion*				findMotion(const LLUUID& id) const;
@@ -237,6 +238,9 @@ public:
 
 private: //aligned members
 	LL_ALIGN_16(LLVector4a	mImpostorExtents[2]);
+
+	// <FS:Ansariel> Show muted avatars as cloud
+	bool			mMutedAsCloud;
 
 	//--------------------------------------------------------------------
 	// Updates

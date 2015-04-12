@@ -84,9 +84,12 @@
 #include "fsconsoleutils.h"
 #include "fscommon.h"
 #include "fsfloaternearbychat.h"
+#include "llslurl.h"
 #ifdef OPENSIM
 #include "llviewernetwork.h"
 #endif // OPENSIM
+#include "llgiveinventory.h"
+#include "llinventoryfunctions.h"
 
 const static std::string ADHOC_NAME_SUFFIX(" Conference");
 
@@ -510,7 +513,7 @@ void LLIMModel::setActiveSessionID(const LLUUID& session_id)
 	}
 
 	mActiveSessionID = session_id;
-		}
+}
 // </FS:Ansariel> [FS communication UI]
 
 void on_new_message(const LLSD& msg)
@@ -2950,7 +2953,11 @@ void LLIMMgr::addMessage(
 	}
 	bool skip_message = false;
 	bool from_linden = LLMuteList::getInstance()->isLinden(from);
-	if (gSavedSettings.getBOOL("VoiceCallsFriendsOnly") && !from_linden)
+	// <FS:Ansariel> FIRE-14564: VoiceCallFriendsOnly prevents receiving of
+	//if (gSavedSettings.getBOOL("VoiceCallsFriendsOnly") && !from_linden)
+	if (gSavedSettings.getBOOL("VoiceCallsFriendsOnly") && !from_linden &&
+		(dialog == IM_NOTHING_SPECIAL || (dialog == IM_SESSION_INVITE && !gAgent.isInGroup(new_session_id))) )
+	// </FS:Ansariel>
 	{
 		// Evaluate if we need to skip this message when that setting is true (default is false)
 		skip_message = (LLAvatarTracker::instance().getBuddyInfo(other_participant_id) == NULL);	// Skip non friends...
@@ -2989,7 +2996,7 @@ void LLIMMgr::addMessage(
 			if (gSavedSettings.getBOOL("FSReportMutedGroupChat"))
 			{
 				LLStringUtil::format_map_t args;
-				args["NAME"] = fixed_session_name;
+				args["NAME"] = LLSLURL("group", new_session_id, "about").getSLURLString();
 				reportToNearbyChat(LLTrans::getString("GroupChatMuteNotice", args));
 			}
 			clearPendingInvitation(new_session_id);
@@ -3058,6 +3065,22 @@ void LLIMMgr::addMessage(
 		{
 			is_group_chat = gAgent.isInGroup(new_session_id);
 		}
+
+		// <FS:PP> Option to automatically ignore and leave all conference (ad-hoc) chats
+		if (dialog != IM_NOTHING_SPECIAL && !is_group_chat && gSavedSettings.getBOOL("FSIgnoreAdHocSessions") && !from_linden)
+		{
+			LL_INFOS() << "Ignoring conference (ad-hoc) chat from " << new_session_id.asString() << LL_ENDL;
+			if (!gIMMgr->leaveSession(new_session_id))
+			{
+				LL_WARNS() << "Ad-hoc session " << new_session_id.asString() << " does not exist." << LL_ENDL;
+			}
+			if (gSavedSettings.getBOOL("FSReportIgnoredAdHocSession"))
+			{
+				reportToNearbyChat(LLTrans::getString("IgnoredAdHocSession"));
+			}
+			return;
+		}
+		// </FS:PP>
 
 		if(!do_not_disturb && PlayModeUISndNewIncomingIMSession != 0 && dialog == IM_NOTHING_SPECIAL)
 		{
@@ -3867,6 +3890,7 @@ void LLIMMgr::processIMTypingCore(const LLIMInfo* im_info, BOOL typing)
 		BOOL is_afk = gAgent.getAFK();
 
 		if (RlvActions::canReceiveIM(im_info->mFromID) && !is_linden &&
+			(!VoiceCallsFriendsOnly || is_friend) &&
 			((is_busy && (!is_muted || (is_muted && !is_autorespond_muted))) ||
 			(is_autorespond && !is_muted) || (is_autorespond_nonfriends && !is_friend && !is_muted) || (FSSendAwayAvatarResponse && is_afk && !is_muted)) )
 		{
@@ -3916,6 +3940,31 @@ void LLIMMgr::processIMTypingCore(const LLIMInfo* im_info, BOOL typing)
 				false, // <-- Wow! This parameter is never handled!!!
 				TRUE
 				);
+
+				// <FS:Ansariel> Send inventory item on autoresponse
+				LLUUID item_id(gSavedPerAccountSettings.getString("FSAutoresponseItemUUID"));
+				if (item_id.notNull())
+				{
+					LLInventoryItem* item = dynamic_cast<LLInventoryItem*>(gInventory.getItem(item_id));
+					if (item)
+					{
+						gIMMgr->addMessage(
+								session_id,
+								gAgentID,
+								LLStringUtil::null, // Pass null value so no name gets prepended
+								LLTrans::getString("IM_autoresponse_item_sent", LLSD().with("[ITEM_NAME]", item->getName())),
+								false,
+								im_info->mName,
+								IM_NOTHING_SPECIAL,
+								im_info->mParentEstateID,
+								im_info->mRegionID,
+								im_info->mPosition,
+								false,
+								TRUE);
+						LLGiveInventory::doGiveInventoryItem(im_info->mFromID, item, session_id);
+					}
+				}
+				// </FS:Ansariel>
 		}
 	}
 	// </FS:Ansariel>
@@ -4150,7 +4199,7 @@ public:
 					if (gSavedSettings.getBOOL("FSReportMutedGroupChat"))
 					{
 						LLStringUtil::format_map_t args;
-						args["NAME"] = group_data.mName;
+						args["NAME"] = LLSLURL("group", session_id, "about").getSLURLString();
 						reportToNearbyChat(LLTrans::getString("GroupChatMuteNotice", args));
 					}
 					

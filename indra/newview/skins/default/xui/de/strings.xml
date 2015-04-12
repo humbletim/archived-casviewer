@@ -73,6 +73,7 @@ Draw Distance: [DRAW_DISTANCE]
 Bandbreite: [BANDWIDTH]
 LOD-Faktor: [LOD]
 Darstellungsqualität: [RENDERQUALITY]
+Erweitertes Beleuchtungsmodell: [ALMSTATUS]
 Texturspeicher: [TEXTUREMEMORY] MB ([TEXTUREMEMORYMULTIPLIER])
 VFS (Cache) Erstellungszeit: [VFS_DATE]
 	</string>
@@ -186,8 +187,8 @@ VFS (Cache) Erstellungszeit: [VFS_DATE]
 		http://join.secondlife.com/?sourceid=[sourceid]
 	</string>
 	<string name="ViewerDownloadURL">
-    http://ctrlaltstudio.com/viewer
-  </string>
+		http://ctrlaltstudio.com/viewer
+	</string>
 	<string name="LoginFailedViewerNotPermitted">
 		Mit dem von Ihnen verwendeten Viewer ist der Zugriff auf Second Life nicht mehr möglich. Laden Sie von den folgenden Seite einen neuen Viewer herunter:
 http://ctrlaltstudio.com/viewer
@@ -1065,6 +1066,15 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	</string>
 	<string name="TeleportYourAgent">
 		Sie teleportieren
+	</string>
+	<string name="ManageEstateSilently">
+		Grundbesitz leise verwalten
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		Ihre Standardanimationen ändern
+	</string>
+	<string name="SnapshotSavedToDisk">
+		Schnappschuss gespeichert: [FILENAME]
 	</string>
 	<string name="JoinAnExperience">
 		Bei einem Erlebnis mitmachen
@@ -2223,6 +2233,21 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	<string name="DoNotDisturbModeResponseDefault">
 		Dieser Einwohner hat den Nicht-stören-Modus aktiviert und wird Ihre Nachricht später sehen.
 	</string>
+	<string name="AutoResponseModeDefault">
+		Dieser Einwohner hat den CtrlAltStudio-Viewer-Modus „Automatische Antwort“ aktiviert. Dies bedeutet, dass er nicht gestört werden möchte. Er wird Ihre Nachricht später sehen.
+	</string>
+	<string name="AutoResponseModeNonFriendsDefault">
+    Dieser Einwohner hat den CtrlAltStudio-Viewer-Modus „Automatische Antwort“ aktiviert. Dies bedeutet, dass er nicht gestört werden möchte. Er wird Ihre Nachricht später sehen.
+  </string>
+	<string name="RejectTeleportOffersResponseDefault">
+    Dieser Einwohner hat den CtrlAltStudio-Viewer-Modus „Teleport-Angebote und -Anforderungen abweisen“ aktiviert. Dies bedeutet, dass er nicht mit Teleport-Angeboten oder -Anforderungen gestört werden möchte. Sie können Ihm weiterhin eine Nachricht senden.
+  </string>
+	<string name="MutedAvatarsResponseDefault">
+		Dieser Einwohner hat den Empfang Ihrer Nachrichten blockiert.
+	</string>
+	<string name="AwayAvatarResponseDefault">
+		Dieser Einwohner ist gerade nicht am Platz und wird Ihre Nachricht später sehen.
+	</string>
 	<string name="MuteByName">
 		(Nach Namen)
 	</string>
@@ -2266,7 +2291,7 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		(wird nach Veröffentlichung aktualisiert)
 	</string>
 	<string name="NoPicksClassifiedsText">
-		Sie haben keine Auswahl oder Anzeigen erstelllt. Klicken Sie auf die „Plus&quot;-Schaltfläche, um eine Auswahl oder Anzeige zu erstellen.
+		Sie haben keine Auswahl oder Anzeigen erstelllt. Klicken Sie auf die „Plus“-Schaltfläche, um eine Auswahl oder Anzeige zu erstellen.
 	</string>
 	<string name="NoAvatarPicksClassifiedsText">
 		Der Einwohner hat keine Auswahl oder Anzeigen
@@ -2281,7 +2306,7 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		Der Einwohner hat keine Auswahl.
 	</string>
 	<string name="NoClassifiedsText">
-		Sie haben keine Anzeige erstelllt. Klicken Sie auf die „Plus&quot;-Schaltfläche, um eine Anzeige zu erstellen.
+		Sie haben keine Anzeige erstelllt. Klicken Sie auf die „Plus“-Schaltfläche, um eine Anzeige zu erstellen.
 	</string>
 	<string name="NoAvatarClassifiedsText">
 		Der Einwohner hat keine Anzeigen.
@@ -4217,6 +4242,9 @@ Falls diese Meldung weiterhin angezeigt wird, wenden Sie sich bitte an [SUPPORT_
 	<string name="IM_autoresponse_sent">
 		Automatische Antwort gesendet.
 	</string>
+	<string name="IM_autoresponse_item_sent">
+		Objekt für automatische Antwort gesendet: [ITEM_NAME]
+	</string>
 	<string name="OnlineStatus">
 		online
 	</string>
@@ -4728,6 +4756,9 @@ Falls der Fehler weiterhin auftritt, überprüfen Sie bitte Ihre Netzwerk- und F
 		 kostenlos
 	</string>
 <!--  /FS:AW opensim currency support -->
+	<string name="Group Ban">
+		Gruppen-Bann
+	</string>
 	<string name="Membership">
 		Mitgliedschaft
 	</string>
@@ -5697,10 +5728,31 @@ Setzen Sie den Editorpfad in Anführungszeichen
 		Kameraposition [POS] wurde in Zwischenablage kopiert.
 	</string>
 	<string name="FSCmdLineRollDiceTotal">
-		Ergenis für [DICE]d[FACES]: [RESULT].
+		Ergenis für [DICE]d[FACES][MODIFIER]: [RESULT].
 	</string>
 	<string name="FSCmdLineRollDiceLimits">
 		Es müssen positive Werte für Würfel (max. 100) und Seiten (max. 1000) angegeben werden.
+	</string>
+	<string name="FSCmdLineRollDiceModifiersInvalid">
+		Falls ein Modifizierer verwendet werden soll, muss ein gültiger Typ und Wert für den Modifizierer angegeben werden. Der Wert muss im Bereich von -1000 bis 1000 liegen. Gültige Typen sind: „+“ (Boni), „-“ (Strafen), „&gt;“, „&lt;“ (Erfolge), "r&lt;", "r" (Erneut würfeln), "!p&gt;", „!&gt;“, "!p&lt;", "!p" (Penetrationen), „!&lt;“ und „!“ (Explosionen). Es kann nur ein Modifizierer-Typ pro Wurf verwendet werden. Beispiele: „[COMMAND] 1 20 + 5“, „[COMMAND] 5 40 &gt; 15“, „[COMMAND] 10 25 ! 25“, „[COMMAND] 15 25 !&lt; 10“.
+	</string>
+	<string name="FSCmdLineRollDiceExploded">
+		Explodiert
+	</string>
+	<string name="FSCmdLineRollDiceExploded">
+		Penetriert
+	</string>
+	<string name="FSCmdLineRollDiceSuccess">
+		Erfolg
+	</string>
+	<string name="FSCmdLineRollDiceReroll">
+		Erneut würfeln
+	</string>
+	<string name="FSCmdLineRollDiceFreezeGuard">
+		Diese Operation kann nicht beendet werden, da der Viewer in einer Endlosschleife landen würde. Bitte die Kriterien ändern.
+	</string>
+	<string name="FSCmdLineCalcRandError">
+		'[RAND]' ist kein gültiger Ausdruck für RAND(min,max). MAX muss größer als MIN sein und beide Werte müssen sich im Intervall von -10000 bis 10000 befinden.
 	</string>
 	<string name="FSWithHavok">
 		mit Havok-Unterstützung
@@ -5904,7 +5956,10 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="GroupChatMuteNotice">
 		Ignoriere Gruppenchat von [NAME].
 	</string>
-	
+	<string name="IgnoredAdHocSession">
+		Eine Einladung zu einer Konferenz wurde aufgrund der aktuellen Einstellungen automatisch ignoriert.
+	</string>
+
 	<!-- <FS:Ansariel> Radar notifications -->
 	<string name="camera_no_focus">
 		Die Kamera kann nicht auf [AVATARNAME] fokussiert werden, da er/sie sich außerhalb der Draw Distance befindet.
@@ -5927,8 +5982,11 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="entering_region_distance">
 		hat die Region betreten ([DISTANCE] m).
 	</string>
-	<string	name="leaving_region">
+	<string name="leaving_region">
 		hat die Region verlassen.
+	</string>
+	<string name="avatar_age_alert">
+		hat den Alters-Alarm ausgelöst. Alter: [AGE] Tag(e)
 	</string>
 
 	<string name="TotalScriptCountChangeIncrease">
@@ -5984,5 +6042,16 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="SLGridStatusOtherError">
 		SL-Grid-Status-Fehler: [STATUS] (https://de.wikipedia.org/wiki/HTTP-Statuscode).
+	</string>
+
+	<string name="DoubleClickTeleportEnabled">
+		Doppelklick-Teleport aktiviert.
+	</string>
+	<string name="DoubleClickTeleportDisabled">
+		Doppelklick-Teleport deaktiviert.
+	</string>
+
+	<string name="FSRegionRestartInLocalChat">
+		Die Region, in der Sie sich gerade befinden, ist dabei neu zu starten. Falls Sie in dieser Region bleiben, werden Sie ausgeloggt.
 	</string>
 </strings>

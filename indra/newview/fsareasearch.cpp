@@ -60,6 +60,8 @@
 #include "llviewerjoystick.h" // For disabling/re-enabling when requested to look at an object.
 #include "llmoveview.h" // For LLPanelStandStopFlying::clearStandStopFlyingMode
 #include "rlvhandler.h"
+#include "fsareasearchlistctrl.h"
+#include "fsareasearchmenu.h"
 
 // max number of objects that can be (de-)selected in a single packet.
 const S32 MAX_OBJECTS_PER_PACKET = 255;
@@ -100,7 +102,7 @@ FSAreaSearch::FSAreaSearch(const LLSD& key) :
 	mFilterForSale(false),
 	mFilterForSaleMin(0),
 	mFilterForSaleMax(999999),
-	mFilterPhysicial(false),
+	mFilterPhysical(false),
 	mFilterTemporary(false),
 	mRegexSearch(false),
 	mFilterClickAction(false),
@@ -119,16 +121,6 @@ FSAreaSearch::FSAreaSearch(const LLSD& key) :
 	mExcludePhysics(true),
 	mExcludeChildPrims(true),
 	mExcludeNeighborRegions(true),
-	mColumnDistance(true),
-	mColumnName(true),
-	mColumnDescription(true),
-	mColumnPrice(true),
-	mColumnLandImpact(true),
-	mColumnPrimCount(true),
-	mColumnOwner(true),
-	mColumnGroup(true),
-	mColumnCreator(true),
-	mColumnLastOwner(true),
 	mRequestQueuePause(false),
 	mRequestNeedsSent(false)
 {
@@ -181,6 +173,11 @@ BOOL FSAreaSearch::postBuild()
 	mBeaconTextColor = LLUIColorTable::getInstance()->getColor("PathfindingDefaultBeaconTextColor");
 
 	return LLFloater::postBuild();
+}
+
+void FSAreaSearch::onOpen(const LLSD& key)
+{
+	mTab->selectTab(1);
 }
 
 void FSAreaSearch::draw()
@@ -281,7 +278,7 @@ void FSAreaSearch::checkRegion()
 			mRequested = 0;
 			mObjectDetails.clear();
 			mRegionRequests.clear();
-			mLastProptiesRecievedTimer.start();
+			mLastPropertiesReceivedTimer.start();
 			mPanelList->getResultList()->deleteAllItems();
 			mPanelList->setCounterText();
 			mPanelList->setAgentLastPosition(gAgent.getPositionGlobal());
@@ -299,7 +296,7 @@ void FSAreaSearch::refreshList(bool cache_clear)
 		mRequested = 0;
 		mObjectDetails.clear();
 		mRegionRequests.clear();
-		mLastProptiesRecievedTimer.start();
+		mLastPropertiesReceivedTimer.start();
 	}
 	else
 	{
@@ -490,7 +487,7 @@ void FSAreaSearch::processRequestQueue()
 	      return;
 	}
 
-	if (mLastProptiesRecievedTimer.getElapsedTimeF32() > REQUEST_TIMEOUT)
+	if (mLastPropertiesReceivedTimer.getElapsedTimeF32() > REQUEST_TIMEOUT)
 	{
 		LL_DEBUGS("FSAreaSearch") << "Timeout reached, resending requests."<< LL_ENDL;
 		S32 request_count = 0;
@@ -513,7 +510,7 @@ void FSAreaSearch::processRequestQueue()
 		}
 
 		mRegionRequests.clear();
-		mLastProptiesRecievedTimer.start();
+		mLastPropertiesReceivedTimer.start();
 
 		if (!mRequestNeedsSent)
 		{
@@ -662,7 +659,7 @@ void FSAreaSearch::processObjectProperties(LLMessageSystem* msg)
 			// and requested objects.
 
 			details.request = FSObjectProperties::FINISHED;
-			mLastProptiesRecievedTimer.start();
+			mLastPropertiesReceivedTimer.start();
 
 			if (details.id.isNull())
 			{
@@ -796,7 +793,7 @@ void FSAreaSearch::matchObject(FSObjectProperties& details, LLViewerObject* obje
 // 			}
 // 		}
 
-	if (mFilterPhysicial && !objectp->flagUsePhysics())
+	if (mFilterPhysical && !objectp->flagUsePhysics())
 	{
 		return;
 	}
@@ -944,91 +941,61 @@ void FSAreaSearch::matchObject(FSObjectProperties& details, LLViewerObject* obje
 	LLScrollListItem::Params row_params;
 	row_params.value = object_id.asString();
 	
-	if (mColumnDistance)
-	{
-		cell_params.column = "distance";
-		cell_params.value = llformat("%1.0f m", dist_vec(mPanelList->getAgentLastPosition(), objectp->getPositionGlobal())); // used mAgentLastPosition instead of gAgent->getPositionGlobal for performace
-		row_params.columns.add(cell_params);
-	}
-	
-	if (mColumnName)
-	{
-		cell_params.column = "name";
-		cell_params.value = details.name;
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "distance";
+	cell_params.value = llformat("%1.0f m", dist_vec(mPanelList->getAgentLastPosition(), objectp->getPositionGlobal())); // used mAgentLastPosition instead of gAgent->getPositionGlobal for performace
+	row_params.columns.add(cell_params);
 
-	if (mColumnDescription)
-	{
-		cell_params.column = "description";
-		cell_params.value = details.description;
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "name";
+	cell_params.value = details.name;
+	row_params.columns.add(cell_params);
 
-	if (mColumnPrice)
-	{
-		cell_params.column = "price";
-		if (details.sale_info.isForSale())
-		{
-			S32 price = details.sale_info.getSalePrice();
-			cell_params.value = price > 0 ? llformat("%s%d", "L$", details.sale_info.getSalePrice()) : LLTrans::getString("free");
-		}
-		else
-		{
-			cell_params.value = " ";
-		}
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "description";
+	cell_params.value = details.description;
+	row_params.columns.add(cell_params);
 
-	if (mColumnLandImpact)
+	cell_params.column = "price";
+	if (details.sale_info.isForSale())
 	{
-		cell_params.column = "land_impact";
-		F32 cost = objectp->getLinksetCost();
-		if (cost > 0.001)
-		{
-			cell_params.value = cost;
-		}
-		else
-		{
-			cell_params.value = "...";
-		}
-		row_params.columns.add(cell_params);
+		S32 price = details.sale_info.getSalePrice();
+		cell_params.value = price > 0 ? llformat("%s%d", "L$", details.sale_info.getSalePrice()) : LLTrans::getString("free");
 	}
+	else
+	{
+		cell_params.value = " ";
+	}
+	row_params.columns.add(cell_params);
 
-	if (mColumnPrimCount)
+	cell_params.column = "land_impact";
+	F32 cost = objectp->getLinksetCost();
+	if (cost > 0.001)
 	{
-		cell_params.column = "prim_count";
-		cell_params.value = objectp->numChildren() + 1;
-		row_params.columns.add(cell_params);
+		cell_params.value = cost;
 	}
+	else
+	{
+		cell_params.value = "...";
+	}
+	row_params.columns.add(cell_params);
 
-	if (mColumnOwner)
-	{
-		cell_params.column = "owner";
-		cell_params.value = owner_name;
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "prim_count";
+	cell_params.value = objectp->numChildren() + 1;
+	row_params.columns.add(cell_params);
 
-	if (mColumnGroup)
-	{
-		cell_params.column = "group";
-		cell_params.value = group_name;
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "owner";
+	cell_params.value = owner_name;
+	row_params.columns.add(cell_params);
 
-	if (mColumnCreator)
-	{
-		cell_params.column = "creator";
-		cell_params.value = creator_name;
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "group";
+	cell_params.value = group_name;
+	row_params.columns.add(cell_params);
 
-	if (mColumnLastOwner)
-	{
-		cell_params.column = "last_owner";
-		cell_params.value = last_owner_name;
-		row_params.columns.add(cell_params);
-	}
+	cell_params.column = "creator";
+	cell_params.value = creator_name;
+	row_params.columns.add(cell_params);
+
+	cell_params.column = "last_owner";
+	cell_params.value = last_owner_name;
+	row_params.columns.add(cell_params);
 	
 	LLScrollListItem* list_row = mPanelList->getResultList()->addRow(row_params);
 
@@ -1051,6 +1018,8 @@ void FSAreaSearch::matchObject(FSObjectProperties& details, LLViewerObject* obje
 			list_cell->setFontStyle(font_style);
 		}
 	}
+
+	mPanelList->getResultList()->refreshLineHeight();
 }
 
 // <FS:Cron> Allows the object costs to be updated on-the-fly so as to bypass the problem with the data being stale when first accessed.
@@ -1062,7 +1031,7 @@ void FSAreaSearch::updateObjectCosts(const LLUUID& object_id, F32 object_cost, F
 		return;
 	}
 	
-	LLScrollListCtrl* result_list = mPanelList->getResultList();
+	FSAreaSearchListCtrl* result_list = mPanelList->getResultList();
 	if (result_list)
 	{
 		LLScrollListItem* list_row = result_list->getItem(LLSD(object_id));
@@ -1292,24 +1261,27 @@ FSPanelAreaSearchList::FSPanelAreaSearchList(FSAreaSearch* pointer)
 :	LLPanel(),
 	mCounterText(0),
 	mResultList(0),
-	mFSAreaSearch(pointer)
-{	
-	// Set up context menu.
-	LLUICtrl::CommitCallbackRegistry::ScopedRegistrar registrar;
-	LLUICtrl::EnableCallbackRegistry::ScopedRegistrar enable_registrar;
-
-	registrar.add("AreaSearch.Action", boost::bind(&FSPanelAreaSearchList::onContextMenuItemClick, this, _2));
-	enable_registrar.add("AreaSearch.Enable", boost::bind(&FSPanelAreaSearchList::onContextMenuItemEnable, this, _2));
-	
-	mPopupMenu = LLUICtrlFactory::getInstance()->createFromFile<LLContextMenu>(
-				"menu_fs_area_search.xml", LLContextMenu::sMenuContainer, LLMenuHolderGL::child_registry_t::instance());
+	mFSAreaSearch(pointer),
+	mFSAreaSearchColumnConfigConnection()
+{
+	mColumnBits["distance"] = 1;
+	mColumnBits["name"] = 2;
+	mColumnBits["description"] = 4;
+	mColumnBits["price"] = 8;
+	mColumnBits["land_impact"] = 16;
+	mColumnBits["prim_count"] = 32;
+	mColumnBits["owner"] = 64;
+	mColumnBits["group"] = 128;
+	mColumnBits["creator"] = 256;
+	mColumnBits["last_owner"] = 512;
 }
 
 BOOL FSPanelAreaSearchList::postBuild()
 {
-	mResultList = getChild<LLScrollListCtrl>("result_list");
+	mResultList = getChild<FSAreaSearchListCtrl>("result_list");
 	mResultList->setDoubleClickCallback(boost::bind(&FSPanelAreaSearchList::onDoubleClick, this));
 	mResultList->sortByColumn("name", TRUE);
+	mResultList->setContextMenu(&gFSAreaSearchMenu);
 
 	mCounterText = getChild<LLTextBox>("counter");
 
@@ -1321,12 +1293,20 @@ BOOL FSPanelAreaSearchList::postBuild()
 
 	mAgentLastPosition = gAgent.getPositionGlobal();
 
+	updateResultListColumns();
+	mFSAreaSearchColumnConfigConnection = gSavedSettings.getControl("FSAreaSearchColumnConfig")->getSignal()->connect(boost::bind(&FSPanelAreaSearchList::updateResultListColumns, this));
+
 	return LLPanel::postBuild();
 }
 
 // virtual
 FSPanelAreaSearchList::~FSPanelAreaSearchList()
-{ }
+{
+	if (mFSAreaSearchColumnConfigConnection.connected())
+	{
+		mFSAreaSearchColumnConfigConnection.disconnect();
+	}
+}
 
 void FSPanelAreaSearchList::onClickRefresh()
 {
@@ -1421,6 +1401,75 @@ void FSPanelAreaSearchList::updateScrollList()
 	}
 }
 
+void FSPanelAreaSearchList::updateResultListColumns()
+{
+	U32 column_config = gSavedSettings.getU32("FSAreaSearchColumnConfig");
+	std::vector<LLScrollListColumn::Params> column_params = mResultList->getColumnInitParams();
+	std::string current_sort_col = mResultList->getSortColumnName();
+	BOOL current_sort_asc = mResultList->getSortAscending();
+	
+	mResultList->clearColumns();
+	mResultList->updateLayout();
+
+	std::vector<LLScrollListColumn::Params>::iterator param_it;
+	for (param_it = column_params.begin(); param_it != column_params.end(); ++param_it)
+	{
+		LLScrollListColumn::Params p = *param_it;
+		
+		LLScrollListColumn::Params params;
+		params.header = p.header;
+		params.name = p.name;
+		params.halign = p.halign;
+		params.sort_direction = p.sort_direction;
+		params.sort_column = p.sort_column;
+		params.tool_tip = p.tool_tip;
+
+		if (column_config & mColumnBits[p.name.getValue()])
+		{
+			params.width = p.width;
+		}
+		else
+		{
+			params.width.pixel_width.set(-1, true);
+		}
+
+		mResultList->addColumn(params);
+	}
+
+	mResultList->sortByColumn(current_sort_col, current_sort_asc);
+	mResultList->dirtyColumns();
+	mResultList->updateColumns(true);
+}
+
+void FSPanelAreaSearchList::onColumnVisibilityChecked(const LLSD& userdata)
+{
+	std::string column = userdata.asString();
+	U32 column_config = gSavedSettings.getU32("FSAreaSearchColumnConfig");
+
+	U32 new_value;
+	U32 enabled = (mColumnBits[column] & column_config);
+	if (enabled)
+	{
+		new_value = (column_config & ~mColumnBits[column]);
+	}
+	else
+	{
+		new_value = (column_config | mColumnBits[column]);
+	}
+
+	gSavedSettings.setU32("FSAreaSearchColumnConfig", new_value);
+
+	updateResultListColumns();
+}
+
+bool FSPanelAreaSearchList::onEnableColumnVisibilityChecked(const LLSD& userdata)
+{
+	std::string column = userdata.asString();
+	U32 column_config = gSavedSettings.getU32("FSAreaSearchColumnConfig");
+
+	return (mColumnBits[column] & column_config);
+}
+
 void FSPanelAreaSearchList::updateName(LLUUID id, std::string name)
 {
 	LLScrollListColumn* creator_column = mResultList->getColumn("creator");
@@ -1467,33 +1516,6 @@ void FSPanelAreaSearchList::updateName(LLUUID id, std::string name)
 			mResultList->setNeedsSort();
 		}
 	}
-}
-
-// virtual
-BOOL FSPanelAreaSearchList::handleRightMouseDown(S32 x, S32 y, MASK mask)
-{
-	BOOL handled = LLUICtrl::handleRightMouseDown(x, y, mask);
-	
-	// BUG: hitItem is off by three rows up.
-	// when fixed, selectByID(item->getValue()) if nothing was selected.
-// 	LLScrollListItem *item = mResultList->hitItem(x, y);
-// 	if (item)
-// 	{
-// 		mResultList->selectByID(item->getValue());
-// 		
-// 	}
-	
-	if (mPopupMenu)
-	{
-		if (mResultList->getNumSelected() !=0)
-		{
-			mPopupMenu->show(x, y);
-			LLMenuGL::showPopup(this, mPopupMenu, x, y);
-			return TRUE;
-		}
-	}
-
-	return handled;
 }
 
 bool FSPanelAreaSearchList::onContextMenuItemEnable(const LLSD& userdata)
@@ -2050,7 +2072,7 @@ void FSPanelAreaSearchFilter::onCommitCheckbox()
 
 	if (mCheckboxExcludePhysics->get())
 	{
-		mFSAreaSearch->setFilterPhysicial(false);
+		mFSAreaSearch->setFilterPhysical(false);
 		mCheckboxPhysical->set(FALSE);
 		mCheckboxPhysical->setEnabled(FALSE);
 		mFSAreaSearch->setExcludePhysics(true);
@@ -2060,7 +2082,7 @@ void FSPanelAreaSearchFilter::onCommitCheckbox()
 		mCheckboxPhysical->setEnabled(TRUE);
 		mFSAreaSearch->setExcludePhysics(false);
 	}
-	mFSAreaSearch->setFilterPhysicial(mCheckboxPhysical->get());
+	mFSAreaSearch->setFilterPhysical(mCheckboxPhysical->get());
 
 	if (mCheckboxExcludetemporary->get())
 	{
@@ -2127,6 +2149,7 @@ FSPanelAreaSearchOptions::FSPanelAreaSearchOptions(FSAreaSearch* pointer)
 	mFSAreaSearch(pointer)
 {
 	mCommitCallbackRegistrar.add("AreaSearch.DisplayColumn", boost::bind(&FSPanelAreaSearchOptions::onCommitCheckboxDisplayColumn, this, _2));
+	mEnableCallbackRegistrar.add("AreaSearch.EnableColumn",	boost::bind(&FSPanelAreaSearchOptions::onEnableColumnVisibilityChecked, this, _2));
 }
 
 // virtual
@@ -2142,113 +2165,12 @@ void FSPanelAreaSearchOptions::onCommitCheckboxDisplayColumn(const LLSD& userdat
 		return;
 	}
 
-	LLScrollListCtrl* result_list = mFSAreaSearch->getPanelList()->getResultList();
-	result_list->deleteAllItems();
-	LLCheckBoxCtrl* checkboxctrl = getChild<LLCheckBoxCtrl>("show_" + column_name);
+	mFSAreaSearch->getPanelList()->onColumnVisibilityChecked(userdata);
+}
 
-	if (checkboxctrl)
-	{
-		if (checkboxctrl->get())
-		{
-			result_list->addColumn(mColumnParms[column_name]);
-		}
-		else
-		{
-			mColumnParms[column_name] = result_list->delColumn(column_name);
-		}
-
-		/// until C++ supports variable within a variable name, have to do this instead.
-		/// used switch instead of a huge if then else if then else...
-		// Please keep in alphabetical order.  Provides both optimizations and ease of updating as the list grows.
-		char c = column_name.at(0);
-		switch(c)
-		{
-			case 'c':
-			{
-				mFSAreaSearch->setColumnCreator(checkboxctrl->get());
-				break;
-			}
-			case 'd':
-			{
-				char d = column_name.at(1);
-				switch (d)
-				{
-					case 'i':
-					{
-						mFSAreaSearch->setColumnDistance(checkboxctrl->get());
-						break;
-					}
-					case 'e':
-					{
-						mFSAreaSearch->setColumnDescription(checkboxctrl->get());
-						break;
-					}
-					default:
-						break;
-				}
-				break;
-			}
-			case 'g':
-			{
-				mFSAreaSearch->setColumnGroup(checkboxctrl->get());
-				break;
-			}
-			case 'l':
-			{
-				char d = column_name.at(2);
-				switch (d)
-				{
-					case 'n':
-					{
-						mFSAreaSearch->setColumnLandImpact(checkboxctrl->get());
-						break;
-					}
-					case 's':
-					{
-						mFSAreaSearch->setColumnLastOwner(checkboxctrl->get());
-						break;
-					}
-					default:
-						break;
-				}
-				break;
-			}
-			case 'n':
-			{
-				mFSAreaSearch->setColumnName(checkboxctrl->get());
-				break;
-			}
-			case 'o':
-			{
-				mFSAreaSearch->setColumnOwner(checkboxctrl->get());
-				break;
-			}
-			case 'p':
-			{
-				char d = column_name.at(3);
-				switch (d)
-				{
-					case 'c':
-					{
-						mFSAreaSearch->setColumnPrice(checkboxctrl->get());
-						break;
-					}
-					case 'm':
-					{
-						mFSAreaSearch->setColumnPrimCount(checkboxctrl->get());
-						break;
-					}
-					default:
-						break;
-				}
-				break;
-			}
-			default:
-				break;
-		}
-	}
-
-	result_list->updateLayout();
+bool FSPanelAreaSearchOptions::onEnableColumnVisibilityChecked(const LLSD& userdata)
+{
+	return mFSAreaSearch->getPanelList()->onEnableColumnVisibilityChecked(userdata);
 }
 
 
