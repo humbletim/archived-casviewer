@@ -2012,6 +2012,7 @@
              parameter="WebLaunchExternalTarget,http://wiki.phoenixviewer.com/firestorm_troubleshooting" />
         </menu_item_call>
 	   
+<!--
         <menu_item_call
          label="Join Firestorm Support Group"
          name="firestorm_support_group">
@@ -2023,7 +2024,6 @@
              parameter="secondlife" />
         </menu_item_call>
 
-<!--
         <menu_item_call
          label="Firestorm Classes Schedule"
          name="Firestorm Classes Schedule">
