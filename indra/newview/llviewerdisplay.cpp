@@ -2109,7 +2109,8 @@ void setRiftSDKRendering(bool on)
 			// Don't show HSW second and subsequent times into Riftlook ... 
 			if (!gRiftHSWEnabled)
 			{
-				ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);
+				// DJRTODO: ovrHmd_DismissHSWDisplay(gRiftHMD) when toggle into Riftlook??? 
+				//ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);
 			}
 		}
 		else
@@ -2120,7 +2121,7 @@ void setRiftSDKRendering(bool on)
 	}
 	else
 	{
-		if (ovrHmd_ConfigureRendering(gRiftHMD, NULL, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, gRiftEyeRenderDesc))
+		if (ovrHmd_ConfigureRendering(gRiftHMD, NULL, ovrDistortionCap_TimeWarp, gRiftEyeFov, gRiftEyeRenderDesc))
 		{
 			// DJRTODO: Need to undo ovrHmd_AttachToWindow()? Perhaps ovrHmd_Release()?
 
@@ -2161,13 +2162,12 @@ void calculateRiftDistortionCaps()
 	unsigned timewarp = gSavedSettings.getBOOL("RiftTimewarp") ? ovrDistortionCap_TimeWarp : 0;
 
 	LL_INFOS() << "RiftTimewarpWaits = " << gSavedSettings.getBOOL("RiftTimewarpWaits") << LL_ENDL;
-	unsigned noSpinwaits = !gSavedSettings.getBOOL("RiftTimewarpWaits") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
+	unsigned noSpinwaits = !gSavedSettings.getBOOL("RiftTimewarpWaits") ? ovrDistortionCap_ProfileNoSpinWaits : 0;
 
 	LL_INFOS() << "RiftOverdrive = " << gSavedSettings.getBOOL("RiftOverdrive") << LL_ENDL;
 	unsigned overdrive = gSavedSettings.getBOOL("RiftOverdrive") ? ovrDistortionCap_Overdrive : 0;
 
-	gRiftDistortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic
-													| ovrDistortionCap_Vignette
+	gRiftDistortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Vignette
 													| ovrDistortionCap_NoRestore
 													| timewarp
 													| overdrive 
