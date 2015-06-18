@@ -750,11 +750,16 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL repeated)
 {
 	// <CV:David>
+	// Dismiss Rift HSW upon keypress ...
 	if (gRift3DEnabled && gRiftHSWEnabled)
 	{
-		ovrHmd_DismissHSWDisplay(gRiftHMD);
-		//ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);  // DJRTODO: This SDK method is not available yet
-		gRiftHSWEnabled = false;
+		ovrHSWDisplayState hswDisplayState;
+		ovrHmd_GetHSWDisplayState(gRiftHMD, &hswDisplayState);
+		if (hswDisplayState.Displayed)
+		{
+			ovrHmd_DismissHSWDisplay(gRiftHMD);
+			gRiftHSWEnabled = false;
+		}
 	}
 	// </CV:David>
 

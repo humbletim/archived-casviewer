@@ -144,13 +144,6 @@ BOOL gRiftMouseCursor = TRUE;
 BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
 
-// DJRTODO: Remove when function is exposed in API ...
-extern "C"
-{
-	void ovrhmd_EnableHSWDisplaySDKRender(ovrHmd hmd, ovrBool enabled);
-}
-// </CV:David>
-
 void display_startup()
 {
 	if (   !gViewerWindow
@@ -2106,11 +2099,11 @@ void setRiftSDKRendering(bool on)
 			// DJRTODO: Where to do the following? ... Here or above?
 			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 
-			// Don't show HSW second and subsequent times into Riftlook ... 
+			// Automatically dismiss HSW second and subsequent times into Riftlook ... 
+			// DJRTODO: Don't show at all once the API supports this again.
 			if (!gRiftHSWEnabled)
 			{
-				// DJRTODO: ovrHmd_DismissHSWDisplay(gRiftHMD) when toggle into Riftlook??? 
-				//ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);
+				ovrHmd_DismissHSWDisplay(gRiftHMD);
 			}
 		}
 		else
