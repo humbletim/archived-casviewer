@@ -140,8 +140,27 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 	
 	if (!gAgent.leftButtonGrabbed())
 	{
+		// <CV:David>
+		// Apply UI offset to get click correct physical object in Riftlook.
+		S32 uiDelta = 0;
+		if (gRift3DEnabled)
+		{
+			S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+			uiDelta = (x > gRiftHFrame) ? -uiDepth : uiDepth;
+			x = x + uiDelta;
+		}
+		// <CV:David>
+
 		// can grab transparent objects (how touch event propagates, scripters rely on this)
 		gViewerWindow->pickAsync(x, y, mask, pickCallback, TRUE);
+		
+		// <CV:David>
+		// Unapply UI offset.
+		if (gRift3DEnabled)
+		{
+			x = x - uiDelta;
+		}
+		// <CV:David>
 	}
 	return TRUE;
 }

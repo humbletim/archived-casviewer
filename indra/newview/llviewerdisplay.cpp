@@ -144,13 +144,6 @@ BOOL gRiftMouseCursor = TRUE;
 BOOL gRiftMouseHorizontal = FALSE;
 S32 gRiftCurrentEye;  // 0 = left, 1 = right
 
-// DJRTODO: Remove when function is exposed in API ...
-extern "C"
-{
-	void ovrhmd_EnableHSWDisplaySDKRender(ovrHmd hmd, ovrBool enabled);
-}
-// </CV:David>
-
 void display_startup()
 {
 	if (   !gViewerWindow
@@ -2106,10 +2099,11 @@ void setRiftSDKRendering(bool on)
 			// DJRTODO: Where to do the following? ... Here or above?
 			//ovrHmd_AttachToWindow(gRiftHMD, window, NULL, NULL);  // DJRTODO: The 3rd parameter is a mirror rectangle  // Direct rendering
 
-			// Don't show HSW second and subsequent times into Riftlook ... 
+			// Automatically dismiss HSW second and subsequent times into Riftlook ... 
+			// DJRTODO: Don't show at all once the API supports this again.
 			if (!gRiftHSWEnabled)
 			{
-				ovrhmd_EnableHSWDisplaySDKRender(gRiftHMD, false);
+				ovrHmd_DismissHSWDisplay(gRiftHMD);
 			}
 		}
 		else
@@ -2120,7 +2114,7 @@ void setRiftSDKRendering(bool on)
 	}
 	else
 	{
-		if (ovrHmd_ConfigureRendering(gRiftHMD, NULL, ovrDistortionCap_Chromatic | ovrDistortionCap_TimeWarp, gRiftEyeFov, gRiftEyeRenderDesc))
+		if (ovrHmd_ConfigureRendering(gRiftHMD, NULL, ovrDistortionCap_TimeWarp, gRiftEyeFov, gRiftEyeRenderDesc))
 		{
 			// DJRTODO: Need to undo ovrHmd_AttachToWindow()? Perhaps ovrHmd_Release()?
 
@@ -2161,13 +2155,12 @@ void calculateRiftDistortionCaps()
 	unsigned timewarp = gSavedSettings.getBOOL("RiftTimewarp") ? ovrDistortionCap_TimeWarp : 0;
 
 	LL_INFOS() << "RiftTimewarpWaits = " << gSavedSettings.getBOOL("RiftTimewarpWaits") << LL_ENDL;
-	unsigned noSpinwaits = !gSavedSettings.getBOOL("RiftTimewarpWaits") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
+	unsigned noSpinwaits = !gSavedSettings.getBOOL("RiftTimewarpWaits") ? ovrDistortionCap_ProfileNoSpinWaits : 0;
 
 	LL_INFOS() << "RiftOverdrive = " << gSavedSettings.getBOOL("RiftOverdrive") << LL_ENDL;
 	unsigned overdrive = gSavedSettings.getBOOL("RiftOverdrive") ? ovrDistortionCap_Overdrive : 0;
 
-	gRiftDistortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Chromatic
-													| ovrDistortionCap_Vignette
+	gRiftDistortionCaps = gRiftHMD->DistortionCaps & (ovrDistortionCap_Vignette
 													| ovrDistortionCap_NoRestore
 													| timewarp
 													| overdrive 
