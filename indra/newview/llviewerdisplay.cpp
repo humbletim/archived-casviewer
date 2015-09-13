@@ -2019,8 +2019,17 @@ void setRiftSDKRendering(bool on)
 		renderTargetSize.w = gRiftHBuffer;
 		renderTargetSize.h = gRiftVBuffer;
 
-		if (ovrHmd_CreateSwapTextureSetGL(gRiftHMD, GL_RGBA, renderTargetSize.w, renderTargetSize.h, &gRiftSwapTextureSet[0]) == ovrSuccess
-			&& ovrHmd_CreateSwapTextureSetGL(gRiftHMD, GL_RGBA, renderTargetSize.w, renderTargetSize.h, &gRiftSwapTextureSet[1]) == ovrSuccess)
+		// Create swap texture sets once per program run
+		if (!gRiftSwapTextureSetCreated[0]) {
+			gRiftSwapTextureSetCreated[0] 
+				= ovrHmd_CreateSwapTextureSetGL(gRiftHMD, GL_RGBA, renderTargetSize.w, renderTargetSize.h, &gRiftSwapTextureSet[0]) == ovrSuccess;
+		}
+		if (!gRiftSwapTextureSetCreated[1]) {
+			gRiftSwapTextureSetCreated[1] 
+				= ovrHmd_CreateSwapTextureSetGL(gRiftHMD, GL_RGBA, renderTargetSize.w, renderTargetSize.h, &gRiftSwapTextureSet[1]) == ovrSuccess;
+		}
+
+		if (gRiftSwapTextureSetCreated[0] && gRiftSwapTextureSetCreated[1])
 		{
 			LL_INFOS() << "Started Rift rendering" << LL_ENDL;
 
@@ -2139,9 +2148,10 @@ void setRiftSDKRendering(bool on)
 	}
 	else
 	{
-		// DJRTODO 0.6: Perhaps don't do until viewer exit? ...
-		ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[0]);
-		ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[1]);
+		// Do ovrHmd_DestroySwapTextureSet() calls at program exit, otherwise toggling in/out of Riftlook can cause a crash.
+		// Alternatively, could probably do ovrHmd_destroy() when exit Riftlook and a new ovrHmd_create() when enter again.
+		//ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[0]);
+		//ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[1]);
 		LL_INFOS("InitInfo") << "Ended Rift rendering" << LL_ENDL;
 	}
 }

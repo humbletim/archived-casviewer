@@ -454,6 +454,7 @@ extern ovrHmd gRiftHMD;
 extern ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 extern ovrFovPort gRiftEyeFov[2];
 extern ovrSwapTextureSet* gRiftSwapTextureSet[2];
+extern bool gRiftSwapTextureSetCreated[2];
 extern ovrLayerEyeFov gRiftLayer;
 
 extern bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode

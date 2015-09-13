@@ -389,6 +389,7 @@ ovrHmd gRiftHMD = nullptr;
 ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 ovrFovPort gRiftEyeFov[2];
 ovrSwapTextureSet* gRiftSwapTextureSet[2];
+bool gRiftSwapTextureSetCreated[2];
 ovrLayerEyeFov gRiftLayer;
 
 bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
@@ -930,10 +931,14 @@ bool LLAppViewer::init()
 	//
 
 	gOutputType = gSavedSettings.getU32("OutputType");
+	// <CV:David>
 	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
+	gRiftSwapTextureSetCreated[0] = false;
+	gRiftSwapTextureSetCreated[1] = false;
 	gDoSetRiftlook = false;
 	gRiftHSWEnabled = true;
 	//initRift();  // initRift() here causes application to crash when enter Riftlook.
+	// </CV:David>
 	
 // <FS>
 	// SJ/AO:  Reset Configuration here, if our marker file exists. Configuration needs to be reset before settings files 
@@ -2278,6 +2283,13 @@ bool LLAppViewer::cleanup()
 	// <CV:David>
 	if (gRift3DConfigured)
 	{
+		if (gRiftSwapTextureSetCreated[0]) {
+			ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[0]);
+		}
+		if (gRiftSwapTextureSetCreated[1]) {
+			ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[1]);
+		}
+
 		ovrHmd_Destroy(gRiftHMD);
 		ovr_Shutdown();
 
