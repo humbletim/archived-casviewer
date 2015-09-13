@@ -1026,46 +1026,19 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		if (!mScreen.allocate(resX, resY, screenFormat, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
 		// <CV:David>
 		LL_INFOS() << "gRift3DEnabled = " << gRift3DEnabled << LL_ENDL;
-		if (true || gRift3DEnabled)  // DJRTODO: "true" needed at present because setRiftSDKRendering() call is in wrong place/
+
+		if (gRift3DEnabled)
 		{
-			LL_INFOS() << "Oculus Rift: Rift FBOs allocation requested at " << resX << " x " << resY << LL_ENDL;
-			if (!mRiftLScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
-			LL_INFOS() << "Oculus Rift: L FBO resolution used: " << mRiftLScreen.getWidth() << " x " << mRiftLScreen.getHeight() << LL_ENDL;
-			if (!mRiftRScreen.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE)) return false;
-			LL_INFOS() << "Oculus Rift: R FBO resolution used: " << mRiftRScreen.getWidth() << " x " << mRiftRScreen.getHeight() << LL_ENDL;
-			if (mRiftLScreen.getWidth() != mRiftRScreen.getWidth() || mRiftLScreen.getHeight() != mRiftRScreen.getHeight())
-			{
-				LL_WARNS() << "Oculus Rift: Left and right FBOs not the same size!" << LL_ENDL;
-				return false;
-			}
-			gRiftHBuffer = mRiftLScreen.getWidth();   // Actual render target size might be different from that requested.
-			gRiftVBuffer = mRiftLScreen.getHeight();
+			// Actual render target sizes might be different from that requested.
+			// Assume that Rift SDK will successfully allocate textures at same size as we are able to.
+			gRiftHBuffer = mScreen.getWidth();
+			gRiftVBuffer = mScreen.getHeight();
 
-			// DJRTODO: Use minimum of requested and provided size as render size?
-
-			ovrSizei textureSize;
-			textureSize.h = gRiftVSample;
-			textureSize.w = gRiftHSample;
-
-			ovrRecti renderSize;
-			renderSize.Pos.x = 0;
-			renderSize.Pos.y = 0;
-			renderSize.Size.h = gRiftVBuffer;
-			renderSize.Size.w = gRiftHBuffer;
-			
-			gRiftEyeTextures[0].OGL.Header.API = ovrRenderAPI_OpenGL;
-			gRiftEyeTextures[0].OGL.Header.TextureSize = textureSize;
-			gRiftEyeTextures[0].OGL.Header.RenderViewport = renderSize;
-			gRiftEyeTextures[0].OGL.TexId = mRiftLScreen.getTexture();
-
-			gRiftEyeTextures[1].OGL.Header.API = ovrRenderAPI_OpenGL;
-			gRiftEyeTextures[1].OGL.Header.TextureSize = textureSize;
-			gRiftEyeTextures[1].OGL.Header.RenderViewport = renderSize;
-			gRiftEyeTextures[1].OGL.TexId = mRiftRScreen.getTexture();
-
+			LL_INFOS() << "Oculus Rift: FBOs requested at " << resX << " x " << resY << LL_ENDL;
+			LL_INFOS() << "Oculus Rift: FBO resolutions used: " << gRiftHBuffer << " x " << gRiftVBuffer << LL_ENDL;
 		}
 
-		//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the correct place for this but with buggy 0.4.1 having it here causes viewer to crash.
+		setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the correct place for this but it wasn't used here for SDK <= 0.5.
 		// </CV:David>
 		if (samples > 0)
 		{
@@ -1143,10 +1116,6 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		}
 		mFXAABuffer.release();
 		mScreen.release();
-		// <CV:David>
-		mRiftLScreen.release();
-		mRiftRScreen.release();
-		// </CV:David>
 		mDeferredScreen.release(); //make sure to release any render targets that share a depth buffer with mDeferredScreen first
 		mDeferredDepth.release();
 		mOcclusionDepth.release();
@@ -1355,10 +1324,6 @@ void LLPipeline::releaseScreenBuffers()
 {
 	mUIScreen.release();
 	mScreen.release();
-	// <CV:David>
-	mRiftLScreen.release();
-	mRiftRScreen.release();
-	// </CV:David>
 	mFXAABuffer.release();
 	mPhysicsDisplay.release();
 	mDeferredScreen.release();

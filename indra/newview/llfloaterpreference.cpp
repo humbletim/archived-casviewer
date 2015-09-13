@@ -1147,8 +1147,7 @@ void LLFloaterPreference::onVertexShaderEnable()
 	{
 		// Temporarily set VertexShaderEnable so that setRiftlook() reshapes the window correctly.
 		gSavedSettings.setBOOL("VertexShaderEnable", TRUE);
-		//CVToggle3D::setRiftlook(false);
-		CVToggle3D::setFullscreenThenRiftlook(false);  // DJRTDODO: Temporarily use while using DK2 extended mode
+		CVToggle3D::setRiftlook(false);
 		gSavedSettings.setBOOL("VertexShaderEnable", FALSE);
 	}
 	// </CV:David>

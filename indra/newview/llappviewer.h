@@ -451,11 +451,10 @@ extern BOOL gPeriodicSlowFrame;
 
 // <CV:David>
 extern ovrHmd gRiftHMD;
-extern ovrFrameTiming gRiftFrameTiming;
-extern ovrGLConfig gRiftConfig;
 extern ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 extern ovrFovPort gRiftEyeFov[2];
-extern ovrGLTexture gRiftEyeTextures[2];
+extern ovrSwapTextureSet* gRiftSwapTextureSet[2];
+extern ovrLayerEyeFov gRiftLayer;
 
 extern bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
 extern bool gDoSetRiftlookValue;  // DJRTODO: Temporarily use while using DK2 extended mode

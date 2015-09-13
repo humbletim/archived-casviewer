@@ -384,12 +384,12 @@ BOOL gLLErrorActivated = FALSE;
 BOOL gLogoutInProgress = FALSE;
 
 // <CV:David>
-ovrHmd gRiftHMD;
-ovrFrameTiming gRiftFrameTiming;
-ovrGLConfig gRiftConfig;
+ovrHmd gRiftHMD = nullptr;
+
 ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 ovrFovPort gRiftEyeFov[2];
-ovrGLTexture gRiftEyeTextures[2];
+ovrSwapTextureSet* gRiftSwapTextureSet[2];
+ovrLayerEyeFov gRiftLayer;
 
 bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
 bool gDoSetRiftlookValue;  // DJRTODO: Temporarily use while using DK2 extended mode
@@ -933,7 +933,7 @@ bool LLAppViewer::init()
 	gRift3DConfigured = gOutputType == OUTPUT_TYPE_RIFT;
 	gDoSetRiftlook = false;
 	gRiftHSWEnabled = true;
-	//initRift();  // DJRTODO: initRift() here causes application to crash at start-up.
+	//initRift();  // initRift() here causes application to crash when enter Riftlook.
 	
 // <FS>
 	// SJ/AO:  Reset Configuration here, if our marker file exists. Configuration needs to be reset before settings files 
@@ -1486,7 +1486,7 @@ bool LLAppViewer::init()
 		LLStringOps::sPM = LLTrans::getString("dateTimePM");
 	}
 
-	initRift();  // <CV:David> Need to do after rest of graphics is set up.  // DJRTODO: initRift() here doesn't cause direct HMD to kick in when toggle.
+	initRift();  // <CV:David> Need to do after rest of graphics is set up.
 
 	LLAgentLanguage::init();
 
@@ -1519,11 +1519,14 @@ void LLAppViewer::initRift()
 
 		LL_INFOS("InitInfo") << "Oculus Rift: OVR version = " << OVR_VERSION_STRING << LL_ENDL;
 
-		ovr_Initialize();
-		//ovr_InitializeRenderingShim();  // Causes Rift not to be found with ovrHmd_Create() and then a crash at ovrHmd_CreateDebug().
-		gRiftHMD = ovrHmd_Create(0);
+		if (ovr_Initialize(nullptr) != ovrSuccess)
+		{
+			LLNotificationsUtil::add("AlertRiftLibraryNotInitialized", LLSD());
+			LL_ERRS("InitInfo") << "Oculus Rift: Could not initialize Oculus library!" << LL_ENDL;
+			return;
+		}
 
-		if (gRiftHMD)
+		if (ovrHmd_Create(0, &gRiftHMD) == ovrSuccess)
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: HMD found" << LL_ENDL;
 
@@ -1546,7 +1549,13 @@ void LLAppViewer::initRift()
 		{
 			LL_INFOS("InitInfo") << "Oculus Rift: HMD not found; simulated device used" << LL_ENDL;
 			LLNotificationsUtil::add("AlertRiftHMDNotFound", LLSD());
-			gRiftHMD = ovrHmd_CreateDebug(ovrHmd_DK1);
+			if (ovrHmd_CreateDebug(ovrHmd_DK2, &gRiftHMD) != ovrSuccess)
+			{
+				LLNotificationsUtil::add("AlertSimulatedRiftNotCreated", LLSD());
+				LL_ERRS("InitInfo") << "Oculus Rift: Could not create simulated Rift!" << LL_ENDL;
+				gRiftHMD = nullptr;
+				return;
+			}
 			ovrHmd_ConfigureTracking(gRiftHMD, 0, 0);
 		}
 
@@ -1564,7 +1573,7 @@ void LLAppViewer::initRift()
 		LL_INFOS("InitInfo") << "Oculus Rift: CameraFrustumFarZInMeters = " << gRiftHMD->CameraFrustumFarZInMeters << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: HmdCaps = " << gRiftHMD->HmdCaps << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: TrackingCaps = " << gRiftHMD->TrackingCaps << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DistortionCaps = " << gRiftHMD->DistortionCaps << LL_ENDL;
+
 		gRiftHResolution = gRiftHMD->Resolution.w;  // Physical resolution of the display incl. both eyes.
 		gRiftVResolution = gRiftHMD->Resolution.h;
 		LL_INFOS("InitInfo") << "Oculus Rift: Full resolution = " << gRiftHResolution << " x " << gRiftVResolution << LL_ENDL;
@@ -1574,20 +1583,15 @@ void LLAppViewer::initRift()
 		LL_INFOS("InitInfo") << "Oculus Rift: Eye resolution = " << gRiftHFrame << " x " << gRiftVFrame << LL_ENDL;
 		LL_INFOS() << "Oculus Rift: Eye display aspect = " << std::setprecision(3) << gRiftAspect << LL_ENDL;
 		
-		// DJRTODO: Use WindowsPos ...
-		LL_INFOS("InitInfo") << "Oculus Rift: WindowsPos = " << gRiftHMD->WindowsPos.x << ", " << gRiftHMD->WindowsPos.y << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan L = " << std::setprecision(6) << gRiftHMD->DefaultEyeFov[0].UpTan << ", " << gRiftHMD->DefaultEyeFov[0].DownTan << ", " << gRiftHMD->DefaultEyeFov[0].LeftTan << ", " << gRiftHMD->DefaultEyeFov[0].RightTan << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan R = " << gRiftHMD->DefaultEyeFov[1].UpTan << ", " << gRiftHMD->DefaultEyeFov[1].DownTan << ", " << gRiftHMD->DefaultEyeFov[1].LeftTan << ", " << gRiftHMD->DefaultEyeFov[1].RightTan << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan L = " << gRiftHMD->MaxEyeFov[0].UpTan << ", " << gRiftHMD->MaxEyeFov[0].DownTan << ", " << gRiftHMD->MaxEyeFov[0].LeftTan << ", " << gRiftHMD->MaxEyeFov[0].RightTan << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan R = " << gRiftHMD->MaxEyeFov[1].UpTan << ", " << gRiftHMD->MaxEyeFov[1].DownTan << ", " << gRiftHMD->MaxEyeFov[1].LeftTan << ", " << gRiftHMD->MaxEyeFov[1].RightTan << std::setprecision(3) << LL_ENDL;
-		// DJRTODO: Use EyeRenderOrder consistently
+		// DJRTODO: Use EyeRenderOrder
 		LL_INFOS("InitInfo") << "Oculus Rift: EyeRenderOrder = " << gRiftHMD->EyeRenderOrder[0] << ", " << gRiftHMD->EyeRenderOrder[1] << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DisplayDeviceName = " << gRiftHMD->DisplayDeviceName << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: DisplayId = " << gRiftHMD->DisplayId << LL_ENDL;  // DJRTODO: Why is it -1? Perhaps if direct mode?
 
-		// DJRTODO: Comment out ...
-		LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << LL_ENDL;
-		LL_INFOS("InitInfo") << "Oculus Rift: Name = " << ovrHmd_GetString(gRiftHMD, "Name", "Name") << LL_ENDL;
+		//LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << LL_ENDL;
+		//LL_INFOS("InitInfo") << "Oculus Rift: Name = " << ovrHmd_GetString(gRiftHMD, "Name", "Name") << LL_ENDL;
 
 		ovrSizei recommendedLSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Left, gRiftHMD->DefaultEyeFov[0], 1.f);
 		ovrSizei recommendedRSize = ovrHmd_GetFovTextureSize(gRiftHMD, ovrEye_Right, gRiftHMD->DefaultEyeFov[1], 1.f);
@@ -5147,8 +5151,7 @@ void LLAppViewer::userQuit()
 	// <CV:David>
 	if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DEnabled)
 	{
-		// CVToggle3D::setRiftlook(FALSE);
-		CVToggle3D::setFullscreenThenRiftlook(FALSE);  // DJRTODO: Temporarily use while using DK2 extended mode
+		CVToggle3D::setRiftlook(FALSE);
 	}
 	// </CV:David>
 	

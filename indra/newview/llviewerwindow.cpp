@@ -1535,8 +1535,7 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 		// <CV:David>
 		if (gRift3DEnabled)
 		{
-			//CVToggle3D::setRiftlook(false);
-			CVToggle3D::setFullscreenThenRiftlook(false);  // DJRTODO: Temporarily use while using DK2 extended mode
+			CVToggle3D::setRiftlook(false);
 		}
 		else
 		// </CV:David>
@@ -1728,8 +1727,9 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	mStatesDirty(false),
 	mCurrResolutionIndex(0),
 	mProgressView(NULL),
-	mProgressViewMini(NULL),
-	mRiftUndistortCache(NULL)  // <CV:David>
+	mProgressViewMini(NULL)
+	// DJRTODO 0.6 ...
+	//mRiftUndistortCache(NULL)  // <CV:David>
 {
 	// gKeyboard is still NULL, so it doesn't do LLWindowListener any good to
 	// pass its value right now. Instead, pass it a nullary function that
@@ -5899,6 +5899,8 @@ LLRect LLViewerWindow::getChatConsoleRect()
 }
 
 // <CV:David>
+// DJRTODO 0.6 ...
+/*
 LLVector2 LLViewerWindow::riftUndistortCalc(ovrDistortionMesh* mesh, U32 x, U32 y, U32 eye)
 {
 	// x: 0 .. gRiftHFrame
@@ -6002,12 +6004,15 @@ void LLViewerWindow::initializeRiftUndistort(ovrDistortionMesh* mesh, int eye)
 		}
 	}
 }
+*/
 
 LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
 {
-	int eye = x < gRiftHFrame ? 0 : 1;
-
-	return mRiftUndistortCache[(eye * gRiftVFrame + y) * gRiftHFrame + (x % gRiftHFrame)];
+	// DJRTODO 0.6 ...
+	//int eye = x < gRiftHFrame ? 0 : 1;
+	//
+	//return mRiftUndistortCache[(eye * gRiftVFrame + y) * gRiftHFrame + (x % gRiftHFrame)];
+	return LLVector2(100, 100);
 }
 // </CV:David>
 

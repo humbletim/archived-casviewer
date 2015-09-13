@@ -1814,6 +1814,7 @@
        height="16"
        initial_value="true"
        label="Dynamic prediction"
+       layout="topleft"
        left="214"
        name="RiftDynamicPrediction"
        width="50"
@@ -1821,63 +1822,18 @@
         <check_box.commit_callback
           function="Pref.RiftHmdSettingsChanged" />
       </check_box>
-      <check_box
-       control_name="RiftTimewarp"
-       height="16"
-       initial_value="true"
-       label="Timewarp"
-       layout="topleft"
-       left="214"
-       name="RiftTimewarp"
-       width="50" >
-       <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-      <check_box
-       control_name="RiftTimewarpWaits"
-       height="16"
-       initial_value="true"
-       label="Timewarp waits"
-       left="214"
-       name="RiftTimewarpWaits"
-       width="50" >
-       <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
 
-      <check_box
-       control_name="RiftVSync"
-       height="16"
-       initial_value="true"
-       label="V sync"
-       layout="topleft"
-       left="364"
-       name="RiftVSync"
-       width="50"
-       top="324" >
-        <check_box.commit_callback
-          function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
       <check_box
        control_name="RiftLowPersistence"
        height="16"
        initial_value="true"
        label="Low persistence"
+       layout="topleft"
        left="364"
        name="RiftLowPersistence"
-       width="50" >
-       <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-      <check_box
-       control_name="RiftOverdrive"
-       height="16"
-       initial_value="true"
-       label="Pixel overdrive"
-       left="364"
-       name="RiftOverDrive"
-       width="50" >
-       <check_box.commit_callback
+       width="50"
+       top="324" >
+        <check_box.commit_callback
          function="Pref.RiftHmdSettingsChanged" />
       </check_box>
 
