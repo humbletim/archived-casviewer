@@ -83,6 +83,7 @@
 #include "rlvlocks.h"
 // [/RLVa:KB]
 #include "llviewermenu.h"  // <CV:David> DJRTODO: Temporarily needed for going fullscreen with DK2 in extended mode
+#include "llnotificationsutil.h"  // <CV:David>
 
 extern LLPointer<LLViewerTexture> gStartTexture;
 extern bool gShiftFrame;
@@ -133,6 +134,7 @@ BOOL gStereoscopic3DEnabled = FALSE;
 BOOL gStereoscopic3DConfigured = FALSE;
 BOOL gRift3DEnabled = FALSE;
 BOOL gRift3DConfigured = FALSE;
+BOOL gRiftInitialized = FALSE;
 unsigned gRiftHmdCaps = 0;
 BOOL gRiftStanding = FALSE;
 BOOL gRiftStrafe = FALSE;
@@ -1894,9 +1896,8 @@ void render_ui_2d()
 
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
 		S32 offset = (gRiftCurrentEye == 0) ? -uiDepth : uiDepth;  // DJRTODO 0.6: I had to reverse these for some reason. Why?
-		// DJRTODO 0.6: Shouldn't this use gRiftHBuffer and gRiftVBuffer? (Perhaps this is why some people have UI offset?)
-		S32 width = gRiftHSample;
-		S32 height = gRiftVSample;
+		S32 width = gRiftHBuffer;
+		S32 height = gRiftVBuffer;
 		LLGLEnable blend(GL_BLEND);
 		gGL.setColorMask(true, false);
 		gGL.color4f(1,1,1,1);
@@ -2011,90 +2012,10 @@ void setRiftSDKRendering(bool on)
 {
 	if (on)
 	{
-		calculateRiftHmdCaps();
-		ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
-
-		ovrSizei renderTargetSize;
-		// DJRTODO 0.6: check the value of gRiftHBuffer
-		renderTargetSize.w = gRiftHBuffer;
-		renderTargetSize.h = gRiftVBuffer;
-
-		// Create swap texture sets once per program run
-		if (!gRiftSwapTextureSetCreated[0]) {
-			gRiftSwapTextureSetCreated[0] 
-				= ovrHmd_CreateSwapTextureSetGL(gRiftHMD, GL_RGBA, renderTargetSize.w, renderTargetSize.h, &gRiftSwapTextureSet[0]) == ovrSuccess;
-		}
-		if (!gRiftSwapTextureSetCreated[1]) {
-			gRiftSwapTextureSetCreated[1] 
-				= ovrHmd_CreateSwapTextureSetGL(gRiftHMD, GL_RGBA, renderTargetSize.w, renderTargetSize.h, &gRiftSwapTextureSet[1]) == ovrSuccess;
-		}
-
-		if (gRiftSwapTextureSetCreated[0] && gRiftSwapTextureSetCreated[1])
+		if (gRiftInitialized)
 		{
-			LL_INFOS() << "Started Rift rendering" << LL_ENDL;
-
-			LL_INFOS() << "Oculus Rift: Rift textures created at " << gRiftSwapTextureSet[0]->Textures[0].Header.TextureSize.w << " x " 
-				<< gRiftSwapTextureSet[0]->Textures[0].Header.TextureSize.h << LL_ENDL;
-			// Should be the same size as gRiftHBuffer x gRiftVBuffer because FBOx have already been successfully allocated at this size.
-
-			// DJRTODO 0.6: Refactor
-			for (int i = 0; i < gRiftSwapTextureSet[0]->TextureCount; ++i)
-			{
-				// DJRTODO 0.6: Do this here or elsewhere?
-				ovrGLTexture* tex = (ovrGLTexture*)&gRiftSwapTextureSet[0]->Textures[i];
-				glBindTexture(GL_TEXTURE_2D, tex->OGL.TexId);
-
-				// DJRTODO 0.6: Needed or not?
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			}
-			for (int i = 0; i < gRiftSwapTextureSet[1]->TextureCount; ++i)
-			{
-				// DJRTODO 0.6: Do this here or elsewhere?
-				ovrGLTexture* tex = (ovrGLTexture*)&gRiftSwapTextureSet[1]->Textures[i];
-				glBindTexture(GL_TEXTURE_2D, tex->OGL.TexId);
-
-				// DJRTODO 0.6: Needed or not?
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			}
-
-			gRiftEyeRenderDesc[0] = ovrHmd_GetRenderDesc(gRiftHMD, ovrEye_Left, gRiftEyeFov[0]);
-			gRiftEyeRenderDesc[1] = ovrHmd_GetRenderDesc(gRiftHMD, ovrEye_Right, gRiftEyeFov[1]);
-			
-			gRiftEyeDeltaL = gRiftEyeRenderDesc[0].HmdToEyeViewOffset.x;  // Positive value
-			gRiftEyeDeltaR = -gRiftEyeRenderDesc[1].HmdToEyeViewOffset.x;  // Positive value
-
-			LL_INFOS() << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust L = " << gRiftEyeDeltaL << ", " << LL_ENDL;
-			LL_INFOS() << std::setprecision(6) << "Oculus Rift: eyeRenderDesc ViewAdjust R = " << gRiftEyeDeltaR << ", " << LL_ENDL;
-
-			ovrMatrix4f projL = ovrMatrix4f_Projection(gRiftEyeRenderDesc[0].Fov, 0.01f, 10000.f, true);
-			ovrMatrix4f projR = ovrMatrix4f_Projection(gRiftEyeRenderDesc[1].Fov, 0.01f, 10000.f, true);
-			/*
-			LL_INFOS() << "Oculus Rift: L projection =  " << projL.M[0][0] << "  " << projL.M[0][1] << "  " << projL.M[0][2] << "  " << projL.M[0][3] << LL_ENDL;
-			LL_INFOS() << "                             " << projL.M[1][0] << "  " << projL.M[1][1] << "  " << projL.M[1][2] << "  " << projL.M[1][3] << LL_ENDL;
-			LL_INFOS() << "                             " << projL.M[2][0] << "  " << projL.M[2][1] << "  " << projL.M[2][2] << "  " << projL.M[2][3] << LL_ENDL;
-			LL_INFOS() << "                             " << projL.M[3][0] << "  " << projL.M[3][1] << "  " << projL.M[3][2] << "  " << projL.M[3][3] << LL_ENDL;
-
-			LL_INFOS() << "Oculus Rift: R projection =  " << projR.M[0][0] << "  " << projR.M[0][1] << "  " << projR.M[0][2] << "  " << projR.M[0][3] << LL_ENDL;
-			LL_INFOS() << "                             " << projR.M[1][0] << "  " << projR.M[1][1] << "  " << projR.M[1][2] << "  " << projR.M[1][3] << LL_ENDL;
-			LL_INFOS() << "                             " << projR.M[2][0] << "  " << projR.M[2][1] << "  " << projR.M[2][2] << "  " << projR.M[2][3] << LL_ENDL;
-			LL_INFOS() << "                             " << projR.M[3][0] << "  " << projR.M[3][1] << "  " << projR.M[3][2] << "  " << projR.M[3][3] << LL_ENDL;
-			*/
-			gRiftProjection00[0] = projL.M[0][0];
-			gRiftProjection00[1] = projR.M[0][0];
-			gRiftProjection02[0] = projL.M[0][2];
-			gRiftProjection02[1] = projR.M[0][2];
-			gRiftProjection11[0] = projL.M[1][1];
-			gRiftProjection11[1] = projR.M[1][1];
-
-			LL_INFOS() << "L / R project offsets = " << gRiftProjection02[0] << " / " << gRiftProjection02[1] << LL_ENDL;
-
-			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
+			calculateRiftHmdCaps();
+			ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
 
 			// DJRTODO 0.6: What to do with the following? ...
 			/*
@@ -2118,41 +2039,17 @@ void setRiftSDKRendering(bool on)
 			}
 			*/
 
-			// DJRTODO 0.6: Check per "Advanced Rendering Configuration"
-			gRiftLayer.Header.Type      = ovrLayerType_EyeFov;
-			gRiftLayer.Header.Flags     = ovrLayerFlag_TextureOriginAtBottomLeft;  // For OpenGL.
-			gRiftLayer.ColorTexture[0]  = gRiftSwapTextureSet[0];
-			gRiftLayer.ColorTexture[1]  = gRiftSwapTextureSet[1];
-			gRiftLayer.Fov[0]           = gRiftEyeRenderDesc[0].Fov;
-			gRiftLayer.Fov[1]           = gRiftEyeRenderDesc[1].Fov;
-			//gRiftLayer.Viewport[0]      = Recti(0, 0,                bufferSize.w / 2, bufferSize.h);
-			gRiftLayer.Viewport[0].Pos.x = 0;
-			gRiftLayer.Viewport[0].Pos.y = 0;
-			gRiftLayer.Viewport[0].Size.h = gRiftVBuffer;
-			gRiftLayer.Viewport[0].Size.w = gRiftHBuffer;
-			//gRiftLayer.Viewport[1]      = ovrRecti(bufferSize.w / 2, 0, bufferSize.w / 2, bufferSize.h);
-			gRiftLayer.Viewport[1].Pos.x = 0;
-			gRiftLayer.Viewport[1].Pos.y = 0;
-			gRiftLayer.Viewport[1].Size.h = gRiftVBuffer;
-			gRiftLayer.Viewport[1].Size.w = gRiftHBuffer;
-			// ld.RenderPose[] is updated later per frame.
-
+			LL_INFOS() << "Oculus Rift: Started Rift rendering" << LL_ENDL;
 		}
 		else
 		{
-			// DJRTODO 0.6: Display warning dialog to user.
-			// DJRTODO 0.6: Destroy whichever swap texture sets were successfully created?
-			LL_WARNS("InitInfo") << "Could not start Rift rendering!" << LL_ENDL;
-			// DJRTODO: What to do if cannot start Rift rendering?
+			LL_WARNS("InitInfo") << "Oculus Rift: Could not start Rift rendering!" << LL_ENDL;
+			LLNotificationsUtil::add("AlertCouldNotStartRiftRendering", LLSD());
 		}
 	}
 	else
 	{
-		// Do ovrHmd_DestroySwapTextureSet() calls at program exit, otherwise toggling in/out of Riftlook can cause a crash.
-		// Alternatively, could probably do ovrHmd_destroy() when exit Riftlook and a new ovrHmd_create() when enter again.
-		//ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[0]);
-		//ovrHmd_DestroySwapTextureSet(gRiftHMD, gRiftSwapTextureSet[1]);
-		LL_INFOS("InitInfo") << "Ended Rift rendering" << LL_ENDL;
+		LL_INFOS("InitInfo") << "Oculus Rift: Ended Rift rendering" << LL_ENDL;
 	}
 }
 

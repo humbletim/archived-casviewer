@@ -10502,8 +10502,15 @@ void CVToggle3D::setStereoscopic(bool on)
 
 void CVToggle3D::setRiftlook(bool on)
 {
-	gRift3DEnabled = on;
-	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+	// DJRTODO 0.6: OK?...
+	if (!gRiftInitialized)
+	{
+		if (on)
+		{
+			LL_WARNS() << "Oculus Rift: Could not enter Riftlook because Rift not initialized" << LL_ENDL;
+		}
+		return;
+	}
 
 	bool was_in_flycam = LLViewerJoystick::getInstance()->getOverrideCamera();
 	if (was_in_flycam)
@@ -10511,7 +10518,7 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerJoystick::getInstance()->toggleFlycam();
 	}
 
-	if (gRift3DEnabled)
+	if (on)
 	{
 		LL_INFOS() << "Oculus Rift: Enter Riftlook mode" << LL_ENDL;
 
@@ -10523,9 +10530,9 @@ void CVToggle3D::setRiftlook(bool on)
 
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
-			// DJRTODO: Should really use gRiftHBuffer and gRiftVBuffer but these are both 0 when setRiftlook(true) is first called.
-			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
+			gViewerWindow->reshape(gRiftHBuffer, gRiftVBuffer);
 		}
+
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 		gSavedSettings.setF32("CameraAngle", gRiftFOV);
@@ -10560,11 +10567,12 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerJoystick::getInstance()->toggleFlycam();
 	}
 
+	gRift3DEnabled = on;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
-
-	//setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but was used with SKD <= 0.5
 }
 	
 bool CVToggle3D::handleEvent(const LLSD& userdata)

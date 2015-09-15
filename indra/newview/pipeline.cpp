@@ -1024,22 +1024,21 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		}
         
 		if (!mScreen.allocate(resX, resY, screenFormat, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
+
 		// <CV:David>
 		LL_INFOS() << "gRift3DEnabled = " << gRift3DEnabled << LL_ENDL;
 
 		if (gRift3DEnabled)
 		{
-			// Actual render target sizes might be different from that requested.
-			// Assume that Rift SDK will successfully allocate textures at same size as we are able to.
-			gRiftHBuffer = mScreen.getWidth();
-			gRiftVBuffer = mScreen.getHeight();
-
-			LL_INFOS() << "Oculus Rift: FBOs requested at " << resX << " x " << resY << LL_ENDL;
-			LL_INFOS() << "Oculus Rift: FBO resolutions used: " << gRiftHBuffer << " x " << gRiftVBuffer << LL_ENDL;
+			if (mScreen.getWidth() != gRiftHBuffer || mScreen.getHeight() != gRiftVBuffer)
+			{
+				LL_WARNS() << "Oculus Rift: FBOs and Rift textures not the same size! FBOs are " << mScreen.getWidth() << " x " << mScreen.getHeight() << LL_ENDL;
+			}
 		}
 
-		setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the correct place for this but it wasn't used here for SDK <= 0.5.
+		setRiftSDKRendering(gRift3DEnabled);  // This is the correct place for this but it wasn't used here for SDK <= 0.5.
 		// </CV:David>
+		
 		if (samples > 0)
 		{
 			if (!mFXAABuffer.allocate(resX, resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, FALSE, samples)) return false;

@@ -11974,6 +11974,27 @@ Enter a domain name to be added to the [LIST]:
      name="okbutton"
      yestext="OK"/>
   </notification>
+
+  <notification
+   icon="notifymodal.tga"
+   name="AlertCouldNotoinitializeRiftRendering"
+   type="alertmodal">
+    Could not initialize Rift rendering. Please restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+  <notification
+   icon="notifymodal.tga"
+   name="AlertCouldNotStartRiftRendering"
+   type="alertmodal">
+    Could not start Rift rendering. Please restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
   <!-- <CV:David> -->
 
   <notification

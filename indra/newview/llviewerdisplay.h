@@ -59,6 +59,7 @@ extern BOOL gStereoscopic3DConfigured;
 extern BOOL gStereoscopic3DEnabled;
 extern BOOL gRift3DConfigured;
 extern BOOL gRift3DEnabled;
+extern BOOL gRiftInitialized;
 extern unsigned gRiftHmdCaps;
 const U32 RIFT_OPERATE_SEATED = 0;
 const U32 RIFT_OPERATE_STANDING = 1;
