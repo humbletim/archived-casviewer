@@ -10518,6 +10518,12 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerJoystick::getInstance()->toggleFlycam();
 	}
 
+	// Close all dialogs so that application doesn't get confused
+	if (gFloaterView)
+	{
+		gFloaterView->closeAllChildren(false);
+	}
+
 	if (on)
 	{
 		LL_INFOS() << "Oculus Rift: Enter Riftlook mode" << LL_ENDL;
