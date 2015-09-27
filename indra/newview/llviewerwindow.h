@@ -423,8 +423,6 @@ public:
 //-TT Window Title Access
 	void			setTitle(const std::string& win_title);
 //-TT
-	// DJRTODO 0.6 ...
-	//void			initializeRiftUndistort(ovrDistortionMesh* mesh, int eye);  // <CV:David>
 
 private:
 	bool                    shouldShowToolTipFor(LLMouseHandler *mh);
@@ -439,10 +437,9 @@ private:
 	S32				getChatConsoleBottomPad(); // Vertical padding for child console rect, varied by bottom clutter
 	LLRect			getChatConsoleRect(); // Get optimal cosole rect.
 	// <CV:David>
-	LLVector2		riftUndistort(U32 x, U32 y);  // DJRTODO 0.6
-	// DJRTODO 0.6 ...
-	//LLVector2		riftUndistortCalc(ovrDistortionMesh* mesh, U32 x, U32 y, U32 eye);
-	//LLVector2*		mRiftUndistortCache;
+	LLCoordGL		riftScaleMouseCoordinates(LLCoordGL coord);
+	LLVector2		riftUnscaleMouseCoordinates(LLCoordGL coord);
+	void			render_cursor();
 	// </CV:David>
 
 private:

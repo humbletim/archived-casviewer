@@ -765,9 +765,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			// DJRTODO 0.6: Use gRiftHMD->EyeRenderOrder[] properly to render in specified order.
 
-			// Left eye ...
-			gRiftCurrentEye = 0;
+			// First eye ...
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
+			gRiftCurrentEye = eye == ovrEye_Left ? 0 : 1;
 			gRiftSwapTextureSet[eye]->CurrentIndex = (gRiftSwapTextureSet[eye]->CurrentIndex + 1) % gRiftSwapTextureSet[eye]->TextureCount;
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_LEFT);
@@ -775,9 +775,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			render_ui();
 			LLSpatialGroup::sNoDelete = FALSE;
 
-			// Right eye ...
-			gRiftCurrentEye = 1;
+			// Second eye ...
 			eye = gRiftHMD->EyeRenderOrder[1];
+			gRiftCurrentEye = eye == ovrEye_Left ? 0 : 1;
 			gRiftSwapTextureSet[eye]->CurrentIndex = (gRiftSwapTextureSet[eye]->CurrentIndex + 1) % gRiftSwapTextureSet[eye]->TextureCount;
 			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			render_frame(RENDER_RIFT_RIGHT);
@@ -1627,7 +1627,7 @@ void render_ui(F32 zoom_factor, int subfield)
 		{
 			gPipeline.mScreen.flush();
 
-			ovrEyeType eye = gRiftHMD->EyeRenderOrder[gRiftCurrentEye];
+			ovrEyeType eye = gRiftCurrentEye == 0 ? ovrEye_Left : ovrEye_Right;
 			ovrGLTexture* tex = (ovrGLTexture*)&gRiftSwapTextureSet[eye]->Textures[gRiftSwapTextureSet[eye]->CurrentIndex];
 			LLRenderTarget::copyContentsToTexture(gPipeline.mScreen, 0, 0, gRiftHBuffer, gRiftVBuffer, 
 				tex->OGL.TexId, 0, 0, gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -1895,7 +1895,7 @@ void render_ui_2d()
 		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
 
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		S32 offset = (gRiftCurrentEye == 0) ? -uiDepth : uiDepth;  // DJRTODO 0.6: I had to reverse these for some reason. Why?
+		S32 offset = (gRiftCurrentEye == 0) ? uiDepth - gRiftLensOffset : -uiDepth + gRiftLensOffset;
 		S32 width = gRiftHBuffer;
 		S32 height = gRiftVBuffer;
 		LLGLEnable blend(GL_BLEND);
@@ -2016,18 +2016,6 @@ void setRiftSDKRendering(bool on)
 		{
 			calculateRiftHmdCaps();
 			ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
-
-			// DJRTODO 0.6: What to do with the following? ...
-			/*
-			// Set up mouse cursor positioning ...
-			ovrDistortionMesh meshData;
-			for (int eye = 0; eye < 2; eye += 1)
-			{
-				ovrHmd_CreateDistortionMesh(gRiftHMD, gRiftEyeRenderDesc[eye].Eye, gRiftEyeRenderDesc[eye].Fov, gRiftDistortionCaps, &meshData);
-				gViewerWindow->initializeRiftUndistort(&meshData, eye);
-				ovrHmd_DestroyDistortionMesh(&meshData);
-			}
-			*/
 
 			// Automatically dismiss HSW second and subsequent times into Riftlook ... 
 			// DJRTODO: Don't show at all once the API supports this again.

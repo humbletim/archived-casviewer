@@ -969,11 +969,9 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	//y = llround((F32)y / mDisplayScale.mV[VY]);
 	if (gRift3DEnabled)
 	{
-		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		S32 uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
-		LLVector2 fboXY = riftUndistort(x, y);
-		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
-		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
+		LLCoordGL fboXY = riftScaleMouseCoordinates(LLCoordGL(x, y));
+		x = llround((F32)fboXY.mX / mDisplayScale.mV[VX]);
+		y = llround((F32)fboXY.mY / mDisplayScale.mV[VX]);
 	}
 	else
 	{
@@ -1149,14 +1147,11 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 	// <CV:David>
 	//x = llround((F32)x / mDisplayScale.mV[VX]);
 	//y = llround((F32)y / mDisplayScale.mV[VY]);
-	S32 uiDelta = 0;
 	if (gRift3DEnabled)
 	{
-		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
-		LLVector2 fboXY = riftUndistort(x, y);
-		x = llround((F32)fboXY[0] / mDisplayScale.mV[VX]) + uiDelta;
-		y = llround((F32)fboXY[1] / mDisplayScale.mV[VX]);
+		LLCoordGL fboXY = riftScaleMouseCoordinates(LLCoordGL(x, y));
+		x = llround((F32)fboXY.mX / mDisplayScale.mV[VX]);
+		y = llround((F32)fboXY.mY / mDisplayScale.mV[VX]);
 	}
 	else
 	{
@@ -1177,10 +1172,7 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 		// If the current tool didn't process the click, we should show
 		// the pie menu.  This can be done by passing the event to the pie
 		// menu tool.
-		// <CV:David>
-		//LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
-		LLToolPie::getInstance()->handleRightMouseDown(x - uiDelta, y, mask);
-		// </CV:David>
+		LLToolPie::getInstance()->handleRightMouseDown(x, y, mask);
 		// show_context_menu( x, y, mask );
 	}
 
@@ -1728,8 +1720,6 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	mCurrResolutionIndex(0),
 	mProgressView(NULL),
 	mProgressViewMini(NULL)
-	// DJRTODO 0.6 ...
-	//mRiftUndistortCache(NULL)  // <CV:David>
 {
 	// gKeyboard is still NULL, so it doesn't do LLWindowListener any good to
 	// pass its value right now. Instead, pass it a nullary function that
@@ -2895,6 +2885,14 @@ void LLViewerWindow::draw()
 			LLUI::popMatrix();
 		}
 
+		// <<CV:David>
+		// Rendering the cursor here draws it in the UI buffer
+		// Render only for the left eye so that clicking on objects works as well as clicking on UI elements.
+		if (gRift3DEnabled && gRiftCurrentEye == 0)
+		{
+			render_cursor();
+		}
+		// <</CV:David>
 
 		if( gShowOverlayTitle && !mOverlayTitle.empty() )
 		{
@@ -3275,17 +3273,28 @@ void LLViewerWindow::moveCursorToCenter()
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
 		// <CV:David>
-		// DJRTDODO: Confirm operation
-		S32 x = gRift3DEnabled ? gRiftHFrame / 2 + gRiftLensOffset : getWindowWidthScaled() / 2;
-		S32 y = gRift3DEnabled ? gRiftVFrame / 2 : getWindowHeightScaled() / 2;
-		// <CV:David>
+		S32 x = gRift3DEnabled ? gRiftHBuffer / 2 : getWindowWidthScaled() / 2;
+		S32 y = gRift3DEnabled ? gRiftVBuffer / 2 : getWindowHeightScaled() / 2;
+		// </CV:David>
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
 		mLastMousePoint.set(x,y);
 		mCurrentMouseDelta.set(0,0);	
 
-		LLUI::setMousePositionScreen(x, y);	
+		// <CV:David>
+		//LLUI::setMousePositionScreen(x, y);	
+		if (gRift3DEnabled)
+		{
+			LLCoordGL glMousePos = LLCoordGL(x, y);
+			LLVector2 mousePos = riftUnscaleMouseCoordinates(glMousePos);
+			LLUI::setMousePositionScreen(mousePos[0], mousePos[1]);
+		}
+		else
+		{
+			LLUI::setMousePositionScreen(x, y);
+		}
+		// </CV:David>
 	}
 }
 
@@ -3371,9 +3380,10 @@ void LLViewerWindow::updateUI()
 	{
 		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
 		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
-		LLVector2 fboXY = riftUndistort(x, y);
-		x = fboXY[0] + uiDelta;
-		y = fboXY[1];
+
+		LLCoordGL fboXY = riftScaleMouseCoordinates(LLCoordGL(x, y));
+		x = fboXY.mX;
+		y = fboXY.mY;
 	}
 	// </CV:David>
 
@@ -5898,121 +5908,51 @@ LLRect LLViewerWindow::getChatConsoleRect()
 	return console_rect;
 }
 
-// <CV:David>
-// DJRTODO 0.6 ...
-/*
-LLVector2 LLViewerWindow::riftUndistortCalc(ovrDistortionMesh* mesh, U32 x, U32 y, U32 eye)
-{
-	// x: 0 .. gRiftHFrame
-	// y: 0 .. gRiveVFrame
-	// eye: 0 | 1
-
-	//typedef struct ovrDistortionMesh_
-	//{
-	//    ovrDistortionVertex* pVertexData;
-	//    unsigned short*      pIndexData;
-	//    unsigned int         VertexCount;
-	//    unsigned int         IndexCount;
-	//} ovrDistortionMesh;
-
-	//typedef struct ovrDistortionVertex_
-	//{
-	//    ovrVector2f ScreenPosNDC;    // [-1,+1],[-1,+1] over the entire framebuffer.
-	//    float       TimeWarpFactor;  // Lerp factor between time-warp matrices. Can be encoded in Pos.z.
-	//    float       VignetteFactor;  // Vignette fade factor. Can be encoded in Pos.w.
-	//    ovrVector2f TanEyeAnglesR;
-	//    ovrVector2f TanEyeAnglesG;
-	//    ovrVector2f TanEyeAnglesB;    
-	//} ovrDistortionVertex;
-
-	const int SIZE_X = 65;  // DK2 distortion mesh vertices are in matrix, 0..64 x 0..64.
-	const int SIZE_Y = 65;
-	if (SIZE_X * SIZE_Y != mesh->VertexCount)
-	{
-		LL_ERRS() << "Rift distortion mesh unexpected size!" << LL_ENDL;
-	}
-
-	// Search for quad that contains the normalized coordinates, centre out ...
-	F32 xNormalized = (F32)eye + ((F32)x - (F32)gRiftHFrame) / (F32)gRiftHFrame;  // L screen goes from -1 to 0, R screen from 0 to +1
-	F32 yNormalized = ((F32)y - (F32)gRiftVFrame / 2.f) / ((F32)gRiftVFrame / 2.f);
-	ovrDistortionVertex* v;
-	int i = (SIZE_X - 1) / 2;
-	int j = (SIZE_Y - 1) / 2;
-	bool found = false;
-	while (!found)
-	{
-		v = mesh->pVertexData + (j * SIZE_X + i);
-
-		if (xNormalized < v->ScreenPosNDC.x && i > 0)
-		{
-			i -= 1;
-		}
-		else if (xNormalized > (v + 1)->ScreenPosNDC.x && i < SIZE_X - 1)
-		{
-			i += 1;
-		}
-		else if (yNormalized > v->ScreenPosNDC.y && j > 0)
-		{
-			j -= 1;
-		}
-		else if (yNormalized < (v + SIZE_X)->ScreenPosNDC.y && j < SIZE_Y - 1)
-		{
-			j += 1;
-		}
-		else
-		{
-			found = true;
-		}
-	}
-	v = mesh->pVertexData + (j * SIZE_X + i);
-
-	// Interpolate coordinate values ...
-	ovrDistortionVertex* v00 = v;
-	ovrDistortionVertex* v01 = v + 1;
-	ovrDistortionVertex* v10 = v + SIZE_X;
-	ovrDistortionVertex* v11 = v + SIZE_X + 1;
-
-	F32 uu = (xNormalized - v00->ScreenPosNDC.x) / (v01->ScreenPosNDC.x - v00->ScreenPosNDC.x);
-	F32 vv = (yNormalized - v00->ScreenPosNDC.y) / (v10->ScreenPosNDC.y - v00->ScreenPosNDC.y);
-
-	F32 tanEyeAngleX = lerp2d(v00->TanEyeAnglesG.x, v01->TanEyeAnglesG.x, v10->TanEyeAnglesG.x, v11->TanEyeAnglesG.x, uu, vv);
-	F32 tanEyeAngleY = lerp2d(v00->TanEyeAnglesG.y, v01->TanEyeAnglesG.y, v10->TanEyeAnglesG.y, v11->TanEyeAnglesG.y, uu, vv);
-	
-	F32 riftTanFOV = tan(gRiftFOV / 2);
-	F32 xCorrected = (tanEyeAngleX / riftTanFOV * (F32)gRiftVSample + (F32)gRiftHSample) / 2.f;
-	F32 yCorrected = (-tanEyeAngleY / riftTanFOV * (F32)gRiftVSample + (F32)gRiftVSample) / 2.f;
-
-	xCorrected += eye ? -gRiftLensOffset : +gRiftLensOffset;
-
-	return LLVector2(xCorrected, yCorrected);
+//<CV:David>
+LLCoordGL LLViewerWindow::riftScaleMouseCoordinates(LLCoordGL coord) {
+	// Scale viewer window coordinates to Rift buffer coordinates
+	LLCoordWindow windowSize;
+	gViewerWindow->getWindow()->getSize(&windowSize);
+	float scaleX = (float)gRiftHBuffer / (float)windowSize.mX;
+	float scaleY = (float)gRiftVBuffer / (float)windowSize.mY;
+	float scale = std::max(scaleX, scaleY);
+	int x = (int)(scale * (float)coord.mX);
+	int y = (int)(scale * (float)coord.mY);
+	return LLCoordGL(x, y);
 }
 
-void LLViewerWindow::initializeRiftUndistort(ovrDistortionMesh* mesh, int eye)
-{
-	// Precalculate all coordinate values for use in riftUndistort().
-
-	if (mRiftUndistortCache == NULL)
-	{
-		mRiftUndistortCache = new LLVector2[2 * gRiftHFrame * gRiftVFrame];
-	}
-
-	for (int y = 0; y < gRiftVFrame; y += 1)
-	{
-		for (int x = 0; x < gRiftHFrame; x += 1)
-		{
-			mRiftUndistortCache[(eye * gRiftVFrame + y) * gRiftHFrame + x] = LLVector2(riftUndistortCalc(mesh, x, y, eye));
-		}
-	}
+LLVector2 LLViewerWindow::riftUnscaleMouseCoordinates(LLCoordGL coord) {
+	// Scale viewer window coordinates to Rift buffer coordinates
+	LLCoordWindow windowSize;
+	gViewerWindow->getWindow()->getSize(&windowSize);
+	float scaleX = (float)gRiftHBuffer / (float)windowSize.mX;
+	float scaleY = (float)gRiftVBuffer / (float)windowSize.mY;
+	float scale = std::max(scaleX, scaleY);
+	int x = (int)((float)coord.mX / scale);
+	int y = (int)((float)coord.mY / scale);
+	return LLVector2(x, y);
 }
-*/
 
-LLVector2 LLViewerWindow::riftUndistort(U32 x, U32 y)
-{
-	// DJRTODO 0.6 ...
-	//int eye = x < gRiftHFrame ? 0 : 1;
-	//
-	//return mRiftUndistortCache[(eye * gRiftVFrame + y) * gRiftHFrame + (x % gRiftHFrame)];
-	return LLVector2(100, 100);
+void LLViewerWindow::render_cursor() {
+	// Get cursor position
+	LLCoordGL mousePosition = gViewerWindow->getCurrentMouse();
+
+	// Scale coordinates
+	mousePosition = gViewerWindow->riftScaleMouseCoordinates(mousePosition);
+	U32 x = mousePosition.mX;
+	U32 y = mousePosition.mY;
+
+	// Draw cross-hair at the cursor position
+	if (mWindow->getCursor() == UI_CURSOR_HAND)
+	{
+		gl_line_2d(x - 8, y, x + 8, y, LLColor4(1.0f, 0.5f, 0.5f));
+		gl_line_2d(x, y - 8, x, y + 8, LLColor4(1.0f, 0.5f, 0.5f));
+	}
+	else
+	{
+		gl_line_2d(x - 8, y, x + 8, y, LLColor4(1.0f, 1.0f, 1.0f));
+		gl_line_2d(x, y - 8, x, y + 8, LLColor4(1.0f, 1.0f, 1.0f));
+	}
 }
 // </CV:David>
 

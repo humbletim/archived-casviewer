@@ -1592,7 +1592,6 @@ void LLAppViewer::initRift()
 		LL_INFOS("InitInfo") << "Oculus Rift: DefaultEyeFov tan R = " << gRiftHMD->DefaultEyeFov[1].UpTan << ", " << gRiftHMD->DefaultEyeFov[1].DownTan << ", " << gRiftHMD->DefaultEyeFov[1].LeftTan << ", " << gRiftHMD->DefaultEyeFov[1].RightTan << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan L = " << gRiftHMD->MaxEyeFov[0].UpTan << ", " << gRiftHMD->MaxEyeFov[0].DownTan << ", " << gRiftHMD->MaxEyeFov[0].LeftTan << ", " << gRiftHMD->MaxEyeFov[0].RightTan << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: MaximumEyeFov tan R = " << gRiftHMD->MaxEyeFov[1].UpTan << ", " << gRiftHMD->MaxEyeFov[1].DownTan << ", " << gRiftHMD->MaxEyeFov[1].LeftTan << ", " << gRiftHMD->MaxEyeFov[1].RightTan << std::setprecision(3) << LL_ENDL;
-		// DJRTODO: Use EyeRenderOrder
 		LL_INFOS("InitInfo") << "Oculus Rift: EyeRenderOrder = " << gRiftHMD->EyeRenderOrder[0] << ", " << gRiftHMD->EyeRenderOrder[1] << LL_ENDL;
 
 		//LL_INFOS("InitInfo") << "Oculus Rift: User = " << ovrHmd_GetString(gRiftHMD, "User", "User") << LL_ENDL;
