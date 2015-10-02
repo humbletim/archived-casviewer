@@ -479,6 +479,8 @@ extern F32 gRiftEyeDeltaR;
 extern F32 gRiftCullCameraDelta;
 extern F32 gRiftHeadOffset;
 extern bool gRiftHSWEnabled;
+extern ovrGLTexture* gRiftMirrorTexture;
+extern GLuint gRiftMirrorFBO;
 // </CV:David>
 
 // <CV:David>

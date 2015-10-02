@@ -793,6 +793,14 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				LL_INFOS() << "Oculus Rift: ovrHmd_SubmitFrame() failed!" << LL_ENDL;
 			}
 			// DJRTODO 0.6: isVisible = (result == ovrSuccess);
+
+			// Copy Rift display to application window ...
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			GLint w = gRiftMirrorTexture->OGL.Header.TextureSize.w;
+			GLint h = gRiftMirrorTexture->OGL.Header.TextureSize.h;
+			glBlitFramebuffer(0, h, w, 0, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
@@ -821,7 +829,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			glDrawBuffer(GL_BACK);  // Needed so that snapshot on exit doesn't include UI.
 		}
 
-		if (!gSnapshot && !gRift3DEnabled)
+		if (!gSnapshot)
 		{
 			swap();
 		}

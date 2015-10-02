@@ -414,6 +414,8 @@ F32 gRiftEyeDeltaR;			// ""
 F32 gRiftCullCameraDelta;	// Distance back to move cull frustum camera.
 F32 gRiftHeadOffset;		// Head offset when toggled into Riftlook.
 bool gRiftHSWEnabled;
+ovrGLTexture* gRiftMirrorTexture;
+GLuint gRiftMirrorFBO;
 // </CV:David>
 
 // <CV:David>

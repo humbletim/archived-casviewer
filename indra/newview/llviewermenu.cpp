@@ -10528,10 +10528,13 @@ void CVToggle3D::setRiftlook(bool on)
 	{
 		LL_INFOS() << "Oculus Rift: Enter Riftlook mode" << LL_ENDL;
 
+		S32 appWindowWidth = gViewerWindow->getWindowWidthRaw();
+		S32 appWindowHeight = gViewerWindow->getWindowHeightRaw();
+
 		if (!gSavedSettings.getBOOL("FullScreen"))
 		{
-			mWindowHResolution = gViewerWindow->getWindowWidthRaw();
-			mWindowVResolution = gViewerWindow->getWindowHeightRaw();
+			mWindowHResolution = appWindowWidth;
+			mWindowVResolution = appWindowHeight;
 		}
 
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
@@ -10546,6 +10549,12 @@ void CVToggle3D::setRiftlook(bool on)
 
 		gAgentAvatarp->updateHeadOffset();
 		gRiftHeadOffset = gAgentAvatarp->mHeadOffset.mV[VZ];
+
+		// Create mirror texture and an FBO used to copy mirror texture to back buffer
+		ovrHmd_CreateMirrorTextureGL(gRiftHMD, GL_RGBA, appWindowWidth, appWindowHeight, (ovrTexture**)&gRiftMirrorTexture);
+		glGenFramebuffers(1, &gRiftMirrorFBO);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);
+		glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gRiftMirrorTexture->OGL.TexId, 0);
 	}
 	else
 	{
@@ -10566,6 +10575,11 @@ void CVToggle3D::setRiftlook(bool on)
 		gSavedSettings.setF32("CameraAngle", DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
+
+		if (gRift3DEnabled)
+		{
+			ovrHmd_DestroyMirrorTexture(gRiftHMD, (ovrTexture*)gRiftMirrorTexture);
+		}
 	}
 
 	if (was_in_flycam)
