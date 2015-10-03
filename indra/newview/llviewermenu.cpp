@@ -10502,7 +10502,6 @@ void CVToggle3D::setStereoscopic(bool on)
 
 void CVToggle3D::setRiftlook(bool on)
 {
-	// DJRTODO 0.6: OK?...
 	if (!gRiftInitialized)
 	{
 		if (on)

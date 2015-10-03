@@ -763,8 +763,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		{
 			LLViewerCamera::getInstance()->calcStereoValues();
 
-			// DJRTODO 0.6: Use gRiftHMD->EyeRenderOrder[] properly to render in specified order.
-
 			// First eye ...
 			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
 			gRiftCurrentEye = eye == ovrEye_Left ? 0 : 1;
@@ -789,10 +787,9 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			ovrLayerHeader* layers = &gRiftLayer.Header;
 			ovrResult result = ovrHmd_SubmitFrame(gRiftHMD, 0, nullptr, &layers, 1);
 			if (result != ovrSuccess) {
-				// DJRTODO 0.6: Anything to do?
+				// DJRTODO: Switch out of Riftlook?
 				LL_INFOS() << "Oculus Rift: ovrHmd_SubmitFrame() failed!" << LL_ENDL;
 			}
-			// DJRTODO 0.6: isVisible = (result == ovrSuccess);
 
 			// Copy Rift display to application window ...
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);

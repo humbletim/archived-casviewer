@@ -642,13 +642,12 @@ void LLRenderTarget::copyContentsToTexture(LLRenderTarget& source, S32 srcX0, S3
 	stop_glerror();
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, srcX0, srcY0, dstX0, dstY0, dstX1 - dstX0, dstY1 - dstY0);
 	stop_glerror();
-	// DJRTODO 0.6: ARe the following lines needed or useful?
-	glBindTexture(GL_TEXTURE_2D, 0);
-	stop_glerror();
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	stop_glerror();
-	glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
-	stop_glerror();
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	//stop_glerror();
+	//glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	//stop_glerror();
+	//glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+	//stop_glerror();
 }
 // </CV:David>
 
