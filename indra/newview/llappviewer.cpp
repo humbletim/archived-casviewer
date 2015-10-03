@@ -1758,6 +1758,13 @@ void LLAppViewer::initRift()
 		}
 	}
 }
+
+S32 LLAppViewer::getRiftUIDepth()
+{
+	// Convert user-friendly value to code-friendly value.
+	return 120 - gSavedSettings.getU32("RiftUIDepth");
+}
+
 // </CV:David>
 
 void LLAppViewer::initMaxHeapSize()

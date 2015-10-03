@@ -145,7 +145,7 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 		S32 uiDelta = 0;
 		if (gRift3DEnabled)
 		{
-			S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+			S32 uiDepth = LLAppViewer::instance()->getRiftUIDepth();
 			uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
 			x = x - uiDelta;
 		}

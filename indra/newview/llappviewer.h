@@ -226,6 +226,8 @@ public:
 
 	// llcorehttp init/shutdown/config information.
 	LLAppCoreHttp & getAppCoreHttp()			{ return mAppCoreHttp; }
+
+	S32 getRiftUIDepth();  // <CV:David>
 	
 protected:
 	virtual bool initWindow(); // Initialize the viewer's window.

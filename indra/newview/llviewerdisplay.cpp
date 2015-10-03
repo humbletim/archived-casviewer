@@ -1902,7 +1902,7 @@ void render_ui_2d()
 		gSplatTextureRectProgram.bind();
 		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
 
-		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDepth = LLAppViewer::instance()->getRiftUIDepth();
 		S32 offset = (gRiftCurrentEye == 0) ? uiDepth - gRiftLensOffset : -uiDepth + gRiftLensOffset;
 		S32 width = gRiftHBuffer;
 		S32 height = gRiftVBuffer;

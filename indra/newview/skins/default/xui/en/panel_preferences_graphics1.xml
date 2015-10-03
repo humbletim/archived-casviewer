@@ -1758,7 +1758,7 @@
        follows="left|top"
        height="16"
        increment="1"
-       initial_value="20"
+       initial_value="100"
        layout="topleft"
        left="54"
        max_val="120"
