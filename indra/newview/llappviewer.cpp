@@ -1668,26 +1668,22 @@ void LLAppViewer::initRift()
 
 		if (gRiftInitialized)
 		{
-			// DJRTODO 0.6: Refactor
 			for (int i = 0; i < gRiftSwapTextureSet[0]->TextureCount; ++i)
 			{
-				// DJRTODO 0.6: Do this here or elsewhere?
 				ovrGLTexture* tex = (ovrGLTexture*)&gRiftSwapTextureSet[0]->Textures[i];
 				glBindTexture(GL_TEXTURE_2D, tex->OGL.TexId);
 
-				// DJRTODO 0.6: Needed or not?
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			}
+
 			for (int i = 0; i < gRiftSwapTextureSet[1]->TextureCount; ++i)
 			{
-				// DJRTODO 0.6: Do this here or elsewhere?
 				ovrGLTexture* tex = (ovrGLTexture*)&gRiftSwapTextureSet[1]->Textures[i];
 				glBindTexture(GL_TEXTURE_2D, tex->OGL.TexId);
 
-				// DJRTODO 0.6: Needed or not?
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1727,24 +1723,22 @@ void LLAppViewer::initRift()
 
 			gRiftCullCameraDelta = gRiftEyeDeltaL / gRiftHMD->DefaultEyeFov[0].LeftTan;
 
-			// DJRTODO 0.6: Check per "Advanced Rendering Configuration"
 			gRiftLayer.Header.Type      = ovrLayerType_EyeFov;
 			gRiftLayer.Header.Flags     = ovrLayerFlag_TextureOriginAtBottomLeft;  // For OpenGL.
 			gRiftLayer.ColorTexture[0]  = gRiftSwapTextureSet[0];
 			gRiftLayer.ColorTexture[1]  = gRiftSwapTextureSet[1];
 			gRiftLayer.Fov[0]           = gRiftEyeRenderDesc[0].Fov;
 			gRiftLayer.Fov[1]           = gRiftEyeRenderDesc[1].Fov;
-			//gRiftLayer.Viewport[0]      = Recti(0, 0,                bufferSize.w / 2, bufferSize.h);
+
 			gRiftLayer.Viewport[0].Pos.x = 0;
 			gRiftLayer.Viewport[0].Pos.y = 0;
 			gRiftLayer.Viewport[0].Size.h = gRiftVBuffer;
 			gRiftLayer.Viewport[0].Size.w = gRiftHBuffer;
-			//gRiftLayer.Viewport[1]      = ovrRecti(bufferSize.w / 2, 0, bufferSize.w / 2, bufferSize.h);
+
 			gRiftLayer.Viewport[1].Pos.x = 0;
 			gRiftLayer.Viewport[1].Pos.y = 0;
 			gRiftLayer.Viewport[1].Size.h = gRiftVBuffer;
 			gRiftLayer.Viewport[1].Size.w = gRiftHBuffer;
-			// ld.RenderPose[] is updated later per frame.
 
 			// DJRTODO: Which of the following to use? ...
 			gRiftLensOffset = llround((F32)gRiftHSample * (1 - horizontalTanIn) / (2.f * horizontalTanOut));
