@@ -3104,6 +3104,8 @@ void LLAgentCamera::zeroSensors()
 			else
 			{
 				gAgent.rotate(mEyeYaw, LLVector3::z_axis);
+				gAgent.resetAxes();
+				gViewerWindow->moveCursorToCenter();
 			}
 			ovrHmd_RecenterPose(gRiftHMD);
 			mLastRiftYaw = 0.f;
