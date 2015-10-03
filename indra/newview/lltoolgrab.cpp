@@ -145,9 +145,9 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 		S32 uiDelta = 0;
 		if (gRift3DEnabled)
 		{
-			S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-			uiDelta = (x > gRiftHFrame) ? -uiDepth : uiDepth;
-			x = x + uiDelta;
+			S32 uiDepth = LLAppViewer::instance()->getRiftUIDepth();
+			uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+			x = x - uiDelta;
 		}
 		// <CV:David>
 
@@ -158,7 +158,7 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 		// Unapply UI offset.
 		if (gRift3DEnabled)
 		{
-			x = x - uiDelta;
+			x = x + uiDelta;
 		}
 		// <CV:David>
 	}
@@ -565,8 +565,7 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 	if (gRift3DEnabled)
 	{
 		// HACK: This is a temporary(?) work-around to make dragging physical objects work somewhat in Riftlook.
-		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
-		dx += (14 + uiDepth);
+		dx += 2;
 	}
 	// </CV:David>
 

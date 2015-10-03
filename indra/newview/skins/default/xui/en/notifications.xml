@@ -11933,6 +11933,28 @@ Enter a domain name to be added to the [LIST]:
   <!-- <CV:David> -->
   <notification
    icon="notifymodal.tga"
+   name="AlertRiftLibraryNotInitialized"
+   type="alertmodal">
+    Oculus library could not be initialized. Please check Oculus runtime installed and restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
+  <notification
+   icon="notifymodal.tga"
+   name="AlertSimulatedRiftNotCreated"
+   type="alertmodal">
+    Simulated Rift could not be created. Please check Oculus runtime installed and restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
+  <notification
+   icon="notifymodal.tga"
    name="AlertRiftHMDNotFound"
    type="alertmodal">
     Rift HMD display not found. Please check connections and restart viewer.
@@ -11947,6 +11969,27 @@ Enter a domain name to be added to the [LIST]:
    name="AlertRiftSensorsNotFound"
    type="alertmodal">
     Rift HMD sensors not found. Please check connections and restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+
+  <notification
+   icon="notifymodal.tga"
+   name="AlertCouldNotoinitializeRiftRendering"
+   type="alertmodal">
+    Could not initialize Rift rendering. Please restart viewer.
+    <tag>confirm</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
+  </notification>
+  <notification
+   icon="notifymodal.tga"
+   name="AlertCouldNotStartRiftRendering"
+   type="alertmodal">
+    Could not start Rift rendering. Please restart viewer.
     <tag>confirm</tag>
     <usetemplate
      name="okbutton"

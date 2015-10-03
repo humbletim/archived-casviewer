@@ -139,7 +139,16 @@ BOOL LLToolPie::handleRightMouseDown(S32 x, S32 y, MASK mask)
 	// don't pick transparent so users can't "pay" transparent objects
 //	mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE);
 // [SL:KB] - Patch: UI-PickRiggedAttachment | Checked: 2012-07-12 (Catznip-3.3)
-	mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE, TRUE);
+	// <CV:David>
+	//mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE, TRUE);
+	S32 uiDelta = 0;
+	if (gRift3DEnabled)
+	{
+		S32 uiDepth = LLAppViewer::instance()->getRiftUIDepth();
+		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
+	}
+	mPick = gViewerWindow->pickImmediate(x - uiDelta, y, FALSE, TRUE, TRUE);
+	// </CV:David>
 // [/SL:KB]
 	mPick.mKeyMask = mask;
 
@@ -1902,7 +1911,7 @@ BOOL LLToolPie::handleRightClickPick()
 	S32 uiDelta = 0;
 	if (gRift3DEnabled)
 	{
-		S32 uiDepth = gSavedSettings.getU32("RiftUIDepth");
+		S32 uiDepth = LLAppViewer::instance()->getRiftUIDepth();
 		uiDelta = (x > gRiftHFrame) ? uiDepth : -uiDepth;
 		x = x + uiDelta;
 	}

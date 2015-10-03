@@ -2233,7 +2233,8 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	// <CV:David>
 	if (gRift3DEnabled)
 	{
-		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
+		ovrFrameTiming frameTiming = ovrHmd_GetFrameTiming(gRiftHMD, 0);
+		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, frameTiming.DisplayMidpointSeconds);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
 		{
 			LL_INFOS() << "Oculus Rift: Sensor found toggling into Riftlook" << LL_ENDL;  // DJRTODO: Delete? No, if can cope with sensor being plugged in at runtime.
@@ -3032,11 +3033,14 @@ void LLAgentCamera::loadCameraPosition()
 
 void LLAgentCamera::calcRiftValues()
 {
-	ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
-	// DJRTODO: Is this the correct timing to use? See SDK doc 8.2.4.
+	ovrFrameTiming frameTiming = ovrHmd_GetFrameTiming(gRiftHMD, 0);
+	ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, frameTiming.DisplayMidpointSeconds);
 	if (!(trackingState.StatusFlags & ovrStatus_OrientationTracked)) {
 		//DJRTODO: What to do?!
 	}
+
+	ovrVector3f hmdToEyeViewOffset[2] = { gRiftEyeRenderDesc[0].HmdToEyeViewOffset, gRiftEyeRenderDesc[1].HmdToEyeViewOffset };
+	ovr_CalcEyePoses(trackingState.HeadPose.ThePose, hmdToEyeViewOffset, gRiftLayer.RenderPose);
 
 	float yaw, roll, pitch;
 	OVR::Posef pose = trackingState.HeadPose.ThePose;
@@ -3089,7 +3093,8 @@ void LLAgentCamera::zeroSensors()
 	{
 		LL_INFOS() << "LLAgentCamera::zeroSensors()" << LL_ENDL;
 
-		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, gRiftFrameTiming.ScanoutMidpointSeconds);
+		ovrFrameTiming frameTiming = ovrHmd_GetFrameTiming(gRiftHMD, 0);
+		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, frameTiming.DisplayMidpointSeconds);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
 		{
 			if (LLViewerJoystick::getInstance()->getOverrideCamera())
@@ -3099,6 +3104,8 @@ void LLAgentCamera::zeroSensors()
 			else
 			{
 				gAgent.rotate(mEyeYaw, LLVector3::z_axis);
+				gAgent.resetAxes();
+				gViewerWindow->moveCursorToCenter();
 			}
 			ovrHmd_RecenterPose(gRiftHMD);
 			mLastRiftYaw = 0.f;

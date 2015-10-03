@@ -625,6 +625,32 @@ void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0
 	}
 }
 
+// <CV:David>
+void LLRenderTarget::copyContentsToTexture(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
+										   U32 destination, S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter)
+{
+	if (!source.mFBO)
+	{
+		LL_WARNS() << "Cannot copy contents for non FBO render sources." << LL_ENDL;
+		return;
+	}
+
+	stop_glerror();
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, source.mFBO);
+	stop_glerror();
+	glBindTexture(GL_TEXTURE_2D, destination);
+	stop_glerror();
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, srcX0, srcY0, dstX0, dstY0, dstX1 - dstX0, dstY1 - dstY0);
+	stop_glerror();
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	//stop_glerror();
+	//glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	//stop_glerror();
+	//glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+	//stop_glerror();
+}
+// </CV:David>
+
 bool LLRenderTarget::isComplete() const
 {
 	return (!mTex.empty() || mDepth) ? true : false;
@@ -637,6 +663,3 @@ void LLRenderTarget::getViewport(S32* viewport)
 	viewport[2] = mResX;
 	viewport[3] = mResY;
 }
-
-
-

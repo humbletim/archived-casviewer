@@ -226,6 +226,8 @@ public:
 
 	// llcorehttp init/shutdown/config information.
 	LLAppCoreHttp & getAppCoreHttp()			{ return mAppCoreHttp; }
+
+	S32 getRiftUIDepth();  // <CV:David>
 	
 protected:
 	virtual bool initWindow(); // Initialize the viewer's window.
@@ -451,11 +453,11 @@ extern BOOL gPeriodicSlowFrame;
 
 // <CV:David>
 extern ovrHmd gRiftHMD;
-extern ovrFrameTiming gRiftFrameTiming;
-extern ovrGLConfig gRiftConfig;
 extern ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 extern ovrFovPort gRiftEyeFov[2];
-extern ovrGLTexture gRiftEyeTextures[2];
+extern ovrSwapTextureSet* gRiftSwapTextureSet[2];
+extern bool gRiftSwapTextureSetCreated[2];
+extern ovrLayerEyeFov gRiftLayer;
 
 extern bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
 extern bool gDoSetRiftlookValue;  // DJRTODO: Temporarily use while using DK2 extended mode
@@ -479,6 +481,8 @@ extern F32 gRiftEyeDeltaR;
 extern F32 gRiftCullCameraDelta;
 extern F32 gRiftHeadOffset;
 extern bool gRiftHSWEnabled;
+extern ovrGLTexture* gRiftMirrorTexture;
+extern GLuint gRiftMirrorFBO;
 // </CV:David>
 
 // <CV:David>

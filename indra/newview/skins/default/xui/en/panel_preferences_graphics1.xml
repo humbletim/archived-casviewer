@@ -1758,7 +1758,7 @@
        follows="left|top"
        height="16"
        increment="1"
-       initial_value="20"
+       initial_value="100"
        layout="topleft"
        left="54"
        max_val="120"
@@ -1810,76 +1810,40 @@
        width="50" />
 
       <check_box
-       control_name="RiftDynamicPrediction"
+       control_name="RiftMirrorToDesktop"
        height="16"
        initial_value="true"
-       label="Dynamic prediction"
-       left="214"
-       name="RiftDynamicPrediction"
-       width="50"
-       top="324" >
-        <check_box.commit_callback
-          function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-      <check_box
-       control_name="RiftTimewarp"
-       height="16"
-       initial_value="true"
-       label="Timewarp"
+       label="Mirror Rift display to desktop"
        layout="topleft"
-       left="214"
-       name="RiftTimewarp"
-       width="50" >
-       <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-      <check_box
-       control_name="RiftTimewarpWaits"
-       height="16"
-       initial_value="true"
-       label="Timewarp waits"
-       left="214"
-       name="RiftTimewarpWaits"
-       width="50" >
-       <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-
-      <check_box
-       control_name="RiftVSync"
-       height="16"
-       initial_value="true"
-       label="V sync"
-       layout="topleft"
-       left="364"
-       name="RiftVSync"
+       left="264"
+       name="RiftMirrorToDesktop"
        width="50"
-       top="324" >
-        <check_box.commit_callback
-          function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
+       top="324" />
       <check_box
        control_name="RiftLowPersistence"
        height="16"
        initial_value="true"
        label="Low persistence"
-       left="364"
+       layout="topleft"
+       left="264"
        name="RiftLowPersistence"
        width="50" >
-       <check_box.commit_callback
+        <check_box.commit_callback
          function="Pref.RiftHmdSettingsChanged" />
       </check_box>
       <check_box
-       control_name="RiftOverdrive"
+       control_name="RiftDynamicPrediction"
        height="16"
        initial_value="true"
-       label="Pixel overdrive"
-       left="364"
-       name="RiftOverDrive"
+       label="Dynamic prediction"
+       layout="topleft"
+       left="264"
+       name="RiftDynamicPrediction"
        width="50" >
-       <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
+        <check_box.commit_callback
+          function="Pref.RiftHmdSettingsChanged" />
       </check_box>
+
 
     </panel>
   </tab_container>

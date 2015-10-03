@@ -171,7 +171,6 @@ public:
 	static void toggle3D();
 	static void setStereoscopic(bool on);
 	static void setRiftlook(bool on);
-	static void setFullscreenThenRiftlook(bool on);  // DJRTODO: Temporarily use while using DK2 extended mode.
 
 private:
 	bool handleEvent(const LLSD& userdata);

@@ -4990,8 +4990,7 @@ void handle_reset_view()
 	{
 		if (gAgentCamera.cameraMouselook())
 		{
-			//CVToggle3D::setRiftlook(FALSE);
-			CVToggle3D::setFullscreenThenRiftlook(FALSE);  // DJRTODO: Temporarily use while using DK2 extended mode.
+			CVToggle3D::setRiftlook(FALSE);
 		}
 		else
 		{
@@ -10490,8 +10489,7 @@ void CVToggle3D::toggle3D()
 	}
 	else if (gOutputType == OUTPUT_TYPE_RIFT && gRift3DConfigured)
 	{
-		//setRiftlook(!gRift3DEnabled);
-		setFullscreenThenRiftlook(!gRift3DEnabled);  // DJRTDODO: Temporarily use while using DK2 extended mode.
+		setRiftlook(!gRift3DEnabled);
 	}
 }
 
@@ -10502,55 +10500,16 @@ void CVToggle3D::setStereoscopic(bool on)
 	LL_INFOS() << "Stereoscopic 3D: " << (gStereoscopic3DEnabled ? "Enter" : "Leave") << " stereoscopic 3D mode" << LL_ENDL;
 }
 
-// DJRTDODO: Temporarily use while using DK2 extended mode
-void CVToggle3D::setFullscreenThenRiftlook(bool on)
-{
-	gDoSetRiftlookValue = on;
-
-	#ifdef LL_WINDOWS
-		static RECT normal_rect;
-		static DWORD normal_style;
-		static DWORD normal_ex_style;
-		HWND hwnd = (HWND)gViewerWindow->getPlatformWindow();
-
-		if (!gSavedSettings.getBOOL("FullScreen") & gDoSetRiftlookValue)
-		{
-			GetWindowRect(hwnd, &normal_rect);
-			normal_style = GetWindowLong(hwnd, GWL_STYLE);
-			normal_ex_style = GetWindowLong(hwnd, GWL_EXSTYLE);
-		}
-
-		if (gDoSetRiftlookValue)
-		{
-			if (!gSavedSettings.getBOOL("FullScreen"))
-			{
-				mWindowHResolution = gViewerWindow->getWindowWidthRaw();
-				mWindowVResolution = gViewerWindow->getWindowHeightRaw();
-
-				SetWindowLong(hwnd, GWL_STYLE, normal_style & ~(WS_CAPTION | WS_THICKFRAME) | WS_POPUP);
-				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE) | WS_EX_APPWINDOW);
-				SendMessage((HWND)gViewerWindow->getPlatformWindow(), WM_SYSCOMMAND, SC_MAXIMIZE, 0);
-			}
-		}
-		else
-		{
-			if (!gSavedSettings.getBOOL("FullScreen"))
-			{
-				SendMessage((HWND)gViewerWindow->getPlatformWindow(), WM_SYSCOMMAND, SC_RESTORE, 0);
-				SetWindowLong(hwnd, GWL_STYLE, normal_style);
-				SetWindowLong(hwnd, GWL_EXSTYLE, normal_ex_style);
-			}
-		}
-
-	#endif
-
-	gDoSetRiftlook = true;
-}
-
 void CVToggle3D::setRiftlook(bool on)
 {
-	gRift3DEnabled = on;
-	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+	if (!gRiftInitialized)
+	{
+		if (on)
+		{
+			LL_WARNS() << "Oculus Rift: Could not enter Riftlook because Rift not initialized" << LL_ENDL;
+		}
+		return;
+	}
 
 	bool was_in_flycam = LLViewerJoystick::getInstance()->getOverrideCamera();
 	if (was_in_flycam)
@@ -10558,21 +10517,30 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerJoystick::getInstance()->toggleFlycam();
 	}
 
-	if (gRift3DEnabled)
+	// Close all dialogs so that application doesn't get confused
+	if (gFloaterView)
+	{
+		gFloaterView->closeAllChildren(false);
+	}
+
+	if (on)
 	{
 		LL_INFOS() << "Oculus Rift: Enter Riftlook mode" << LL_ENDL;
 
+		S32 appWindowWidth = gViewerWindow->getWindowWidthRaw();
+		S32 appWindowHeight = gViewerWindow->getWindowHeightRaw();
+
 		if (!gSavedSettings.getBOOL("FullScreen"))
 		{
-			// DJRTODO: Temporarily moved into setFullscreenThenRiftlook while use DK2 extended mode
-			//mWindowHResolution = gViewerWindow->getWindowWidthRaw();
-			//mWindowVResolution = gViewerWindow->getWindowHeightRaw();
+			mWindowHResolution = appWindowWidth;
+			mWindowVResolution = appWindowHeight;
 		}
 
 		if (gSavedSettings.getBOOL("VertexShaderEnable"))
 		{
-			gViewerWindow->reshape(gRiftHSample, gRiftVSample);
+			gViewerWindow->reshape(gRiftHBuffer, gRiftVBuffer);
 		}
+
 		LLViewerCamera::getInstance()->setAspect(gRiftAspect);
 		LLViewerCamera::getInstance()->setDefaultFOV(gRiftFOV);
 		gSavedSettings.setF32("CameraAngle", gRiftFOV);
@@ -10580,6 +10548,12 @@ void CVToggle3D::setRiftlook(bool on)
 
 		gAgentAvatarp->updateHeadOffset();
 		gRiftHeadOffset = gAgentAvatarp->mHeadOffset.mV[VZ];
+
+		// Create mirror texture and an FBO used to copy mirror texture to back buffer
+		ovrHmd_CreateMirrorTextureGL(gRiftHMD, GL_RGBA, appWindowWidth, appWindowHeight, (ovrTexture**)&gRiftMirrorTexture);
+		glGenFramebuffers(1, &gRiftMirrorFBO);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);
+		glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gRiftMirrorTexture->OGL.TexId, 0);
 	}
 	else
 	{
@@ -10600,6 +10574,11 @@ void CVToggle3D::setRiftlook(bool on)
 		gSavedSettings.setF32("CameraAngle", DEFAULT_FIELD_OF_VIEW);
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
+
+		if (gRift3DEnabled)
+		{
+			ovrHmd_DestroyMirrorTexture(gRiftHMD, (ovrTexture*)gRiftMirrorTexture);
+		}
 	}
 
 	if (was_in_flycam)
@@ -10607,11 +10586,12 @@ void CVToggle3D::setRiftlook(bool on)
 		LLViewerJoystick::getInstance()->toggleFlycam();
 	}
 
+	gRift3DEnabled = on;
+	gSavedSettings.setBOOL("Rift3DEnabled", gRift3DEnabled);
+
 	gViewerWindow->getRootView()->getChild<LLPanel>("status_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("nav_bar_container")->setVisible(!gRift3DEnabled);
 	gViewerWindow->getRootView()->getChild<LLPanel>("toolbar_view_holder")->setVisible(!gRift3DEnabled);
-
-	setRiftSDKRendering(gRift3DEnabled);  // DJRTODO: This is the incorrect place for this call but with buggy 0.4.1 it at least provides something onscreen.
 }
 	
 bool CVToggle3D::handleEvent(const LLSD& userdata)

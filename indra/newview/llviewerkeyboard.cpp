@@ -751,6 +751,8 @@ BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL
 {
 	// <CV:David>
 	// Dismiss Rift HSW upon keypress ...
+	// Not supported in SDK >= 0.6.
+	/*
 	if (gRift3DEnabled && gRiftHSWEnabled)
 	{
 		ovrHSWDisplayState hswDisplayState;
@@ -761,6 +763,7 @@ BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL
 			gRiftHSWEnabled = false;
 		}
 	}
+	*/
 	// </CV:David>
 
 	// check for re-map
