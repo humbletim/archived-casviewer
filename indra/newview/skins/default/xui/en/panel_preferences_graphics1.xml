@@ -1810,32 +1810,40 @@
        width="50" />
 
       <check_box
-       control_name="RiftDynamicPrediction"
+       control_name="RiftMirrorToDesktop"
        height="16"
        initial_value="true"
-       label="Dynamic prediction"
+       label="Mirror Rift display to desktop"
        layout="topleft"
-       left="214"
-       name="RiftDynamicPrediction"
+       left="264"
+       name="RiftMirrorToDesktop"
        width="50"
-       top="324" >
-        <check_box.commit_callback
-          function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-
+       top="324" />
       <check_box
        control_name="RiftLowPersistence"
        height="16"
        initial_value="true"
        label="Low persistence"
        layout="topleft"
-       left="364"
+       left="264"
        name="RiftLowPersistence"
-       width="50"
-       top="324" >
+       width="50" >
         <check_box.commit_callback
          function="Pref.RiftHmdSettingsChanged" />
       </check_box>
+      <check_box
+       control_name="RiftDynamicPrediction"
+       height="16"
+       initial_value="true"
+       label="Dynamic prediction"
+       layout="topleft"
+       left="264"
+       name="RiftDynamicPrediction"
+       width="50" >
+        <check_box.commit_callback
+          function="Pref.RiftHmdSettingsChanged" />
+      </check_box>
+
 
     </panel>
   </tab_container>
