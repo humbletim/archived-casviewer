@@ -825,6 +825,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				glBlitFramebuffer(0, h, w, 0, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 			}
+			else
+			{
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			}
 		}
 		else // gOutputType == OUTPUT_TYPE_STEREO && gStereoscopic3DEnabled && !output_for_snapshot
 		{
