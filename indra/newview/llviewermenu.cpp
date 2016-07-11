@@ -10566,6 +10566,12 @@ void CVToggle3D::setRiftlook(bool on)
 			glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		}
+
+		// Disable VSync for Rift compositor
+		if (wglSwapIntervalEXT)
+		{
+			wglSwapIntervalEXT(0);
+		}
 	}
 	else
 	{
