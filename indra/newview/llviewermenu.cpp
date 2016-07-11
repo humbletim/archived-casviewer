@@ -10465,6 +10465,7 @@ bool viewer_3d_configured()
 	}
 	else
 	{
+		// Note: Could probably disable toolbar button item by checking for gRiftInitialized here, if needed.
 		return gRift3DConfigured;
 	}
 }
@@ -10550,10 +10551,21 @@ void CVToggle3D::setRiftlook(bool on)
 		gRiftHeadOffset = gAgentAvatarp->mHeadOffset.mV[VZ];
 
 		// Create mirror texture and an FBO used to copy mirror texture to back buffer
-		ovrHmd_CreateMirrorTextureGL(gRiftHMD, GL_RGBA, appWindowWidth, appWindowHeight, (ovrTexture**)&gRiftMirrorTexture);
-		glGenFramebuffers(1, &gRiftMirrorFBO);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);
-		glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gRiftMirrorTexture->OGL.TexId, 0);
+		memset(&gRiftMirrorTextureDesc, 0, sizeof(gRiftMirrorTextureDesc));
+		gRiftMirrorTextureDesc.Width = appWindowWidth;
+		gRiftMirrorTextureDesc.Height = appWindowHeight;
+		gRiftMirrorTextureDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+		gRiftHaveMirrorTexture = ovr_CreateMirrorTextureGL(gRiftSession, &gRiftMirrorTextureDesc, &gRiftMirrorTexture) == ovrSuccess;
+		if (gRiftHaveMirrorTexture)
+		{
+			GLuint mirrorTexId;
+			ovr_GetMirrorTextureBufferGL(gRiftSession, gRiftMirrorTexture, &mirrorTexId);
+			glGenFramebuffers(1, &gRiftMirrorFBO);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);
+			glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTexId, 0);
+			glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		}
 	}
 	else
 	{
@@ -10575,9 +10587,18 @@ void CVToggle3D::setRiftlook(bool on)
 		rightclick_mousewheel_zoom();
 		gAgentCamera.changeCameraToDefault();
 
-		if (gRift3DEnabled)
+		if (gRift3DEnabled && gRiftHaveMirrorTexture)
 		{
-			ovrHmd_DestroyMirrorTexture(gRiftHMD, (ovrTexture*)gRiftMirrorTexture);
+			if (gRiftMirrorFBO)
+			{
+				glDeleteFramebuffers(1, &gRiftMirrorFBO);
+			}
+			if (gRiftMirrorTexture)
+			{
+				ovr_DestroyMirrorTexture(gRiftSession, gRiftMirrorTexture);
+			}
+			glDisable(GL_FRAMEBUFFER_SRGB);
+			gRiftHaveMirrorTexture = false;
 		}
 	}
 
@@ -10622,6 +10643,7 @@ class CVAllow3D: public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
+		// Note: Could disable menu item by checking for gRiftInitialized here, if needed.
 		bool new_value = (gOutputType == OUTPUT_TYPE_STEREO) || (gOutputType == OUTPUT_TYPE_RIFT);
 		return new_value;
 	}

@@ -2233,13 +2233,12 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 	// <CV:David>
 	if (gRift3DEnabled)
 	{
-		ovrFrameTiming frameTiming = ovrHmd_GetFrameTiming(gRiftHMD, 0);
-		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, frameTiming.DisplayMidpointSeconds);
-		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
+		unsigned int statusFlags = ovr_GetTrackingState(gRiftSession, ovr_GetTimeInSeconds(), ovrTrue).StatusFlags;
+		if (statusFlags & ovrStatus_OrientationTracked)
 		{
 			LL_INFOS() << "Oculus Rift: Sensor found toggling into Riftlook" << LL_ENDL;  // DJRTODO: Delete? No, if can cope with sensor being plugged in at runtime.
 
-			ovrHmd_RecenterPose(gRiftHMD);
+			ovr_RecenterTrackingOrigin(gRiftSession);
 			mLastRiftYaw = 0.f;
 			mEyeYaw = 0.f;
 
@@ -3033,13 +3032,14 @@ void LLAgentCamera::loadCameraPosition()
 
 void LLAgentCamera::calcRiftValues()
 {
-	ovrFrameTiming frameTiming = ovrHmd_GetFrameTiming(gRiftHMD, 0);
-	ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, frameTiming.DisplayMidpointSeconds);
-	if (!(trackingState.StatusFlags & ovrStatus_OrientationTracked)) {
-		//DJRTODO: What to do?!
-	}
+	double displayTime = ovr_GetPredictedDisplayTime(gRiftSession, 0);
+	ovrTrackingState trackingState = ovr_GetTrackingState(gRiftSession, displayTime, ovrTrue);
 
-	ovrVector3f hmdToEyeViewOffset[2] = { gRiftEyeRenderDesc[0].HmdToEyeViewOffset, gRiftEyeRenderDesc[1].HmdToEyeViewOffset };
+	//if (!(trackingState.StatusFlags & ovrStatus_OrientationTracked)) {
+	//	//DJRTODO: What to do?!
+	//}
+
+	ovrVector3f hmdToEyeViewOffset[2] = { gRiftEyeRenderDesc[0].HmdToEyeOffset, gRiftEyeRenderDesc[1].HmdToEyeOffset };
 	ovr_CalcEyePoses(trackingState.HeadPose.ThePose, hmdToEyeViewOffset, gRiftLayer.RenderPose);
 
 	float yaw, roll, pitch;
@@ -3093,8 +3093,8 @@ void LLAgentCamera::zeroSensors()
 	{
 		LL_INFOS() << "LLAgentCamera::zeroSensors()" << LL_ENDL;
 
-		ovrFrameTiming frameTiming = ovrHmd_GetFrameTiming(gRiftHMD, 0);
-		ovrTrackingState trackingState = ovrHmd_GetTrackingState(gRiftHMD, frameTiming.DisplayMidpointSeconds);
+		double displayTime = ovr_GetPredictedDisplayTime(gRiftSession, 0);
+		ovrTrackingState trackingState = ovr_GetTrackingState(gRiftSession, displayTime, ovrTrue);
 		if (trackingState.StatusFlags & ovrStatus_OrientationTracked)
 		{
 			if (LLViewerJoystick::getInstance()->getOverrideCamera())
@@ -3107,7 +3107,7 @@ void LLAgentCamera::zeroSensors()
 				gAgent.resetAxes();
 				gViewerWindow->moveCursorToCenter();
 			}
-			ovrHmd_RecenterPose(gRiftHMD);
+			ovr_RecenterTrackingOrigin(gRiftSession);
 			mLastRiftYaw = 0.f;
 			mEyeYaw = 0.f;
 			mRotatingView = 0;

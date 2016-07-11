@@ -762,43 +762,66 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		else if (gOutputType == OUTPUT_TYPE_RIFT) // && gRift3DEnabled && !output_for_snapshot
 		{
 			LLViewerCamera::getInstance()->calcStereoValues();
+			int curIndex;
+			GLuint curTexId;
+			ovrEyeType eye;
 
-			// First eye ...
-			ovrEyeType eye = gRiftHMD->EyeRenderOrder[0];
-			gRiftCurrentEye = eye == ovrEye_Left ? 0 : 1;
-			gRiftSwapTextureSet[eye]->CurrentIndex = (gRiftSwapTextureSet[eye]->CurrentIndex + 1) % gRiftSwapTextureSet[eye]->TextureCount;
-			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			// First (left) eye ...
+			eye = ovrEyeType(0);
+			gRiftCurrentEye = eye;
+
+			ovr_GetTextureSwapChainCurrentIndex(gRiftSession, gRiftTextureSwapChain[eye], &curIndex);
+			ovr_GetTextureSwapChainBufferGL(gRiftSession, gRiftTextureSwapChain[eye], curIndex, &curTexId);
+			glBindFramebuffer(GL_FRAMEBUFFER, gRiftTextureBuffers[eye]);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
+			//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gRiftDepthBuffers[eye], 0);
+			glViewport(0, 0, gRiftHSample, gRiftVSample);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glEnable(GL_FRAMEBUFFER_SRGB);
+			
 			render_frame(RENDER_RIFT_LEFT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUILeftEye");
 			render_ui();
 			LLSpatialGroup::sNoDelete = FALSE;
 
-			// Second eye ...
-			eye = gRiftHMD->EyeRenderOrder[1];
-			gRiftCurrentEye = eye == ovrEye_Left ? 0 : 1;
-			gRiftSwapTextureSet[eye]->CurrentIndex = (gRiftSwapTextureSet[eye]->CurrentIndex + 1) % gRiftSwapTextureSet[eye]->TextureCount;
-			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			ovr_CommitTextureSwapChain(gRiftSession, gRiftTextureSwapChain[eye]);
+
+			// Second (right) eye ...
+			eye = ovrEyeType(1);
+			gRiftCurrentEye = eye;
+
+			ovr_GetTextureSwapChainCurrentIndex(gRiftSession, gRiftTextureSwapChain[eye], &curIndex);
+			ovr_GetTextureSwapChainBufferGL(gRiftSession, gRiftTextureSwapChain[eye], curIndex, &curTexId);
+			glBindFramebuffer(GL_FRAMEBUFFER, gRiftTextureBuffers[eye]);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, curTexId, 0);
+			//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gRiftDepthBuffers[eye], 0);
+			glViewport(0, 0, gRiftHSample, gRiftVSample);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glEnable(GL_FRAMEBUFFER_SRGB);
+
 			render_frame(RENDER_RIFT_RIGHT);
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUIRightEye");
 			render_ui();
 			LLSpatialGroup::sNoDelete = FALSE;
 
+			ovr_CommitTextureSwapChain(gRiftSession, gRiftTextureSwapChain[eye]);
+			
 			// Submit frame with single layer we're using ...
 			ovrLayerHeader* layers = &gRiftLayer.Header;
-			ovrResult result = ovrHmd_SubmitFrame(gRiftHMD, 0, nullptr, &layers, 1);
+			ovrResult result = ovr_SubmitFrame(gRiftSession, 0, nullptr, &layers, 1);
 			if (result != ovrSuccess) {
 				// DJRTODO: Switch out of Riftlook?
 				LL_INFOS() << "Oculus Rift: ovrHmd_SubmitFrame() failed!" << LL_ENDL;
 			}
 
-			// Copy Rift display to application window ...
+			// Mirror Rift display to application window ...
 			static LLCachedControl<bool> riftMirrorToDesktop(gSavedSettings, "RiftMirrorToDesktop");
-			if (riftMirrorToDesktop)
+			if (riftMirrorToDesktop && gRiftHaveMirrorTexture)
 			{
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, gRiftMirrorFBO);
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-				GLint w = gRiftMirrorTexture->OGL.Header.TextureSize.w;
-				GLint h = gRiftMirrorTexture->OGL.Header.TextureSize.h;
+				GLint w = gRiftMirrorTextureDesc.Width;
+				GLint h = gRiftMirrorTextureDesc.Height;
 				glBlitFramebuffer(0, h, w, 0, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 				glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 			}
@@ -1636,10 +1659,12 @@ void render_ui(F32 zoom_factor, int subfield)
 		{
 			gPipeline.mScreen.flush();
 
-			ovrEyeType eye = gRiftCurrentEye == 0 ? ovrEye_Left : ovrEye_Right;
-			ovrGLTexture* tex = (ovrGLTexture*)&gRiftSwapTextureSet[eye]->Textures[gRiftSwapTextureSet[eye]->CurrentIndex];
+			int curIndex;
+			GLuint curTexId;
+			ovr_GetTextureSwapChainCurrentIndex(gRiftSession, gRiftTextureSwapChain[gRiftCurrentEye], &curIndex);
+			ovr_GetTextureSwapChainBufferGL(gRiftSession, gRiftTextureSwapChain[gRiftCurrentEye], curIndex, &curTexId);
 			LLRenderTarget::copyContentsToTexture(gPipeline.mScreen, 0, 0, gRiftHBuffer, gRiftVBuffer, 
-				tex->OGL.TexId, 0, 0, gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				curTexId, 0, 0, gRiftHBuffer, gRiftVBuffer, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		}
 		// </CV:David>
 	}
@@ -2023,19 +2048,6 @@ void setRiftSDKRendering(bool on)
 	{
 		if (gRiftInitialized)
 		{
-			calculateRiftHmdCaps();
-			ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
-
-			// Automatically dismiss HSW second and subsequent times into Riftlook ... 
-			// DJRTODO: Don't show at all once the API supports this again.
-			// DJRTODO: Functionality not present in SDK 0.6.
-			/*
-			if (!gRiftHSWEnabled)
-			{
-				ovrHmd_DismissHSWDisplay(gRiftHMD);
-			}
-			*/
-
 			LL_INFOS() << "Oculus Rift: Started Rift rendering" << LL_ENDL;
 		}
 		else
@@ -2047,31 +2059,6 @@ void setRiftSDKRendering(bool on)
 	else
 	{
 		LL_INFOS("InitInfo") << "Oculus Rift: Ended Rift rendering" << LL_ENDL;
-	}
-}
-
-void calculateRiftHmdCaps()
-{
-	gRiftHmdCaps = 0;
-
-	LL_INFOS() << "RiftLowPersistence = " << gSavedSettings.getBOOL("RiftLowPersistence") << LL_ENDL;
-	if (gSavedSettings.getBOOL("RiftLowPersistence"))
-	{
-		gRiftHmdCaps |= ovrHmdCap_LowPersistence;
-	}
-	LL_INFOS() << "RiftDynamicPrediction = " << gSavedSettings.getBOOL("RiftDynamicPrediction") << LL_ENDL;
-	if (gSavedSettings.getBOOL("RiftDynamicPrediction"))
-	{
-		gRiftHmdCaps |= ovrHmdCap_DynamicPrediction;
-	}
-}
-
-void updateRiftSettings()
-{
-	if (gRift3DEnabled)
-	{
-		calculateRiftHmdCaps();
-		ovrHmd_SetEnabledCaps(gRiftHMD, gRiftHmdCaps);
 	}
 }
 // </CV:David>

@@ -4431,7 +4431,6 @@ void LLFloaterPreference::onRiftMouseHorizontalEnable()
 
 void LLFloaterPreference::onRiftHmdSettingsChanged()
 {
-	updateRiftSettings();
 }
 // </CV:David>
 

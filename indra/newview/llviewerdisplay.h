@@ -48,9 +48,6 @@ extern F32 gLastDrawDistanceStep;
 
 // <CV:David>
 void setRiftSDKRendering(bool on);
-void updateRiftSettings();
-void calculateRiftHmdCaps();
-
 extern U32 gOutputType;
 const U32 OUTPUT_TYPE_NORMAL = 0;
 const U32 OUTPUT_TYPE_STEREO = 1;

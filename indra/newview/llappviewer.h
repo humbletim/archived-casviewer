@@ -29,6 +29,7 @@
 
 #include "llallocator.h"
 #include "llcontrol.h"
+#include "llgl.h"  // <CV:David>
 #include "llsys.h"			// for LLOSInfo
 #include "lltimer.h"
 #include "llappcorehttp.h"
@@ -452,11 +453,13 @@ extern BOOL gRandomizeFramerate;
 extern BOOL gPeriodicSlowFrame;
 
 // <CV:David>
-extern ovrHmd gRiftHMD;
+extern ovrHmdType gRiftHMDType;
+extern ovrSession gRiftSession;
 extern ovrEyeRenderDesc gRiftEyeRenderDesc[2];
 extern ovrFovPort gRiftEyeFov[2];
-extern ovrSwapTextureSet* gRiftSwapTextureSet[2];
-extern bool gRiftSwapTextureSetCreated[2];
+extern ovrTextureSwapChain gRiftTextureSwapChain[2];
+extern GLuint gRiftTextureBuffers[2];
+//extern GLuint gRiftDepthBuffers[2];  // Not used at present but might need to be at some stage
 extern ovrLayerEyeFov gRiftLayer;
 
 extern bool gDoSetRiftlook;  // DJRTODO: Temporarily use while using DK2 extended mode
@@ -481,7 +484,9 @@ extern F32 gRiftEyeDeltaR;
 extern F32 gRiftCullCameraDelta;
 extern F32 gRiftHeadOffset;
 extern bool gRiftHSWEnabled;
-extern ovrGLTexture* gRiftMirrorTexture;
+extern bool gRiftHaveMirrorTexture;
+extern ovrMirrorTexture gRiftMirrorTexture;
+extern ovrMirrorTextureDesc gRiftMirrorTextureDesc;
 extern GLuint gRiftMirrorFBO;
 // </CV:David>
 
