@@ -1808,42 +1808,14 @@
        left="54"
        name="RiftAvatar"
        width="50" />
-
       <check_box
        control_name="RiftMirrorToDesktop"
        height="16"
        initial_value="true"
        label="Mirror Rift display to desktop"
-       layout="topleft"
-       left="264"
+       left="54"
        name="RiftMirrorToDesktop"
-       width="50"
-       top="324" />
-      <check_box
-       control_name="RiftLowPersistence"
-       height="16"
-       initial_value="true"
-       label="Low persistence"
-       layout="topleft"
-       left="264"
-       name="RiftLowPersistence"
-       width="50" >
-        <check_box.commit_callback
-         function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-      <check_box
-       control_name="RiftDynamicPrediction"
-       height="16"
-       initial_value="true"
-       label="Dynamic prediction"
-       layout="topleft"
-       left="264"
-       name="RiftDynamicPrediction"
-       width="50" >
-        <check_box.commit_callback
-          function="Pref.RiftHmdSettingsChanged" />
-      </check_box>
-
+       width="50" />
 
     </panel>
   </tab_container>
