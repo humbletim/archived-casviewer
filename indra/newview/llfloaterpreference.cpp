@@ -4413,7 +4413,7 @@ void LLFloaterPreference::onClickResetRiftHeadReorientsSpeed()
 
 void LLFloaterPreference::onClickResetRiftUIDepth()
 {
-	gSavedSettings.setU32("RiftUIDepth", 100);
+	gSavedSettings.setU32("RiftUIDepth", 50);
 }
 
 void LLFloaterPreference::onChangeRiftMouseMode()

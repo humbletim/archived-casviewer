@@ -1763,7 +1763,7 @@ void LLAppViewer::initRift()
 			gRiftLayer.Viewport[1].Size.w = gRiftHBuffer;
 
 			// DJRTODO: Which of the following to use? ...
-			gRiftLensOffset = llround((F32)gRiftHSample * (1 - horizontalTanIn) / (2.f * horizontalTanOut));
+			//gRiftLensOffset = llround((F32)gRiftHSample * (1 - horizontalTanIn) / (2.f * horizontalTanOut));
 			gRiftLensOffset = llround((F32)gRiftHSample * (0.5f - horizontalTanIn / (horizontalTanIn + horizontalTanOut)));
 			LL_INFOS("InitInfo") << "Oculus Rift: Lens offset = " << gRiftLensOffset << LL_ENDL;
 		}
@@ -1778,7 +1778,7 @@ void LLAppViewer::initRift()
 S32 LLAppViewer::getRiftUIDepth()
 {
 	// Convert user-friendly value to code-friendly value.
-	return 120 - gSavedSettings.getU32("RiftUIDepth");
+	return 75 - gSavedSettings.getU32("RiftUIDepth");
 }
 
 // </CV:David>
