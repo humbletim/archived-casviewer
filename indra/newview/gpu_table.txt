@@ -273,8 +273,9 @@ ATI RV515								.*RV515.*											1	1	0	0
 ATI RV570 (X1900 GT/PRO)				.*RV570.*											3	1	0	0
 ATI RV380								.*RV380.*											0	1	0	0
 ATI RV530								.*RV530.*											1	1	0	0
-ATI RX480 (Xpress 200P)					.*RX480.*											0	1	0	0
+ATI RX480 (Xpress 200P)					.*RX480.*200P										0	1	0	0
 ATI RX700								.*RX700.*											1	1	0	0
+ATI RX480								.*RX480.*											5	1	0	4.4
 AMD ANTILLES (HD 6990)					.*(AMD|ATI).*Antilles.*								3	1	0	0
 ATI ROBSON								.*(AMD|ATI).*ROBSON.*								3	1	0	4
 AMD ARUBA (HD 6800)						.*(AMD|ATI).*ARUBA.*								3	1	1	2.1
@@ -484,6 +485,10 @@ NVIDIA GTX 880M							.*NVIDIA .*GTX *88[0-9]M.*							5	1	0	4.4
 NVIDIA GTX 960M							.*NVIDIA .*GTX *96[0-9]M.*							5	1	0	4.4
 NVIDIA GTX 970M							.*NVIDIA .*GTX *97[0-9]M.*							5	1	0	4.4
 NVIDIA GTX 980M							.*NVIDIA .*GTX *98[0-9]M.*							5	1	0	4.4
+NVIDIA GTX 1060M						.*NVIDIA .*GTX *106[0-9]M.*							5	1	0	4.4
+NVIDIA GTX 1070M						.*NVIDIA .*GTX *107[0-9]M.*							5	1	0	4.4
+NVIDIA GTX 1080M						.*NVIDIA .*GTX *108[0-9]M.*							5	1	0	4.4
+NVIDIA GTX 1090M						.*NVIDIA .*GTX *109[0-9]M.*							5	1	0	4.4
 NVIDIA G100								.*NVIDIA .*G10.*									3	1	1	3.3
 NVIDIA GT 120							.*NVIDIA .*GT 12.*									2	1	0	3.3
 NVIDIA GT 130							.*NVIDIA .*GT 13.*									2	1	0	3.3
@@ -556,8 +561,13 @@ NVIDIA GTX 75x							.*NVIDIA .*GTX *75.*								3	1	0	4.4
 NVIDIA GTX 76x							.*NVIDIA .*GTX *76.*								5	1	0	4.4
 NVIDIA GTX 77x							.*NVIDIA .*GTX *77.*								5	1	0	4.4
 NVIDIA GTX 78x							.*NVIDIA .*GTX *78.*								5	1	0	4.4
+NVIDIA GTX 96x							.*NVIDIA .*GTX *96.*								5	1	0	4.4
 NVIDIA GTX 97x							.*NVIDIA .*GTX *97.*								5	1	0	4.4
 NVIDIA GTX 98x							.*NVIDIA .*GTX *98.*								5	1	0	4.4
+NVIDIA GTX 106x							.*NVIDIA .*GTX *106.*								5	1	0	4.4
+NVIDIA GTX 107x							.*NVIDIA .*GTX *107.*								5	1	0	4.4
+NVIDIA GTX 108x							.*NVIDIA .*GTX *108.*								5	1	0	4.4
+NVIDIA GTX 109x							.*NVIDIA .*GTX *109.*								5	1	0	4.4
 NVIDIA GTX TITAN						.*NVIDIA .*GTX *TITAN.*								5	1	0	4.4
 NVIDIA C51								.*NVIDIA .*C51.*									0	1	1	2
 NVIDIA G72								.*NVIDIA .*G72.*									1	1	0	0
