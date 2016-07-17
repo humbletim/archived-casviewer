@@ -21950,6 +21950,17 @@ Change of this parameter will affect the layout of buttons in notification toast
       <key>Value</key>
       <integer>90</integer>
     </map>
+    <key>RiftFOVMultiplier</key>
+    <map>
+      <key>Comment</key>
+      <string>Multiplies the default FOV used for the Rift display.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <integer>1.0</integer>
+    </map>
     <key>RiftMouseMode</key>
     <map>
       <key>Comment</key>

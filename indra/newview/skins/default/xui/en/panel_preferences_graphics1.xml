@@ -1795,6 +1795,37 @@
          function="Pref.ResetRiftUIDepth" />
       </button>
 
+      <slider
+       control_name="RiftFOVMultiplier"
+       decimal_digits="1"
+       label="FOV multiplier (requires restart):"
+       follows="left|top"
+       height="16"
+       increment="0.1"
+       initial_value="1.0"
+       layout="topleft"
+       left="54"
+       max_val="2.0"
+       min_val="0.5"
+       name="RiftFOVMultiplier"
+       width="318"
+       label_width="175"
+       tool_tip="Adjusts the depth the UI is displayed at."/>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="46"
+       name="ResetRiftFOVMultiplier"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftFOVMultiplier" />
+      </button>
+
       <check_box
        control_name="RiftContextMenu"
        height="16"
@@ -1803,7 +1834,7 @@
        layout="topleft"
        left="54"
        name="RiftContextMenu"
-       top_pad="6"
+       top_pad="10"
        width="50" />
       <check_box
        control_name="RiftHoverText"
@@ -1818,7 +1849,9 @@
        height="16"
        initial_value="true"
        label="Show avatar"
-       left="54"
+       layout="topleft"
+       left="264"
+       top="344"
        name="RiftAvatar"
        width="50" />
       <check_box
@@ -1826,7 +1859,7 @@
        height="16"
        initial_value="true"
        label="Mirror Rift display to desktop"
-       left="54"
+       left="264"
        name="RiftMirrorToDesktop"
        width="50" />
 

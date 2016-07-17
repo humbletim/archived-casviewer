@@ -1595,6 +1595,24 @@ void LLAppViewer::initRift()
 		float horizontalTanOut = llmax(hmdDescription.DefaultEyeFov[0].LeftTan, hmdDescription.DefaultEyeFov[1].RightTan);
 		float horizontalTanIn = llmax(hmdDescription.DefaultEyeFov[0].RightTan, hmdDescription.DefaultEyeFov[1].LeftTan);
 
+		float fovMultiplier = gSavedSettings.getF32("RiftFOVMultiplier");
+
+		float maxFOVMultiplierLeft = llmin(hmdDescription.MaxEyeFov[0].LeftTan / hmdDescription.DefaultEyeFov[0].LeftTan, 
+			hmdDescription.MaxEyeFov[1].LeftTan / hmdDescription.DefaultEyeFov[1].LeftTan);
+		float maxFOVMultiplierRight = llmin(hmdDescription.MaxEyeFov[0].RightTan / hmdDescription.DefaultEyeFov[0].RightTan,
+			hmdDescription.MaxEyeFov[1].RightTan / hmdDescription.DefaultEyeFov[1].RightTan);
+		float maxFOVMultiplierUp = llmin(hmdDescription.MaxEyeFov[0].UpTan / hmdDescription.DefaultEyeFov[0].UpTan,
+			hmdDescription.MaxEyeFov[1].UpTan / hmdDescription.DefaultEyeFov[1].UpTan);
+		float maxFOVMultiplierDown = llmin(hmdDescription.MaxEyeFov[0].DownTan / hmdDescription.DefaultEyeFov[0].DownTan,
+			hmdDescription.MaxEyeFov[1].DownTan / hmdDescription.DefaultEyeFov[1].DownTan);
+		fovMultiplier = llmin(fovMultiplier, llmin(maxFOVMultiplierLeft, maxFOVMultiplierRight, maxFOVMultiplierUp, maxFOVMultiplierDown));
+
+		LL_INFOS("InitInfo") << "Oculus Rift: FOV multiplier used = " << fovMultiplier << LL_ENDL;
+
+		verticalTan = fovMultiplier * verticalTan;
+		horizontalTanOut = fovMultiplier * horizontalTanOut;
+		horizontalTanIn = fovMultiplier * horizontalTanIn;
+
 		gRiftEyeFov[0].UpTan = verticalTan;
 		gRiftEyeFov[0].DownTan = verticalTan;
 		gRiftEyeFov[0].LeftTan = horizontalTanOut;
@@ -1779,6 +1797,11 @@ S32 LLAppViewer::getRiftUIDepth()
 {
 	// Convert user-friendly value to code-friendly value.
 	return 75 - gSavedSettings.getU32("RiftUIDepth");
+}
+
+F32 LLAppViewer::getRiftFOVMultiplier()
+{
+	return gSavedSettings.getF32("RiftFOVMultiplier");
 }
 
 // </CV:David>

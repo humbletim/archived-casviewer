@@ -550,6 +550,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftHeadReorientsSpeed",	boost::bind(&LLFloaterPreference::onChangeRiftHeadReorientsSpeed, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftHeadReorientsSpeed",	boost::bind(&LLFloaterPreference::onClickResetRiftHeadReorientsSpeed, this));
 	mCommitCallbackRegistrar.add("Pref.ResetRiftUIDepth",	boost::bind(&LLFloaterPreference::onClickResetRiftUIDepth, this));
+	mCommitCallbackRegistrar.add("Pref.ResetRiftFOVMultiplier",	boost::bind(&LLFloaterPreference::onClickResetRiftFOVMultiplier, this));
 	mCommitCallbackRegistrar.add("Pref.ChangeRiftMouseMode", boost::bind(&LLFloaterPreference::onChangeRiftMouseMode, this));
 	mCommitCallbackRegistrar.add("Pref.RiftMouseHorizontalEnable",	boost::bind(&LLFloaterPreference::onRiftMouseHorizontalEnable, this));
 	mCommitCallbackRegistrar.add("Pref.RiftHmdSettingsChanged",	boost::bind(&LLFloaterPreference::onRiftHmdSettingsChanged, this));
@@ -4414,6 +4415,11 @@ void LLFloaterPreference::onClickResetRiftHeadReorientsSpeed()
 void LLFloaterPreference::onClickResetRiftUIDepth()
 {
 	gSavedSettings.setU32("RiftUIDepth", 50);
+}
+
+void LLFloaterPreference::onClickResetRiftFOVMultiplier()
+{
+	gSavedSettings.setF32("RiftFOVMultiplier", 1.0f);
 }
 
 void LLFloaterPreference::onChangeRiftMouseMode()

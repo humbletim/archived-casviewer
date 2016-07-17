@@ -229,6 +229,7 @@ public:
 	LLAppCoreHttp & getAppCoreHttp()			{ return mAppCoreHttp; }
 
 	S32 getRiftUIDepth();  // <CV:David>
+	F32 getRiftFOVMultiplier();  // <CV:David>
 	
 protected:
 	virtual bool initWindow(); // Initialize the viewer's window.
