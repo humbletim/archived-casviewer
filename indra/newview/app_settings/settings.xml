@@ -14,6 +14,17 @@
     <key>Value</key>
     <string>4.6.9</string>
   </map>
+  <key>EnableAllGPUFeatures</key>
+  <map>
+    <key>Comment</key>
+    <string>Override GPU table file</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
   <!-- </CV:David> -->
   <key>FSFloaterBlacklistSortColumn</key>
   <map>

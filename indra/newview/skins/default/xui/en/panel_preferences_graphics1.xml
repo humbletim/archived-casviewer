@@ -790,6 +790,19 @@
         <button.commit_callback
          function="Pref.HardwareDefaults" />
       </button>
+
+    <!-- GPU Table Override-->
+      <check_box
+       control_name="EnableAllGPUFeatures"
+       height="16"
+       label="Enable all features (requires restart)"
+       layout="topleft"
+       left="4"
+       name="EnableAllGPUFeatures"
+       top="380"
+       width="256" />
+
+
     </panel>
 
 <!--Hardware Settings-->

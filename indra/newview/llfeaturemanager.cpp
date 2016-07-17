@@ -604,6 +604,17 @@ bool LLFeatureManager::parseGPUTable(std::string filename)
 #endif
 	file.close();
 
+
+	// <CV:David>
+	// Possibly override GPU table (useful if new GPU is not present in table).
+	if (gSavedSettings.getBOOL("EnableAllGPUFeatures")) {
+		mGPUString = "Enable All GPU Features";
+		mGPUClass = GPU_CLASS_5;
+		mGPUSupported = true;
+		mExpectedGLVersion = 4.4;
+	}
+	// </CV:David>
+
 	if ( gpuFound )
 	{
 		LL_INFOS("RenderInit") << "GPU '" << rawRenderer << "' recognized as '" << mGPUString << "'" << LL_ENDL;
