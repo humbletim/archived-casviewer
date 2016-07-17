@@ -1626,8 +1626,11 @@ void LLAppViewer::initRift()
 		gRiftFOV = 2.f * atan(verticalTan);
 		LL_INFOS("InitInfo") << "Oculus Rift: Adjusted vertical FOV = " << std::setprecision(6) << gRiftFOV << std::setprecision(3) << LL_ENDL;
 
-		ovrSizei usedLSize = ovr_GetFovTextureSize(gRiftSession, ovrEye_Left, gRiftEyeFov[ovrEye_Left], 1.f);
-		ovrSizei usedRSize = ovr_GetFovTextureSize(gRiftSession, ovrEye_Right, gRiftEyeFov[ovrEye_Right], 1.f);
+		float pixelDensity = gSavedSettings.getF32("RiftPixelDensity");
+		LL_INFOS("InitInfo") << "Oculus Rift: Pixel density used = " << pixelDensity << LL_ENDL;
+
+		ovrSizei usedLSize = ovr_GetFovTextureSize(gRiftSession, ovrEye_Left, gRiftEyeFov[ovrEye_Left], pixelDensity);
+		ovrSizei usedRSize = ovr_GetFovTextureSize(gRiftSession, ovrEye_Right, gRiftEyeFov[ovrEye_Right], pixelDensity);
 		LL_INFOS("InitInfo") << "Oculus Rift: Requested texture size L = " << usedLSize.w << " x " << usedLSize.h  << LL_ENDL;
 		LL_INFOS("InitInfo") << "Oculus Rift: Requested texture size R = " << usedRSize.w << " x " << usedRSize.h  << LL_ENDL;
 		// Use same, left eye size for both eyes.
@@ -1802,6 +1805,11 @@ S32 LLAppViewer::getRiftUIDepth()
 F32 LLAppViewer::getRiftFOVMultiplier()
 {
 	return gSavedSettings.getF32("RiftFOVMultiplier");
+}
+
+F32 LLAppViewer::getRiftPixelDensity()
+{
+	return gSavedSettings.getF32("RiftPixelDensity");
 }
 
 // </CV:David>

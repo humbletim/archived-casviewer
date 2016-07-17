@@ -1810,7 +1810,7 @@
        name="RiftFOVMultiplier"
        width="318"
        label_width="175"
-       tool_tip="Adjusts the depth the UI is displayed at."/>
+       tool_tip="Adjusts the FOV for the Rift display."/>
       <button
        follows="left|top"
        height="18"
@@ -1824,6 +1824,37 @@
        width="60">
         <button.commit_callback
          function="Pref.ResetRiftFOVMultiplier" />
+      </button>
+
+      <slider
+       control_name="RiftPixelDensity"
+       decimal_digits="1"
+       label="Pixel density (requires restart):"
+       follows="left|top"
+       height="16"
+       increment="0.1"
+       initial_value="1.0"
+       layout="topleft"
+       left="54"
+       max_val="2.0"
+       min_val="0.5"
+       name="RiftPixelDensity"
+       width="318"
+       label_width="175"
+       tool_tip="Adjusts the depth the pixel density used for the Rift image."/>
+      <button
+       follows="left|top"
+       height="18"
+       label="Reset"
+       label_selected="Reset"
+       layout="topleft"
+       left_pad="46"
+       name="ResetRiftPixelDensity"
+       top_delta="-2"
+       bottom_pad="2"
+       width="60">
+        <button.commit_callback
+         function="Pref.ResetRiftPixelDensity" />
       </button>
 
       <check_box
@@ -1851,7 +1882,7 @@
        label="Show avatar"
        layout="topleft"
        left="264"
-       top="344"
+       top="368"
        name="RiftAvatar"
        width="50" />
       <check_box

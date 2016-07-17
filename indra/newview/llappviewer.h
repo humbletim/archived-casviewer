@@ -230,6 +230,7 @@ public:
 
 	S32 getRiftUIDepth();  // <CV:David>
 	F32 getRiftFOVMultiplier();  // <CV:David>
+	F32 getRiftPixelDensity();  // <CV:David>
 	
 protected:
 	virtual bool initWindow(); // Initialize the viewer's window.

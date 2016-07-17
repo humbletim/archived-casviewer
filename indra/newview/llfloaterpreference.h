@@ -257,6 +257,7 @@ public:
 	void onClickResetRiftHeadReorientsSpeed();
 	void onClickResetRiftUIDepth();
 	void onClickResetRiftFOVMultiplier();
+	void onClickResetRiftPixelDensity();
 	void onChangeRiftMouseMode();
 	void onRiftMouseHorizontalEnable();
 	void onRiftHmdSettingsChanged();
