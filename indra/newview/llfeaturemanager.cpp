@@ -765,8 +765,11 @@ void fetch_gpu_table(std::string table)
 // fetch table(s) from a website (S3)
 void LLFeatureManager::fetchHTTPTables()
 {
-	fetch_feature_table(FEATURE_TABLE_VER_FILENAME);
-	fetch_gpu_table(GPU_TABLE_VER_FILENAME);
+	// <CV:David>
+	// Don't download these from Firestorm any more.
+	//fetch_feature_table(FEATURE_TABLE_VER_FILENAME);
+	//fetch_gpu_table(GPU_TABLE_VER_FILENAME);
+	// <CV:David>
 }
 
 
