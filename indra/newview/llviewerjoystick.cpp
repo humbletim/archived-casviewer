@@ -322,6 +322,10 @@ void LLViewerJoystick::init(bool autoenable)
 		// No device connected, don't change any settings
 	}
 	
+	// <CV:David>
+	mIsXboxOneController = mController == XBOX_CONTROLLER && isLikeXboxOneController();
+	// </CV:David>
+
 	LL_INFOS() << "ndof: mDriverState=" << mDriverState << "; mNdofDev=" 
 			<< mNdofDev << "; libinit=" << libinit << LL_ENDL;
 
@@ -357,6 +361,15 @@ void LLViewerJoystick::updateStatus()
 	{
 		mAxes[i] = (F32) mNdofDev->axes[i] / mNdofDev->axes_max;
 	}
+
+	// <CV:David>
+	if (mIsXboxOneController && gSavedSettings.getBOOL("JoystickCombineTriggers"))
+	{
+		// Combine XBox One triggers into single y-axis (up) control.
+		mAxes[2] = mAxes[2] - mAxes[5];
+	}
+	// </CV:David>
+
 
 	for (int i=0; i<16; i++)
 	{
@@ -1837,6 +1850,15 @@ bool LLViewerJoystick::isLikeXboxController() const
 	return false;
 #endif
 }
+
+bool LLViewerJoystick::isLikeXboxOneController() const
+{
+#if LIB_NDOF	
+	return (isJoystickInitialized() && isLikeXboxController() && boost::regex_match(getDescription(), boost::regex("^.*One.*$", boost::regex::icase)));
+#else
+	return false;
+#endif
+}
 // </CV:David>
 
 // -----------------------------------------------------------------------------
@@ -1942,6 +1964,7 @@ void LLViewerJoystick::setSNDefaults()
 	gSavedSettings.setF32("FlycamFeathering", 5.f);
 
 	gSavedSettings.setBOOL("JoystickSwapMouseButtons", FALSE);  // <CV:David>
+	gSavedSettings.setBOOL("JoystickCombineTriggers", FALSE);  // <CV:David>
 }
 
 // <CV:David>
@@ -2014,6 +2037,7 @@ void LLViewerJoystick::setXboxControllerDefaults()
 	gSavedSettings.setF32("BuildFeathering", 12.f);
 	gSavedSettings.setF32("FlycamFeathering", 10.f);
 
-	gSavedSettings.setBOOL("JoystickSwapMouseButtons", TRUE);  // </CV:David>
+	gSavedSettings.setBOOL("JoystickSwapMouseButtons", TRUE);
+	gSavedSettings.setBOOL("JoystickCombineTriggers", isLikeXboxOneController());
 }
 // </CV:David>

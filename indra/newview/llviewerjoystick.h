@@ -72,6 +72,7 @@ public:
 	bool isJoystickInitialized() const {return (mDriverState==JDS_INITIALIZED);}
 	bool isLikeSpaceNavigator() const;
 	bool isLikeXboxController() const;  // <CV:David>
+	bool isLikeXboxOneController() const;  // <CV:David>
 	void setNeedsReset(bool reset = true) { mResetFlag = reset; }
 	void setCameraNeedsUpdate(bool b)     { mCameraUpdated = b; }
 	bool getCameraNeedsUpdate() const     { return mCameraUpdated; }
@@ -126,6 +127,7 @@ private:
 
 	// Controllers.
 	EControllerType mController;
+	bool mIsXboxOneController;
 	
 	// Controller-specific defaults.
 	void setSNDefaults();

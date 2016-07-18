@@ -123,6 +123,7 @@ BOOL LLFloaterJoystick::postBuild()
 	childSetAction("ControllerDefaults", onClickRestoreControllerDefaults, this);
 
 	getChild<LLCheckBoxCtrl>("JoystickSwapMouseButtons")->setEnabled(LLViewerJoystick::getInstance()->isLikeXboxController());
+	getChild<LLCheckBoxCtrl>("JoystickCombineTriggers")->setEnabled(LLViewerJoystick::getInstance()->isLikeXboxOneController());
 	// </CV:David>
 
 	childSetAction("cancel_btn", onClickCancel, this);
@@ -211,6 +212,7 @@ void LLFloaterJoystick::initFromSettings()
 	mFlycamFeathering = gSavedSettings.getF32("FlycamFeathering");
 
 	mSwapMouseButtons = gSavedSettings.getBOOL("JoystickSwapMouseButtons");  // <CV:David>
+	mCombineTriggers = gSavedSettings.getBOOL("JoystickCombineTriggers");  // <CV:David>
 }
 
 void LLFloaterJoystick::refresh()
@@ -288,6 +290,7 @@ void LLFloaterJoystick::cancel()
 	gSavedSettings.setF32("FlycamFeathering", mFlycamFeathering);
 
 	gSavedSettings.setBOOL("JoystickSwapMouseButtons", mSwapMouseButtons);  // <CV:David>
+	gSavedSettings.setBOOL("JoystickCombineTriggers", mCombineTriggers);  // <CV:David>
 }
 
 void LLFloaterJoystick::onCommitJoystickEnabled(LLUICtrl*, void *joy_panel)

@@ -810,7 +810,7 @@
      min_val="1"
      name="AvatarFeathering"
      show_text="false"
-     top="402"
+     top="392"
      width="73" />
     <slider
      control_name="BuildFeathering"
@@ -907,8 +907,18 @@
      enabled="false"
      layout="topleft"
      left="42"
-     top="480"
+     top="466"
      name="JoystickSwapMouseButtons"
+     width="60" />
+    <check_box
+     bottom_delta="18"
+     height="10"
+     control_name="JoystickCombineTriggers"
+     label="Combine XBox One triggers"
+     enabled="false"
+     layout="topleft"
+     left="42"
+     name="JoystickCombineTriggers"
      width="60" />
     <!-- </CV:David> -->
     <button
